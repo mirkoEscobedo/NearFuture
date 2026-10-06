@@ -25,12 +25,16 @@ async function sourcesUnder(directory, extension) {
     }
     return sources;
 }
+/** @type {import("./boundaries.mjs").Package[]} */
+const packages = JSON.parse(cargo.stdout).packages;
 const sources = [
     ...await sourcesUnder(resolve(root, 'crates/nf-contract/src'), '.rs'),
     ...await sourcesUnder(resolve(root, 'crates/nf-kernel/src'), '.rs'),
     ...await sourcesUnder(resolve(root, 'java/contract/src/main'), '.java'),
+    ...(packages.some(pkg => pkg.name === 'nf-nex-boundary') ?
+        await sourcesUnder(resolve(root, 'crates/nf-nex-boundary/src'), '.rs') : []),
 ];
-const violations = dependencyViolations(JSON.parse(cargo.stdout).packages, sources);
+const violations = dependencyViolations(packages, sources);
 if (violations.length) {
     console.error(violations.join('\n'));
     process.exit(1);
