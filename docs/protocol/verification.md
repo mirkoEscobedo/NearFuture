@@ -1,6 +1,6 @@
 # NF-003 contract verification
 
-Issue [#7](https://github.com/mirkoEscobedo/NearFuture/issues/7). Work date: 2026-10-07. This is the integration evidence for typed identities/counters, generated wire contracts, closed canonical codecs and signature primitives. The implementation revision and final review result are recorded after the checks below are refreshed on the published change.
+Issue [#7](https://github.com/mirkoEscobedo/NearFuture/issues/7). Work date: 2026-10-07. This is the integration evidence for typed identities/counters, generated wire contracts, closed canonical codecs and signature primitives. The reviewed implementation revision, final complete checks and independent PASS are recorded in [foundation integration](../integration.md).
 
 The Rust domain crate is `no_std` with maintained SHA-256, NFC and Ed25519 libraries. The Java contract has the same closed registry; generated protobuf modules stay separate from the pure domain codecs. Canonical hashes use explicit NF-CANON-1 bytes, never protobuf reserialization. No decoder mutates state, authenticates a principal, opens a transport or records a durable operation.
 

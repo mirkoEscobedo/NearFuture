@@ -4,7 +4,7 @@ Mode: Ticketed. Goal: complete the implementation backlog in https://github.com/
 
 ## Current outcome
 
-Current: #7 typed contracts and Java/Rust interoperability, including independent review and one bounded semantic repair. Foundation #5–#6 passed scoped local review; hosted Windows/Linux evidence awaits the implementation PR. #12 profiling tooling is reviewed as partial delivery; actual game measurements remain unmeasured. The dependent #8 world kernel is being prepared in parallel and is not accepted yet.
+Current: #8 data-only world kernel. Foundation #5–#7 passed scoped independent review and the isolated complete public lane; hosted Windows/Linux evidence awaits the implementation PR. #9 persistence and #22 identity are being implemented in parallel against explicit ports and are not accepted yet. #12 profiling tooling is reviewed as partial delivery; actual game measurements remain unmeasured. See docs/integration.md for the reviewed foundation revision.
 
 Checks: deterministic runtime manifests and actionable failure diagnostics, source/license inventory, public Rust/Java tests, formatting/linting, dependency boundaries, missing-game-library failures, independent review. Game claims need exact-runtime game evidence.
 
