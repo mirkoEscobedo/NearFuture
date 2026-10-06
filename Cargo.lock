@@ -292,6 +292,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "nf-kernel"
+version = "0.1.0"
+dependencies = [
+ "nf-contract",
+ "sha2",
+]
+
+[[package]]
 name = "nf-wire"
 version = "0.1.0"
 dependencies = [

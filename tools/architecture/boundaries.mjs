@@ -1,6 +1,6 @@
 // @ts-check
 // Architectural lint, not a sandbox for adversarial source code.
-/** @typedef {{ name: string, req?: string, uses_default_features?: boolean, kind?: string | null }} Dependency */
+/** @typedef {{ name: string, req?: string, uses_default_features?: boolean, kind?: string | null, path?: string }} Dependency */
 /** @typedef {{ name: string, dependencies: Dependency[] }} Package */
 /** @typedef {{ path: string, content: string }} Source */
 
@@ -13,16 +13,21 @@ function codeOnly(content) {
 export function dependencyViolations(packages, sources) {
     const violations = [];
     const pureDependencies = new Map([['sha2', '=0.10.9'], ['unicode-normalization', '=0.1.25'], ['ed25519-dalek', '=2.2.0']]);
-    for (const pkg of packages.filter(pkg => pkg.name === 'nf-contract')) {
+    for (const pkg of packages.filter(pkg => ['nf-contract', 'nf-kernel'].includes(pkg.name))) {
         for (const dependency of pkg.dependencies.filter(dependency => dependency.kind !== 'dev')) {
-            if (pureDependencies.get(dependency.name) !== dependency.req || dependency.uses_default_features !== false) {
+            const kernelContract = pkg.name === 'nf-kernel' && dependency.name === 'nf-contract' &&
+                typeof dependency.path === 'string' && dependency.path.replaceAll('\\', '/').endsWith('/crates/nf-contract');
+            const pureHash = dependency.name === 'sha2' && dependency.req === '=0.10.9' && dependency.uses_default_features === false;
+            const permitted = pkg.name === 'nf-kernel' ? kernelContract || pureHash :
+                pureDependencies.get(dependency.name) === dependency.req && dependency.uses_default_features === false;
+            if (!permitted) {
                 violations.push(`${pkg.name}: domain dependency ${dependency.name} is forbidden`);
             }
         }
     }
     for (const { path, content } of sources) {
         const code = codeOnly(content);
-        if (path.startsWith('crates/nf-contract/')) {
+        if (['crates/nf-contract/', 'crates/nf-kernel/'].some(prefix => path.startsWith(prefix))) {
             if (/\bstd\s*::|\bextern\s+crate\s+std\b/.test(code)) {
                 violations.push(`${path}: Rust domain must not access std`);
             }

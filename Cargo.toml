@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/nf-contract", "crates/nf-wire"]
+members = [".", "crates/nf-contract", "crates/nf-wire", "crates/nf-kernel"]
 resolver = "3"
 
 [workspace.package]
