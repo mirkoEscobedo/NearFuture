@@ -1,0 +1,41 @@
+// @ts-check
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { run } from './support/run.mjs';
+const cli = 'tools/performance/cli.mjs';
+test('CLI synthetic saturation reports bounded telemetry without claiming a game measurement', () => {
+  const result = spawnSync(process.execPath, [cli, 'saturate', '--offers', '10000'], {encoding: 'utf8', timeout: 30000});
+  assert.equal(result.status, 0, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.actualGameBaseline, 'unmeasured');
+  assert.equal(report.saturated.offered, 10000);
+  assert.ok(report.saturated.queuedItems <= 4096);
+  assert.ok(report.saturated.queuedBytes <= 1048576);
+  assert.equal(report.drained.queuedItems, 0);
+  assert.equal(report.bridgeP99Us.measured, false);
+});
+test('CLI analyzes exact hashed inputs and redacts unknown metadata/event fields', async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'nf-performance-'));
+  t.after(() => rm(directory, {recursive: true, force: true}));
+  const manifest = '{"synthetic":true}';
+  const budgetBytes = await readFile('config/resource-budgets.json');
+  const metadata = run({manifestSha256: createHash('sha256').update(manifest).digest('hex'), budgetsSha256: createHash('sha256').update(budgetBytes).digest('hex')});
+  await writeFile(join(directory, 'manifest.json'), manifest);
+  await writeFile(join(directory, 'metadata.json'), JSON.stringify({...metadata, privatePath: 'private-secret'}));
+  await writeFile(join(directory, 'events.ndjson'), JSON.stringify({traceId: metadata.traceId, source: 'adapter', kind: 'frame', atUs: 2000000, durationUs: 16666, privateText: 'private-secret'}) + '\n');
+  const args = [cli, 'analyze', '--metadata', join(directory, 'metadata.json'), '--events', join(directory, 'events.ndjson'), '--manifest', join(directory, 'manifest.json')];
+  const result = spawnSync(process.execPath, args, {encoding: 'utf8', timeout: 30000});
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).frames.p99Us, 16666);
+  assert.ok(!result.stdout.includes('private-secret'));
+  assert.ok(!result.stdout.includes(directory));
+  await writeFile(join(directory, 'manifest.json'), 'changed');
+  const mismatched = spawnSync(process.execPath, args, {encoding: 'utf8', timeout: 30000});
+  assert.equal(mismatched.status, 1);
+  assert.match(mismatched.stderr, /INPUT_IDENTITY_MISMATCH/);
+});

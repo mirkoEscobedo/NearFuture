@@ -1,0 +1,22 @@
+/target
+
+# workspace-template:thin-state:start
+!.agentic/
+.agentic/*
+!.agentic/project.json
+!.agentic/history/
+.agentic/history/*
+!.agentic/history/migration-index.json
+!.agentic/resumption/
+!.agentic/resumption/**
+# workspace-template:thin-state:end
+
+/node_modules/
+/.tmp/
+
+# Local build outputs and licensed/private inputs
+/java/.gradle/
+/java/**/build/
+/runtime-private/
+*.jfr
+*.hprof

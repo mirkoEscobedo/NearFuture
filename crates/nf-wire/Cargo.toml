@@ -1,0 +1,23 @@
+[package]
+name = "nf-wire"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+build = "build.rs"
+
+[dependencies]
+nf-contract = { path = "../nf-contract" }
+prost = "=0.13.5"
+prost-types = "=0.13.5"
+sha2 = "=0.10.9"
+unicode-normalization = "=0.1.25"
+
+[build-dependencies]
+prost-build = "=0.13.5"
+protoc-bin-vendored = "=3.2.0"
+
+[dev-dependencies]
+serde_json = "=1.0.150"
+
+[lints]
+workspace = true

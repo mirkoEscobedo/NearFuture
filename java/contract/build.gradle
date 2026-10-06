@@ -1,0 +1,68 @@
+repositories { mavenCentral() }
+dependencies { implementation 'org.bouncycastle:bcprov-jdk18on:1.81' }
+tasks.register('contractTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.BuildIdentityTest'
+    if (project.hasProperty('testJavaExecutable')) {
+        executable = project.property('testJavaExecutable')
+    }
+}
+tasks.named('check') { dependsOn contractTest }
+tasks.register('verifyDependencyBoundary') {
+    doLast {
+        def forbidden = configurations.collectMany { it.allDependencies.toList() }.findAll { it.group != 'org.bouncycastle' || it.name != 'bcprov-jdk18on' || it.version != '1.81' }
+        if (!forbidden.isEmpty()) {
+            throw new GradleException('Java contract permits only pinned pure Ed25519 point validation; put game/transport/storage APIs in adapters.')
+        }
+    }
+}
+tasks.named('compileJava') { dependsOn verifyDependencyBoundary }
+def generatedCorpus = layout.buildDirectory.dir('generated/sources/corpus')
+tasks.register('generateCorpus', Exec) {
+    workingDir rootProject.projectDir.parentFile
+    commandLine 'node', 'tools/protocol/generate-java-corpus.mjs'
+    inputs.files(rootProject.file('../protocol/vectors/nf-canon-1.json'), rootProject.file('../tools/protocol/generate-java-corpus.mjs'))
+    outputs.dir(generatedCorpus)
+}
+sourceSets.test.java.srcDir(generatedCorpus)
+tasks.named('compileTestJava') { dependsOn generateCorpus }
+['CanonicalProfileTest', 'CanonicalDecoderTest', 'CanonicalRecordTest', 'CanonicalCorpusTest'].each { testMain ->
+    def task = tasks.register(testMain, JavaExec) {
+        dependsOn testClasses
+        classpath = sourceSets.test.runtimeClasspath
+        mainClass = "nf.contract.canonical.${testMain}"
+        if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+    }
+    tasks.named('check') { dependsOn task }
+}
+tasks.register('UnicodeAdmissionTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.canonical.UnicodeAdmissionTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'UnicodeAdmissionTest' }
+tasks.register('Ed25519Test', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.canonical.Ed25519Test'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'Ed25519Test' }
+tasks.register('CanonicalFuzzTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.canonical.CanonicalFuzzTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'CanonicalFuzzTest' }
+tasks.register('CanonicalSemanticLimitsTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.canonical.CanonicalSemanticLimitsTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'CanonicalSemanticLimitsTest' }
+
+tasks.register('lockDependencies') { doLast { configurations.findAll { it.canBeResolved }.each { it.resolve() } } }

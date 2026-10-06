@@ -1,0 +1,67 @@
+repositories { mavenCentral() }
+configurations { protocCompiler }
+
+def osName = System.getProperty('os.name').toLowerCase(java.util.Locale.ROOT)
+def architecture = System.getProperty('os.arch')
+if (!(architecture in ['amd64', 'x86_64']) || !(osName.contains('windows') || osName.contains('linux'))) {
+    throw new GradleException('Protobuf generation supports Windows/Linux x86_64 in this build profile.')
+}
+def protocPlatform = osName.contains('windows') ? 'windows-x86_64' : 'linux-x86_64'
+dependencies {
+    implementation project(':contract')
+    implementation 'com.google.protobuf:protobuf-java:4.31.1'
+    protocCompiler "com.google.protobuf:protoc:4.31.1:${protocPlatform}@exe"
+}
+def generatedProto = layout.buildDirectory.dir('generated/sources/proto')
+tasks.register('generateProto', Exec) {
+    def schema = rootProject.file('../protocol/near_future/v1/near_future.proto')
+    inputs.file(schema)
+    outputs.dir(generatedProto)
+    doFirst {
+        def compiler = configurations.protocCompiler.singleFile
+        if (!osName.contains('windows') && !compiler.setExecutable(true)) throw new GradleException('Cannot enable the local protoc executable.')
+        generatedProto.get().asFile.mkdirs()
+        commandLine compiler.absolutePath, "--proto_path=${rootProject.file('../protocol').absolutePath}",
+                "--java_out=${generatedProto.get().asFile.absolutePath}", schema.absolutePath
+    }
+}
+sourceSets.main.java.srcDir(generatedProto)
+tasks.named('compileJava') { dependsOn generateProto }
+configurations { protocVerification }
+dependencies {
+    protocVerification 'com.google.protobuf:protoc:4.31.1:windows-x86_64@exe'
+    protocVerification 'com.google.protobuf:protoc:4.31.1:linux-x86_64@exe'
+}
+tasks.register('lockDependencies') {
+    doLast { configurations.findAll { it.canBeResolved }.each { it.resolve() } }
+}
+tasks.register('WireBoundaryTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.wire.WireBoundaryTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'WireBoundaryTest' }
+def generatedCorpus = layout.buildDirectory.dir('generated/sources/corpus')
+tasks.register('generateWireCorpus', Exec) {
+    workingDir rootProject.projectDir.parentFile
+    commandLine 'node', 'tools/protocol/generate-java-wire-corpus.mjs'
+    inputs.files(rootProject.file('../protocol/vectors/wire-v1.json'), rootProject.file('../tools/protocol/generate-java-wire-corpus.mjs'))
+    outputs.dir(generatedCorpus)
+}
+sourceSets.test.java.srcDir(generatedCorpus)
+tasks.named('compileTestJava') { dependsOn generateWireCorpus }
+tasks.register('WireCorpusTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.wire.WireCorpusTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'WireCorpusTest' }
+tasks.register('WirePolicyTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.wire.WirePolicyTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'WirePolicyTest' }

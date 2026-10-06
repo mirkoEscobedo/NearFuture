@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "unknownConfigurationMode": "legacy-read-only",
+  "certifications": [],
+  "statusDefinitions": {
+    "supported": "Exact runtime/content hashes passed required game integration and gate evidence under independent review.",
+    "experimentally-supported": "A named experimental capability passed on exact hashes; broader capabilities remain unavailable.",
+    "unknown": "Inventoried or unrecognized configuration without game integration evidence; no promoted authority."
+  },
+  "observedTarget": {
+    "manifest": "docs/runtime/observed-installation.json",
+    "gameBuild": "0.98a-RC8",
+    "jvmVendor": "Azul Systems, Inc.",
+    "jvmVersion": "17.0.10",
+    "nexerelinVersion": "0.12.2c",
+    "consoleVersion": "4.0.9",
+    "status": "unknown",
+    "evidence": ["deterministic-installation-capture", "public-api-signature-inspection"],
+    "missingEvidence": ["live-launch-flags", "campaign-hooks", "save-durability", "console-listener-delivery", "Nex-single-writer-substitution", "G1", "G2", "G3", "G4", "G5"]
+  },
+  "referenceSources": {
+    "nexerelin": {
+      "repository": "https://github.com/Histidine91/Nexerelin",
+      "tag": "v0.12.2c",
+      "commit": "a669f4d0740e95a4acbb6b894dde09ade67aa754",
+      "scope": "reference inspection only; binary-to-source equivalence unverified"
+    },
+    "consoleCommands": {
+      "repository": "https://github.com/LazyWizard/console-commands",
+      "commit": "c5718df92c64d29c6a5fe7f4165f52127470d343",
+      "scope": "registration contract reference; installed 4.0.9 signature inspected, source-to-binary match unverified"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "capabilities": {
+    "interactive-gui": "optional",
+    "runtime-debug": "optional"
+  },
+  "execution": {
+    "defaultMode": "direct",
+    "limits": {
+      "flakyReruns": 1,
+      "semanticRepairs": 2
+    },
+    "method": "adaptive"
+  },
+  "history": {
+    "migrationIndex": null,
+    "resumption": null
+  },
+  "overrides": {},
+  "version": 2,
+  "workspaceTemplate": {
+    "artifacts": {
+      "windows-x86_64": {
+        "executableSha256": "00e272fdf9a406fc15619c1c7fecec36c39ebea04a184c5d9f725a3ce83213d0",
+        "packageName": "workspace-template-win32-x64",
+        "rustTarget": "x86_64-pc-windows-msvc",
+        "signingStatus": "unsigned-development"
+      }
+    },
+    "embeddedAssetManifestSha256": "7b26e29938f10a7214b77b1325a736edfa85fec4d229e5b114e1b4615f129d8f",
+    "packageName": "workspace-template-win32-x64",
+    "releaseCommit": "9b76e0312d83ff30538f97b6ceb05432580799e2",
+    "releaseManifestSha256": "35b949caa9e35a45870dfb8dedb9b54c4e840670949f0633eac55cc5ad5d4361",
+    "releaseVersion": "0.9.0-alpha.0",
+    "sourceCommit": "9b76e0312d83ff30538f97b6ceb05432580799e2"
+  }
+}
