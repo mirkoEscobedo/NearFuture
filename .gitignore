@@ -13,6 +13,7 @@
 
 /node_modules/
 /.tmp/
+/crates/**/.tmp/
 
 # Local build outputs and licensed/private inputs
 /java/.gradle/
