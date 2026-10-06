@@ -1,0 +1,10 @@
+repositories { mavenCentral() }
+dependencies { implementation project(':contract') }
+def testJavaExecutable = providers.gradleProperty('testJavaExecutable')
+tasks.register('captureSmoke', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.capture.CaptureSmoke'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'captureSmoke' }
