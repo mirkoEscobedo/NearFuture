@@ -1,0 +1,14 @@
+[package]
+name = "nf-identity"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+sha2 = { version = '=0.10.9', default-features = false }
+nf-contract = { path = "../nf-contract" }
+getrandom = "=0.4.3"
+zeroize = "=1.9.0"
+
+[lints]
+workspace = true

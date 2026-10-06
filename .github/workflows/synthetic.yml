@@ -30,5 +30,16 @@ jobs:
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
+      - name: Install maintained Linux sync fault injector
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends strace
+          strace --version
+      - name: Observe SQLite sync failure and recovery
+        if: runner.os == 'Linux'
+        env:
+          NF_STORE_REQUIRE_SYNC_FAULT: '1'
+        run: cargo test -p nf-store --test fsync_failure --locked --offline -- --nocapture
       - name: Build headless node
         run: cargo build --workspace --locked --offline --release

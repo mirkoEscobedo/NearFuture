@@ -1,0 +1,15 @@
+[package]
+name = "nf-store"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+nf-identity = { path = '../nf-identity' }
+nf-contract = { path = "../nf-contract" }
+nf-kernel = { path = "../nf-kernel" }
+rusqlite = { version = "=0.32.1", features = ["bundled", "limits", "backup"] }
+sha2 = { version = "=0.10.9", default-features = false }
+
+[lints]
+workspace = true
