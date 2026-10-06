@@ -1,0 +1,22 @@
+def gameDir = providers.gradleProperty('gameDir').orElse(providers.environmentVariable('STARSECTOR_HOME'))
+def requiredLibraries = ['starfarer.api.jar']
+def localLibraries = provider {
+    gameDir.isPresent() ? requiredLibraries.collect { new File(gameDir.get(), "starsector-core/${it}") } : []
+}
+dependencies {
+    implementation project(':contract')
+    compileOnly files(localLibraries)
+}
+tasks.register('validateLocalLibraries') {
+    group = 'verification'
+    doLast {
+        if (!gameDir.isPresent()) {
+            throw new GradleException('Game integration unavailable: set STARSECTOR_HOME or pass -PgameDir=<licensed Starsector installation>. Required: starsector-core/starfarer.api.jar. No game libraries are downloaded.')
+        }
+        def missing = localLibraries.get().findAll { !it.isFile() }
+        if (!missing.isEmpty()) {
+            throw new GradleException("Game integration unavailable: missing local libraries ${missing.collect { it.name }.join(', ')} under the selected starsector-core directory. Verify the licensed installation; no game libraries are downloaded.")
+        }
+    }
+}
+tasks.named('compileJava') { dependsOn validateLocalLibraries }

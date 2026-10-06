@@ -1,0 +1,41 @@
+allprojects {
+    group = 'nf'
+    version = '0.1.0'
+}
+subprojects {
+    apply plugin: 'java-library'
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 17
+        options.encoding = 'UTF-8'
+        options.compilerArgs += ['-Xlint:all', '-Werror']
+    }
+    dependencyLocking { lockAllConfigurations() }
+    tasks.withType(Jar).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+}
+tasks.register('syntheticCheck') {
+    group = 'verification'
+    description = 'Public Java contract and generated wire verification; does not require Starsector.'
+    dependsOn ':contract:check', ':contract:jar', ':wire:check', ':wire:jar'
+}
+tasks.register('gameAdapter') {
+    group = 'verification'
+    description = 'Opt-in local licensed API compilation; this is not an in-game validation.'
+    dependsOn ':adapter:build'
+}
+tasks.register('verifyCompiler') {
+    doLast {
+        if (System.getProperty('java.version') != '21.0.8') {
+            throw new GradleException('Pinned compiler requires JDK 21.0.8 (see .java-version); compiled output targets Java 17. Set JAVA_HOME to that JDK.')
+        }
+    }
+}
+subprojects {
+    tasks.withType(JavaCompile).configureEach { dependsOn rootProject.tasks.named('verifyCompiler') }
+}

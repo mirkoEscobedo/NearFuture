@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "status": "initial-engineering-budgets-not-measured-achievements",
+  "bridgeP99Us": 2000,
+  "longFrameUs": 16667,
+  "trace": {
+    "maxItems": 4096,
+    "maxBytes": 1048576,
+    "maxEventBytes": 1024,
+    "maxBatchItems": 256,
+    "maxInputBytes": 67108864,
+    "maxEvents": 100000
+  },
+  "ipc": {
+    "controlFrameBytes": 1048576,
+    "bulkChunkBytes": 262144,
+    "inFlightBytesPerDirection": 16777216
+  },
+  "jfr": {
+    "maxRecordingBytes": 67108864,
+    "maxDurationSeconds": 120
+  },
+  "scope": "TraceBuffer enforces telemetry item/serialized-byte/event limits; CLI bounds offline inputs. IPC/JFR values are experiment configuration, not an implemented IPC limit or total RSS guarantee."
+}

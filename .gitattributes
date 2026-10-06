@@ -1,0 +1,14 @@
+* text=auto
+/java/gradlew text eol=lf
+*.bat text eol=crlf
+*.mjs text eol=lf
+*.rs text eol=lf
+*.gradle text eol=lf
+*.yml text eol=lf
+*.jar binary
+*.tgz binary
+*.json text eol=lf
+*.java text eol=lf
+*.cjs text eol=lf
+/protocol/text/DerivedAge-13.0.0.txt -text
+/protocol/text/Unicode-LICENSE.txt -text

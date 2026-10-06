@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "baseline": "synthetic",
+  "actualGameBaseline": "unmeasured",
+  "budgetsSha256": "4505f9e2991f73a571cbb62aaa5705ce621a1a28feeeb367b4fc0c22dccf4e1e",
+  "saturated": {
+    "offered": 1000000,
+    "accepted": 4096,
+    "dropped": 995904,
+    "invalid": 0,
+    "queuedItems": 4096,
+    "queuedBytes": 449450
+  },
+  "drained": {
+    "offered": 1000000,
+    "accepted": 4096,
+    "dropped": 995904,
+    "invalid": 0,
+    "queuedItems": 0,
+    "queuedBytes": 0
+  },
+  "nodeCpuUs": {
+    "user": 1406000,
+    "system": 0
+  },
+  "nodeRssBytes": 57896960,
+  "bridgeP99Us": {
+    "budget": 2000,
+    "measured": false
+  },
+  "scope": "Bounded telemetry payload and slots; process RSS includes runtime overhead, not a configured guarantee. No game/IPC saturation claim."
+}

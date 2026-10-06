@@ -1,0 +1,31 @@
+{
+  "name": "near-future",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local development tooling for the NearFuture Rust project.",
+  "scripts": {
+    "start": "cargo run --locked --offline",
+    "test:rust": "cargo test --workspace --locked --offline",
+    "test:tools": "node --test tests/architecture/*.test.mjs tests/build/*.test.mjs tests/runtime-manifest/*.test.mjs tests/performance/*.test.mjs",
+    "test": "npm run test:rust && npm run test:tools",
+    "lint:rust": "cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+    "check:types": "tsc -p tsconfig.json",
+    "check:boundaries": "node tools/architecture/check.mjs",
+    "check:java": "node tools/build/java.mjs synthetic",
+    "check:game": "node tools/build/java.mjs game",
+    "lint": "npm run lint:rust && npm run check:types && npm run check:boundaries",
+    "check": "npm run lint && npm run check:schemas && npm test && npm run check:java",
+    "workspace-template": "workspace-template",
+    "skills": "workspace-template skills list",
+    "check:schemas": "node protocol/vectors/generate-fixtures.cjs --check && node protocol/vectors/generate-wire-fixtures.cjs --check && node protocol/text/generate-ranges.cjs --check",
+    "check:performance": "node --test tests/performance/*.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "file:vendor/types-node-24.13.2.tgz",
+    "typescript": "file:vendor/typescript-5.9.3.tgz",
+    "undici-types": "file:vendor/undici-types-7.18.2.tgz"
+  },
+  "optionalDependencies": {
+    "workspace-template-win32-x64": "file:vendor/workspace-template-win32-x64-0.9.0-alpha.0.tgz"
+  }
+}
