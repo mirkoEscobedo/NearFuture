@@ -1,0 +1,11 @@
+[package]
+name = "nf-nex-boundary"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+nf-contract = { path = "../nf-contract" }
+
+[lints]
+workspace = true

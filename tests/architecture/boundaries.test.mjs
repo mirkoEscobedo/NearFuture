@@ -54,3 +54,15 @@ test('kernel accepts the local contract and exact pure hash while rejecting regi
     }
     assert.deepEqual(dependencyViolations([{name: 'nf-kernel', dependencies: [{name: 'nf-contract', req: '^0.1.0'}]}], []), ['nf-kernel: domain dependency nf-contract is forbidden']);
 });
+
+test('Nex boundary permits only the local pure contract and refuses effects', () => {
+    const pkg = { name: 'nf-nex-boundary', dependencies: [{ name: 'rusqlite' }] };
+    assert.deepEqual(dependencyViolations([pkg], []), ['nf-nex-boundary: domain dependency rusqlite is forbidden']);
+    assert.deepEqual(dependencyViolations([], [{path: 'crates/nf-nex-boundary/src/lib.rs', content: '#![no_std]\nuse std::fs::File;'}]), ['crates/nf-nex-boundary/src/lib.rs: Rust domain must not access std']);
+    assert.deepEqual(dependencyViolations([], [{path: 'crates/nf-nex-boundary/src/lib.rs', content: 'pub struct View;'}]), ['crates/nf-nex-boundary/src/lib.rs: Rust domain requires no_std']);
+    const local = { name: 'nf-contract', path: '/checkout/crates/nf-contract' };
+    assert.deepEqual(dependencyViolations([{name: pkg.name, dependencies: [local]}], []), []);
+    for (const dependency of [{name: 'nf-contract', req: '^0.1.0'}, {name: 'sha2', req: '=0.10.9', uses_default_features: false}]) {
+        assert.deepEqual(dependencyViolations([{name: pkg.name, dependencies: [dependency]}], []), [`${pkg.name}: domain dependency ${dependency.name} is forbidden`]);
+    }
+});
