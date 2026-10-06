@@ -39,3 +39,18 @@ test('test-only fixture readers and pure byte buffers remain outside production 
     }
     assert.equal(dependencyViolations([], [{ path: sources[0].path, content: 'System.currentTimeMillis();' }]).length, 1);
 });
+
+test('world kernel rejects effect dependencies and ambient std access', () => {
+    const dependencies = [{ name: 'rusqlite' }];
+    assert.deepEqual(dependencyViolations([{ name: 'nf-kernel', dependencies }], []), ['nf-kernel: domain dependency rusqlite is forbidden']);
+    const source = {path: 'crates/nf-kernel/src/lib.rs', content: '#![no_std]\nuse std::time::SystemTime;'};
+    assert.deepEqual(dependencyViolations([], [source]), ['crates/nf-kernel/src/lib.rs: Rust domain must not access std']);
+});
+
+test('kernel accepts the local contract and exact pure hash while rejecting registry substitution', () => {
+    const hash = {name: 'sha2', req: '=0.10.9', uses_default_features: false};
+    for (const path of ['E:/checkout/crates/nf-contract', 'E:\\checkout\\crates\\nf-contract']) {
+        assert.deepEqual(dependencyViolations([{name: 'nf-kernel', dependencies: [hash, {name: 'nf-contract', path}]}], []), []);
+    }
+    assert.deepEqual(dependencyViolations([{name: 'nf-kernel', dependencies: [{name: 'nf-contract', req: '^0.1.0'}]}], []), ['nf-kernel: domain dependency nf-contract is forbidden']);
+});

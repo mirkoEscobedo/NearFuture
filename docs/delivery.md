@@ -4,7 +4,7 @@ Mode: Ticketed. Goal: complete the implementation backlog in https://github.com/
 
 ## Current outcome
 
-Current: #8 data-only world kernel. Foundation #5–#7 passed scoped independent review and the isolated complete public lane; hosted Windows/Linux evidence awaits the implementation PR. #9 persistence and #22 identity are being implemented in parallel against explicit ports and are not accepted yet. #12 profiling tooling is reviewed as partial delivery; actual game measurements remain unmeasured. See docs/integration.md for the reviewed foundation revision.
+Current: #8 data-only world kernel. Foundation #5–#7 passed scoped independent review and hosted Windows/Linux checks, merged in PR #49. Kernel #8 passed read-only review R2; its isolated full lane and hosted execution are being verified before acceptance. #9 persistence and #22 identity are being implemented in parallel against explicit ports and are not accepted yet. #12 profiling tooling is reviewed as partial delivery; actual game measurements remain unmeasured. See docs/integration.md for the reviewed foundation revision.
 
 Checks: deterministic runtime manifests and actionable failure diagnostics, source/license inventory, public Rust/Java tests, formatting/linting, dependency boundaries, missing-game-library failures, independent review. Game claims need exact-runtime game evidence.
 

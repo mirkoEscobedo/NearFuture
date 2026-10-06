@@ -27,6 +27,7 @@ async function sourcesUnder(directory, extension) {
 }
 const sources = [
     ...await sourcesUnder(resolve(root, 'crates/nf-contract/src'), '.rs'),
+    ...await sourcesUnder(resolve(root, 'crates/nf-kernel/src'), '.rs'),
     ...await sourcesUnder(resolve(root, 'java/contract/src/main'), '.java'),
 ];
 const violations = dependencyViolations(JSON.parse(cargo.stdout).packages, sources);

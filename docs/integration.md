@@ -5,7 +5,7 @@ Implementation revision: [3bccb851c86efb953cd2b797f3382fb68256833d](https://gith
 | Issue | Reviewed outcome |
 | --- | --- |
 | #5 / NF-001 | Runtime/source manifest and feasibility inventory accepted. Actual game capability gates remain explicitly unknown/blocked, as required by the spike's failure contract. |
-| #6 / NF-002 | Build foundation accepted locally, including a clean isolated candidate checkout; hosted Windows/Linux execution is pending publication. |
+| #6 / NF-002 | Build foundation accepted locally, including a clean isolated candidate checkout; [hosted Windows/Linux execution](https://github.com/mirkoEscobedo/NearFuture/actions/runs/37543377882) passed; PR #49 merged and issues #5–#7 closed. |
 | #7 / NF-003 | Typed canonical/wire/signature contract accepted after independent review round 2. This is a data/primitive contract, not session authorization or durable operations. |
 | #12 / NF-008 | Profiling tooling accepted as partial delivery. Actual late-game baseline/control/shadow runs and instrumentation overhead remain unmeasured; keep the issue open. |
 
@@ -17,4 +17,4 @@ Review provenance: the coordinator independently inspected NF-001 runtime code a
 
 The staged prohibited-content scan found no game JAR/assets, save files, private captures, keys or machine-specific installation paths. The only tracked JAR is the public Gradle wrapper. Open-source build packages and Unicode license notices retain their provenance. Runtime evidence contains relative artifact names, hashes and selected safe metadata rather than private launcher contents.
 
-Residual limitations are retained in the component evidence: no game campaign/save/load/thread or writer-ownership certificate; no account authorization, transport, durable deduplication, cancellation handler or bulk assembler; finite mutation campaigns do not prove all possible inputs; logical decoder/queue budgets do not guarantee whole-process RSS. Linux execution is a configured public CI lane until the published workflow result is observed. Kernel #8, persistence #9 and identity #22 are separate in-progress outcomes, not silently accepted by this foundation.
+Residual limitations are retained in the component evidence: no game campaign/save/load/thread or writer-ownership certificate; no account authorization, transport, durable deduplication, cancellation handler or bulk assembler; finite mutation campaigns do not prove all possible inputs; logical decoder/queue budgets do not guarantee whole-process RSS. Both hosted Windows and Linux jobs passed the complete public lane and release build in workflow run 37543377882. Kernel #8, persistence #9 and identity #22 are separate in-progress outcomes, not silently accepted by this foundation.
