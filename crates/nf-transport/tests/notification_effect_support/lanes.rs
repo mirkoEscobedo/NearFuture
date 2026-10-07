@@ -16,10 +16,14 @@ pub struct Lanes {
     pub rs: ReceiptLane,
     pub rc: ReceiptLane,
 }
-fn observe<T>(p: Poll<Result<Option<T>, nf_transport::PeerError>>) -> Option<T> {
+fn observe<T>(
+    stage: &'static str,
+    lane: &'static str,
+    p: Poll<Result<Option<T>, nf_transport::PeerError>>,
+) -> Option<T> {
     match p {
         Poll::Ready(Ok(value)) => value,
-        Poll::Ready(Err(e)) => panic!("actual owned backend: {e:?}"),
+        Poll::Ready(Err(e)) => panic!("actual owned backend ({stage}/{lane}): {e:?}"),
         Poll::Pending => None,
     }
 }
@@ -58,12 +62,13 @@ impl Lanes {
         tokio::time::timeout(
             Duration::from_secs(5),
             poll_fn(|cx| {
-                if let Some(NotifyLaneEvent::Listening(a)) = observe(lanes.ns.poll(cx, &mut f.repo))
+                if let Some(NotifyLaneEvent::Listening(a)) =
+                    observe("listen", "notify-server", lanes.ns.poll(cx, &mut f.repo))
                 {
                     notify_address = Some(a);
                 }
                 if let Some(ReceiptLaneEvent::Listening(a)) =
-                    observe(lanes.rs.poll(cx, &mut f.repo))
+                    observe("listen", "receipt-server", lanes.rs.poll(cx, &mut f.repo))
                 {
                     receipt_address = Some(a);
                 }
@@ -83,16 +88,20 @@ impl Lanes {
         tokio::time::timeout(
             Duration::from_secs(5),
             poll_fn(|cx| {
-                observe(lanes.ns.poll(cx, &mut f.repo));
-                if let Some(NotifyLaneEvent::Subscribed) =
-                    observe(lanes.nc.poll(cx, &mut f.client_repo))
-                {
+                observe("startup", "notify-server", lanes.ns.poll(cx, &mut f.repo));
+                if let Some(NotifyLaneEvent::Subscribed) = observe(
+                    "startup",
+                    "notify-client",
+                    lanes.nc.poll(cx, &mut f.client_repo),
+                ) {
                     subscribed = true;
                 }
-                observe(lanes.rs.poll(cx, &mut f.repo));
-                if let Some(ReceiptLaneEvent::Authenticated { .. }) =
-                    observe(lanes.rc.poll(cx, &mut f.client_repo))
-                {
+                observe("startup", "receipt-server", lanes.rs.poll(cx, &mut f.repo));
+                if let Some(ReceiptLaneEvent::Authenticated { .. }) = observe(
+                    "startup",
+                    "receipt-client",
+                    lanes.rc.poll(cx, &mut f.client_repo),
+                ) {
                     receipt_authenticated = true;
                 }
                 if subscribed && receipt_authenticated {
@@ -108,13 +117,18 @@ impl Lanes {
     }
     fn poll_all(
         &mut self,
+        stage: &'static str,
         cx: &mut Context<'_>,
         f: &mut RepoFixture,
     ) -> (Option<NotifyLaneEvent>, Option<ReceiptLaneEvent>) {
-        observe(self.ns.poll(cx, &mut f.repo));
-        let notify = observe(self.nc.poll(cx, &mut f.client_repo));
-        observe(self.rs.poll(cx, &mut f.repo));
-        let receipt = observe(self.rc.poll(cx, &mut f.client_repo));
+        observe(stage, "notify-server", self.ns.poll(cx, &mut f.repo));
+        let notify = observe(stage, "notify-client", self.nc.poll(cx, &mut f.client_repo));
+        observe(stage, "receipt-server", self.rs.poll(cx, &mut f.repo));
+        let receipt = observe(
+            stage,
+            "receipt-client",
+            self.rc.poll(cx, &mut f.client_repo),
+        );
         (notify, receipt)
     }
     pub async fn receipt(&mut self, f: &mut RepoFixture) -> (AdmittedReceipt, ReceiptCompletion) {
@@ -127,7 +141,7 @@ impl Lanes {
                         outcome,
                         completion: Some(completion),
                     }),
-                ) = self.poll_all(cx, f)
+                ) = self.poll_all("receipt-query", cx, f)
                 {
                     Poll::Ready((outcome, *completion))
                 } else {
@@ -142,7 +156,7 @@ impl Lanes {
         tokio::time::timeout(
             Duration::from_secs(5),
             poll_fn(|cx| {
-                if let (Some(NotifyLaneEvent::Dirty), _) = self.poll_all(cx, f) {
+                if let (Some(NotifyLaneEvent::Dirty), _) = self.poll_all("dirty-notice", cx, f) {
                     Poll::Ready(())
                 } else {
                     Poll::Pending

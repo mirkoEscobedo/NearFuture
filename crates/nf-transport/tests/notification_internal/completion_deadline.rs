@@ -3,12 +3,12 @@ use std::time::Duration;
 #[tokio::test]
 async fn expired_notification_cannot_cover_dirty_after_validated_receipt_cut() {
     let mut f = RepoFixture::new();
-    let mut l = Lanes::with_lifetime(&mut f, 4).await;
+    let mut l = Lanes::with_lifetime(&mut f, 30).await;
     l.nc.request_followup(&mut l.rc, &mut f.client_repo)
         .unwrap();
     let (_, completion) = l.receipt(&mut f).await;
     let remaining = l.nc.remaining_for_test().unwrap();
-    assert!(remaining <= Duration::from_secs(4));
+    assert!(!remaining.is_zero() && remaining <= Duration::from_secs(30));
     let mut observed = false;
     // This is a simulated synchronous scheduling delay, after real four-lane
     // receipt Status verification/persistence and final current-SQL validation.

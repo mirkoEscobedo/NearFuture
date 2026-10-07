@@ -451,9 +451,9 @@
     },
     {
       "path": "crates/nf-transport/tests/notification_effect_support/lanes.rs",
-      "workingSha256": "c2e7356db3608eb2398f3cf0f42a4030fba30d84e944bf1fefc6a922645bf9de",
-      "gitLfSha256": "c2e7356db3608eb2398f3cf0f42a4030fba30d84e944bf1fefc6a922645bf9de",
-      "gitLfBytes": 5365
+      "workingSha256": "d65dc9a77b3ceef767bdbe988412769d92d28be095b668aaee3958a1601ee61e",
+      "gitLfSha256": "d65dc9a77b3ceef767bdbe988412769d92d28be095b668aaee3958a1601ee61e",
+      "gitLfBytes": 5920
     },
     {
       "path": "crates/nf-transport/tests/notification_effect_support/mod.rs",
@@ -487,15 +487,15 @@
     },
     {
       "path": "crates/nf-transport/tests/notification_internal/completion_deadline.rs",
-      "workingSha256": "72dfb37cebecc4034e353545228b8ef556abdc3e4f0f8c8d55b596b2642b367f",
-      "gitLfSha256": "72dfb37cebecc4034e353545228b8ef556abdc3e4f0f8c8d55b596b2642b367f",
-      "gitLfBytes": 1310
+      "workingSha256": "c7313fb9a035a8694269b0a94a3d4a187059945dc1b9d08d40f4d7fef8a8e7f7",
+      "gitLfSha256": "c7313fb9a035a8694269b0a94a3d4a187059945dc1b9d08d40f4d7fef8a8e7f7",
+      "gitLfBytes": 1336
     },
     {
       "path": "crates/nf-transport/tests/notification_internal/deadline.rs",
-      "workingSha256": "0e5d7a49b63d1cb73347675d9339cd95034894687d4e23a516fe542f4ddfc0f4",
-      "gitLfSha256": "d7d4b807183200d516e5575fed4be80ebbd69ea8f40b7abc8e97cd1e01819181",
-      "gitLfBytes": 2831
+      "workingSha256": "63d5bf7c0e18e74a97a0ebc1be8e44894a7605ce0d2f272fed6747fea1c4190d",
+      "gitLfSha256": "1378014c4a079af106131313a04631c02fc6a165f9fc9fad9115b5d8132131d1",
+      "gitLfBytes": 3206
     },
     {
       "path": "crates/nf-transport/tests/notification_internal/delivery.rs",
@@ -684,10 +684,22 @@
       "gitLfBytes": 4643
     },
     {
+      "path": "docs/transport/effects-fixture-amendments.json",
+      "workingSha256": "3f5362c5f1838d6d408a2a5ce4a68d4e1cfe5940709d6f0b518c330af844e47f",
+      "gitLfSha256": "3f5362c5f1838d6d408a2a5ce4a68d4e1cfe5940709d6f0b518c330af844e47f",
+      "gitLfBytes": 3027
+    },
+    {
+      "path": "docs/transport/effects-fixture-verification.md",
+      "workingSha256": "73be1d4f0d119a3403f9e48f4adde6160190be7d372f9a1f960567dc9ca616a3",
+      "gitLfSha256": "73be1d4f0d119a3403f9e48f4adde6160190be7d372f9a1f960567dc9ca616a3",
+      "gitLfBytes": 1980
+    },
+    {
       "path": "docs/transport/effects-independent-verification.md",
-      "workingSha256": "92c7ac5dadb06cd14b1493578ec2594d6f43161d54a910744426cec9c0f43c87",
-      "gitLfSha256": "92c7ac5dadb06cd14b1493578ec2594d6f43161d54a910744426cec9c0f43c87",
-      "gitLfBytes": 6518
+      "workingSha256": "38fafd415c6883cbc2b12cb41d8d5f6e9efa1d30f9701e67fd93355d0eb68092",
+      "gitLfSha256": "38fafd415c6883cbc2b12cb41d8d5f6e9efa1d30f9701e67fd93355d0eb68092",
+      "gitLfBytes": 6922
     },
     {
       "path": "docs/transport/notification-effects-checkpoint.json",
@@ -754,6 +766,15 @@
       "workingSha256": "794cb6a3f760514e052dd5cdd0224daf9332dc04875abdbf97f375c18e2accdd",
       "gitLfSha256": "794cb6a3f760514e052dd5cdd0224daf9332dc04875abdbf97f375c18e2accdd",
       "gitLfBytes": 2656
+    }
+  ],
+  "amendments": [
+    {
+      "kind": "Test-only fixture reliability",
+      "previousHead": "5ef940f110100df71add0565c3317344f49b9453",
+      "previousCheckpointSha256": "4e21aaded2fa92dc1997df59bafa0169b9df12f5cf79bdfe1e021b6f578dd4fd",
+      "path": "docs/transport/effects-fixture-amendments.json",
+      "sha256": "3f5362c5f1838d6d408a2a5ce4a68d4e1cfe5940709d6f0b518c330af844e47f"
     }
   ]
 }
