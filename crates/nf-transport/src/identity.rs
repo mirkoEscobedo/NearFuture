@@ -43,4 +43,16 @@ impl TransportIdentity {
     pub fn build_lane(&self, lane: Lane) -> Result<libp2p::Swarm<PeerBehaviour>, PeerError> {
         build_lane_swarm(self.key.clone(), lane)
     }
+    /// Uses the same loaded private Noise identity; receipt records grant no application authority.
+    pub fn build_receipt_lane(
+        &self,
+    ) -> Result<libp2p::Swarm<crate::receipt_effects::ReceiptBehaviour>, PeerError> {
+        crate::receipt_effects::build_receipt_swarm(self.key.clone())
+    }
+    /// Uses the loaded private Noise identity and fixed notification lane bounds.
+    pub fn build_notification_lane(
+        &self,
+    ) -> Result<libp2p::Swarm<crate::notification_effects::NotifyBehaviour>, PeerError> {
+        crate::notification_effects::build_notify_swarm(self.key.clone())
+    }
 }

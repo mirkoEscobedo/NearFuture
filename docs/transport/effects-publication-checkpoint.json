@@ -1,0 +1,759 @@
+{
+  "schemaVersion": 1,
+  "acceptedBase": "921948739e43dabb7560d6206c10ccaa844019c9",
+  "normalization": "Exact UTF-8 bytes with CRLF to LF; no other rewriting; compare actual staged and committed Git blobs",
+  "reviewCandidateSnapshotSha256": "042562edca18f7ce3e03ab3f05851e0f4a605682665d058b2c96b96caf20fda8",
+  "excludedSelf": "docs/transport/effects-publication-checkpoint.json",
+  "files": [
+    {
+      "path": ".github/workflows/synthetic.yml",
+      "workingSha256": "45c3baf67f6cbfd19ba6cb726bb184c05a3217501e88110f1550c26431e93169",
+      "gitLfSha256": "45c3baf67f6cbfd19ba6cb726bb184c05a3217501e88110f1550c26431e93169",
+      "gitLfBytes": 3201
+    },
+    {
+      "path": "crates/nf-transport/Cargo.toml",
+      "workingSha256": "fdcc81c55ceb5a547c1d1b546c83a436622ba5a87eca2be20a23d317f1181954",
+      "gitLfSha256": "f231eeb1d307f53789cf4a53c041e815e0678d18d49afb719f6c0cefa5048a72",
+      "gitLfBytes": 773
+    },
+    {
+      "path": "crates/nf-transport/src/identity.rs",
+      "workingSha256": "7e38f5862eb1de49e72015a9170bfdc890b23d75ca798610e4a69dce6c544003",
+      "gitLfSha256": "7e38f5862eb1de49e72015a9170bfdc890b23d75ca798610e4a69dce6c544003",
+      "gitLfBytes": 2318
+    },
+    {
+      "path": "crates/nf-transport/src/lib.rs",
+      "workingSha256": "60425b887da6ccd8c3fd4add3fcbc82708dd64f3c09e9584ec8e42aac57f186a",
+      "gitLfSha256": "60425b887da6ccd8c3fd4add3fcbc82708dd64f3c09e9584ec8e42aac57f186a",
+      "gitLfBytes": 584
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/binding.rs",
+      "workingSha256": "3b37060d86167ca769797636a324d43c6fe757f5a00ae331b0f111540514474f",
+      "gitLfSha256": "3b37060d86167ca769797636a324d43c6fe757f5a00ae331b0f111540514474f",
+      "gitLfBytes": 5829
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/broker.rs",
+      "workingSha256": "83a9200c3e251b73e736b8864c40ca1201575a80ed596847db95774ce1d1a4fb",
+      "gitLfSha256": "83a9200c3e251b73e736b8864c40ca1201575a80ed596847db95774ce1d1a4fb",
+      "gitLfBytes": 9991
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/broker/control.rs",
+      "workingSha256": "62dc942c7492a2e1799fc6d3982ba4d5e48099bbc5ead98545b5973331d520db",
+      "gitLfSha256": "62dc942c7492a2e1799fc6d3982ba4d5e48099bbc5ead98545b5973331d520db",
+      "gitLfBytes": 3341
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/broker/notice.rs",
+      "workingSha256": "faedbb57f2191ded5e07827606222f3929a3548d96026fa0926e7a45520857ea",
+      "gitLfSha256": "faedbb57f2191ded5e07827606222f3929a3548d96026fa0926e7a45520857ea",
+      "gitLfBytes": 5861
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/client.rs",
+      "workingSha256": "d567164e6a4ec3e01e4da3e4d25b39bf6129d0d5fd6df72362d018f2f0842400",
+      "gitLfSha256": "d567164e6a4ec3e01e4da3e4d25b39bf6129d0d5fd6df72362d018f2f0842400",
+      "gitLfBytes": 9903
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/client/notice.rs",
+      "workingSha256": "7ad44a1bea4b4060349d6868185af664e9fd8b5ea5e77795ef2219fd6ff4adac",
+      "gitLfSha256": "7ad44a1bea4b4060349d6868185af664e9fd8b5ea5e77795ef2219fd6ff4adac",
+      "gitLfBytes": 5446
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/delivery.rs",
+      "workingSha256": "604baeb23ddecad49abbb7033c31622e5796edf3c430cb8be4b9e4992c28c0de",
+      "gitLfSha256": "604baeb23ddecad49abbb7033c31622e5796edf3c430cb8be4b9e4992c28c0de",
+      "gitLfBytes": 5347
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/emission.rs",
+      "workingSha256": "d6c79ef243c0666c82a70db97ecfc3d526929f3bfc7f1247d66b46651d6d3b99",
+      "gitLfSha256": "d6c79ef243c0666c82a70db97ecfc3d526929f3bfc7f1247d66b46651d6d3b99",
+      "gitLfBytes": 553
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/flow.rs",
+      "workingSha256": "22de28b2436500dce5c44c30d821e707d513710f996e5e62d16e7d4adb69e1cc",
+      "gitLfSha256": "22de28b2436500dce5c44c30d821e707d513710f996e5e62d16e7d4adb69e1cc",
+      "gitLfBytes": 7329
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/handshake.rs",
+      "workingSha256": "02e03eccb48b7a33a96e0e8ca93e0959e7a3c8202d074a0202e380c87f2ab844",
+      "gitLfSha256": "02e03eccb48b7a33a96e0e8ca93e0959e7a3c8202d074a0202e380c87f2ab844",
+      "gitLfBytes": 10867
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/completion_test.rs",
+      "workingSha256": "af610c8f1bc75a4c6cb6a21cb3fc17a6e6c0684127af1eb5adb679b58c76e305",
+      "gitLfSha256": "af610c8f1bc75a4c6cb6a21cb3fc17a6e6c0684127af1eb5adb679b58c76e305",
+      "gitLfBytes": 2902
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/deadline.rs",
+      "workingSha256": "61ab42d3e92fd92d49c9fac80d04463cc8046959486173f67afba0f8dafd487d",
+      "gitLfSha256": "61ab42d3e92fd92d49c9fac80d04463cc8046959486173f67afba0f8dafd487d",
+      "gitLfBytes": 947
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/events.rs",
+      "workingSha256": "8f1026b4b80209e98f603a5617ed93f89e06d7f0dc27cc190822180fbb798a1b",
+      "gitLfSha256": "8f1026b4b80209e98f603a5617ed93f89e06d7f0dc27cc190822180fbb798a1b",
+      "gitLfBytes": 14549
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/guard.rs",
+      "workingSha256": "3b623c9cf145b3adb8c60c8b76e41c16b6bcc9dfc9c3b6eb8eff879e8bce266e",
+      "gitLfSha256": "3b623c9cf145b3adb8c60c8b76e41c16b6bcc9dfc9c3b6eb8eff879e8bce266e",
+      "gitLfBytes": 1691
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/mod.rs",
+      "workingSha256": "6108da17741bf350498994a0ecae4e2a3b7dd5bf6a1336f545293ccd7bb6ab1c",
+      "gitLfSha256": "6108da17741bf350498994a0ecae4e2a3b7dd5bf6a1336f545293ccd7bb6ab1c",
+      "gitLfBytes": 10384
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/query.rs",
+      "workingSha256": "713ff43436606235b751084d4185f26d56a90b61b8e511892fb9fce52a3492f8",
+      "gitLfSha256": "713ff43436606235b751084d4185f26d56a90b61b8e511892fb9fce52a3492f8",
+      "gitLfBytes": 4464
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/send.rs",
+      "workingSha256": "ef2798ccc652293fa0a5bdfc5b2e4f8686281855255247194d971250d4dcfb7d",
+      "gitLfSha256": "ef2798ccc652293fa0a5bdfc5b2e4f8686281855255247194d971250d4dcfb7d",
+      "gitLfBytes": 5304
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/mod.rs",
+      "workingSha256": "6197f16679c44961ee3bc72d6e06ff9ca6c301903edbfb9b1e8ebe8ecdf0b936",
+      "gitLfSha256": "6197f16679c44961ee3bc72d6e06ff9ca6c301903edbfb9b1e8ebe8ecdf0b936",
+      "gitLfBytes": 1294
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/network/builder.rs",
+      "workingSha256": "cbf5b0329991c7f2a8fabf6a90a4aaedbe52c3446810bd4dd79e40c62fa10036",
+      "gitLfSha256": "cbf5b0329991c7f2a8fabf6a90a4aaedbe52c3446810bd4dd79e40c62fa10036",
+      "gitLfBytes": 2158
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/network/codec.rs",
+      "workingSha256": "0200f53d02ad36240253176c2d14d18f423239c86ccdb354b3f069dcfcbe914f",
+      "gitLfSha256": "0200f53d02ad36240253176c2d14d18f423239c86ccdb354b3f069dcfcbe914f",
+      "gitLfBytes": 2937
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/network/mod.rs",
+      "workingSha256": "582f24dd14fb5b61d9a1b99d199bb76e372a2d5f64dc1eb85af0170b9b3b5f99",
+      "gitLfSha256": "582f24dd14fb5b61d9a1b99d199bb76e372a2d5f64dc1eb85af0170b9b3b5f99",
+      "gitLfBytes": 215
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/network/owner_codec.rs",
+      "workingSha256": "4e9817fae5723de97e3cc3be90e30edeae97065d0df81e265e5bf962350d9422",
+      "gitLfSha256": "4e9817fae5723de97e3cc3be90e30edeae97065d0df81e265e5bf962350d9422",
+      "gitLfBytes": 2680
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/owner.rs",
+      "workingSha256": "0401eef5eae448b2f54621fd31ea453607abf609a43502eaaaeeae5b19201b53",
+      "gitLfSha256": "0401eef5eae448b2f54621fd31ea453607abf609a43502eaaaeeae5b19201b53",
+      "gitLfBytes": 2250
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/policy.rs",
+      "workingSha256": "721253c346fb6e8a0ff32881cd1d2d1d6a2e1280f26a5cb703df184e1648a9bb",
+      "gitLfSha256": "721253c346fb6e8a0ff32881cd1d2d1d6a2e1280f26a5cb703df184e1648a9bb",
+      "gitLfBytes": 975
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/quota.rs",
+      "workingSha256": "9de6b1252ea7955be0b2bd103f74fd5aaba427860eb4822d19b02883fe2ab5f3",
+      "gitLfSha256": "9de6b1252ea7955be0b2bd103f74fd5aaba427860eb4822d19b02883fe2ab5f3",
+      "gitLfBytes": 5004
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/tests.rs",
+      "workingSha256": "571f1c24e2294f95704a2112126bee099a96a9292f8082eb32914820c3fc33fc",
+      "gitLfSha256": "571f1c24e2294f95704a2112126bee099a96a9292f8082eb32914820c3fc33fc",
+      "gitLfBytes": 1114
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/arguments.rs",
+      "workingSha256": "6f5c8f3aeb637dfe83960bac305e72a17919cbf2099a050a11873fc505f0652e",
+      "gitLfSha256": "6f5c8f3aeb637dfe83960bac305e72a17919cbf2099a050a11873fc505f0652e",
+      "gitLfBytes": 2364
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/file.rs",
+      "workingSha256": "b87a90b9c9b1284a12df27c5a509aac9317fa03f23851c3b5f344bfe1371a4d7",
+      "gitLfSha256": "b87a90b9c9b1284a12df27c5a509aac9317fa03f23851c3b5f344bfe1371a4d7",
+      "gitLfBytes": 1692
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/mod.rs",
+      "workingSha256": "bf8ad9564d69ef549073ac4562924cda9f9c75a1f46eb4b8e8935e8ea892f95a",
+      "gitLfSha256": "bf8ad9564d69ef549073ac4562924cda9f9c75a1f46eb4b8e8935e8ea892f95a",
+      "gitLfBytes": 1800
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/parser.rs",
+      "workingSha256": "da818d63c73560f06d62fedadc1f7f51c2a8fcc8442d8e7de72a403543511158",
+      "gitLfSha256": "da818d63c73560f06d62fedadc1f7f51c2a8fcc8442d8e7de72a403543511158",
+      "gitLfBytes": 4852
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/primitives.rs",
+      "workingSha256": "89baf0da7e198d280e82f574d67d7c529a7aecaae2a82f087aac3d17df28891d",
+      "gitLfSha256": "89baf0da7e198d280e82f574d67d7c529a7aecaae2a82f087aac3d17df28891d",
+      "gitLfBytes": 2621
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/rows.rs",
+      "workingSha256": "412f089383018456054cdbd84c335bb0c0e659b2e6cbdcde7bd9afded90a09e3",
+      "gitLfSha256": "412f089383018456054cdbd84c335bb0c0e659b2e6cbdcde7bd9afded90a09e3",
+      "gitLfBytes": 2068
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/activation.rs",
+      "workingSha256": "86eaa9493d5b1e165b61fedab05af3f4882b80195964125211e3c374f564e942",
+      "gitLfSha256": "86eaa9493d5b1e165b61fedab05af3f4882b80195964125211e3c374f564e942",
+      "gitLfBytes": 569
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/anchor.rs",
+      "workingSha256": "add9c7d67596b5b9abc79139e37478a6dccdd67db4cee0bcc88178b3ce32fa49",
+      "gitLfSha256": "add9c7d67596b5b9abc79139e37478a6dccdd67db4cee0bcc88178b3ce32fa49",
+      "gitLfBytes": 2174
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/codec.rs",
+      "workingSha256": "3bdf104db0bb2cbd8c2c65cab2ac7020facf598914a1895c550980442f7ece69",
+      "gitLfSha256": "3bdf104db0bb2cbd8c2c65cab2ac7020facf598914a1895c550980442f7ece69",
+      "gitLfBytes": 5024
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/collision_test.rs",
+      "workingSha256": "ab4e74b578a3fd1b41e6793237fb739866a68ebcf752b957839c0438dbccffb1",
+      "gitLfSha256": "ab4e74b578a3fd1b41e6793237fb739866a68ebcf752b957839c0438dbccffb1",
+      "gitLfBytes": 2844
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/inventory.rs",
+      "workingSha256": "4bd053742e53f2e4283ff54a6a67fc815ae8f06b51a74bd6c7f577253a083a87",
+      "gitLfSha256": "4bd053742e53f2e4283ff54a6a67fc815ae8f06b51a74bd6c7f577253a083a87",
+      "gitLfBytes": 3166
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/mod.rs",
+      "workingSha256": "4650592ae7443a3693b3c21669c7bc0a79786cb87e3a57f46abc459a24fcf16c",
+      "gitLfSha256": "4650592ae7443a3693b3c21669c7bc0a79786cb87e3a57f46abc459a24fcf16c",
+      "gitLfBytes": 322
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/model.rs",
+      "workingSha256": "8fd6f529c90ea09858ba1a94fb35647bf3546df784cfce1d58530387a4792888",
+      "gitLfSha256": "8fd6f529c90ea09858ba1a94fb35647bf3546df784cfce1d58530387a4792888",
+      "gitLfBytes": 2636
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/persistence.rs",
+      "workingSha256": "42cd8906eb12724287453e273199750099fd185a539fb125b3853f0aed02c11a",
+      "gitLfSha256": "42cd8906eb12724287453e273199750099fd185a539fb125b3853f0aed02c11a",
+      "gitLfBytes": 4276
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/reader.rs",
+      "workingSha256": "ff2dae1774d1a7fb5ce3bc48b6e8bba6087fca917126e2cc6d7974528fbec451",
+      "gitLfSha256": "ff2dae1774d1a7fb5ce3bc48b6e8bba6087fca917126e2cc6d7974528fbec451",
+      "gitLfBytes": 839
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/completion.rs",
+      "workingSha256": "fb5f87f9b6d44b044efc2d2aa87fec0297df04ce0e5746c9ecd6207d187941ca",
+      "gitLfSha256": "fb5f87f9b6d44b044efc2d2aa87fec0297df04ce0e5746c9ecd6207d187941ca",
+      "gitLfBytes": 4103
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/handshake.rs",
+      "workingSha256": "a7c49d5b414cb83f0073265620c79e91c9477996ccfd062d6047641d52d22e00",
+      "gitLfSha256": "a7c49d5b414cb83f0073265620c79e91c9477996ccfd062d6047641d52d22e00",
+      "gitLfBytes": 12301
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/handshake_custody.rs",
+      "workingSha256": "37c8d12e7d66e45623d645f17b4d984bf0488db18cebf71aead9dbd7f3def328",
+      "gitLfSha256": "37c8d12e7d66e45623d645f17b4d984bf0488db18cebf71aead9dbd7f3def328",
+      "gitLfBytes": 887
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/handshake_delivery.rs",
+      "workingSha256": "c16cdbf7bd982b7f26c26b2650114dafff53d59f96c261df0aeeac15164b99f3",
+      "gitLfSha256": "c16cdbf7bd982b7f26c26b2650114dafff53d59f96c261df0aeeac15164b99f3",
+      "gitLfBytes": 9577
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/inbound.rs",
+      "workingSha256": "8c67bc7b84efc758489990d4aa56aec6e93a5a998678d6a69fe772a889fee78a",
+      "gitLfSha256": "8c67bc7b84efc758489990d4aa56aec6e93a5a998678d6a69fe772a889fee78a",
+      "gitLfBytes": 407
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/activation_test.rs",
+      "workingSha256": "51ec3546673ea191898c6288261476c95130fa2cf608c6f684e96410fef01d3c",
+      "gitLfSha256": "51ec3546673ea191898c6288261476c95130fa2cf608c6f684e96410fef01d3c",
+      "gitLfBytes": 1548
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/deadline.rs",
+      "workingSha256": "98ce91287ec271289dd2ff92dbe0322d2bfb89e9e6b15e7afcec05bb4c5435b4",
+      "gitLfSha256": "98ce91287ec271289dd2ff92dbe0322d2bfb89e9e6b15e7afcec05bb4c5435b4",
+      "gitLfBytes": 666
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/events.rs",
+      "workingSha256": "881939360f6fc311e50d8e62423b576079957bf086e8fc365709d05adb3d0e1e",
+      "gitLfSha256": "881939360f6fc311e50d8e62423b576079957bf086e8fc365709d05adb3d0e1e",
+      "gitLfBytes": 15125
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/mod.rs",
+      "workingSha256": "292a5abd421421e4f9a43de577fdf61cfa35df9def951ea68fe626422bfbc3a1",
+      "gitLfSha256": "292a5abd421421e4f9a43de577fdf61cfa35df9def951ea68fe626422bfbc3a1",
+      "gitLfBytes": 10706
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/policy.rs",
+      "workingSha256": "4dbd985d1336f17c98a6b59bcc987e3214422b914f67563d81ba84666300bdd9",
+      "gitLfSha256": "4dbd985d1336f17c98a6b59bcc987e3214422b914f67563d81ba84666300bdd9",
+      "gitLfBytes": 3526
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/mod.rs",
+      "workingSha256": "b53e163dddd2f5a3960b74243dc7a2a26ed7d0063daea75909ab35a1e0b7110c",
+      "gitLfSha256": "b53e163dddd2f5a3960b74243dc7a2a26ed7d0063daea75909ab35a1e0b7110c",
+      "gitLfBytes": 1134
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/model.rs",
+      "workingSha256": "f54e2c86c43506d6df647e2190271d2cd15b7e44824002d304db84defca7917a",
+      "gitLfSha256": "f54e2c86c43506d6df647e2190271d2cd15b7e44824002d304db84defca7917a",
+      "gitLfBytes": 1953
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/network.rs",
+      "workingSha256": "9f36d7c90ad53ed20f17aca4255f7edd331fa5150e878878fdb6faeaffc4ca02",
+      "gitLfSha256": "9f36d7c90ad53ed20f17aca4255f7edd331fa5150e878878fdb6faeaffc4ca02",
+      "gitLfBytes": 2241
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/observation.rs",
+      "workingSha256": "5be7bd6ed1fde876c7e34e5e3d49ae220c6b6016119bb947636b366c3914acee",
+      "gitLfSha256": "5be7bd6ed1fde876c7e34e5e3d49ae220c6b6016119bb947636b366c3914acee",
+      "gitLfBytes": 4254
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/client.rs",
+      "workingSha256": "06dfe21f2dcdcdee356825411e6024c4994159d79a96fe329461428324c67fe5",
+      "gitLfSha256": "06dfe21f2dcdcdee356825411e6024c4994159d79a96fe329461428324c67fe5",
+      "gitLfBytes": 11273
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/common.rs",
+      "workingSha256": "8bd1d6fe8fc9f02f74f41952651070686a5300e8d1583e3e7655321956259208",
+      "gitLfSha256": "8bd1d6fe8fc9f02f74f41952651070686a5300e8d1583e3e7655321956259208",
+      "gitLfBytes": 3320
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/delivery.rs",
+      "workingSha256": "35dc7a4f3a7ad7c1fb14bb44bc1f581ee8e02335a8c751a6fb5480530a27cdec",
+      "gitLfSha256": "35dc7a4f3a7ad7c1fb14bb44bc1f581ee8e02335a8c751a6fb5480530a27cdec",
+      "gitLfBytes": 4188
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/delivery_tests.rs",
+      "workingSha256": "701a96ec6c005a406ec48c67687e908444872208ed043a5882d96b361c2a3467",
+      "gitLfSha256": "701a96ec6c005a406ec48c67687e908444872208ed043a5882d96b361c2a3467",
+      "gitLfBytes": 6933
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/mod.rs",
+      "workingSha256": "e6590799cb51b4c87f91dc093b9702313c826d46c38b5274438615803acf4cee",
+      "gitLfSha256": "e6590799cb51b4c87f91dc093b9702313c826d46c38b5274438615803acf4cee",
+      "gitLfBytes": 407
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/model.rs",
+      "workingSha256": "9babed7ad7acc5ffcb6475297d9255dd2fb4dcff073bcefa5d654573d03ba01d",
+      "gitLfSha256": "9babed7ad7acc5ffcb6475297d9255dd2fb4dcff073bcefa5d654573d03ba01d",
+      "gitLfBytes": 1388
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/outbound.rs",
+      "workingSha256": "d3db28a6dcea92560c8c1e4eb1c33bee453fd4513ed2b4244795607594649da8",
+      "gitLfSha256": "960e01190067881cd135ce9c26fd371ea8cef01929b212042d2e9aaf68075c00",
+      "gitLfBytes": 6980
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/server.rs",
+      "workingSha256": "cf454d0aea625a069218611ee07e108b51cb0ea318fcc8562c88c95cf2b3901d",
+      "gitLfSha256": "cf454d0aea625a069218611ee07e108b51cb0ea318fcc8562c88c95cf2b3901d",
+      "gitLfBytes": 7704
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/owner_codec.rs",
+      "workingSha256": "11f856f9b294ec25968b59909329627a0d3f573b811e457e8b85f58382d05ef9",
+      "gitLfSha256": "11f856f9b294ec25968b59909329627a0d3f573b811e457e8b85f58382d05ef9",
+      "gitLfBytes": 2948
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/read_delay.rs",
+      "workingSha256": "90cc6721788c8b5eb4785fa21475ae948bfe7959faf94bbc192467aafe3f0b85",
+      "gitLfSha256": "90cc6721788c8b5eb4785fa21475ae948bfe7959faf94bbc192467aafe3f0b85",
+      "gitLfBytes": 928
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/repository.rs",
+      "workingSha256": "a5a1a30363e1428d8a7660712b346a96650f891ba9abaa695e35b939aaf915e7",
+      "gitLfSha256": "a5a1a30363e1428d8a7660712b346a96650f891ba9abaa695e35b939aaf915e7",
+      "gitLfBytes": 8777
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/revocation.rs",
+      "workingSha256": "07cc82a79b5eec5d735176e59591c6933eaa7c042c99a61440db7ca45ecf2eee",
+      "gitLfSha256": "07cc82a79b5eec5d735176e59591c6933eaa7c042c99a61440db7ca45ecf2eee",
+      "gitLfBytes": 744
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/selector.rs",
+      "workingSha256": "1426458d4b4bd9351f6d943242428214ad9782db2b8b1097025e474a7649b804",
+      "gitLfSha256": "1426458d4b4bd9351f6d943242428214ad9782db2b8b1097025e474a7649b804",
+      "gitLfBytes": 5371
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/tests.rs",
+      "workingSha256": "76fa3582b00d96ba7fa9c81e1cfaa8acf8fdd0549fb949e7e7e24129a790499e",
+      "gitLfSha256": "76fa3582b00d96ba7fa9c81e1cfaa8acf8fdd0549fb949e7e7e24129a790499e",
+      "gitLfBytes": 170
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/trusted_commit.rs",
+      "workingSha256": "86b196e5a4f1943365ec9cbda756fcd70c6e5741d1cfc586b0c41e7515fac340",
+      "gitLfSha256": "86b196e5a4f1943365ec9cbda756fcd70c6e5741d1cfc586b0c41e7515fac340",
+      "gitLfBytes": 2825
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_effect_support/lanes.rs",
+      "workingSha256": "c2e7356db3608eb2398f3cf0f42a4030fba30d84e944bf1fefc6a922645bf9de",
+      "gitLfSha256": "c2e7356db3608eb2398f3cf0f42a4030fba30d84e944bf1fefc6a922645bf9de",
+      "gitLfBytes": 5365
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_effect_support/mod.rs",
+      "workingSha256": "913cb202becc6fb7062bcaa00380203feea1e0259024b1dafa28596083d395e4",
+      "gitLfSha256": "913cb202becc6fb7062bcaa00380203feea1e0259024b1dafa28596083d395e4",
+      "gitLfBytes": 5314
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_effect_support/repo.rs",
+      "workingSha256": "6986a8b5deaf79a090c6a8312c1137d5c39e15d978a30a171b48ab14eef46a3d",
+      "gitLfSha256": "6986a8b5deaf79a090c6a8312c1137d5c39e15d978a30a171b48ab14eef46a3d",
+      "gitLfBytes": 8492
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_followup.rs",
+      "workingSha256": "b901a09319c957a28b9f70504a0350424e099d9c024cb1300382c2841fa3ce36",
+      "gitLfSha256": "b901a09319c957a28b9f70504a0350424e099d9c024cb1300382c2841fa3ce36",
+      "gitLfBytes": 1850
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/auth.rs",
+      "workingSha256": "5410577bd7162ed7f0f4d2acf54c65f967b4e7ef286a4c6d0492c8056db1dbcc",
+      "gitLfSha256": "5410577bd7162ed7f0f4d2acf54c65f967b4e7ef286a4c6d0492c8056db1dbcc",
+      "gitLfBytes": 5117
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/broker.rs",
+      "workingSha256": "caaa188c8e4f90ab87958fa8efe3f9eeb43b4456670d9c353d459b1418db9efb",
+      "gitLfSha256": "caaa188c8e4f90ab87958fa8efe3f9eeb43b4456670d9c353d459b1418db9efb",
+      "gitLfBytes": 1834
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/completion_deadline.rs",
+      "workingSha256": "72dfb37cebecc4034e353545228b8ef556abdc3e4f0f8c8d55b596b2642b367f",
+      "gitLfSha256": "72dfb37cebecc4034e353545228b8ef556abdc3e4f0f8c8d55b596b2642b367f",
+      "gitLfBytes": 1310
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/deadline.rs",
+      "workingSha256": "0e5d7a49b63d1cb73347675d9339cd95034894687d4e23a516fe542f4ddfc0f4",
+      "gitLfSha256": "d7d4b807183200d516e5575fed4be80ebbd69ea8f40b7abc8e97cd1e01819181",
+      "gitLfBytes": 2831
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/delivery.rs",
+      "workingSha256": "8dbdd104f337c119ae8e090a87cd433dd587c85164250df9bb7b81ce7c4fdece",
+      "gitLfSha256": "8dbdd104f337c119ae8e090a87cd433dd587c85164250df9bb7b81ce7c4fdece",
+      "gitLfBytes": 2701
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/final_completion.rs",
+      "workingSha256": "d5ed380216ee324ee7302d5b8bd9b2c1e582c6328da94b95f431de7099da195d",
+      "gitLfSha256": "d5ed380216ee324ee7302d5b8bd9b2c1e582c6328da94b95f431de7099da195d",
+      "gitLfBytes": 6659
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/notice.rs",
+      "workingSha256": "2451d919dbb04580d526dc8b0b87e9651d37289ce8fdebb7681de972fa087554",
+      "gitLfSha256": "2451d919dbb04580d526dc8b0b87e9651d37289ce8fdebb7681de972fa087554",
+      "gitLfBytes": 3819
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/queue.rs",
+      "workingSha256": "fa79736143f224fd2fb9ddc73eedf1df99df70dbf17ca5695dde51ec9e7e1097",
+      "gitLfSha256": "fa79736143f224fd2fb9ddc73eedf1df99df70dbf17ca5695dde51ec9e7e1097",
+      "gitLfBytes": 2177
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/rate.rs",
+      "workingSha256": "ccd05d174a586f4cb971bfd944f40f6a8b1f23c46cdfe55abc542e2887b54cee",
+      "gitLfSha256": "ccd05d174a586f4cb971bfd944f40f6a8b1f23c46cdfe55abc542e2887b54cee",
+      "gitLfBytes": 1635
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/read_cuts.rs",
+      "workingSha256": "a4550a2bc13040d8eba888d7f6941e4cbb62aef1aca922434c761fd600f8979c",
+      "gitLfSha256": "a4550a2bc13040d8eba888d7f6941e4cbb62aef1aca922434c761fd600f8979c",
+      "gitLfBytes": 9512
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/subscription.rs",
+      "workingSha256": "eb53d1612289b9efa869a6fe80f6ae8177efe33e68bce74cb5b63e5984533389",
+      "gitLfSha256": "eb53d1612289b9efa869a6fe80f6ae8177efe33e68bce74cb5b63e5984533389",
+      "gitLfBytes": 8368
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/support_sessions.rs",
+      "workingSha256": "2ef9662b8ceeefc7cb76c809435f5799301dc3337c9db849eb975672b6ca8d2a",
+      "gitLfSha256": "2ef9662b8ceeefc7cb76c809435f5799301dc3337c9db849eb975672b6ca8d2a",
+      "gitLfBytes": 1536
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_lane.rs",
+      "workingSha256": "00183131c3d8187b4542a52ad18337f3b4a76892095cb981422acc9c5064c56b",
+      "gitLfSha256": "00183131c3d8187b4542a52ad18337f3b4a76892095cb981422acc9c5064c56b",
+      "gitLfBytes": 3200
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_owner_framing.rs",
+      "workingSha256": "0fec544ed257994112491775f7434e7b8c781c11bbac4f1b08b3c4f77835dde5",
+      "gitLfSha256": "0fec544ed257994112491775f7434e7b8c781c11bbac4f1b08b3c4f77835dde5",
+      "gitLfBytes": 2326
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_arguments.rs",
+      "workingSha256": "bcae89b2192f39bb62652648494380c637105d2d6f1215d2e882980b5ae756ab",
+      "gitLfSha256": "bcae89b2192f39bb62652648494380c637105d2d6f1215d2e882980b5ae756ab",
+      "gitLfBytes": 3142
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_config.rs",
+      "workingSha256": "a57c1f9e678bee081924d525c9adb1376d9f5d3b31db5cdc2f5efa1c40d44019",
+      "gitLfSha256": "a57c1f9e678bee081924d525c9adb1376d9f5d3b31db5cdc2f5efa1c40d44019",
+      "gitLfBytes": 10971
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_config_file.rs",
+      "workingSha256": "89142af3e28b00ddccaabe327fd2018762c0548fd37db5f7d574ac9b43c3ee23",
+      "gitLfSha256": "89142af3e28b00ddccaabe327fd2018762c0548fd37db5f7d574ac9b43c3ee23",
+      "gitLfBytes": 4212
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_capacity.rs",
+      "workingSha256": "dd886e5ef0e1eec55b0ce7a59c9ca1a3246d1db0c2552bf1e5f74f8db3456772",
+      "gitLfSha256": "dd886e5ef0e1eec55b0ce7a59c9ca1a3246d1db0c2552bf1e5f74f8db3456772",
+      "gitLfBytes": 2784
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_codec.rs",
+      "workingSha256": "40e695fb22caf36d28c6e77cacd8692f0a8e07098f891f5a2b144d4af8837f27",
+      "gitLfSha256": "40e695fb22caf36d28c6e77cacd8692f0a8e07098f891f5a2b144d4af8837f27",
+      "gitLfBytes": 1055
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_inventory.rs",
+      "workingSha256": "035c3401341928aa9f7dba9321ce26505fc641e2e80f85b7504f9e6f00acfde9",
+      "gitLfSha256": "035c3401341928aa9f7dba9321ce26505fc641e2e80f85b7504f9e6f00acfde9",
+      "gitLfBytes": 1670
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_original.rs",
+      "workingSha256": "9af3aca0ccea509881ad3e09e77df291261ea337997e357851374856f5329981",
+      "gitLfSha256": "9af3aca0ccea509881ad3e09e77df291261ea337997e357851374856f5329981",
+      "gitLfBytes": 1479
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_recovery.rs",
+      "workingSha256": "a1c2fec8393a5b669c29fa1b0a90b72a1b4bbe130897ce8bc39a22aff47c7aaa",
+      "gitLfSha256": "a1c2fec8393a5b669c29fa1b0a90b72a1b4bbe130897ce8bc39a22aff47c7aaa",
+      "gitLfBytes": 1778
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/activation_cases.rs",
+      "workingSha256": "f0dc749527c89e29ccb953ab2eecf73736cccd7ec33153b1c25595ac75755d55",
+      "gitLfSha256": "f0dc749527c89e29ccb953ab2eecf73736cccd7ec33153b1c25595ac75755d55",
+      "gitLfBytes": 2923
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/corpus.rs",
+      "workingSha256": "77531c919f52564a1dc6e699a4eba470d0f322895fc652e33effcccbe90f2465",
+      "gitLfSha256": "77531c919f52564a1dc6e699a4eba470d0f322895fc652e33effcccbe90f2465",
+      "gitLfBytes": 588
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/fixture.rs",
+      "workingSha256": "70412072a6a82d84514ee75b3794af1b35b2254fb9fa1dff9d70c539aebff857",
+      "gitLfSha256": "70412072a6a82d84514ee75b3794af1b35b2254fb9fa1dff9d70c539aebff857",
+      "gitLfBytes": 9862
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/fork.rs",
+      "workingSha256": "d2a00ae76396e1afc90573bcbb00df4970acf2d5dff0ec5da521bf1232c893d9",
+      "gitLfSha256": "d2a00ae76396e1afc90573bcbb00df4970acf2d5dff0ec5da521bf1232c893d9",
+      "gitLfBytes": 2225
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/lane_cases.rs",
+      "workingSha256": "4f67439691324f59c690d1a2d63aa8f32a2d7b488c467d63771f1584c61d6cce",
+      "gitLfSha256": "4f67439691324f59c690d1a2d63aa8f32a2d7b488c467d63771f1584c61d6cce",
+      "gitLfBytes": 7999
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/malformed_cases.rs",
+      "workingSha256": "cd073acfe261f32e8be00b72841ee8a9c2c87c476026c38e5a7498ab4d6dfcca",
+      "gitLfSha256": "cd073acfe261f32e8be00b72841ee8a9c2c87c476026c38e5a7498ab4d6dfcca",
+      "gitLfBytes": 10857
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/scratch.rs",
+      "workingSha256": "123ba65cf5c1f8bab56228e16691104af44852f47712916ecc33698c3534c2c5",
+      "gitLfSha256": "123ba65cf5c1f8bab56228e16691104af44852f47712916ecc33698c3534c2c5",
+      "gitLfBytes": 798
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/activation.rs",
+      "workingSha256": "42487b5b1d7b9d70801a38b090b2b6b24dd8fb45373eff88d65a3914097eb5a3",
+      "gitLfSha256": "42487b5b1d7b9d70801a38b090b2b6b24dd8fb45373eff88d65a3914097eb5a3",
+      "gitLfBytes": 1226
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/repository.rs",
+      "workingSha256": "47c1890ceee84b52c8dca74a78ccd7b67df80e8bab6f519c2f0d6804639d6f88",
+      "gitLfSha256": "47c1890ceee84b52c8dca74a78ccd7b67df80e8bab6f519c2f0d6804639d6f88",
+      "gitLfBytes": 24811
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/timing.rs",
+      "workingSha256": "c366c5b51065f9d2560091bc93e20b79e3086c39fe360d456cd46d33dd6005bf",
+      "gitLfSha256": "c366c5b51065f9d2560091bc93e20b79e3086c39fe360d456cd46d33dd6005bf",
+      "gitLfBytes": 2894
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/timing_origin.rs",
+      "workingSha256": "c9e5c123649a71fd4ddc2746012793ee6a4eead17cad8a892d4ebbd874c410ea",
+      "gitLfSha256": "c9e5c123649a71fd4ddc2746012793ee6a4eead17cad8a892d4ebbd874c410ea",
+      "gitLfBytes": 1583
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_owner_framing.rs",
+      "workingSha256": "7900f8ed09909e82621e69978cefe8f9236a23d2c096f6d503773d1cc290651a",
+      "gitLfSha256": "7900f8ed09909e82621e69978cefe8f9236a23d2c096f6d503773d1cc290651a",
+      "gitLfBytes": 1650
+    },
+    {
+      "path": "docs/identity/blob-scan.md",
+      "workingSha256": "af6e7ea058db2cc7ae067b6afbaef5cb0fe3287cebd4a058c5ed8a2ba5721d66",
+      "gitLfSha256": "af6e7ea058db2cc7ae067b6afbaef5cb0fe3287cebd4a058c5ed8a2ba5721d66",
+      "gitLfBytes": 4643
+    },
+    {
+      "path": "docs/transport/effects-independent-verification.md",
+      "workingSha256": "92c7ac5dadb06cd14b1493578ec2594d6f43161d54a910744426cec9c0f43c87",
+      "gitLfSha256": "92c7ac5dadb06cd14b1493578ec2594d6f43161d54a910744426cec9c0f43c87",
+      "gitLfBytes": 6518
+    },
+    {
+      "path": "docs/transport/notification-effects-checkpoint.json",
+      "workingSha256": "41c2dddb4ee4d6779731fed3a59b66e15716507b052f6ebace5c86d7842fee04",
+      "gitLfSha256": "41c2dddb4ee4d6779731fed3a59b66e15716507b052f6ebace5c86d7842fee04",
+      "gitLfBytes": 10337
+    },
+    {
+      "path": "docs/transport/notification-effects-verification.md",
+      "workingSha256": "9a6eaf9d799faf897ad96e0a7b624eead4fc4667454fc2fb261b41e25dc944fa",
+      "gitLfSha256": "9a6eaf9d799faf897ad96e0a7b624eead4fc4667454fc2fb261b41e25dc944fa",
+      "gitLfBytes": 8761
+    },
+    {
+      "path": "docs/transport/notification-effects.md",
+      "workingSha256": "03d2f16ad3b69eb32be1d4929f61285bf9c34b0f0957814714931546f0f6e9b1",
+      "gitLfSha256": "03d2f16ad3b69eb32be1d4929f61285bf9c34b0f0957814714931546f0f6e9b1",
+      "gitLfBytes": 4228
+    },
+    {
+      "path": "docs/transport/portable-protocol-verification.md",
+      "workingSha256": "49caeabfd8172d615d11a2900f687d10b4497adbdc1296edd9f537cddbf5bb92",
+      "gitLfSha256": "64502434bc66e7930e25c6b85bc8beac494832063ff78d97467b82b382a2e96d",
+      "gitLfBytes": 6183
+    },
+    {
+      "path": "docs/transport/portal-config-checkpoint.json",
+      "workingSha256": "114c8e39b0def61f28b5850fb064da2d9b2dd51bd743af963207379d295cfb7d",
+      "gitLfSha256": "d396f0ee2e6578ba5c02ed5fd1cd4292b0b776c9d6015bd4b4b82413c38f333b",
+      "gitLfBytes": 1978
+    },
+    {
+      "path": "docs/transport/portal-config-format.md",
+      "workingSha256": "9a2b5bf02692d43748aacea64affa1db2f5632fc6db28740a603d90e6aae97e0",
+      "gitLfSha256": "9a2b5bf02692d43748aacea64affa1db2f5632fc6db28740a603d90e6aae97e0",
+      "gitLfBytes": 7989
+    },
+    {
+      "path": "docs/transport/portal-config-verification.md",
+      "workingSha256": "3695aadd89188a6480d600a75dbb953a41f5f94553fb5de09a9ce72aed603d67",
+      "gitLfSha256": "3695aadd89188a6480d600a75dbb953a41f5f94553fb5de09a9ce72aed603d67",
+      "gitLfBytes": 3782
+    },
+    {
+      "path": "docs/transport/portal-owner-design.md",
+      "workingSha256": "95780b9b19e9c9921210a7d4bf6ba7052310db8fb35bd92be3f28a4209c4a195",
+      "gitLfSha256": "95780b9b19e9c9921210a7d4bf6ba7052310db8fb35bd92be3f28a4209c4a195",
+      "gitLfBytes": 28548
+    },
+    {
+      "path": "docs/transport/receipt-effects-checkpoint.json",
+      "workingSha256": "f31da2c07f0b8811c66fca297cceac163805b75d9c6ba6af368523dda6725dec",
+      "gitLfSha256": "fa73983cecc7da5c651d9c7f9f253ccb48c87354aa1475c05a62242fd3346b8d",
+      "gitLfBytes": 9601
+    },
+    {
+      "path": "docs/transport/receipt-effects-evidence.md",
+      "workingSha256": "95e0cba7e9f224ef4a2c2e5de8f89ad88d936b2c0c7451d8274615bc85fbf8be",
+      "gitLfSha256": "95e0cba7e9f224ef4a2c2e5de8f89ad88d936b2c0c7451d8274615bc85fbf8be",
+      "gitLfBytes": 20720
+    },
+    {
+      "path": "package.json",
+      "workingSha256": "794cb6a3f760514e052dd5cdd0224daf9332dc04875abdbf97f375c18e2accdd",
+      "gitLfSha256": "794cb6a3f760514e052dd5cdd0224daf9332dc04875abdbf97f375c18e2accdd",
+      "gitLfBytes": 2656
+    }
+  ]
+}
