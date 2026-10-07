@@ -71,9 +71,28 @@ fn actual_create_new_refusal_preserves_old_prefix_and_rejects_inserted_tail() {
         phase: ReceiptPhase::Pending,
     };
     let _armed = Armed::new();
+    let failure = append_receipt_detailed(&vault, &anchors, 0, &status, record.minimum)
+        .err()
+        .unwrap();
+    assert_eq!(failure.peer_error(), PeerError::Storage);
+    let diagnostic = failure
+        .storage_failure()
+        .and_then(|f| f.diagnostic())
+        .expect("append create-new cause missing");
+    assert_eq!(
+        diagnostic.operation(),
+        nf_identity::private_storage::PrivateOperation::BlobCreate
+    );
+    assert_eq!(
+        diagnostic.stage(),
+        nf_identity::private_storage::PrivateStage::CreateNew
+    );
     assert!(matches!(
-        append_receipt(&vault, &anchors, 0, &status, record.minimum),
-        Err(PeerError::Storage)
+        diagnostic.cause(),
+        nf_identity::private_storage::PrivateCause::Io {
+            kind: std::io::ErrorKind::AlreadyExists,
+            ..
+        }
     ));
     assert_eq!(vault.read_private_blob("receipt-r0-g0").unwrap(), before);
     assert_eq!(anchors[0].generation, 0);

@@ -3,7 +3,7 @@ mod fixture;
 #[path = "../receipt_effect_support/fork.rs"]
 mod fork;
 #[path = "../receipt_effect_support/scratch.rs"]
-mod scratch;
+pub(in crate::receipt_effects) mod scratch;
 use nf_contract::identity::EventSeq;
 use nf_transport::{receipt::ReceiptPhase, receipt_effects::*};
 #[test]
@@ -613,3 +613,6 @@ mod timing_origin;
 
 #[path = "activation.rs"]
 mod activation;
+
+#[path = "repository_diagnostics.rs"]
+mod diagnostics;

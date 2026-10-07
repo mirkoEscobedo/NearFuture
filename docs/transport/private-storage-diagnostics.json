@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "status": "SOURCE_REVIEWED_WINDOWS_INTEGRATION_PASS_HOSTED_CAUSE_UNOBSERVED",
+  "parent": "94566313c262d8b6d52a9401c8dbdeb186990715",
+  "sourceFiles": [
+    {
+      "path": "crates/nf-identity/src/lib.rs",
+      "sha256": "010d490e95dd45af31ffb1a7dcb0fdcfc858e517b46beab375725834cd657be9"
+    },
+    {
+      "path": "crates/nf-identity/src/private-acl-batch.ps1",
+      "sha256": "c9692f481326bbfae3f8c66fd2e6f12005a7b6d02820d56f30210c8955d34dd6"
+    },
+    {
+      "path": "crates/nf-identity/src/private-acl.ps1",
+      "sha256": "278da1aa88d8c0082c02ba8d8279953a1e67158bffea131c1e9c16f1d6fcfd92"
+    },
+    {
+      "path": "crates/nf-identity/src/private_blob.rs",
+      "sha256": "a0963c92995abf4e57cb66b2b7c740d76b858d20c894945b9ac96d3e4cb0fc10"
+    },
+    {
+      "path": "crates/nf-identity/src/private_blob_acl.rs",
+      "sha256": "0a5025253c46c95e84b1b6f9b76d2986c402d0b202756310b6a6835cb2596493"
+    },
+    {
+      "path": "crates/nf-identity/src/private_blob_acl_tests.rs",
+      "sha256": "64325925bd7127a63c5178260edc2efd6061522d6857f6d66cc5131c76cf355b"
+    },
+    {
+      "path": "crates/nf-identity/src/private_blob_scan.rs",
+      "sha256": "861af8bfe93747bd4fe151932a2e4e4d068f7ef3dd2e35b7e052b9ab708116df"
+    },
+    {
+      "path": "crates/nf-identity/src/private_diagnostics.rs",
+      "sha256": "16d167a70f261898947f125a28944ddf2550f2bf98a406c93ba1189885d2c0dc"
+    },
+    {
+      "path": "crates/nf-identity/src/private_diagnostics/access.rs",
+      "sha256": "f4da957a6fd15f558c27526db40f94b602dce3f496aa7656bda99c8d3ddffdd2"
+    },
+    {
+      "path": "crates/nf-identity/src/private_diagnostics/blob_create.rs",
+      "sha256": "3b9aa85cd40d1760d90e56072d9c7ed0f6dfe50b37e842c6b1c3061e2ea19f30"
+    },
+    {
+      "path": "crates/nf-identity/src/private_diagnostics/helper.rs",
+      "sha256": "ea85d2cf3ec02e8b83e8549609279c9f72f231dc74171b894440b2f17b2c8b76"
+    },
+    {
+      "path": "crates/nf-identity/src/private_diagnostics/identity_create.rs",
+      "sha256": "9b7f987d661f22082f8b3da58cbb9a7f93b07d7533e6e3d5e14099d2d043e086"
+    },
+    {
+      "path": "crates/nf-identity/src/private_diagnostics/model.rs",
+      "sha256": "7fe9ddb3310ee02048753b20a035d68b0c80162c0c477754fe51a4573e57ca1a"
+    },
+    {
+      "path": "crates/nf-identity/src/private_storage.rs",
+      "sha256": "671e862f2aba7507a62f714d7b80fc698e9abfef10f71e414aa32f22c222a347"
+    },
+    {
+      "path": "crates/nf-identity/tests/private_storage_diagnostic.rs",
+      "sha256": "d03bbe7e1eb4e84c162633d271df3b90a8808f32f80fa0db5e130f059c8ff8ac"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/collision_test.rs",
+      "sha256": "72d0ef5400e10b290b38d412b4e8b0ed44bf665940b0e44fda353f170dd6b17a"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/diagnostic.rs",
+      "sha256": "04c36677bc3b5635943668e5e4a21bcf72992421d04de25ebc33ee201aa63a7f"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/diagnostic_tests.rs",
+      "sha256": "050d1208690947e6413287d488523ba8067cf55ba8c45735e94c86047d237674"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/inventory.rs",
+      "sha256": "7989dcd1766eaba882efb7295da27698307e1c7ecb44b851dba04634f3c7c46a"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/mod.rs",
+      "sha256": "afce403ad389ed588c126ce50d9f6f911d94106016020b4413401247f0927fb0"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/persistence.rs",
+      "sha256": "4b32d8d8367d104764fe1fbda6682e89aa02c6e44b0440f353ec3b81a99855ad"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/repository.rs",
+      "sha256": "b86be319219d24f7495f6a884f4d232d4c94594f3b637e8828678c8947543337"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/tests.rs",
+      "sha256": "654adee826f3ba9459b4cfb96814ea0656fa2a582facf0edde54a2ca15ab99ef"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/fixture.rs",
+      "sha256": "79a4b6cfe3db12492100ec946e79af5fb20aa610feaae7d3d61cde5f74a61176"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/repository.rs",
+      "sha256": "fc24ed46744390db46e87adb722a0624756023ec8b2085d42456cf3bb9cf7b88"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/repository_diagnostics.rs",
+      "sha256": "c39529dd73489bfa2ae1c81bd202d2aeda0cb55ed05a8a080a2d9cd973f8ec99"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_capacity.rs",
+      "sha256": "9148b89df75277ced7fb74c1dd077a54f87dc23347cd1253d998e39f2cdb1b7e"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_inventory.rs",
+      "sha256": "892c0ff121c2fd394ba5e0648caebbaef5fc7ee2edd1d3d716892deb3462da74"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_recovery.rs",
+      "sha256": "bd122d81db1a5cac588b147d9794dba764076d9694226be9bfc44502793b2c4d"
+    }
+  ],
+  "sourceCount": 29,
+  "authoredEvidence": {
+    "baseline": "f09423ac0094c0557d6ae2f401a60eefd178121c",
+    "compiledRegressionCycles": 13,
+    "focusedWindowsCases": 59,
+    "checkpointSha256": "0c17286f2bbfaa053e28440f417a690b1798d15a40326d271db5baa9e767281a"
+  },
+  "sourceReviews": [
+    {
+      "kind": "identity-root-r1",
+      "sha256": "66a9b57b8a64fa1c23664b8eb936cf67612754cd50e1aa90bf183df232607c23",
+      "semanticRepairs": 0
+    },
+    {
+      "kind": "receipt-root-r1",
+      "sha256": "5a1049b0f5f35a19f285d6ca762316f212ce7d37b3e87546b58d3c8705232d84",
+      "semanticRepairs": 0
+    },
+    {
+      "kind": "integration-caller-independent-r1",
+      "sha256": "50dc178e9d3221961fe38b4a782664a1eeed0f4a6632b0e12409ddc7c137188b",
+      "semanticRepairs": 0
+    }
+  ],
+  "integration": {
+    "nativeReportSha256": "989d1e0434e26a6380ac7d2b198179d41875391866865870b175079fd0e5a3c6",
+    "sourceSnapshotSha256": "98ef38a8fdd038800a655fb3f06fe6daa5786ca3748deb0c2b38c694b25ec241",
+    "testedInputFiles": 978,
+    "identityCases": 50,
+    "transportUnitCases": 84,
+    "publicBookCases": 7,
+    "totalCases": 141,
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "E:/github/NearFuture/.tmp/storage-diagnostic-native-r2/check.cjs"
+        ],
+        "status": 0,
+        "timedOut": false,
+        "ownership": "windows-job-object",
+        "passedCases": 0
+      },
+      {
+        "program": "cargo",
+        "args": [
+          "test",
+          "--manifest-path",
+          "E:/github/NearFuture/.tmp/storage-diagnostic-publication/Cargo.toml",
+          "--target-dir",
+          "E:/github/NearFuture/.tmp/replica-publication-target",
+          "--locked",
+          "--offline",
+          "-p",
+          "nf-identity",
+          "--",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "timedOut": false,
+        "ownership": "windows-job-object",
+        "passedCases": 50
+      },
+      {
+        "program": "cargo",
+        "args": [
+          "test",
+          "--manifest-path",
+          "E:/github/NearFuture/.tmp/storage-diagnostic-publication/Cargo.toml",
+          "--target-dir",
+          "E:/github/NearFuture/.tmp/replica-publication-target",
+          "--locked",
+          "--offline",
+          "-p",
+          "nf-transport",
+          "--lib",
+          "--",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "timedOut": false,
+        "ownership": "windows-job-object",
+        "passedCases": 84
+      },
+      {
+        "program": "cargo",
+        "args": [
+          "test",
+          "--manifest-path",
+          "E:/github/NearFuture/.tmp/storage-diagnostic-publication/Cargo.toml",
+          "--target-dir",
+          "E:/github/NearFuture/.tmp/replica-publication-target",
+          "--locked",
+          "--offline",
+          "-p",
+          "nf-transport",
+          "--test",
+          "receipt_book_capacity",
+          "--test",
+          "receipt_book_codec",
+          "--test",
+          "receipt_book_inventory",
+          "--test",
+          "receipt_book_original",
+          "--test",
+          "receipt_book_recovery",
+          "--",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "timedOut": false,
+        "ownership": "windows-job-object",
+        "passedCases": 7
+      },
+      {
+        "program": "cargo",
+        "args": [
+          "fmt",
+          "--manifest-path",
+          "E:/github/NearFuture/.tmp/storage-diagnostic-publication/Cargo.toml",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "status": 0,
+        "timedOut": false,
+        "ownership": "windows-job-object",
+        "passedCases": 0
+      },
+      {
+        "program": "cargo",
+        "args": [
+          "clippy",
+          "--manifest-path",
+          "E:/github/NearFuture/.tmp/storage-diagnostic-publication/Cargo.toml",
+          "--target-dir",
+          "E:/github/NearFuture/.tmp/replica-publication-target",
+          "--locked",
+          "--offline",
+          "--workspace",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "status": 0,
+        "timedOut": false,
+        "ownership": "windows-job-object",
+        "passedCases": 0
+      },
+      {
+        "program": "node",
+        "args": [
+          "E:/github/NearFuture/.tmp/storage-diagnostic-publication/tools/architecture/check.mjs"
+        ],
+        "status": 0,
+        "timedOut": false,
+        "ownership": "windows-job-object",
+        "passedCases": 0
+      },
+      {
+        "program": "node",
+        "args": [
+          "E:/github/NearFuture/.tmp/storage-diagnostic-publication/tools/reference/sync/generate.cjs",
+          "--check"
+        ],
+        "status": 0,
+        "timedOut": false,
+        "ownership": "windows-job-object",
+        "passedCases": 0
+      },
+      {
+        "program": "node",
+        "args": [
+          "E:/github/NearFuture/.tmp/storage-diagnostic-native-r2/check.cjs"
+        ],
+        "status": 0,
+        "timedOut": false,
+        "ownership": "windows-job-object",
+        "passedCases": 0
+      }
+    ],
+    "protectedMainFiles": 957,
+    "protectedAuthorFiles": 933
+  },
+  "harnessSetupFailure": {
+    "verdict": "INSUFFICIENT_EVIDENCE",
+    "steps": 0,
+    "error": "unknown workspace module: node:.",
+    "sha256": "e7b048a1d10a0ba5a9eec7f1c4234ca789adaf5460f38c047fc5684e3a21246c",
+    "amendment": "Add non-executable package.json discovery marker; source bytes unchanged."
+  },
+  "historicalHosted": {
+    "mergedParent": "94566313c262d8b6d52a9401c8dbdeb186990715",
+    "tree": "2194236a92bf2e6a3f66ad1f175fa4857e7bb9d8",
+    "linux": "Both jobs passed",
+    "windows": "Both jobs failed with generic errors; cause unobserved",
+    "evidenceSha256": "f69d01b81cb79572857ccd25af3663093420ac5b886cad7543daf95d532c71b4"
+  },
+  "limits": [
+    "Fresh hosted Linux and Windows checks of the new diagnostic source remain pending.",
+    "Existing generic storage failures remain unexplained; no production root-cause repair is claimed.",
+    "ReceiptRepo::open_owned and other legacy-only private effects are not fully instrumented.",
+    "Whole issues23/39 and native Starsector acceptance remain open."
+  ],
+  "metadataAppend": "Two documentation/checkpoint files are added after the source-bound978-input native gate. All tested source inputs and29 owned source hashes remain byte-exact."
+}

@@ -27,7 +27,7 @@ fn full_closed_inventory_recovers_and_gen7_refuses_raised_minima_without_new_byt
             record.previous = previous;
             let bytes = encode_book(&record).unwrap();
             vault
-                .create_private_blob(&format!("receipt-r{slot}-g{generation}"), &bytes)
+                .create_private_blob_detailed(&format!("receipt-r{slot}-g{generation}"), &bytes)
                 .unwrap();
             previous = record.digest().unwrap();
             if generation == 7 {

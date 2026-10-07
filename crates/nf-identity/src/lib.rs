@@ -12,6 +12,7 @@ mod private_blob;
 #[cfg(windows)]
 mod private_blob_acl;
 mod private_blob_scan;
+mod private_diagnostics;
 pub mod private_storage;
 pub mod rotation;
 pub mod signing;

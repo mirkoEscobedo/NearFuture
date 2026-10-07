@@ -9,7 +9,7 @@ fn independent_external_head_rejects_a_valid_prefix_rollback() {
     let vault = scratch.vault("private");
     for generation in 0..3 {
         vault
-            .create_private_blob(
+            .create_private_blob_detailed(
                 &format!("receipt-r0-g{generation}"),
                 &corpus::row("book", &format!("generation-{generation}")),
             )

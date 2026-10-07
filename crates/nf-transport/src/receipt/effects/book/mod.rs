@@ -12,3 +12,11 @@ pub use persistence::{append_receipt, initialize_book, validate_status};
 
 #[cfg(test)]
 mod collision_test;
+
+mod diagnostic;
+pub(crate) use diagnostic::{BookFailure, BookResult};
+pub(crate) use inventory::recover_book_detailed;
+#[cfg(test)]
+mod diagnostic_tests;
+pub(crate) use persistence::append_receipt_detailed;
+pub(crate) use persistence::initialize_book_detailed;

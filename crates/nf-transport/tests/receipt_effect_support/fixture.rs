@@ -37,8 +37,12 @@ impl Fixture {
         let cv = scratch.vault("client-private");
         let st = TransportIdentity::create(&sv).unwrap();
         let ct = TransportIdentity::create(&cv).unwrap();
-        let server = sv.create_identity(st.peer_id().to_bytes()).unwrap();
-        let client = cv.create_identity(ct.peer_id().to_bytes()).unwrap();
+        let server = sv
+            .create_identity_detailed(st.peer_id().to_bytes())
+            .unwrap();
+        let client = cv
+            .create_identity_detailed(ct.peer_id().to_bytes())
+            .unwrap();
         let scope = Scope {
             universe: UniverseId::from_bytes(random()),
             history: HistoryId::from_bytes(random()),
@@ -138,7 +142,7 @@ impl Fixture {
         let mut client_repo =
             ReceiptRepo::open_owned(local, cv, config(&client.public), &[]).unwrap();
         client_repo
-            .initialize_originals(&[(
+            .initialize_originals_for_test(&[(
                 0,
                 original.clone(),
                 SourceMinima {

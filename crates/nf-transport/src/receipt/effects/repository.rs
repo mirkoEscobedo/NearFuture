@@ -94,11 +94,18 @@ impl ReceiptRepo {
         &mut self,
         originals: &[(u8, OriginalReceipt, SourceMinima)],
     ) -> Result<Vec<BookAnchor>, PeerError> {
+        self.initialize_originals_inner(originals)
+            .map_err(BookFailure::peer_error)
+    }
+    fn initialize_originals_inner(
+        &mut self,
+        originals: &[(u8, OriginalReceipt, SourceMinima)],
+    ) -> BookResult<Vec<BookAnchor>> {
         if !self.anchors.is_empty() {
-            return Err(PeerError::Backpressure);
+            return Err(PeerError::Backpressure.into());
         }
         if originals.is_empty() || originals.len() > 8 {
-            return Err(PeerError::Limit);
+            return Err(PeerError::Limit.into());
         }
         let mut records = Vec::with_capacity(originals.len());
         for (slot, original, minimum) in originals {
@@ -116,9 +123,16 @@ impl ReceiptRepo {
                 },
             ));
         }
-        let catalog = initialize_book(&self.vault, &records)?;
+        let catalog = initialize_book_detailed(&self.vault, &records)?;
         self.anchors = catalog.anchors()?;
         Ok(self.anchors.clone())
+    }
+    #[cfg(test)]
+    pub(crate) fn initialize_originals_for_test(
+        &mut self,
+        originals: &[(u8, OriginalReceipt, SourceMinima)],
+    ) -> BookResult<Vec<BookAnchor>> {
+        self.initialize_originals_inner(originals)
     }
     pub(super) fn validate_book_context(&self) -> Result<(), PeerError> {
         if self

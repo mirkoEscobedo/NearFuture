@@ -9,8 +9,14 @@ pub fn initialize_book(
     vault: &PrivateVault,
     originals: &[(u8, BookRecord)],
 ) -> Result<BookCatalog, PeerError> {
+    super::initialize_book_detailed(vault, originals).map_err(BookFailure::peer_error)
+}
+pub(crate) fn initialize_book_detailed(
+    vault: &PrivateVault,
+    originals: &[(u8, BookRecord)],
+) -> BookResult<BookCatalog> {
     if originals.is_empty() || originals.len() > 8 {
-        return Err(PeerError::Limit);
+        return Err(PeerError::Limit.into());
     }
     for (index, (slot, record)) in originals.iter().enumerate() {
         if *slot >= 8
@@ -22,19 +28,19 @@ pub fn initialize_book(
                 .iter()
                 .any(|(old, r)| old == slot || r.original.request() == record.original.request())
         {
-            return Err(PeerError::Malformed);
+            return Err(PeerError::Malformed.into());
         }
         record.validate()?;
     }
-    recover_book(vault, &[])?;
+    recover_book_detailed(vault, &[])?;
     let mut anchors = Vec::with_capacity(originals.len());
     for (slot, record) in originals {
         vault
-            .create_private_blob(&inventory::name(*slot, 0), &encode_book(record)?)
-            .map_err(|_| PeerError::Storage)?;
+            .create_private_blob_detailed(&inventory::name(*slot, 0), &encode_book(record)?)
+            .map_err(BookFailure::storage)?;
         anchors.push(BookAnchor::from_record(*slot, record)?);
     }
-    recover_book(vault, &anchors)
+    recover_book_detailed(vault, &anchors)
 }
 /// Appends only checked receipt metadata after a fresh complete inventory pass.
 /// The caller must retain returned heads independently to claim rollback protection.
@@ -45,7 +51,17 @@ pub fn append_receipt(
     status: &ReceiptStatus,
     external: SourceMinima,
 ) -> Result<BookCatalog, PeerError> {
-    let catalog = recover_book(vault, anchors)?;
+    super::append_receipt_detailed(vault, anchors, slot, status, external)
+        .map_err(BookFailure::peer_error)
+}
+pub(crate) fn append_receipt_detailed(
+    vault: &PrivateVault,
+    anchors: &[BookAnchor],
+    slot: u8,
+    status: &ReceiptStatus,
+    external: SourceMinima,
+) -> BookResult<BookCatalog> {
+    let catalog = recover_book_detailed(vault, anchors)?;
     let old = catalog.head(slot)?;
     validate_status(old, status, external)?;
     let minimum = maximum(maximum(old.minimum, external), status.current);
@@ -54,7 +70,7 @@ pub fn append_receipt(
         return Ok(catalog);
     }
     if old.generation == 7 {
-        return Err(PeerError::Backpressure);
+        return Err(PeerError::Backpressure.into());
     }
     let next = BookRecord {
         generation: old.generation + 1,
@@ -69,18 +85,18 @@ pub fn append_receipt(
     #[cfg(test)]
     super::collision_test::before_create(vault, &inventory::name(slot, next.generation))?;
     vault
-        .create_private_blob(
+        .create_private_blob_detailed(
             &inventory::name(slot, next.generation),
             &encode_book(&next)?,
         )
-        .map_err(|_| PeerError::Storage)?;
+        .map_err(BookFailure::storage)?;
     let mut updated = catalog.anchors()?;
     let anchor = updated
         .iter_mut()
         .find(|a| a.slot == slot)
         .ok_or(PeerError::Storage)?;
     *anchor = BookAnchor::from_record(slot, &next)?;
-    recover_book(vault, &updated)
+    recover_book_detailed(vault, &updated)
 }
 pub(super) fn maximum(a: SourceMinima, b: SourceMinima) -> SourceMinima {
     SourceMinima {
