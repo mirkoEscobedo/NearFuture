@@ -5,6 +5,8 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+getrandom = "=0.4.3"
+nf-world = { path = "../nf-world" }
 nf-identity = { path = '../nf-identity' }
 nf-contract = { path = "../nf-contract" }
 nf-kernel = { path = "../nf-kernel" }

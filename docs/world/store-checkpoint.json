@@ -1,0 +1,283 @@
+{
+  "scope": "whole portable MiniatureStore source and public test corpus candidate; Linux sync observation and independent whole verdict remain separate gates",
+  "files": [
+    {
+      "path": "crates/nf-store/src/identity.rs",
+      "sha256": "ff72c9b18532ae9cd600a3d3527668dbbe153bf2bb9020ba84b09e0933f3252f"
+    },
+    {
+      "path": "crates/nf-store/src/lib.rs",
+      "sha256": "1bce1d1cf19a3aea55122d4acbb67734425952821811d9b187384406185bd4af"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/activity.rs",
+      "sha256": "72eebc94661ba1911151a10f471b0d68d3e171a273eff79e2f05ade412c1df5f"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/advancement.rs",
+      "sha256": "19be543522564fe7125661df16ce4f3cb7d9837f95fbd397e4d7cc3992b7e1f6"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/auth.rs",
+      "sha256": "0d557168e360c899f83bf9ebfd226df9a2408055bacb78b11e3317bf2c38f2e8"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/authority.rs",
+      "sha256": "2733afedb54dd32d345d7f2c07f73c307cc806d32fe990a39ebc0d8c2ca56198"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/bootstrap.rs",
+      "sha256": "ff740ebb2468ca12e6159872079305c3d591ccd17bb26d84b77988ec5bd677b6"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/cancellation.rs",
+      "sha256": "6f40fcff63a83685195fc075cae769a15b88048a93817605c28d58685c430491"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/challenges.rs",
+      "sha256": "cfd5dbc5b776d444ed22b757281582e1cf72707f4521d0cf7b585dba811814c0"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/codec.rs",
+      "sha256": "e7233ea141cc8c542723094016031b2ad08afe2e812b6c5a9e56ccd94310b786"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/economic.rs",
+      "sha256": "807a4447810851143a47f1e4c53923cd99bc4221135aa4fc0faa6b043a539911"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/error.rs",
+      "sha256": "c1af4cd7fac2a5bdf7c29a9780e5d505b62d768b5e5f638a718f7a725e9d2bc9"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/maintenance.rs",
+      "sha256": "ab15a393567c5e2d1c518204f90c415b74b07da4acab5e496d7fe7c77a5927d3"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/membership.rs",
+      "sha256": "9a2fd4008dccb08ddf03c842c7e3e0895a17f875f39d52c8a0e4fbc15bcc50ec"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/mirrors.rs",
+      "sha256": "5506acb2599980e0d31b4dfeb39761aaf773455fccffbec205a666e28a1563ba"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/mod.rs",
+      "sha256": "22a27b10514f0173a28df9ad0ae0844eb77bd89209385566bbf73fee9a9099ea"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/model.rs",
+      "sha256": "cff54c1012580d5fcd99f74af0512b12b61d38b962a6c1fb2b5ddfcaa555fcf2"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/owner.rs",
+      "sha256": "d7d4c0f71773ec19eb1738494a20ded46b5a6a0829d4e98a6409204dcb71c47d"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/persistence.rs",
+      "sha256": "fa130d783bbdec8b918bea38e0203b5f22fcc568a901b2d0eceb310bb50c0538"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/recovery.rs",
+      "sha256": "daacdadc8704455c1fc13d08206ebef187fc371b0cc1dc62dfb63f69ad704692"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/resumption.rs",
+      "sha256": "f6b42f54e8e79f17f31c5048671b5a46dd98eeb812f5b99a95e8f474701eef8b"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/schema.rs",
+      "sha256": "9d342a3a00f2e1d4f61949a030ca8912035678df66d80cecc057d77460b368af"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/state.rs",
+      "sha256": "8c4d5dcce7b52cf4870bf414149c3a947a9ef157470be74654a6d1764b5f4216"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/tests/mod.rs",
+      "sha256": "15a6cb778026b88ad7ba637445763333114124d912636710ae6edcb45d4fd7a2"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/tests/quota_fixture.rs",
+      "sha256": "9a592945a6ad03e3f04df199c2d19983faf3808c9c80f1b44299a0b85472144e"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/tests/quota.rs",
+      "sha256": "883288b261682950ffd19787f0bc707c98e677b73052051046ed024d55879e1f"
+    },
+    {
+      "path": "crates/nf-store/src/miniature/transitions.rs",
+      "sha256": "f7ebc3822037d1003f821b316bf4e261b5238e326911720b62396504b7728114"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_advance.rs",
+      "sha256": "31880683cc8aa731c94fa4862ca6e3e69c5cee4468efabc76f88f1766b82deb9"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_all_actors.rs",
+      "sha256": "a1688e23a9da0498359918dc1bb18d055a600b6d53d421fb9588075aa4eb1e8d"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_authority.rs",
+      "sha256": "6349fec190d9e695b2bcbffcb71f5c8b7e9630e2e2af23189fbabcdac7eac102"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_bootstrap.rs",
+      "sha256": "305103afa6280887bf4eccc9c2e9d9e82ef7ab72a646559759c9d3d9c5c1c40b"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_cancel.rs",
+      "sha256": "f3bf5ab5f6f8ca765cae5d04760082139078e5b2acaffbfb5a80dc7c55e30141"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_crashes.rs",
+      "sha256": "ec6d2f9f08ce452369da6c0d772f380d64f62d5806b6281d32d03ee876b26008"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_fsync_failure.rs",
+      "sha256": "cd215a7333d069170379201efbbe3dd4c8153bf84a15f8c78a2e1394917ee8d7"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_genesis.rs",
+      "sha256": "2eb3b010c9f8ccbaf88497295b167baca93c7a76cfa0bc3ebb8a1ee493a36abc"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_extended_support/lifetime.rs",
+      "sha256": "753afedcf5c9f09e4be0194603dab928fe3f7ad1c4cf7d6b5630bb1ad0dd09a9"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_extended_support/minima.rs",
+      "sha256": "aa68aafd592a5e8a809ee927a250972abc1b5192e1a7d1caf68b8dacf0c0ef1c"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_extended_support/mirrors.rs",
+      "sha256": "fe0e2abd6e0243cc4c67cf1ac0735c392e243f8d5d6be0f7445887d0dde7673c"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_extended_support/mod.rs",
+      "sha256": "757205b6284ae0f645e4641d85f114b66cb12cd96a40e455c4b51ca63187a788"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_extended_support/transcript_fields.rs",
+      "sha256": "b06a22c6f22704ad5df9174d69a14c12bae1db10b8bf61f3dad437bd29920762"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_extended_support/transcripts.rs",
+      "sha256": "8bb1b1b38d8cdb0d05bf68604f303969b31f65eb8c0caf17f4c9a181e7975adb"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_extended.rs",
+      "sha256": "6d98210328a373f9d3dfc1496ca431c5f0b066a0ac17310f9227c3ea7b12b1a3"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_support/admission.rs",
+      "sha256": "c663bd7a6adc28f43fe938969e05a46ef7c01f2dec1059a9af88518e3d3f5c74"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_support/challenge.rs",
+      "sha256": "3aa9e8afa250df32ceb3171815ca0a01f45309d67aab32737f94418bcb2b3c79"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_support/fixture.rs",
+      "sha256": "04ff680f0f2a5ef0a0dfd1aa3257876e15731d165a5f3bb0e6da26a4b77c9c9d"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_support/mod.rs",
+      "sha256": "2c52c68897d0baf2affe0fbb953cdd685de6ebd4a9bc0a507f833b6e1b182641"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_support/schema.rs",
+      "sha256": "b0c1246eb489903427a54474fa6a5fd5a738067bff2d55ff2092d524ba308e54"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_support/scratch.rs",
+      "sha256": "0fd3644523a9f3ff34c2e4103eecbaa8b6a57aa1550f8a4da960a1075d4ad7d5"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_independent_vectors.rs",
+      "sha256": "466fd77a6bca4f4a1bdc0cbce774bbce6e361b68d549126f8922ae1e337226ae"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_prepare.rs",
+      "sha256": "d023ba3d3b5a47b499a1061e21dacc9312817bcd4595ae4945f3cb615285f057"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_profile_isolation.rs",
+      "sha256": "35f471a5737dcc02d4e683399bb67e457fb0d27ee79ea7a4b9a464b39095636f"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_resources.rs",
+      "sha256": "9a688c5ee146e48ee6ee0c996628bbec6a1bddb1f2ded1ad080a40d698d92b1f"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_resume.rs",
+      "sha256": "edc859cfecbd9fc409fce8f7721ccbbe24a106a3fc16daa434007fe86869e98d"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_support/crash_data.rs",
+      "sha256": "3154b6421f0d64b77b06f9ab8d366f660875f5a1b1b550cbad52fb928f8a5353"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_support/flow.rs",
+      "sha256": "d5105e28adba8a1f486d27412316f2d055b1704939199ed08e5b9ace692cc939"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_support/mod.rs",
+      "sha256": "ebd639b2a7b351932cf4d35930ed7feb8c02054f3762793ef540488e91607e86"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_support/process.rs",
+      "sha256": "69cbff46eae22d3b99b21199b20115d218594973d89b0898790bb8ca72ee63fd"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_support/sync_trace.rs",
+      "sha256": "f8f2e4c124d239f8783265d330b6119967add400bfc16deabe1d951d07a61d2c"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_support/vault.rs",
+      "sha256": "811230b607a19e00e401d573c417a70183484d7fd8d2d290ab9cb7cae7604e8c"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_timers.rs",
+      "sha256": "9e71d3d8a1b16bd58d42b1019b31f67a31884809939da474c2afed950eaec485"
+    },
+    {
+      "path": "crates/nf-store/tests/miniature_writer_exclusion.rs",
+      "sha256": "b60a11d37d996e47827b20e0057b915eab52d0d4197507c940755fdddffa3283"
+    },
+    {
+      "path": "docs/world/vectors/store-v2.json",
+      "sha256": "311cedbd09cbee9b49076d28a045e4b2654dd59a9f1736e3a0fa1d18b0c90d0d"
+    },
+    {
+      "path": "docs/world/vectors/store-v2.tsv",
+      "sha256": "4dfff581d81a659db20cfde2fed2d2ff53df6d6296da9a2e905366e10e46b097"
+    },
+    {
+      "path": "tools/miniature-store-vectors/generate.cjs",
+      "sha256": "50fa710968a4b30e8aa4985b5752070dfbe6e1d89517be38486451f92b938088"
+    },
+    {
+      "path": "tools/miniature-store-vectors/profile.cjs",
+      "sha256": "86301d7a830940d84326761ad9d610e45e21c6ee96689b998a4b7044cc48cb8e"
+    },
+    {
+      "path": "tools/miniature-store-vectors/profile.test.cjs",
+      "sha256": "ad4d39052df2e216d70b4926dd35f2e576a1f7cfd1843a647e59e8436d3d8489"
+    },
+    {
+      "path": "tools/miniature-store-vectors/README.md",
+      "sha256": "e016cbf7d71dfe34ac4a697b87b0688dd3353555ee17dbaa3d4ea7f8543a14a3"
+    }
+  ],
+  "method": "raw working-byte SHA256 copied before full native gate completion; no text normalization or binary equivalence",
+  "authorVerification": {
+    "sourceHashesMatchedAfter": true,
+    "ownership": "windows-job-object",
+    "linuxSyncObservation": "UNOBSERVED on Windows author host",
+    "status": 0,
+    "timedOut": false,
+    "nativeResultSha256": "ff1d09684e3f10571b0c29d2a6866790f49ff9b714d85c929c25f932f2671b9e",
+    "command": "cargo test -p nf-store --all-targets --locked --offline"
+  }
+}

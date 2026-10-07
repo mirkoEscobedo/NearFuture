@@ -6,7 +6,7 @@
   "scripts": {
     "start": "cargo run --locked --offline",
     "test:rust": "cargo test --workspace --locked --offline",
-    "test:tools": "node --test tests/architecture/*.test.mjs tests/build/*.test.mjs tests/runtime-manifest/*.test.mjs tests/performance/*.test.mjs",
+    "test:tools": "node --test tests/architecture/*.test.mjs tests/build/*.test.mjs tests/runtime-manifest/*.test.mjs tests/performance/*.test.mjs tools/miniature-store-vectors/profile.test.cjs",
     "test": "npm run test:rust && npm run test:tools",
     "lint:rust": "cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
     "check:types": "tsc -p tsconfig.json",
@@ -17,7 +17,7 @@
     "check": "npm run lint && npm run check:schemas && npm test && npm run check:java",
     "workspace-template": "workspace-template",
     "skills": "workspace-template skills list",
-    "check:schemas": "node protocol/vectors/generate-fixtures.cjs --check && node protocol/vectors/generate-wire-fixtures.cjs --check && node protocol/text/generate-ranges.cjs --check && node protocol/vectors/generate-local-auth-fixtures.cjs --check && node crates/nf-nex-shadow/fixtures/generate-identity.cjs --check && node crates/nf-nex-shadow/fixtures/generate-world.cjs --check && node crates/nf-world/fixtures/generate.cjs --check && node crates/nf-transport/tools/generate-peer-vectors.cjs --check && node crates/nf-kernel/tests/fixtures/miniature/generate.cjs --check && node crates/nf-kernel/tools/generate-miniature-source.cjs --check",
+    "check:schemas": "node protocol/vectors/generate-fixtures.cjs --check && node protocol/vectors/generate-wire-fixtures.cjs --check && node protocol/text/generate-ranges.cjs --check && node protocol/vectors/generate-local-auth-fixtures.cjs --check && node crates/nf-nex-shadow/fixtures/generate-identity.cjs --check && node crates/nf-nex-shadow/fixtures/generate-world.cjs --check && node crates/nf-world/fixtures/generate.cjs --check && node crates/nf-transport/tools/generate-peer-vectors.cjs --check && node crates/nf-kernel/tests/fixtures/miniature/generate.cjs --check && node crates/nf-kernel/tools/generate-miniature-source.cjs --check && node tools/miniature-store-vectors/generate.cjs --check && node crates/nf-world-driver/tools/generate-action-vectors.cjs --check",
     "check:performance": "node --test tests/performance/*.test.mjs"
   },
   "devDependencies": {

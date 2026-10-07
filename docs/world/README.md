@@ -1,6 +1,6 @@
 # NF-MINI-1 pure core
 
-Phase1 implements only `nf-world`: a bounded no_std value model and pure rules. [Proposal](proposal.md) records the scope and [exact phase2 contract](integration-contract.md) records the proposed later kernel/store/driver integration; typed kernel implementation is now frozen for independent review; atomic Store/driver composition remains pending. Issue36 remains open pending actual atomic persistence, authority/activity policy, pacing/restart and reviewed headless composition.
+The pure `nf-world` core is a bounded no_std value model. [Proposal](proposal.md) records its scope and the [phase2 contract](integration-contract.md) defines typed kernel, atomic storage and foreground driver composition. Those layers now passed their independent source reviews; the combined workspace/Java17/release gate also passed. Required hosted Windows/Linux and calibrated sync-fault acceptance remain pending. [Durable verification](durable-verification.md) records the current issue36 gates. The descriptions below distinguish pure model policy from guarded Store authority.
 
 Genesis has three systems, three account-controlled factions, six fixed sites (three initial colonies), three abstract fleets and three symmetric pair relations. Integer NF resources and costs are fixed in `RULESET_CONFIG`; `ruleset_hash()` commits its exact bytes. These are Near Future rules, with no native/Nex compatibility claim. No function reads a clock, identity vault, membership database, filesystem, network, ambient random generator or game object.
 
@@ -16,6 +16,6 @@ Genesis has three systems, three account-controlled factions, six fixed sites (t
 
 The component codec is [domain7/schema2/type5](component-schema.md). Foundation and accepted kernel schema1 decoders remain unchanged and reject these bytes. No schema or capability is registered on public IPC, Java or transport.
 
-Coordinator approved the independently reviewed phase2 design (frozen design SHA256 c9292ff1edc6a6f1a3f60ec5fb1208a706d2b5055e4802317eecad2a4c819f70). Only typed nf-kernel miniature modules are currently authorized for implementation; their source review is pending. Store/driver acceptance is not inferred from design approval. Pure-core scoped R2 evidence is [core-verification.md](core-verification.md).
+The phase2 design was independently reviewed before composition (historical design SHA256 c9292ff1edc6a6f1a3f60ec5fb1208a706d2b5055e4802317eecad2a4c819f70). The typed kernel and pure pacing merged in PR60; separate Store R1 and repaired Driver R2 passed. Design approval alone does not establish operational acceptance. Pure-core scoped R2 evidence remains in [core-verification.md](core-verification.md); current composition evidence is in [durable-verification.md](durable-verification.md).
 
 Typed kernel source/API and scoped evidence are [kernel-README.md](kernel-README.md) and [kernel-verification.md](kernel-verification.md).
