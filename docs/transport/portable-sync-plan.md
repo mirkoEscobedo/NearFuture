@@ -1,5 +1,7 @@
 # Remaining portable NF-019 transport plan
 
+This is the historical PR59 proposal. Store/Driver issue36 subsequently passed acceptance in PR61; PR63 added reviewed pure receipt/notification protocols and bounded book inventory. Current owner design is portal-owner-design.md; current semantic synchronization registry and limits are replica-sync-design.md and sync-contract.md, with proposed cache schema replica-cache-schema.md. In particular, the historical Phase D 1MiB/128-chunk suggestion below is superseded by the reviewed 2105344-byte/257-chunk document cap and negotiated chunk product. Those newer designs still require independent source/runtime acceptance and do not close issue23/39 or the native game gate.
+
 Proposal only, after merged PR59 and while issue36 finishes independent/hosted acceptance. This changes no record registry, authority, source, dependency or runtime behavior. Store's frozen67 paths remain untouched. Issue23/design#2 section6 and design#3 section11 require notifications, stable-request reconnect and semantic recovery; native #10/game responsiveness remains a separate unobserved gate.
 
 ## Verified starting seams

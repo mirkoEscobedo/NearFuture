@@ -24,3 +24,6 @@
 /docs/transport/receipt-contract.md text eol=lf
 /docs/transport/notification-contract.md text eol=lf
 /crates/nf-identity/src/private-acl-batch.ps1 text eol=lf
+/docs/transport/sync-contract.md text eol=lf
+/docs/transport/sync-vectors/*.tsv text eol=lf
+/tools/reference/sync/README.md text eol=lf
