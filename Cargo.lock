@@ -2125,9 +2125,11 @@ dependencies = [
 name = "nf-store"
 version = "0.1.0"
 dependencies = [
+ "getrandom 0.4.3",
  "nf-contract",
  "nf-identity",
  "nf-kernel",
+ "nf-world",
  "rusqlite",
  "sha2 0.10.9",
 ]
@@ -2169,6 +2171,20 @@ version = "0.1.0"
 dependencies = [
  "nf-contract",
  "sha2 0.10.9",
+]
+
+[[package]]
+name = "nf-world-driver"
+version = "0.1.0"
+dependencies = [
+ "getrandom 0.4.3",
+ "nf-contract",
+ "nf-identity",
+ "nf-kernel",
+ "nf-store",
+ "nf-world",
+ "sha2 0.10.9",
+ "zeroize",
 ]
 
 [[package]]
@@ -2241,10 +2257,6 @@ checksum = "12f40cff3dde1b6087cc5d5f5d4d65712f34016a03ed60e9c08dcc392736b5b7"
 dependencies = [
  "asn1-rs",
 ]
-
-[[package]]
-name = "nf-world-driver"
-version = "0.1.0"
 
 [[package]]
 name = "once_cell"

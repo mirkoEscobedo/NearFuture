@@ -59,5 +59,10 @@ jobs:
         env:
           NF_STORE_REQUIRE_SYNC_FAULT: '1'
         run: cargo test -p nf-store --test fsync_failure --locked --offline -- --nocapture
+      - name: Observe miniature SQLite sync failure and pending recovery
+        if: runner.os == 'Linux'
+        env:
+          NF_MINIATURE_REQUIRE_SYNC_FAULT: '1'
+        run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture
       - name: Build headless node
         run: cargo build --workspace --locked --offline --release

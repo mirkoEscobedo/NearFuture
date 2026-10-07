@@ -10,7 +10,7 @@ use nf_identity::{
     model::{IdentityError, MembershipRepository, MembershipState, Scope},
 };
 use rusqlite::{Connection, OptionalExtension, params};
-fn load(connection: &Connection, scope: Scope) -> Result<Option<MembershipState>> {
+pub(crate) fn load(connection: &Connection, scope: Scope) -> Result<Option<MembershipState>> {
     let record = connection
         .query_row(
             "SELECT revision,public_state,digest FROM membership WHERE universe=?1 AND history=?2",
