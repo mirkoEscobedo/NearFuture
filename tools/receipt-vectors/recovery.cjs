@@ -1,0 +1,31 @@
+'use strict';
+const {cat,bytes,uint,hash} = require('./fields.cjs');
+const {book,wrapper} = require('./records.cjs');
+function addRecovery(c,row) {
+  const zero=bytes(32),root=book(c,0,zero),pending=book(c,1,hash(root),2),terminal=book(c,2,hash(pending),4);
+  const negative=(name,value,extra={})=>row('negative',name,'recovery','REJECT_RECOVERY',value,extra);
+  const mutate=(name,value,edit)=>{const changed=Buffer.from(value);edit(changed);negative(name,changed);};
+  mutate('book-magic',root,v=>v[0]^=1);mutate('book-version',root,v=>v.writeUInt16LE(2,18));
+  mutate('book-profile',root,v=>v.writeUInt16LE(2,20));mutate('book-generation-over-limit',root,v=>v[22]=8);
+  mutate('book-root-nonzero-previous',root,v=>v[23]=1);mutate('book-generation-bad-chain',pending,v=>v[23]^=1);
+  mutate('book-peer-padding',root,v=>v[343]=1);mutate('book-kind-unknown',root,v=>v.writeUInt32LE(4,376));
+  mutate('book-binding-inconsistent',root,v=>v[412]^=1);mutate('book-phase-unknown',root,v=>v[468]=5);
+  mutate('book-invalid-presence',terminal,v=>v[469]=2);mutate('book-terminal-zero-sequence',terminal,v=>v.fill(0,470,478));
+  mutate('book-unobserved-sequence',root,v=>v[470]=1);mutate('book-payload-changed-with-old-binding',root,v=>v[380]^=1);
+  negative('book-truncated',root.subarray(0,-1));negative('book-trailing',cat(root,uint(1,0)));
+  negative('book-descriptor-substituted',book({...c,operation:bytes(16,21)},1,hash(root),2),{previous_hex:root.toString('hex')});
+  negative('book-minimum-decreased',book({...c,minimum_event:89n},1,hash(root),2),{previous_hex:root.toString('hex')});
+  negative('book-terminal-regressed',book(c,3,hash(terminal),2),{previous_hex:terminal.toString('hex')});
+  negative('book-terminal-sequence-changed',book(c,3,hash(terminal),4,8n),{previous_hex:terminal.toString('hex')});
+  const anchor={slot:0,generation:2,digest:hash(terminal).toString('hex'),minimum_event:'90',minimum_store:'190',minimum_membership:'11'};
+  negative('book-anchored-older-valid-prefix',pending,{chain_hex:[root,pending].map(v=>v.toString('hex')),external_anchor:anchor});
+  negative('book-gap-before-valid-tail',terminal,{chain_hex:[root,terminal].map(v=>v.toString('hex')),external_anchor:anchor});
+  negative('book-wrong-external-head',terminal,{external_anchor:{...anchor,digest:bytes(32,1).toString('hex')}});
+  negative('book-wrong-current-principal',terminal,{expected_account:bytes(16,21).toString('hex')});
+  negative('book-wrong-current-source-pin',terminal,{expected_source_peer:bytes(38,21).toString('hex')});
+  negative('book-valid-prefix-bad-tail',cat(terminal,uint(1,0)),{chain_hex:[root,pending].map(v=>v.toString('hex'))});
+  const wrapped=wrapper(root);mutate('blob-wrong-checksum',wrapped,v=>v[v.length-1]^=1);
+  row('capacity','generation7-needs-append','local','BUSY_NO_FRESH_REPORT',book(c,7,hash(terminal),4),{next_generation:8,requires_append:true});
+  row('capacity','eight-slots-exhausted','local','BUSY_NO_NEW_SLOT',root,{occupied_slots:[0,1,2,3,4,5,6,7],requested_slot:8});
+}
+module.exports={addRecovery};

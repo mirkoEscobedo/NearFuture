@@ -1,0 +1,63 @@
+{
+  "native_result_sha256": "0eaf692d5d6aeff66d7449359caf0a400e1898abd91c7f40b4344d6ea1af9fb2",
+  "scope": "Independent TEST-ONLY Control2 receipt Node writer and data; no production/auth/consumer verdict",
+  "contract_lf_sha256": "763fbd65d5d6df42268c6b30d3ddaf3bea23972303fa7b0ab5f618ab58f31efd",
+  "files": [
+    {
+      "path": "tools/receipt-vectors/context.test.cjs",
+      "sha256": "78b7940f0c37952de3d2f65f5ed8636654fee81dbdb97bf5b1b6b5d0710f1a69"
+    },
+    {
+      "path": "tools/receipt-vectors/corpus.cjs",
+      "sha256": "9a33c7fa1da14c222da541e129cbfd4ddb9047e925dfaa0eb232588872d40254"
+    },
+    {
+      "path": "tools/receipt-vectors/corpus.test.cjs",
+      "sha256": "51f2c987170039cc3964d65c5d5466f78757b2d2b7caf92a2b82e4e5ea8d76fa"
+    },
+    {
+      "path": "tools/receipt-vectors/fields.cjs",
+      "sha256": "9013f3b8015e58648d60509cd0f7ae06c452e842db354bad7e7218ab1c61cff1"
+    },
+    {
+      "path": "tools/receipt-vectors/fixture.cjs",
+      "sha256": "030360d6d6e90556a4ea64bd9526cedff77c62cbaf1d904a56a2a18705ea059a"
+    },
+    {
+      "path": "tools/receipt-vectors/generate.cjs",
+      "sha256": "5917738de62a0eff5f4ef080785bc1bf962888a2a9b0f3c6940829f1e43093fe"
+    },
+    {
+      "path": "tools/receipt-vectors/malformed.cjs",
+      "sha256": "1b3708f3616ed8b1dad04694d26e35e41095302cd6370e3c48c275957198f5c3"
+    },
+    {
+      "path": "tools/receipt-vectors/profiles.cjs",
+      "sha256": "5542f7e2e22d83fdabb4c2e98b13f7b566c6ec60106cd79b29f5b77372ebab96"
+    },
+    {
+      "path": "tools/receipt-vectors/profiles.test.cjs",
+      "sha256": "b19dd6ca30cec1afe0ac8e706f3b575b4d83f0afc150f5f411e5e27aa51220aa"
+    },
+    {
+      "path": "tools/receipt-vectors/README.md",
+      "sha256": "80a27926d0dc8c5978357a36caa4915ec96f7684374fbf47385af0c2180aed74"
+    },
+    {
+      "path": "tools/receipt-vectors/records.cjs",
+      "sha256": "4ee3cec2640d713b7d693e3ddbacacb57dabdf94f5751983e631a5d02410c4ea"
+    },
+    {
+      "path": "tools/receipt-vectors/recovery.cjs",
+      "sha256": "caef56ae8bdc12d60ae7ae0c73900dfd5b0bfcc754f70f3186d82483f91e4331"
+    },
+    {
+      "path": "docs/transport/vectors/receipt-v2.json",
+      "sha256": "97ba35ee58f6fb01d30bd2e2d6d3d07d8f82e75c3f6626f4cc056c8476e95e1e"
+    },
+    {
+      "path": "docs/transport/vectors/receipt-v2.tsv",
+      "sha256": "579f5b322ccf4075e8225f48bb2840e92eabdf9a9756e3b557d83e2c5726a945"
+    }
+  ]
+}

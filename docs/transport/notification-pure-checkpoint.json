@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "scope": "Phase B pure notification model/codec/transcript only",
+  "status": "AUTHOR_FROZEN_FOR_INDEPENDENT_R1",
+  "contract_sha256": "f3e818776bb3ee9fe0c660424bc420f938e852c3f7d3ba0eec51466440aa0dce",
+  "independent_vectors_checkpoint_sha256": "790b128fca025856bfee99ae0f8659171db274e262893031575e2205c90742b0",
+  "author_result_sha256": "db57c481bb74d8a3da6eda8e2c6da0f8cdb4fb171efb9676789ab31160cdfd86",
+  "owned_raw_paths": [
+    {
+      "path": "crates/nf-transport/src/notification/codec.rs",
+      "sha256": "74ded6388974a04a914036afcc5a7f3bf5737629da6dab459cd58ceebefead0c"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/decode.rs",
+      "sha256": "9ed91b791a2e9d38ead32e1133ef625e78d317df91a06288891ab5ead8956b48"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/fields.rs",
+      "sha256": "5a6636f17bd638b093b06836dbc2a6bff10e23e5a864685a0e5bd55007fd5a92"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/framing.rs",
+      "sha256": "5e4388ac6e6fb7d4343e150175783eb5c374ae3d61808004b597dca2d0bed2f9"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/limits.rs",
+      "sha256": "7ef3871a3888d05b1df17fb901d59f029496cfd03bae83d74acef807a17824f9"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/mod.rs",
+      "sha256": "7d3da17f8b5c9a336e9dd160ec2d586346f3c5bf6a6dab4bff9386226758ede6"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/model.rs",
+      "sha256": "fa5a61c1c1bc09d397cb9374389a0bc1293835164fcdd4496a11cf31cf39bcab"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/transcript.rs",
+      "sha256": "b2e3f7ba19e2f4edc5a5cd1ccc61c62f56a389f96f107d499ad9606b1c1f0502"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/validation.rs",
+      "sha256": "8d07cf4940e1c7e07c2191331a033ea1b8670696ea9d4356083abb411a4d2f95"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_framing.rs",
+      "sha256": "0ad88f9401433d6298f5b82985ab6f04d20870428f1be4f1ba750184584a9dc4"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_limits.rs",
+      "sha256": "a27d83046ee9e76159246c063bb4b319507a6ecbdac8a43b625c2bebb215c8aa"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_shape.rs",
+      "sha256": "253298bac05bde8a0f8c920d673496b1d573b8645b6760bac9f9529f4ae601c7"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_signatures.rs",
+      "sha256": "439101376f050a1fc286d0e70bd1c6ab0d9480a6cd624c6efb5f5e50873321e1"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_support/mod.rs",
+      "sha256": "cfed625d070afdd3ce6983b09f3312a59f96167649d03c36ff17a41d150ef8a1"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_transcripts.rs",
+      "sha256": "bcf89338e5fa5728ab1a0eabcc0b634191da2d09200f6b1ebaf5ec673f230100"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_vectors.rs",
+      "sha256": "a607a7d9b3908009c6696e5b1e76c86962eac9be874d8f4f1e9170c24f2c308a"
+    },
+    {
+      "path": "docs/transport/notification-pure-evidence.md",
+      "sha256": "d57fede15f61b84ec201f357b953b9ed0012e4f3a6ed105d56fa7cdcf672bc13"
+    }
+  ]
+}

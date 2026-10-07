@@ -1,0 +1,20 @@
+//! Closed Rust-only control2 receipt data. Shape admission is never authorization.
+mod decode;
+mod model;
+mod reader;
+pub use decode::decode_body;
+pub use model::*;
+mod body;
+mod fields;
+mod status;
+pub use body::*;
+mod encode;
+pub use encode::{encode_body, reply_prefix_digest};
+mod handshake;
+pub use handshake::ReceiptHandshake;
+mod transcript;
+pub use transcript::ReceiptOperation;
+mod session;
+pub use session::{ReceiptEndpoint, ReceiptSession, ReceiptSessionBinding};
+mod framing;
+pub use framing::{RECEIPT_PROTOCOL, ReceiptCodec};

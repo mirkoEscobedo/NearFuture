@@ -1,0 +1,21 @@
+# Portable protocol foundation verification
+
+The reviewed scope comprises the bounded private blob scan, pure Rust control2 receipt protocol and pure notification protocol, plus independently authored fixture producers. It does not yet implement a durable receipt book, receipt operation acceptance, notification authorization/subscriptions, a three-lane owner or semantic replica synchronization. Issue 23 remains open.
+
+## Independent source review
+
+Root reviewed all 21 receipt source/test paths and all 17 notification checkpoint paths, including the evidence document. Root authored neither production codec. Root previously reviewed every independently authored Node producer source and ran its public tests/reproducibility checks in isolated candidates. The separate reviewer read every batch source/test path, unchanged ACL/process context and exact legacy-reader extraction; independent implementation R1 passed all 36 identity tests, formatting, strict Clippy and frozen source checks. Its private native result SHA256 is `430d3a029afb8d5f7aaef24ba6293d6ebe1d7f1cede50f1f31f15e06b585a858`.
+
+No Important source finding was established in these scoped reviews. The receipt session authenticates a handshake and checks an active envelope against caller-supplied current membership. Its future trusted owner must reload actual durable policy at every protected cut; the pure API does not establish a SQL lookup. The codec structurally admits a signed terminal sequence above the record's current source event. The future operation client must reject that contextual relation, exact-binding/principal/operation mismatch, below-protected minima, stale membership and substituted pinned source before reporting or persisting a receipt. The independently encoded contextual negatives are not claimed as exercised operation-acceptance tests by this pure slice.
+
+Notification records and transcript inputs are untrusted values. Frame-length admission performs no I/O/allocation and must be called before body allocation by the later reader. Signature corpus tests prove primitive bytes using declared public test keys; those keys never create operational membership. Token-bucket, queue and scheduling corpus scenarios are data, not observed network progress or memory measurements. The exact notification protocol digest has no trailing NUL; receipt and notification signature domains remain separate.
+
+## Frozen identities and publication
+
+Author checkpoints record exact Windows working-file bytes and retain their historical author status. They must not be relabeled as Git blob identities. Root's separate `protocol-publication-checkpoint.json` records 78 code/data/integration paths after CRLF-to-LF Git text normalization. Exact committed blobs and a fresh LF checkout must be checked before publication. The fixture producers are registered in mandatory `check:schemas` and `test:tools`; Cargo dependencies, features and lock data are unchanged from accepted main.
+
+## Native checks
+
+Independent implementation R1 passed in both isolated accepted-main-plus-owned-source candidates. Receipt passed 51 transport tests, including 12 receipt tests; notification passed 56, including 17 notification tests. Each candidate excluded the other codec and moving batch source. All 10 supervisor steps passed with Windows Job Object ownership, status 0 and no timeout: before/after raw source checks, complete transport tests, scoped formatting and strict all-target Clippy. Private result `.tmp/pure-protocol-root-native.json`, SHA256 `1a624219221d09618e493efd59d7a66a19236e58ba8a4f7975e8061a063858e0`. Exact raw checks covered all 21 receipt and 17 notification checkpoint paths against both candidate and frozen working tree.
+
+Earlier transport and legacy fixture deadline failures remain recorded in the author/batch evidence. A quiet targeted diagnostic rerun passed unchanged sources and deadlines; contention is a supported hypothesis, not a proven hidden-state diagnosis. No production timer was widened. Actual hosted Linux batch owner/mode behavior and the final publication CI are separate pending gates. Native Starsector frame behavior, complete issue 23 acceptance and hardware power-loss guarantees are not inferred from headless checks.

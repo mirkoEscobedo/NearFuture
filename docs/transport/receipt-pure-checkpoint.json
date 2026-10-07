@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "slice": "receipt-control2-pure",
+  "method": "SHA-256 of exact working-file bytes on Windows; no text normalization",
+  "excludes": [
+    "this checkpoint",
+    "evidence document",
+    "root shared export",
+    "independently owned corpus"
+  ],
+  "contract_sha256": "763fbd65d5d6df42268c6b30d3ddaf3bea23972303fa7b0ab5f618ab58f31efd",
+  "fixture_json_sha256": "97ba35ee58f6fb01d30bd2e2d6d3d07d8f82e75c3f6626f4cc056c8476e95e1e",
+  "fixture_tsv_sha256": "579f5b322ccf4075e8225f48bb2840e92eabdf9a9756e3b557d83e2c5726a945",
+  "files": [
+    {
+      "path": "crates/nf-transport/src/receipt/body.rs",
+      "sha256": "5c385a60e860cc69c67804fb9cca72da4339ac608e7fbb18e3471398f81e1441"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/decode.rs",
+      "sha256": "871e1fdc31531fa4ffb6ce059ce8c9bfcde400529ae8f1ee7b8ec0dbb9d25e40"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/encode.rs",
+      "sha256": "5f6a1eb88a363c2d69ce1ba6bfd694c1661b62fcbcb53b23d3db21fbeccadb01"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/fields.rs",
+      "sha256": "cd8d55ab7f3e80b3bb151500c8d0d594937fdea2f61a09e5d775e8abb9d9aeb4"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/framing.rs",
+      "sha256": "1591c5ef1e37c14bf6639a4d62253370f4a0768a1e2a57347b4ae0ae28dbdb6d"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/handshake.rs",
+      "sha256": "9a6cc2b41e258522592b44ec510bebf30d81bd6953e14345be1a051b6fd3902f"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/mod.rs",
+      "sha256": "63f1b56bea6aada923f7cf90118e78f8dc0d03a2392dd1a4702ddfb815421ce0"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/model.rs",
+      "sha256": "8606e66876d41ccd9ee318decbad6d79dd7ffcfd4e6cd8f976f231d3adef57a8"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/reader.rs",
+      "sha256": "329c62ca1c59f22db9db05d0e431d818a95db0b219930d4fab7ed9fd7ee5917e"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/session.rs",
+      "sha256": "0de9d9b5489cb75463c791001bddb4172d6d7f2ba32b9db132db6c06cbc3b6da"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/status.rs",
+      "sha256": "7b40d9fcc7c61497f257ee6307cc3477efdcfd7bad101ac9b0d4ad0d8be4dd01"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/transcript.rs",
+      "sha256": "a9542ebb7876d92bbbe20c8765c42f52ae140d5b8db8a397c3aa737f387e8554"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_committed.rs",
+      "sha256": "82112b0bc220111e16bf1dfe3ab0333367e648acfc13bbd0a4943ad2b428ed74"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_framing.rs",
+      "sha256": "d0de96b72adc1349aecfbb3083cbab36c3872ae2c547302b36d0886767135019"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_original.rs",
+      "sha256": "03c85ca7934c6babbfe5a6b3a2b9db2ebbe597025a75f4cbc5f1603ad182feb9"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_records.rs",
+      "sha256": "aa7e467379c9bb09eb4dd7fac7df9bbded1ed7e23330c9e5c5b2be49a93d8b63"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_session.rs",
+      "sha256": "f03f867459d578ae4e98bcb1cf5c6eb515d4791cb5129d4dd135122fa2944ad2"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_signatures.rs",
+      "sha256": "44647ee5e3eda22aa87723facfc398d4f56a7d4169c32bb03716d1e182631f76"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_transcript.rs",
+      "sha256": "b0437fba0812136fc9f753787750d8e34bc5435a7ae0e0c1c94cb8137bb2832c"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_support/corpus.rs",
+      "sha256": "2e79d924f32e050210ff81e2550d9adc3d1eec2c6a935a9fe0aa81936aecdc88"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_support/identities.rs",
+      "sha256": "a65673187792430a1a2219f314ca61a8b10bbcf35b1a1452ecd534d607bbaca0"
+    }
+  ]
+}
