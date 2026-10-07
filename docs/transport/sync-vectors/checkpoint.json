@@ -1,0 +1,206 @@
+{
+  "format": "NF-SYNC-1 independent reference checkpoint",
+  "scope": "Data-only Node writer, pure byte vectors and tests; no runtime authority or semantic document admission",
+  "contract_sha256": "e4223a690379b3c76db543a08dc8c8179da2d75df55dc96c8b473b2aed8c65bc",
+  "meaningful_red": {
+    "path": ".tmp/sync-reference-header-red.json",
+    "sha256": "f8b36a6781ff4c5b52bf402801289768296af8da89db48f3d60f57e2626ed067",
+    "case": "Supported header API returns Unavailable for valid exact126-byte Hello",
+    "tests": 1,
+    "status": 1,
+    "processOwnership": "windows-job-object",
+    "timedOut": false
+  },
+  "observed_green": {
+    "path": ".tmp/sync-reference-nonce-green.json",
+    "sha256": "71c2193e20acc21e5a601ef0ac338c2aaaca41abdcd84cfacfdcac7a69039fec",
+    "tests": 17,
+    "steps": 5,
+    "status": 0,
+    "processOwnership": "windows-job-object",
+    "timedOut": false,
+    "qualification": "18 repaired source raw hashes matched before/after; README evidence only updated afterward. Executable sources/tests and regenerated corpus unchanged."
+  },
+  "corpus_counts": {
+    "records": 25,
+    "closed_kinds": 17,
+    "prefixes": 12,
+    "transcripts": 16,
+    "primitive_signatures": 14,
+    "malformed_context_or_framing": 75,
+    "rows": 142
+  },
+  "files": [
+    {
+      "path": "docs/transport/sync-contract.md",
+      "bytes": 17259,
+      "sha256": "e4223a690379b3c76db543a08dc8c8179da2d75df55dc96c8b473b2aed8c65bc"
+    },
+    {
+      "path": "docs/transport/sync-vectors/sync-v1.json",
+      "bytes": 261929,
+      "sha256": "692e6d992b1215235bda20062277a3679067f03a6a9972b1b0ecde1a9924705b"
+    },
+    {
+      "path": "docs/transport/sync-vectors/sync-v1.tsv",
+      "bytes": 179963,
+      "sha256": "7e4bc2526d4bace0df2d8a0965a5e23921129d79befbf43057de85035d07a633"
+    },
+    {
+      "path": "tests/reference/sync/corpus.test.cjs",
+      "bytes": 3084,
+      "sha256": "a11032cbfaf0079c5949c8e5963bf984b48c1843b2a080b4385ca1e01b36f8d9"
+    },
+    {
+      "path": "tests/reference/sync/fields.test.cjs",
+      "bytes": 2918,
+      "sha256": "653a1be1be947d45dd54898f8be92098142b4513c5993dd3fcb61c11f1117cfb"
+    },
+    {
+      "path": "tests/reference/sync/records.test.cjs",
+      "bytes": 1437,
+      "sha256": "3bf8e507ad54a424f6c27d04c7e6e5c7e1070fbccbf9f99935418cedebc5a650"
+    },
+    {
+      "path": "tests/reference/sync/transcripts.test.cjs",
+      "bytes": 6637,
+      "sha256": "9f65bf20a2ba17d3a039386eddb7b368a3b0e59f3a23c64a1cb26a3b7dadccd7"
+    },
+    {
+      "path": "tools/reference/sync/corpus.cjs",
+      "bytes": 4637,
+      "sha256": "92eef866acde2f76a354b192de8775350ed632a1ca2bfe4010398e348a87d682"
+    },
+    {
+      "path": "tools/reference/sync/fields.cjs",
+      "bytes": 1714,
+      "sha256": "f3a0ebacf0cdd422bc31cfb91d942876d29fc8cf7670b756da07b0eb24864392"
+    },
+    {
+      "path": "tools/reference/sync/fixtures.cjs",
+      "bytes": 1807,
+      "sha256": "5bd0267763a907479e630a80ee1015ea50bfc2b902343ce62c4562cb777b9788"
+    },
+    {
+      "path": "tools/reference/sync/generate.cjs",
+      "bytes": 1280,
+      "sha256": "95878c5a2c3921d8e11396e316e8ffef10566866f8207db59b1b99ab4bada357"
+    },
+    {
+      "path": "tools/reference/sync/identity.cjs",
+      "bytes": 1622,
+      "sha256": "34ee7ffc871c987b0556e8c7ca50e32a1beeca5b13a7fd969aae57dd18a5454e"
+    },
+    {
+      "path": "tools/reference/sync/malformed.cjs",
+      "bytes": 3145,
+      "sha256": "957a3db921ab74a371e025b13da88be0b6f46f54a228bffd1614a455060ba677"
+    },
+    {
+      "path": "tools/reference/sync/profile.cjs",
+      "bytes": 2334,
+      "sha256": "fc62de1f903a0c9e07aa9c792154aa0f9e93b362215f4f48cfb44fc26b6898ca"
+    },
+    {
+      "path": "tools/reference/sync/README.md",
+      "bytes": 6330,
+      "sha256": "08bd8bfa6e9d9d2e09281538ea1b630bb18e1241c32c837a387c210dbaaefe3f"
+    },
+    {
+      "path": "tools/reference/sync/records-auth.cjs",
+      "bytes": 986,
+      "sha256": "487c89756ca3294658dc3b8fc92d91a9cbdfd3e497306d557421cc4181793267"
+    },
+    {
+      "path": "tools/reference/sync/records-control.cjs",
+      "bytes": 2532,
+      "sha256": "8efdf64fa45a30d05b4b60b363420f0e349632c4e254ecd738745709a6b2d32e"
+    },
+    {
+      "path": "tools/reference/sync/records-transfer.cjs",
+      "bytes": 2377,
+      "sha256": "ce0818c9cdc660a76b2a5bc7488eefd93e9d58a38e7c049533fde459d8555294"
+    },
+    {
+      "path": "tools/reference/sync/source-schema.cjs",
+      "bytes": 1086,
+      "sha256": "49c65ab5d769ed04e3a276917059ed6064c0f163c5f244b39ad79070006b0e4d"
+    },
+    {
+      "path": "tools/reference/sync/transcripts.cjs",
+      "bytes": 1993,
+      "sha256": "132a2ec4389e6572af87bf19aaef0578ccbbce2cb530238d9685496063016840"
+    }
+  ],
+  "initial_green": {
+    "path": ".tmp/sync-reference-green.json",
+    "sha256": "ca711ce3651b9df9f4a2caee4917086f79d52007f621ec54977f3fcaddf32e3d",
+    "tests": 15,
+    "steps": 5,
+    "status": 0,
+    "processOwnership": "windows-job-object",
+    "timedOut": false,
+    "qualification": "18 draft source hashes matched before/after; README evidence only updated afterward. Executable sources/tests and generated corpus unchanged."
+  },
+  "review_repair": {
+    "round": 1,
+    "finding": "Initial fixture reused Sync and Document operation nonces, masking Install control-nonce substitution",
+    "meaningful_red": {
+      "path": ".tmp/sync-reference-nonce-red.json",
+      "sha256": "b58900e7004cd3769c1b0aa558b673682344704f73f677640d511e265a37e9f7",
+      "case": "Existing supported API emits control0x11 instead of distinct final document0x1e at transcript142..174",
+      "tests": 1,
+      "status": 1,
+      "processOwnership": "windows-job-object",
+      "timedOut": false
+    },
+    "qualification": "Data-only fixture repair; fixed reviewed wire contract unchanged; runtime admission not observed",
+    "changed_paths": [
+      {
+        "path": "docs/transport/sync-vectors/sync-v1.json",
+        "old_sha256": "a86ebd6cb1c0353ae445365c400372ecc3296b8521b03178afd7158cfb23b85b",
+        "new_sha256": "692e6d992b1215235bda20062277a3679067f03a6a9972b1b0ecde1a9924705b"
+      },
+      {
+        "path": "docs/transport/sync-vectors/sync-v1.tsv",
+        "old_sha256": "a37de69579231f15aa9175795fd0880a2d65edfac9121a1864dfc4e8b075f3f8",
+        "new_sha256": "7e4bc2526d4bace0df2d8a0965a5e23921129d79befbf43057de85035d07a633"
+      },
+      {
+        "path": "tests/reference/sync/transcripts.test.cjs",
+        "old_sha256": "24e7596760b4a809897edd310299b291d26cec02c396b77eea0f2fcff2e56f10",
+        "new_sha256": "9f65bf20a2ba17d3a039386eddb7b368a3b0e59f3a23c64a1cb26a3b7dadccd7"
+      },
+      {
+        "path": "tools/reference/sync/corpus.cjs",
+        "old_sha256": "a1e6325fcf04f3d76ca62e230427ae87ba32a61e47b1efe11b99e40ad7d672b7",
+        "new_sha256": "92eef866acde2f76a354b192de8775350ed632a1ca2bfe4010398e348a87d682"
+      },
+      {
+        "path": "tools/reference/sync/fixtures.cjs",
+        "old_sha256": "52617259602b94b77d15410b7c09ccf88e6fdb64fc3cf9650d8f4e8b1e2b165b",
+        "new_sha256": "5bd0267763a907479e630a80ee1015ea50bfc2b902343ce62c4562cb777b9788"
+      },
+      {
+        "path": "tools/reference/sync/README.md",
+        "old_sha256": "4240d5e910d5c0aa80b48af4498d8fa7a55d00988e62513caf2f453dd2a55773",
+        "new_sha256": "08bd8bfa6e9d9d2e09281538ea1b630bb18e1241c32c837a387c210dbaaefe3f"
+      },
+      {
+        "path": "tools/reference/sync/records-control.cjs",
+        "old_sha256": "63bd7699525bbf155f8c774cfc07a486e8e0a476a508b97606060b055fc48f56",
+        "new_sha256": "8efdf64fa45a30d05b4b60b363420f0e349632c4e254ecd738745709a6b2d32e"
+      },
+      {
+        "path": "tools/reference/sync/records-transfer.cjs",
+        "old_sha256": "e877f36acb28d88e14df06823c989330e572821529504e0f162f21429aa7a3b5",
+        "new_sha256": "ce0818c9cdc660a76b2a5bc7488eefd93e9d58a38e7c049533fde459d8555294"
+      },
+      {
+        "path": "tools/reference/sync/transcripts.cjs",
+        "old_sha256": "075f8782c1e529de5e78beb6ea8f40eadf9c8f09bd360fbb7faeabc4c18e0a18",
+        "new_sha256": "132a2ec4389e6572af87bf19aaef0578ccbbce2cb530238d9685496063016840"
+      }
+    ]
+  }
+}
