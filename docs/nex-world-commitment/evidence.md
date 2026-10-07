@@ -1,6 +1,6 @@
 # Full-world implementation evidence
 
-Status: author checks passed; independent semantic review pending. No native capture or operation-authority claim. The frozen partial shadow baseline is commit6907179bd4f8b09366050f57bfa6522215271482; new work adds only owned world modules/tests/fixtures, additive lib.rs exports and these documents. A read-only diff over every frozen production source outside lib.rs was empty after implementation.
+Status: independent semantic review R1 and isolated publication gate passed. No native capture or operation-authority claim. The frozen partial shadow baseline is commit6907179bd4f8b09366050f57bfa6522215271482; new work adds only owned world modules/tests/fixtures, additive lib.rs exports and these documents. A read-only diff over every frozen production source outside lib.rs was empty after implementation.
 
 ## Observed RED/GREEN
 
@@ -55,3 +55,9 @@ npm.cmd exec -- workspace-template verify .tmp/shadow-review --scope module --mo
 Fresh full crate checks passed29 public/unit tests; the optional differential test was intentionally separate and then actually passed all26 real Java17 raw-input cases. The native package-owned verifier reported both structured steps processOwnership=windows-job-object, status0, timedOut=false. Formatting, strict Clippy, both generators and repository type/boundary checks passed. A test-only single-element-loop Clippy failure was corrected before this strict GREEN; it was not a semantic result.
 
 Snapshot equality is equality of supplied declared values, not evidence that the owner supplied the actual current native capture. Full aggregate read-set, G1 writer/coherence/thread/lifecycle, native source/JAR equivalence, MutableStat total priority/order, complete selection/player/multi-target policy and live side-effect success remain unavailable. The result has no actuator, IPC registry or promotion authority.
+
+## Independent review and isolated publication
+
+Reviewed implementation revision: `f60455a6319e0b4a6787a79d40be84bc374d3e14`. Coordinator R1 inspected the complete model/encoder inventory, private admitted-world and result construction, borrowed preflight, finite encodings, current-world/current-owner/method/target comparisons and independent goldens. Verdict PASS with no important semantic finding or semantic repair. Fresh native-supervised checks passed all29 public/unit tests plus the explicitly invoked Java17 differential test, both fixture generators, classpath export and strict all-target Clippy; all five steps returned status0, no timeout and windows-job-object ownership.
+
+The isolated accepted-main-plus-commitment candidate then passed clean offline npm installation, full157 Rust/40 Node checks and Java checks, actual bundled Java17 control/bulk sockets13.77s and26-case differential0.20s, and locked offline workspace release. All six structured steps reported status0, timedOut=false and processOwnership=windows-job-object; verifier verdictPASS. These are headless test durations, not bridge latency. Hosted Windows/Linux gates are pending publication. No native writer/capture/authority gap is closed by this slice.
