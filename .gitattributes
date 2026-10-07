@@ -15,3 +15,4 @@
 /crates/nf-nex-shadow/fixtures/*.tsv text eol=lf
 /crates/nf-world/fixtures/*.tsv text eol=lf
 /java/nex-reference/src/test/resources/*.tsv text eol=lf
+/crates/nf-world/fixtures/*.hex text eol=lf
