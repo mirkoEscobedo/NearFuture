@@ -17,7 +17,7 @@
     "check": "npm run lint && npm run check:schemas && npm test && npm run check:java",
     "workspace-template": "workspace-template",
     "skills": "workspace-template skills list",
-    "check:schemas": "node protocol/vectors/generate-fixtures.cjs --check && node protocol/vectors/generate-wire-fixtures.cjs --check && node protocol/text/generate-ranges.cjs --check && node protocol/vectors/generate-local-auth-fixtures.cjs --check && node crates/nf-nex-shadow/fixtures/generate-identity.cjs --check",
+    "check:schemas": "node protocol/vectors/generate-fixtures.cjs --check && node protocol/vectors/generate-wire-fixtures.cjs --check && node protocol/text/generate-ranges.cjs --check && node protocol/vectors/generate-local-auth-fixtures.cjs --check && node crates/nf-nex-shadow/fixtures/generate-identity.cjs --check && node crates/nf-nex-shadow/fixtures/generate-world.cjs --check",
     "check:performance": "node --test tests/performance/*.test.mjs"
   },
   "devDependencies": {

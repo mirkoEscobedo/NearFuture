@@ -17,3 +17,7 @@ pub use identity::{ShadowInput, ShadowMetadata, encode_input, input_digest};
 pub use session::*;
 mod diagnostics;
 pub use diagnostics::*;
+mod world_session;
+pub use world_session::*;
+mod world_commitment;
+pub use world_commitment::{WorldCommitment, commit_world};
