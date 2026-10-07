@@ -32,9 +32,9 @@ async fn response(
 async fn actual_noise_server_refuses_foreign_scope_history_and_ruleset_without_authoritative_result()
  {
     for field in 0..3 {
+        let tmp = scratch::Scratch::new();
+        let c = owned_community::OwnedCommunity::new(&tmp.0);
         tokio::time::timeout(std::time::Duration::from_secs(8), async {
-            let tmp = scratch::Scratch::new();
-            let c = owned_community::OwnedCommunity::new(&tmp.0);
             let policy = SessionPolicy {
                 scope: c.state.scope,
                 ruleset: [4; 32],
@@ -86,9 +86,9 @@ async fn actual_noise_server_refuses_foreign_scope_history_and_ruleset_without_a
 }
 #[tokio::test(flavor = "current_thread")]
 async fn actual_noise_peer_with_valid_worker_signature_cannot_promote_itself_to_player() {
+    let tmp = scratch::Scratch::new();
+    let c = owned_community::OwnedCommunity::with_role(&tmp.0, Roles::WORKER);
     tokio::time::timeout(std::time::Duration::from_secs(8), async {
-        let tmp = scratch::Scratch::new();
-        let c = owned_community::OwnedCommunity::with_role(&tmp.0, Roles::WORKER);
         let policy = SessionPolicy {
             scope: c.state.scope,
             ruleset: [4; 32],

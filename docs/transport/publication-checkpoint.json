@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "date": "2026-10-07",
-  "method": "SHA256 exact normalized staged Git blobs under repository attributes; same 83 paths as historical raw working-byte checkpoint; text CRLF converted to LF without logical content changes",
+  "method": "SHA256 exact normalized staged Git blobs under repository attributes; same83path inventory as historical raw working-byte checkpoint",
   "basis": "bc29e8cffefafa33e87e7ff4ab1aa5f3a1b3510e",
   "files": [
     {
@@ -214,7 +214,7 @@
     },
     {
       "path": "crates/nf-transport/tests/foreground_rejections.rs",
-      "sha256": "eab77e937f10f561c990645676b1e8a4c30ad84f7373267b963f40e53913e985"
+      "sha256": "05832fe1e4ae29bdfddf0313db58af471a8c1fa2b6b199b5c8f38f812a641e5a"
     },
     {
       "path": "crates/nf-transport/tests/framing.rs",
@@ -336,5 +336,6 @@
       "path": "docs/transport/vectors/peer-v1.tsv",
       "sha256": "49baafd8719d6854d39f26e8b8badaf2935c6b7730d5d2ad1d2fbda84c46b795"
     }
-  ]
+  ],
+  "revision_note": "After initial publication8e2cf30, test-only foreground_rejections fixture preparation moved outside unchanged8s network deadlines; no production change. Historical raw checkpoint remains unmodified."
 }
