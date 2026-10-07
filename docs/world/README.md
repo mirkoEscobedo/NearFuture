@@ -1,6 +1,6 @@
 # NF-MINI-1 pure core
 
-Phase1 implements only `nf-world`: a bounded no_std value model and pure rules. [Proposal](proposal.md) records the intended later kernel/store/driver integration; none is implemented or accepted by this core. Issue36 remains open pending actual atomic persistence, authority/activity policy, pacing/restart and reviewed headless composition.
+Phase1 implements only `nf-world`: a bounded no_std value model and pure rules. [Proposal](proposal.md) records the scope and [exact phase2 contract](integration-contract.md) records the proposed later kernel/store/driver integration; typed kernel implementation is now frozen for independent review; atomic Store/driver composition remains pending. Issue36 remains open pending actual atomic persistence, authority/activity policy, pacing/restart and reviewed headless composition.
 
 Genesis has three systems, three account-controlled factions, six fixed sites (three initial colonies), three abstract fleets and three symmetric pair relations. Integer NF resources and costs are fixed in `RULESET_CONFIG`; `ruleset_hash()` commits its exact bytes. These are Near Future rules, with no native/Nex compatibility claim. No function reads a clock, identity vault, membership database, filesystem, network, ambient random generator or game object.
 
@@ -15,3 +15,7 @@ Genesis has three systems, three account-controlled factions, six fixed sites (t
 `validate_at` checks canonical identity/order/counts, fixed topology/ownership, pair bounds, schedule/phase bidirectional references and resource accounting. At trusted committed N, every pending construction has remaining duration1..2 ticks and arrival1..3. Internal action-output validation instead uses actual committing N and permits old due==N only until exact due reduction; it is not final snapshot admission. Remaining distance is checked by subtraction, so high ticks do not overflow a computed upper bound. Available plus spent resources equal genesis totals. Spent credits exactly match newly founded colonies and purchased industry slots; supplies cover those costs plus integral20-unit travel expenditure. This validates model consistency, not the authenticity of an arbitrary snapshot or its history. Only accepted journal replay/authenticated ownership can establish that provenance.
 
 The component codec is [domain7/schema2/type5](component-schema.md). Foundation and accepted kernel schema1 decoders remain unchanged and reject these bytes. No schema or capability is registered on public IPC, Java or transport.
+
+Coordinator approved the independently reviewed phase2 design (frozen design SHA256 c9292ff1edc6a6f1a3f60ec5fb1208a706d2b5055e4802317eecad2a4c819f70). Only typed nf-kernel miniature modules are currently authorized for implementation; their source review is pending. Store/driver acceptance is not inferred from design approval. Pure-core scoped R2 evidence is [core-verification.md](core-verification.md).
+
+Typed kernel source/API and scoped evidence are [kernel-README.md](kernel-README.md) and [kernel-verification.md](kernel-verification.md).

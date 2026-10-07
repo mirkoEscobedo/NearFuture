@@ -17,3 +17,4 @@
 /java/nex-reference/src/test/resources/*.tsv text eol=lf
 /crates/nf-world/fixtures/*.hex text eol=lf
 /docs/transport/vectors/*.tsv text eol=lf
+/crates/nf-kernel/tests/fixtures/miniature/*.hex text eol=lf

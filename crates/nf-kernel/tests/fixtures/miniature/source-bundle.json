@@ -1,0 +1,138 @@
+{
+  "profile": "NF-MINIATURE-SOURCE-1",
+  "normalization": "UTF-8, CRLF to LF; no other rewriting",
+  "excluded": "crates/nf-kernel/src/miniature/generated_pin.rs",
+  "files": [
+    {
+      "path": "crates/nf-kernel/src/miniature/cancel.rs",
+      "bytes": 2452,
+      "sha256": "aa982d2a45761583034b976d557557d2cbbddfad0c91dabb6426c4124d25aa79"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/actions.rs",
+      "bytes": 2182,
+      "sha256": "40e72abd3e8b38f1360349b9a9a86dd683e48b3bae670f20d6f515c71e92dd5f"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/batch.rs",
+      "bytes": 3695,
+      "sha256": "c4e1679d0a82a7f78a9ae9c7e4b270ad26239d41c5d3379f7dc46837c66febdc"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/events.rs",
+      "bytes": 3165,
+      "sha256": "b86c21bff082c6799316b61f34382a6096421f040b2d69e1d7680812f3a81123"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/frontier.rs",
+      "bytes": 2531,
+      "sha256": "922cdb93388cdd593e4d4cf4702d35e1f702ec0e350bbcfadc657bbaf19432c8"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/holds.rs",
+      "bytes": 581,
+      "sha256": "8d4ce56b0e01e3f11fb2f4beae0a85d80c53d21104acaa4895f88b0bb505efa0"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/intent.rs",
+      "bytes": 2620,
+      "sha256": "fc91cccf8a7995db2c5ccaebf087e60ada6606d40e484a55833c1a3e33df83bb"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/mod.rs",
+      "bytes": 2771,
+      "sha256": "472c163c2d0e0c1678731aa9197633f40e7176e465d4b3d64f3e715afc7da2c5"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/primitives.rs",
+      "bytes": 4365,
+      "sha256": "6cd9e4965e91ef4426947efbca3e4670920eddb356d6414fff118a322f4a8fb2"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/snapshot.rs",
+      "bytes": 2642,
+      "sha256": "574e45fcf9ef5e5e98cc535381b867ace73c52c386166dd387b68f4b78a8bedb"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/frontier.rs",
+      "bytes": 3882,
+      "sha256": "c1364a020c9fd32b4e3bfad0f9a048a989d8a1b17212067ff7fdd07f7c7dc46e"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/mod.rs",
+      "bytes": 410,
+      "sha256": "ae27976295b913f36388a64fe82ff2eb08f4bd23e26a01a9032d4b833535b5a7"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/model.rs",
+      "bytes": 7483,
+      "sha256": "c1153ef078e2a1ce8718cca76e056fba03f2c2be39e592be03ea8eb0856b2182"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/profile.rs",
+      "bytes": 354,
+      "sha256": "ceb3e385bd2a48552e465f4b2fe83af6bce1b92bc361ea53c730fe311e946999"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/reducer.rs",
+      "bytes": 4730,
+      "sha256": "b3f3c8e18209ca78de3fa1e9ee215a014364f08357d116a7c6bdc6f1178a81df"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/world.rs",
+      "bytes": 1379,
+      "sha256": "49eb9cfe368ea429753dc896bd01386ce1559234920d6ba6c5ff653e9466aa37"
+    },
+    {
+      "path": "crates/nf-world/src/actions.rs",
+      "bytes": 9709,
+      "sha256": "434336be338b8c3a87762fe4a198112cce9efe9c91d5c0a670dab131557c6601"
+    },
+    {
+      "path": "crates/nf-world/src/codec/mod.rs",
+      "bytes": 1984,
+      "sha256": "399c57f7cefc2e37f721477d607b4fb207f7dce73a4d1ab48688643f05ec9ad8"
+    },
+    {
+      "path": "crates/nf-world/src/codec/read.rs",
+      "bytes": 4278,
+      "sha256": "4a437c74c2e0406046c90b218021d42f1f760f786ad05ec601781bf374d2939c"
+    },
+    {
+      "path": "crates/nf-world/src/codec/write.rs",
+      "bytes": 3129,
+      "sha256": "2d7f32587faed1869411b818214eabbad5e5df1f8c632f2891c0d7c7dc4310c8"
+    },
+    {
+      "path": "crates/nf-world/src/frontier.rs",
+      "bytes": 2610,
+      "sha256": "155984c2f5de3a46aead1e753e7726c248da987aa04c55039e7962e0813da3d1"
+    },
+    {
+      "path": "crates/nf-world/src/genesis.rs",
+      "bytes": 2679,
+      "sha256": "72ed4ea09510a58f6e66f78bf483c25c51918c13363d7eab29eab265ea34af7a"
+    },
+    {
+      "path": "crates/nf-world/src/lib.rs",
+      "bytes": 350,
+      "sha256": "5d5f9a27828675c10f0ea728dc5aa579dd4c56021ba72c49a1629d543bb265e7"
+    },
+    {
+      "path": "crates/nf-world/src/model.rs",
+      "bytes": 2960,
+      "sha256": "ecb89b164b50476478d580bc1d194f861900cf8c15f413eeea73d170c35c3ba2"
+    },
+    {
+      "path": "crates/nf-world/src/schedules.rs",
+      "bytes": 2585,
+      "sha256": "d30eccc3f86e3a3ca5600c3e1de605d49b44b3eca1f4d4d784b82bf4a4f20b75"
+    },
+    {
+      "path": "crates/nf-world/src/validation.rs",
+      "bytes": 9041,
+      "sha256": "bc0de2c44d67ccc7a6782c54246162c91cfb3d64845fe107768ebdeec839c579"
+    }
+  ],
+  "bundle_sha256": "9261c94ec6e936e9c14c0af0ac7984dfd5fa1de59cf26b7fd6deb80c2fcbe5f6"
+}
