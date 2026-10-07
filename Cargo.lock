@@ -412,6 +412,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "nf-nex-shadow"
+version = "0.1.0"
+dependencies = [
+ "nf-contract",
+ "nf-nex-boundary",
+ "sha2",
+]
+
+[[package]]
 name = "nf-store"
 version = "0.1.0"
 dependencies = [

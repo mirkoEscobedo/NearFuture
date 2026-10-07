@@ -1,0 +1,14 @@
+[package]
+name = "nf-nex-shadow"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file = "LICENSE-NEX-MIT.txt"
+
+[dependencies]
+nf-nex-boundary = { path = "../nf-nex-boundary" }
+nf-contract = { path = "../nf-contract" }
+sha2 = { version = "=0.10.9", default-features = false }
+
+[lints]
+workspace = true

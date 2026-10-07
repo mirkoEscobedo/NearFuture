@@ -1,0 +1,19 @@
+// Additive root-owned integration after the frozen #14 baseline publishes.
+// Oracle takes public corpus path and mode; no input/output algorithm is shared with Rust.
+tasks.register('differentialOracle', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.nex.reference.DifferentialOracleMain'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+    doFirst {
+        if (!providers.gradleProperty('oracleMode').isPresent() || !providers.gradleProperty('oracleCorpus').isPresent()) throw new GradleException('Explicit public oracle mode/corpus required')
+        args providers.gradleProperty('oracleMode').get(), providers.gradleProperty('oracleCorpus').get()
+    }
+}
+tasks.register('exportDifferentialClasspath') {
+    dependsOn testClasses
+    def target = layout.buildDirectory.file('differential-classpath.txt')
+    inputs.files(sourceSets.test.runtimeClasspath)
+    outputs.file(target)
+    doLast { target.get().asFile.text = sourceSets.test.runtimeClasspath.asPath }
+}
