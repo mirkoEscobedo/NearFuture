@@ -27,7 +27,7 @@ npm.cmd exec -- workspace-template verify .tmp/shadow-review --scope module --mo
 # cargo test --manifest-path E:/github/NearFuture/Cargo.toml -p nf-nex-shadow --test differential --locked --offline -- --ignored --nocapture
 ```
 
-The two baseline public corpus identities are SHA256 of exact bytes: `war-v1.tsv` = `5a009c776b643172fea6889a4ffbd8d481856f5bc9b7126c8f2be8b43d66fe16`; `peace-v1.tsv` = `74954740ef83d1cc7b701a274519887644b50d646057f1c1e88538890db034d5`. Source/ref/config/runtime/implementation and full input identities are separately required in bound shadow evaluations; synthetic test metadata is deliberately public and does not establish native runtime verification. Reviewed implementation revision: ``6907179bd4f8b09366050f57bfa6522215271482``.
+The two baseline public corpus identities are SHA256 of the normalized Git blob bytes (LF): `war-v1.tsv` = `5a009c776b643172fea6889a4ffbd8d481856f5bc9b7126c8f2be8b43d66fe16`; `peace-v1.tsv` = `74954740ef83d1cc7b701a274519887644b50d646057f1c1e88538890db034d5`. Source/ref/config/runtime/implementation and full input identities are separately required in bound shadow evaluations; synthetic test metadata is deliberately public and does not establish native runtime verification. Reviewed implementation revision: ``6907179bd4f8b09366050f57bfa6522215271482``.
 
 This portable slice does not close issue15. Missing actual game capture/writer coverage, proprietary MutableStat total priority/order, multi-target/player decision branches, complete action selection/lifecycle, live side-effect success, source/JAR equivalence and native disconnect/save/load hooks remain explicit promotion blockers. No private campaign or proprietary data is included. Capture and projection remain SHADOW_ONLY.
 
