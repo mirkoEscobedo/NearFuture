@@ -1,8 +1,21 @@
 //! Generated protobuf contracts and strict data-only admission. No transport or mutation.
-pub mod generated {
-    include!(concat!(env!("OUT_DIR"), "/nearfuture.protocol.v1.rs"));
+pub mod nearfuture {
+    pub mod protocol {
+        pub mod v1 {
+            include!(concat!(env!("OUT_DIR"), "/nearfuture.protocol.v1.rs"));
+        }
+    }
+    pub mod ipc {
+        pub mod v1 {
+            include!(concat!(env!("OUT_DIR"), "/nearfuture.ipc.v1.rs"));
+        }
+    }
 }
+pub use nearfuture::ipc::v1 as local_auth;
+pub use nearfuture::protocol::v1 as generated;
 mod admission;
+mod local_auth_admission;
+pub use local_auth_admission::{decode_local_auth, decode_local_auth_with_limits};
 mod preflight;
 mod records;
 use prost::Message;
@@ -93,7 +106,14 @@ pub fn decode_snapshot(input: &[u8]) -> Result<generated::WorldSnapshot, WireErr
     Ok(value)
 }
 pub fn decode_chunk(input: &[u8]) -> Result<generated::SnapshotChunk, WireError> {
-    preflight::preflight(input, "SnapshotChunk", Limits::default())?;
+    decode_chunk_with_limits(input, Limits::default())
+}
+/// Borrowed preflight enforces negotiated quotas before generated payload allocation.
+pub fn decode_chunk_with_limits(
+    input: &[u8],
+    limits: Limits,
+) -> Result<generated::SnapshotChunk, WireError> {
+    preflight::preflight(input, "SnapshotChunk", limits)?;
     let value = generated::SnapshotChunk::decode(input).map_err(|_| WireError::Malformed)?;
     admission::chunk(&value)?;
     Ok(value)

@@ -1,0 +1,23 @@
+[package]
+name = "nf-ipc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+nf-contract = { path = "../nf-contract" }
+nf-wire = { path = "../nf-wire" }
+prost = '=0.13.5'
+getrandom = '=0.4.3'
+zeroize = '=1.9.0'
+nf-identity = { path = "../nf-identity" }
+sha2 = { version = "=0.10.9", default-features = false }
+nf-store = { path = "../nf-store" }
+
+hmac = { version = "=0.12.1", default-features = false }
+
+[dev-dependencies]
+nf-kernel = { path = "../nf-kernel" }

@@ -9,7 +9,7 @@ fn equal(left: &g::RequiredSemantics, right: &g::RequiredSemantics) -> Result<()
     }
     Ok(())
 }
-fn limits(value: &g::ResourceLimits) -> Result<()> {
+pub(crate) fn limits(value: &g::ResourceLimits) -> Result<()> {
     let actual = [
         value.control_frame_bytes as u64,
         value.chunk_bytes as u64,

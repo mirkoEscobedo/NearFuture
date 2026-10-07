@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "sha256": "d6ed6c018feb632cd80c3d557da05472be9f33944c09d26890cab08b27f4fbe6",
+      "path": "crates/nf-ipc/Cargo.toml"
+    },
+    {
+      "sha256": "201f1d5b074d2f8813d8b5c0e00ecac7e8c8d2e5c2a3530207ce974f844118ff",
+      "path": "crates/nf-ipc/src/auth.rs"
+    },
+    {
+      "sha256": "5d296973fea09146afb6c0f449d630602cb7ab96e7176281cfc5c86f2987b179",
+      "path": "crates/nf-ipc/src/bin/nf-ipc-node.rs"
+    },
+    {
+      "sha256": "40476a867457b4976b9d7e56a4021ee7fa6f06c969d37869eff71a16eb27ca82",
+      "path": "crates/nf-ipc/src/bulk.rs"
+    },
+    {
+      "sha256": "9207c2f19c6c3f7c8e06b1a32ab9bc93977a03fbd47169e8ce1a80e9b3ff6306",
+      "path": "crates/nf-ipc/src/error.rs"
+    },
+    {
+      "sha256": "81880b54d584edfc36fc3d19e3cb05ab164ae79fa5244a8d5d8eb3f45e481068",
+      "path": "crates/nf-ipc/src/framing.rs"
+    },
+    {
+      "sha256": "f6382457ffaa15f6f9dbdce95b0d001f791e64660fc2ed065e0fe7f4c206d544",
+      "path": "crates/nf-ipc/src/lib.rs"
+    },
+    {
+      "sha256": "7194e202a8100d19c1ada1200d3fe905417e7588cd7c114fbe36f8cbbb737cd2",
+      "path": "crates/nf-ipc/src/queues.rs"
+    },
+    {
+      "sha256": "36126eeb9e9f9719522b0f6f039e6cf4f03defb55ecc6f493dcb14b0f076b1a2",
+      "path": "crates/nf-ipc/src/rendezvous.rs"
+    },
+    {
+      "sha256": "2892df2947caebc3ce21df1eb4e9c5fa5089eb09e0484b50fe324d741273bf0b",
+      "path": "crates/nf-ipc/src/server.rs"
+    },
+    {
+      "sha256": "2619c44b276a74861a3271054a14fda53d9de043a011df4a5c97b45761b019b2",
+      "path": "crates/nf-ipc/src/session.rs"
+    },
+    {
+      "sha256": "26870748f2a0ba83b3c83e043e29e1424dd4df8a702c92a2f6fbceab64ba8ef8",
+      "path": "crates/nf-ipc/src/store_query.rs"
+    },
+    {
+      "sha256": "03362c45f3867524c38f6801f687e3de45075307b9cb13406659f9ec194d3a05",
+      "path": "crates/nf-ipc/src/transport.rs"
+    },
+    {
+      "sha256": "4843067949dcc2d727732910362ebc43e0cb1cf7306b5a23740456467a0efe98",
+      "path": "crates/nf-ipc/tests/auth.rs"
+    },
+    {
+      "sha256": "041f414583dedf06f77c0a16fcd95cf5cef5102e26d25a48de596d8ae909cb1c",
+      "path": "crates/nf-ipc/tests/bulk_server.rs"
+    },
+    {
+      "sha256": "a5e1cfe81ffb7a7610411cd89bcb0acaf80bbf9c896b50d53d9c04905c970b6a",
+      "path": "crates/nf-ipc/tests/bulk.rs"
+    },
+    {
+      "sha256": "fb6f445b93b12ef30884b7197f2bbd286b598c27336f3eb4e7bae7163f437af8",
+      "path": "crates/nf-ipc/tests/common/mod.rs"
+    },
+    {
+      "sha256": "22a642e34c18fd4ff72c1723702daec7c2b96a354eeebe6ed8c00e04f52be2b2",
+      "path": "crates/nf-ipc/tests/framing.rs"
+    },
+    {
+      "sha256": "1eeb280c397467555e0f2f232dbe4cc63f2ddea175641e2cbb25943ee2fcc914",
+      "path": "crates/nf-ipc/tests/java_process.rs"
+    },
+    {
+      "sha256": "7563eba7267653885743b3e13d3e6dbed8794a8e04803a8f3a17febb65ea0fb4",
+      "path": "crates/nf-ipc/tests/node_process.rs"
+    },
+    {
+      "sha256": "999edeb69db68d0e843c505041bc84667f0003c94f8af516236997c214242678",
+      "path": "crates/nf-ipc/tests/queues.rs"
+    },
+    {
+      "sha256": "187ceeb062934b98f79db67bf32572b430bba2ba70ff91fc44f9c861153d9b78",
+      "path": "crates/nf-ipc/tests/rendezvous.rs"
+    },
+    {
+      "sha256": "62af980cfaddca9b4dfc5b05ab51243ea7ab4e229b2c3d853152dea994e67da3",
+      "path": "crates/nf-ipc/tests/response_limits.rs"
+    },
+    {
+      "sha256": "ed6ca57c679eb92ea88be99568b55e14ca1006d1337e529869a43dddb7da7998",
+      "path": "crates/nf-ipc/tests/server.rs"
+    },
+    {
+      "sha256": "f3cae8811be2d5ddd46b04e56583a981d2bd4e680308f426ba1bd12e84d6df82",
+      "path": "crates/nf-ipc/tests/session.rs"
+    },
+    {
+      "sha256": "43c8d432ca584ed6ad488885ac917a97cc2a34d10d5646418ccaf14c1d504294",
+      "path": "crates/nf-ipc/tests/store_process.rs"
+    },
+    {
+      "sha256": "5bc50c0e57500ba63abba04b09ea9b854bb5539b0f20ab718ef9171fc61b5729",
+      "path": "crates/nf-ipc/tests/store_query.rs"
+    },
+    {
+      "sha256": "b0ee1188a8126299297f1265f506355715820ed873986bc42d08bc88baf6f26f",
+      "path": "crates/nf-ipc/tests/transport.rs"
+    },
+    {
+      "sha256": "8a2a2ef7994d9e95f9ac3c3a363eac5052654bc52d7c4195a618e64b68470fa4",
+      "path": "crates/nf-wire/build.rs"
+    },
+    {
+      "sha256": "b517d89eb3458704e8ff69eda9617f74c395d9b09743035497daebad1ba53a3e",
+      "path": "crates/nf-wire/src/admission.rs"
+    },
+    {
+      "sha256": "9bd354d3406a666564a7a6b7a2217d988be26666b8b9e55424d9c23769838059",
+      "path": "crates/nf-wire/src/lib.rs"
+    },
+    {
+      "sha256": "869469a6dd67573a9c3c590014949dd1b26c7986dde37a89415e190dd32e378e",
+      "path": "crates/nf-wire/src/local_auth_admission.rs"
+    },
+    {
+      "sha256": "9db7d761b254489c6805b0153eb4d6d7912ea733dd2b4cbbec58bc8e1576cc2e",
+      "path": "crates/nf-wire/src/preflight.rs"
+    },
+    {
+      "sha256": "f7d52cc7e08b1bca324b926527b2d0d8da797dba37d5fe89603ef305ee58a9a0",
+      "path": "crates/nf-wire/tests/local_auth.rs"
+    },
+    {
+      "sha256": "854485d93c4a284a96f78511e02589b99f3ec485245d1f1ab750678f5d84db01",
+      "path": "java/ipc/build.gradle"
+    },
+    {
+      "sha256": "8437601d9b931e7b53f1f2dbc7dbf2ea35eb801a61110b8b0663bf03cff021f3",
+      "path": "java/ipc/gradle.lockfile"
+    },
+    {
+      "sha256": "d6301cdd8702c4e76a57a4d2d24c43e46b7dec3a00dde4bd1e153e0c4385d81a",
+      "path": "java/ipc/src/main/java/nf/adapter/ipc/AuthContext.java"
+    },
+    {
+      "sha256": "51238e96a35b03c600eb89317d7cb930cf82c2a7eec26839b1753944088a6926",
+      "path": "java/ipc/src/main/java/nf/adapter/ipc/AuthFailure.java"
+    },
+    {
+      "sha256": "d85129672331271f1d6566d6fa7479e520fb1ee5377fb2ab3af37cb32fbd0ad5",
+      "path": "java/ipc/src/main/java/nf/adapter/ipc/AuthLimits.java"
+    },
+    {
+      "sha256": "6533c552a3b590a94b0e66a23132b97f5e94dc3ce6198ed77826fa0f2b40ed59",
+      "path": "java/ipc/src/main/java/nf/adapter/ipc/AuthTranscript.java"
+    },
+    {
+      "sha256": "2ab5ea7c822e230e9561604753ad94244956980e7a359d3aac018827c7ca26c1",
+      "path": "java/ipc/src/main/java/nf/adapter/ipc/BackgroundChannel.java"
+    },
+    {
+      "sha256": "ee5afa5c820c999cd777116f180556841435fcf1b569f152f2869bfebd107655",
+      "path": "java/ipc/src/main/java/nf/adapter/ipc/FrameBridge.java"
+    },
+    {
+      "sha256": "3e1af76d9d5401b0276a0c9f173f646000050e992eea3ef18d1ae9f7575050a5",
+      "path": "java/ipc/src/main/java/nf/adapter/ipc/FrameMessage.java"
+    },
+    {
+      "sha256": "fff4bf12eaaf1f8de6b3e220a6f548728f16c4ccd57022e362ba831e3bf19814",
+      "path": "java/ipc/src/main/java/nf/adapter/ipc/MutualAuthClient.java"
+    },
+    {
+      "sha256": "bdeb6141688b273eea752f87823e473fc59883e03efeaccf425f6a43784ff575",
+      "path": "java/ipc/src/main/java/nf/adapter/ipc/SessionFence.java"
+    },
+    {
+      "sha256": "a4946eaad5cdcac45dfc9cb56be49f754fdbdff2d10791ef270249bbb0ce7ac6",
+      "path": "java/ipc/src/test/java/nf/adapter/ipc/AuthClientTest.java"
+    },
+    {
+      "sha256": "925c4828da698f9cbb5a15b86747559e0ee7cf813d85a16de21379d610a1ec7d",
+      "path": "java/ipc/src/test/java/nf/adapter/ipc/AuthLimitTest.java"
+    },
+    {
+      "sha256": "870fa69ee8c9118b427cde269deb882c018ff4ccc1d565804e07bc49f35af07b",
+      "path": "java/ipc/src/test/java/nf/adapter/ipc/AuthRejectionTest.java"
+    },
+    {
+      "sha256": "4a850ef06c0dac2683abc95278e774dd4556d8948f514c5a008213d950f7520c",
+      "path": "java/ipc/src/test/java/nf/adapter/ipc/AuthSocketClient.java"
+    },
+    {
+      "sha256": "d73de08ff19ceec2f8e635bfa168f449a65eebcddd94051d9039bf85d7265aa3",
+      "path": "java/ipc/src/test/java/nf/adapter/ipc/IpcSmoke.java"
+    },
+    {
+      "sha256": "69ca8b7392b17d2397a7a5a58655483f67ca63172209aaa369dca3a258b3321c",
+      "path": "java/wire/build.gradle"
+    },
+    {
+      "sha256": "e562d4d1a0966005bd7efa111ce66dd4be3dbffb912fd8373f01509cf051c4d8",
+      "path": "java/wire/src/main/java/nf/wire/AuthAdmission.java"
+    },
+    {
+      "sha256": "7aed101528d71f82f0e5a6979727fdcf51618182507d6d3054f197136213ae87",
+      "path": "java/wire/src/main/java/nf/wire/LocalAuthDecoder.java"
+    },
+    {
+      "sha256": "478f67d7f1778ad9f3766c73a51b5b968b0bb91b47acbea85e9ccb88439a11cc",
+      "path": "java/wire/src/main/java/nf/wire/Preflight.java"
+    },
+    {
+      "sha256": "32c25650d12be2bc2b51f8cc1a5f06c347d1733e8fc5874649e5377f0655e29c",
+      "path": "java/wire/src/test/java/nf/wire/AuthWireCorpus.java"
+    },
+    {
+      "sha256": "e9460decf2554288a3e1195a87b68e26f85247bcf79dbba45a9bfb3ee5631292",
+      "path": "java/wire/src/test/java/nf/wire/AuthWireTest.java"
+    },
+    {
+      "sha256": "98e86dedf7d2be5109e425f4dd074e7ab9713c848483703804bbaae33ce48d08",
+      "path": "protocol/near_future/ipc/v1/local_auth.proto"
+    },
+    {
+      "sha256": "2de74c06b8f2288486be75d9835216bc8d747ad12b8c265c51f30cbc21338c25",
+      "path": "protocol/vectors/generate-local-auth-fixtures.cjs"
+    },
+    {
+      "sha256": "a89393da61cb38b3dbd7b05233efee9e91c860cce306c13aabeb20aceb3a842a",
+      "path": "protocol/vectors/local-auth-v1.json"
+    }
+  ],
+  "status": "uncommitted-portable-checkpoint-native-gates-unmeasured",
+  "basisCommit": "296d3a40d0454407a7b55ad62e50cd6039012442",
+  "hashingMethod": "SHA-256 of staged normalized Git file bytes exported by checkout-index; Cargo EOF whitespace normalized before hashing"
+}

@@ -15,14 +15,15 @@ dependencies {
 def generatedProto = layout.buildDirectory.dir('generated/sources/proto')
 tasks.register('generateProto', Exec) {
     def schema = rootProject.file('../protocol/near_future/v1/near_future.proto')
-    inputs.file(schema)
+    def authSchema = rootProject.file('../protocol/near_future/ipc/v1/local_auth.proto')
+    inputs.files(schema, authSchema)
     outputs.dir(generatedProto)
     doFirst {
         def compiler = configurations.protocCompiler.singleFile
         if (!osName.contains('windows') && !compiler.setExecutable(true)) throw new GradleException('Cannot enable the local protoc executable.')
         generatedProto.get().asFile.mkdirs()
         commandLine compiler.absolutePath, "--proto_path=${rootProject.file('../protocol').absolutePath}",
-                "--java_out=${generatedProto.get().asFile.absolutePath}", schema.absolutePath
+                "--java_out=${generatedProto.get().asFile.absolutePath}", schema.absolutePath, authSchema.absolutePath
     }
 }
 sourceSets.main.java.srcDir(generatedProto)
@@ -65,3 +66,12 @@ tasks.register('WirePolicyTest', JavaExec) {
     if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
 }
 tasks.named('check') { dependsOn 'WirePolicyTest' }
+
+tasks.register('AuthWireTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.wire.AuthWireTest'
+    workingDir rootProject.projectDir.parentFile
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'AuthWireTest' }
