@@ -1,4 +1,4 @@
-# Phase1 core evidence (repair1 frozen for independent R2)
+# Phase1 core evidence (independent R2 accepted scope)
 
 Only pure nf-world production/tests/fixtures and docs/world are authored in this phase. Root owns its workspace/lock/architecture admission. Accepted kernel/store/identity modules, foundation schemas and runtime installations are unchanged.
 
@@ -13,3 +13,5 @@ Additional public regressions include all1018 truncation cuts, strict unknown ve
 These tests supply no actual SQLite profile2, authority lease/fencing/restart, atomic resource hold, active-player pause, pacing, crash/fsync, CLI, migration or native acceptance. Those require the separately approved integration phase and an independent review. Issue36 remains open.
 
 Independent R1 reported one IMPORTANT remaining-horizon bypass: both valid industry/arrival checkpoint due bytes changed to100 decoded and re-encoded successfully. The approved repair adds strict final committed horizon1..2/1..3 and a separate internal action-output phase at actual committing N, permitting existing due==N before exact apply_due. Public `cargo test -p nf-world --test horizons --locked --offline` first observed two behavioral failures (one-over/far-future and incorrect earlier contextual tick near u64::MAX); after repair all three horizon tests passed. They cover both exact upper bounds, one over, due100, no-schedule maximum tick, maximum valid due with subtraction-based bounds, and action plus existing timer on the same tick with intermediate encode rejection. Fresh full20 tests, fmt, all-target Clippy, independent golden and architecture scan all PASS. Golden/ruleset bytes are unchanged. This establishes consistency only; it does not certify creation/history provenance.
+
+Independent reviewer starsector_guidance formal R2 PASS after one semantic repair: fresh native six-step lane observed20 public tests, fmt, strict all-target Clippy, golden reproducibility and all29 checkpoint hashes. Both independent R1 industry/arrival due100 probes now reject InvalidValue. Reviewer inspected phase separation at actual N, private validator visibility, checked remaining distance, unchanged final-codec/golden and near-MAX/same-tick regressions. No unresolved IMPORTANT pure-core finding. This verdict covers authored core only, not the proposed durable kernel/store/driver integration or whole issue36.
