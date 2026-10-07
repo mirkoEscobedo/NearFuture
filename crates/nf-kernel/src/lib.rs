@@ -18,3 +18,5 @@ mod reducer;
 mod replay;
 pub use replay::*;
 pub mod miniature;
+
+pub mod replica;

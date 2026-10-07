@@ -32,6 +32,8 @@ pub use lane::{NotifyLane, NotifyLaneEvent};
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+pub(crate) use tests::support as owner_test_support;
 
 fn elapsed_cut(
     created: std::time::Instant,

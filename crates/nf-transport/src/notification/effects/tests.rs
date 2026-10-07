@@ -6,7 +6,7 @@ mod delivery;
 #[path = "../../../tests/notification_internal/notice.rs"]
 mod notice;
 #[path = "../../../tests/notification_effect_support/mod.rs"]
-mod support;
+pub(crate) mod support;
 
 #[path = "../../../tests/notification_internal/deadline.rs"]
 mod deadline;

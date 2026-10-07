@@ -26,4 +26,7 @@ pub mod receipt_effects;
 #[path = "portal/config/mod.rs"]
 pub mod portal_config;
 
+#[path = "portal/owner/mod.rs"]
+pub mod portal;
+
 pub mod sync;

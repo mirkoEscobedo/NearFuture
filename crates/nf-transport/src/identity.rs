@@ -55,4 +55,10 @@ impl TransportIdentity {
     ) -> Result<libp2p::Swarm<crate::notification_effects::NotifyBehaviour>, PeerError> {
         crate::notification_effects::build_notify_swarm(self.key.clone())
     }
+    /// Uses the loaded private Noise identity and fixed portal bulk-verification bounds.
+    pub fn build_portal_bulk_lane(
+        &self,
+    ) -> Result<libp2p::Swarm<crate::portal::PortalBulkBehaviour>, PeerError> {
+        crate::portal::build_portal_bulk_swarm(self.key.clone())
+    }
 }
