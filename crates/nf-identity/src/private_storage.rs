@@ -22,18 +22,10 @@ pub struct LocalIdentity {
 }
 impl PrivateVault {
     pub fn create(path: &Path, game_save_root: &Path) -> Result<Self, IdentityError> {
-        fs::create_dir(path).map_err(|_| IdentityError::PrivateStorage)?;
-        private_access(path, true)?;
-        Self::open(path, game_save_root)
+        Self::create_detailed(path, game_save_root).map_err(PrivateFailure::identity_error)
     }
     pub fn open(path: &Path, game_save_root: &Path) -> Result<Self, IdentityError> {
-        private_access(path, false)?;
-        let root = fs::canonicalize(path).map_err(|_| IdentityError::PrivateStorage)?;
-        let saves = fs::canonicalize(game_save_root).map_err(|_| IdentityError::PrivateStorage)?;
-        if root.starts_with(&saves) || !root.is_dir() {
-            return Err(IdentityError::PrivateStorage);
-        }
-        Ok(Self { root })
+        Self::open_detailed(path, game_save_root).map_err(PrivateFailure::identity_error)
     }
     pub fn create_identity(&self, peer: Vec<u8>) -> Result<LocalIdentity, IdentityError> {
         self.create_identity_detailed(peer)

@@ -56,12 +56,18 @@ impl PrivateFailure {
 pub type PrivateResult<T> = Result<T, PrivateFailure>;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PrivateOperation {
+    VaultCreate,
+    VaultOpen,
     IdentityCreate,
     BlobCreate,
     BlobScan,
 }
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PrivateStage {
+    CreateDirectory,
+    RootCanonicalize,
+    SaveRootCanonicalize,
+    RootRelation,
     Name,
     RootAccess,
     CreateNew,

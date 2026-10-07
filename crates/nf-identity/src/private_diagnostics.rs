@@ -17,3 +17,6 @@ pub(crate) use access::check as access_cause;
 
 #[path = "private_diagnostics/blob_create.rs"]
 mod blob_create;
+
+#[path = "private_diagnostics/vault.rs"]
+mod vault;
