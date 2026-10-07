@@ -12,3 +12,4 @@
 *.cjs text eol=lf
 /protocol/text/DerivedAge-13.0.0.txt -text
 /protocol/text/Unicode-LICENSE.txt -text
+/crates/nf-nex-shadow/fixtures/*.tsv text eol=lf

@@ -66,3 +66,15 @@ test('Nex boundary permits only the local pure contract and refuses effects', ()
         assert.deepEqual(dependencyViolations([{name: pkg.name, dependencies: [dependency]}], []), [`${pkg.name}: domain dependency ${dependency.name} is forbidden`]);
     }
 });
+
+test('Nex shadow permits only copied local domains and exact pure hash', () => {
+    const name = 'nf-nex-shadow';
+    const hash = {name: 'sha2', req: '=0.10.9', uses_default_features: false};
+    const contract = {name: 'nf-contract', path: '/checkout/crates/nf-contract'};
+    const boundary = {name: 'nf-nex-boundary', path: 'E:\\checkout\\crates\\nf-nex-boundary'};
+    assert.deepEqual(dependencyViolations([{name, dependencies: [contract, boundary, hash]}], []), []);
+    for (const dependency of [{name: 'nf-store'}, {name: 'nf-wire'}, {name: 'nf-nex-boundary', req: '^0.1.0'}, {...hash, uses_default_features: true}]) {
+        assert.deepEqual(dependencyViolations([{name, dependencies: [dependency]}], []), [`${name}: domain dependency ${dependency.name} is forbidden`]);
+    }
+    assert.deepEqual(dependencyViolations([], [{path: 'crates/nf-nex-shadow/src/lib.rs', content: '#![no_std]\nuse std::net::TcpStream;'}]), ['crates/nf-nex-shadow/src/lib.rs: Rust domain must not access std']);
+});

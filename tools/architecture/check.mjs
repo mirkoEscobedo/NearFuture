@@ -33,6 +33,8 @@ const sources = [
     ...await sourcesUnder(resolve(root, 'java/contract/src/main'), '.java'),
     ...(packages.some(pkg => pkg.name === 'nf-nex-boundary') ?
         await sourcesUnder(resolve(root, 'crates/nf-nex-boundary/src'), '.rs') : []),
+    ...(packages.some(pkg => pkg.name === 'nf-nex-shadow') ?
+        await sourcesUnder(resolve(root, 'crates/nf-nex-shadow/src'), '.rs') : []),
 ];
 const violations = dependencyViolations(packages, sources);
 if (violations.length) {

@@ -39,6 +39,15 @@ jobs:
           $env:NF_IPC_JAVA = 'java'
           $env:NF_IPC_JAVA_CLASSPATH_FILE = Join-Path (Get-Location) 'java/ipc/build/auth-test-classpath.txt'
           cargo test -p nf-ipc --test java_process --locked --offline -- --ignored
+      - name: Compare Rust shadow against actual Java reference outputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :nex-reference:exportDifferentialClasspath --no-daemon
+          $env:NF_SHADOW_JAVA = 'java'
+          $env:NF_SHADOW_CLASSPATH_FILE = Join-Path (Get-Location) 'java/nex-reference/build/differential-classpath.txt'
+          cargo test -p nf-nex-shadow --test differential --locked --offline -- --ignored
       - name: Install maintained Linux sync fault injector
         if: runner.os == 'Linux'
         run: |
