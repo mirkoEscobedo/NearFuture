@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "method": "SHA256 of UTF8 bytes after CRLF-to-LF Git text normalization; exact Git blobs must be audited before publication",
+  "method": "SHA256 of exact Git text blobs; archive working bytes are compared after CRLF-to-LF normalization. Rust/CJS/JSON/TSV and the pinned protocol contracts require actual LF checkout bytes.",
   "scope": "Reviewed batch inventory, pure receipt and notification modules, independently reviewed fixture writers and root integration metadata",
   "excludes": [
     "this proof and documentation",
@@ -319,6 +319,10 @@
     {
       "path": "tools/receipt-vectors/recovery.cjs",
       "sha256": "f2318c167481dc045ce9d5b4a56d7abcbe7ffda4f386c14c8688761badcf9115"
+    },
+    {
+      "sha256": "8dfaf59aaa7688d9c79d82987c861ebe91c6ce8eb47cfbc3e463ef6eb3496b84",
+      "path": ".gitattributes"
     }
   ],
   "dependency_lock": "Cargo.lock unchanged from accepted main; no new dependencies or features"

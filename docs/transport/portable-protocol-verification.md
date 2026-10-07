@@ -12,7 +12,7 @@ Notification records and transcript inputs are untrusted values. Frame-length ad
 
 ## Frozen identities and publication
 
-Author checkpoints record exact Windows working-file bytes and retain their historical author status. They must not be relabeled as Git blob identities. Root's separate `protocol-publication-checkpoint.json` records 78 code/data/integration paths after CRLF-to-LF Git text normalization. Exact committed blobs and a fresh LF checkout must be checked before publication. The fixture producers are registered in mandatory `check:schemas` and `test:tools`; Cargo dependencies, features and lock data are unchanged from accepted main.
+Author checkpoints record exact Windows working-file bytes and retain their historical author status. They must not be relabeled as Git blob identities. Root's separate `protocol-publication-checkpoint.json` records 79 code/data/integration paths as exact Git text blobs. Archive working bytes are compared after CRLF-to-LF normalization; Rust/CJS/JSON/TSV and the pinned protocol contracts must have actual LF bytes. Existing automatic line-ending conversion in Cargo.lock is not a dependency change. Explicit attributes preserve LF for both pinned contract documents and the new sidecar. Exact committed blobs and a fresh archive checkout must be checked before publication. The fixture producers are registered in mandatory `check:schemas` and `test:tools`; Cargo dependencies, features and lock data are unchanged from accepted main.
 
 ## Native checks
 
