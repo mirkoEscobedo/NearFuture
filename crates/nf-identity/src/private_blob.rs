@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use std::{
     fs::{self, OpenOptions},
     io::{Read, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 use zeroize::Zeroizing;
 
@@ -53,33 +53,7 @@ impl PrivateVault {
             return Err(IdentityError::MissingLocalState);
         }
         private_access(&path, false)?;
-        let file = fs::File::open(path).map_err(|_| IdentityError::PrivateStorage)?;
-        let size = file
-            .metadata()
-            .map_err(|_| IdentityError::PrivateStorage)?
-            .len();
-        if !(46..=4142).contains(&size) {
-            return Err(IdentityError::MissingLocalState);
-        }
-        let mut record = Zeroizing::new(Vec::new());
-        file.take(4143)
-            .read_to_end(&mut record)
-            .map_err(|_| IdentityError::PrivateStorage)?;
-        if record.len() != size as usize || &record[..10] != b"NF-BLOB-1\0" {
-            return Err(IdentityError::MissingLocalState);
-        }
-        let count = u32::from_le_bytes(
-            record[10..14]
-                .try_into()
-                .map_err(|_| IdentityError::MissingLocalState)?,
-        ) as usize;
-        if count > 4096
-            || count + 46 != record.len()
-            || Sha256::digest(&record[..count + 14]).as_slice() != &record[count + 14..]
-        {
-            return Err(IdentityError::MissingLocalState);
-        }
-        Ok(record[14..14 + count].to_vec())
+        read_blob_payload(&path)
     }
     /// None means a genuinely absent entry in a valid private vault. Present corruption is Err.
     /// Caller owns returned private bytes and must keep them out of diagnostics.
@@ -121,7 +95,7 @@ impl PrivateVault {
         private_access(&path, false)?;
         fs::remove_file(path).map_err(|_| IdentityError::PrivateStorage)
     }
-    fn blob_path(&self, name: &str) -> Result<PathBuf, IdentityError> {
+    pub(crate) fn blob_path(&self, name: &str) -> Result<PathBuf, IdentityError> {
         if name.is_empty()
             || name.len() > 64
             || !name
@@ -132,4 +106,34 @@ impl PrivateVault {
         }
         Ok(self.root.join(format!("blob-{name}")))
     }
+}
+
+pub(crate) fn read_blob_payload(path: &Path) -> Result<Vec<u8>, IdentityError> {
+    let file = fs::File::open(path).map_err(|_| IdentityError::PrivateStorage)?;
+    let size = file
+        .metadata()
+        .map_err(|_| IdentityError::PrivateStorage)?
+        .len();
+    if !(46..=4142).contains(&size) {
+        return Err(IdentityError::MissingLocalState);
+    }
+    let mut record = Zeroizing::new(Vec::new());
+    file.take(4143)
+        .read_to_end(&mut record)
+        .map_err(|_| IdentityError::PrivateStorage)?;
+    if record.len() != size as usize || &record[..10] != b"NF-BLOB-1\0" {
+        return Err(IdentityError::MissingLocalState);
+    }
+    let count = u32::from_le_bytes(
+        record[10..14]
+            .try_into()
+            .map_err(|_| IdentityError::MissingLocalState)?,
+    ) as usize;
+    if count > 4096
+        || count + 46 != record.len()
+        || Sha256::digest(&record[..count + 14]).as_slice() != &record[count + 14..]
+    {
+        return Err(IdentityError::MissingLocalState);
+    }
+    Ok(record[14..14 + count].to_vec())
 }

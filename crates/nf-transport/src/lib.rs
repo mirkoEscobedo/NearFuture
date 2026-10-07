@@ -9,6 +9,8 @@ pub mod identity;
 pub mod mux;
 pub mod network;
 pub mod node;
+pub mod notification;
 pub mod query;
+pub mod receipt;
 pub mod records;
 pub mod session;

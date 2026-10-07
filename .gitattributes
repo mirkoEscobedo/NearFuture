@@ -20,3 +20,7 @@
 /crates/nf-kernel/tests/fixtures/miniature/*.hex text eol=lf
 /docs/world/vectors/*.tsv text eol=lf
 /crates/nf-world-driver/fixtures/*.tsv text eol=lf
+
+/docs/transport/receipt-contract.md text eol=lf
+/docs/transport/notification-contract.md text eol=lf
+/crates/nf-identity/src/private-acl-batch.ps1 text eol=lf

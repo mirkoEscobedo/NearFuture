@@ -1,0 +1,23 @@
+# Pure notification source checkpoint
+
+The author-frozen Phase B slice implements data-only notification values, all ten closed record encodings/decodings, exact limit negotiation, allocation-free frame-length admission, three transcript profiles and signed-prefix digests. It follows the accepted notification contract. Decoded `NotifyRecord`, selector, transcript and digest are untrusted values; none is an authenticated session, membership grant, subscription or receipt.
+
+The pure slice exposes `/nearfuture/peer/notify/1` only. Its header is 128 bytes. Handshake, subscription and notice transcript preimages are exactly 617, 244 and 212 bytes. Signed Subscribed, Notice and NoticeAck prefixes are 219, 248 and 185 bytes. Unknown namespace/version/lane/kind/topic, malformed widths/padding/trailing input and invalid limits reject. Handshake transcription requires the exact componentwise selected minimum and binds the exact protocol digest; the neutral context hash cannot be requested through the signed-stage challenge API. Public transcript inputs remain caller-supplied data, so they do not demonstrate actual endpoint or SQL authorization.
+
+Independent expected bytes are read from `docs/transport/vectors/notify-v1.tsv`; the production author did not edit its producer or data. The independent writer checkpoint is `tools/notification-vectors/checkpoint.json`, SHA256 `790b128fca025856bfee99ae0f8659171db274e262893031575e2205c90742b0`. Root separately reviewed the writer R1. The consumer covers 16 positive records/all ten kinds, 86 malformed shape/limit records, all eight transcripts, three prefixes, 12 maintained-Ed25519 primitive signatures plus tampering, and two rejected length declarations. Primitive keys come only from explicit public RFC test fixtures. Model, capacity and context-policy fixture labels do not become runtime assertions in these tests.
+
+Seventeen public tests passed, including every positive-record truncation, 10,000 finite bounded decoder mutations, exact namespace/stage/limit rejection and transcript binding sensitivity. Successful mutated shape decoding must re-encode exactly; this is bounded testing, not an exhaustive proof. Length admission performs no allocation or I/O; an actual framed reader must call it before allocating a body in the later effectful integration.
+
+Compiled behavior RED followed by GREEN was observed under the package-native Windows Job Object for Hello, BeginSubscribe, exact minima, Notice, the remaining closed records, frame length, handshake bytes, signed prefixes, subscription bytes, notice bytes and public challenge hashes. Eleven `*-red.json` and their corresponding `*-green.json` results are retained privately under `.tmp/notification-author`; RED status was 101 with a failing public behavior assertion, not a build/setup failure. A wrong signature-test import was a separate setup error and is not counted as behavior evidence.
+
+Final author gate:
+
+```text
+npm.cmd exec -- workspace-template verify .tmp/notification-author --scope module --module node:. --timeout 180000
+```
+
+The exact private command config ran targeted notification tests with `--locked --offline`, `cargo clippy -p nf-transport --all-targets --locked --offline -- -D warnings`, `rustfmt --edition 2024 --check` on the sixteen owned Rust files, the independent producer `--check`, and the actual architecture scanner. All five steps passed with native `windows-job-object` ownership, status 0 and no timeout. Result: `.tmp/notification-author/pure-final.json`, SHA256 `db57c481bb74d8a3da6eda8e2c6da0f8cdb4fb171efb9676789ab31160cdfd86`.
+
+An attempted whole transport `--all-targets` regression stopped at accepted `foreground_bulk::sole_store_owner_drives_separate_physical_bulk_progress_and_control_query` with its internal two-lane deadline `Elapsed(())` after 22.57 seconds. Earlier accepted targets passed, but the attempt did not reach notification targets. Result `.tmp/notification-author/pure-full.json`, SHA256 `78cd3e1c1eddaed0a906a9bee2a8713528ea5744972a55094b45a1460cffb9f2`; the failure was reported to the coordinator and transport author without editing the accepted test. This checkpoint does not claim that whole regression gate passed.
+
+Independent pure-source R1 review is pending. Authenticated notification handshake, current durable SQL policy, first-attempt challenge consumption, subscription expiry/sequence/replay, notice admission/ack, token buckets/coalescing/queues, portal owner/fair three-lane polling, actual two-process notice flood/control/bulk progress, reconnect and CLI remain unimplemented in this slice. Native Starsector and receipt authority are not inferred. Issue 23 remains open.

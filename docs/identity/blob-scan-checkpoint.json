@@ -1,0 +1,59 @@
+{
+  "full_native_result_sha256": "1a8678f132267c54139a3b076abe5a4246999aa6d4e08bcef06ac901ef847af0",
+  "additional_bounds_native_result_sha256": "259a8b45caf1c8ad11018814319440ee3ec38d41daa4c20641df3b3673211bbd",
+  "schema_version": 1,
+  "base_commit": "7a617c40026e5f59313cbd320cd2bc19328a6b17",
+  "scope": "Additive bounded private blob inventory scan and unchanged legacy-reader extraction",
+  "owned_raw_paths": [
+    {
+      "sha256": "2fb474f5df5952a87d622a66984b6de7c8731998ef909783bb1f8f6c9c684695",
+      "path": "crates/nf-identity/src/lib.rs"
+    },
+    {
+      "sha256": "ae8f3a317ff602fb94d4e5b1b953528f9a84f0e9fdbb4ca49478d0c19352fcc3",
+      "path": "crates/nf-identity/src/private_blob.rs"
+    },
+    {
+      "sha256": "3787cfc358c85032f99c97c825042fb193b3de82217b7acc1fd89121b493cbab",
+      "path": "crates/nf-identity/src/private_blob_scan.rs"
+    },
+    {
+      "sha256": "b1959efca341cc2b16b9aa86676b39d085f74c6ae133329f95236724312ff1dc",
+      "path": "crates/nf-identity/src/private_blob_acl.rs"
+    },
+    {
+      "sha256": "e15b57dc985519419b36ed206a3de0d8d9afbafab5511fd256dd250cffa1e653",
+      "path": "crates/nf-identity/src/private_blob_acl_tests.rs"
+    },
+    {
+      "sha256": "9f1c64db721d78214c1200d6e61323fed631ca58fde26fa80d9f7f481aadde3b",
+      "path": "crates/nf-identity/src/private-acl-batch.ps1"
+    },
+    {
+      "sha256": "ba8ca16d4eb584c51e578aa63a173ff77058245e859833fb22b3efd59f47791b",
+      "path": "crates/nf-identity/tests/private_blob_scan.rs"
+    },
+    {
+      "sha256": "ef5b4d6d03d2dd3fff141b4883df1675b1c7defe5730f1a2cab650b9f22c19df",
+      "path": "crates/nf-identity/tests/private_blob_scan_capacity.rs"
+    },
+    {
+      "sha256": "c58d79875b277f20077978df2e81fd15ba2b04fc6430be7c1e2d8b132bc24f03",
+      "path": "crates/nf-identity/tests/private_blob_scan_failures.rs"
+    },
+    {
+      "sha256": "70d953d68e2da93e2d5c69702abd5540af4226b0d0ba1e8e018a980d9813a564",
+      "path": "crates/nf-identity/tests/private_blob_scan_windows.rs"
+    },
+    {
+      "sha256": "274c77e2c7effb3cadb0e7cb6fc4440d9fa726ed3c135861566f2e73407846ff",
+      "path": "crates/nf-identity/tests/private_blob_scan_bounds.rs"
+    },
+    {
+      "sha256": "ff35086e39639c7e9e1e27bd0b48747980d2e0bb699aade79873e2bac7923511",
+      "path": "crates/nf-identity/tests/support/blob_scan.rs"
+    }
+  ],
+  "design_sha256": "cb44185ab10339c8a3345dc94da967c747814e9d2badbc5e4cb5e89e20da0119",
+  "status": "ROOT_AUTHOR_FROZEN_FOR_INDEPENDENT_R1"
+}

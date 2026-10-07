@@ -1,0 +1,56 @@
+{
+  "scope": "Independent TEST-ONLY NF-NOTIFY-1 writer/data; no production/auth/time/queue/native verdict",
+  "files": [
+    {
+      "sha256": "b84d31d54f5974dcc3fd0f78922d521f4038ab5e357d3f03774d9080325e4a69",
+      "path": "tools/notification-vectors/corpus.cjs"
+    },
+    {
+      "sha256": "746f2d866b04a5c63ff7a5af6ce05f84c8ed6ad0726330924886efb450b09209",
+      "path": "tools/notification-vectors/corpus.test.cjs"
+    },
+    {
+      "sha256": "8e412fbfb0e513fd1b84287403e50703bedeb3dd44981d8991e0a4069e162743",
+      "path": "tools/notification-vectors/fields.cjs"
+    },
+    {
+      "sha256": "1232b98ff1ac2fdcae42b343a97c806eb0d71d1b979c4f71735ed007cc362213",
+      "path": "tools/notification-vectors/fixture.cjs"
+    },
+    {
+      "sha256": "1bbbef40a3d4f8ac5adbf2f2b7b6561088f6a1c4b807e7e7374571edd2bd8def",
+      "path": "tools/notification-vectors/generate.cjs"
+    },
+    {
+      "sha256": "d08c0c8ed6378800c533f4bd0156e75ef2f4e057cc0167040ccac40154f2a129",
+      "path": "tools/notification-vectors/malformed.cjs"
+    },
+    {
+      "sha256": "c4ba62d5a3352e07c7360fd3f70161962e876a41864cc3744575ceedc65ee6fb",
+      "path": "tools/notification-vectors/profiles.cjs"
+    },
+    {
+      "sha256": "059845bcf6ab254a06feb79971b52aafee959cc6343516da422f27ffb137b1a8",
+      "path": "tools/notification-vectors/profiles.test.cjs"
+    },
+    {
+      "sha256": "60f1194b84e4500f159b966ff3591afadf1ef76f20d355a9d1cd044b2d62c3d7",
+      "path": "tools/notification-vectors/README.md"
+    },
+    {
+      "sha256": "3b6455c19ae87c65b8d597f429ea6c2bcc579cc8c8336175e51ef79e5ca8dd7f",
+      "path": "tools/notification-vectors/scheduling.cjs"
+    },
+    {
+      "sha256": "79da1d1db8cd2631ada7252e0f0a920f36c4b47dcda45ac716121b66caa39c1a",
+      "path": "docs/transport/vectors/notify-v1.json"
+    },
+    {
+      "sha256": "29d22a604fb243635c5343dc7efaac3810ffbf0c10bece50c5ad08a126303d11",
+      "path": "docs/transport/vectors/notify-v1.tsv"
+    }
+  ],
+  "contract_raw_review_sha256": "f3e818776bb3ee9fe0c660424bc420f938e852c3f7d3ba0eec51466440aa0dce",
+  "native_result_sha256": "754292ae88960b87acb10dc224104ef40c1da1a8ec3a8ee42f16fbc2a3bddd78",
+  "contract_lf_sha256": "f7aebf226c0d9c03bf8c6c97945f371b333abf180bbc7aae498a70a4fbc4dc8d"
+}

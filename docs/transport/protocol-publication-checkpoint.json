@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "method": "SHA256 of exact Git text blobs; archive working bytes are compared after CRLF-to-LF normalization. Rust/CJS/JSON/TSV and the pinned protocol contracts require actual LF checkout bytes.",
+  "scope": "Reviewed batch inventory, pure receipt and notification modules, independently reviewed fixture writers and root integration metadata",
+  "excludes": [
+    "this proof and documentation",
+    "later effectful owner or book",
+    "operational identities"
+  ],
+  "paths": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "e160aebf472c77d5242358aed8a64e34e64c9467a370d98fef8af1b7d7baed29"
+    },
+    {
+      "path": "crates/nf-identity/src/lib.rs",
+      "sha256": "2fb474f5df5952a87d622a66984b6de7c8731998ef909783bb1f8f6c9c684695"
+    },
+    {
+      "path": "crates/nf-identity/src/private_blob_acl_tests.rs",
+      "sha256": "6d770804b94d0604f4b3ae80fe5adce6c4ebe11cd75867a3371e22a6f9765a2d"
+    },
+    {
+      "path": "crates/nf-identity/src/private_blob_acl.rs",
+      "sha256": "b1959efca341cc2b16b9aa86676b39d085f74c6ae133329f95236724312ff1dc"
+    },
+    {
+      "path": "crates/nf-identity/src/private_blob_scan.rs",
+      "sha256": "3787cfc358c85032f99c97c825042fb193b3de82217b7acc1fd89121b493cbab"
+    },
+    {
+      "path": "crates/nf-identity/src/private_blob.rs",
+      "sha256": "ae8f3a317ff602fb94d4e5b1b953528f9a84f0e9fdbb4ca49478d0c19352fcc3"
+    },
+    {
+      "path": "crates/nf-identity/src/private-acl-batch.ps1",
+      "sha256": "9f1c64db721d78214c1200d6e61323fed631ca58fde26fa80d9f7f481aadde3b"
+    },
+    {
+      "path": "crates/nf-identity/tests/private_blob_scan_bounds.rs",
+      "sha256": "274c77e2c7effb3cadb0e7cb6fc4440d9fa726ed3c135861566f2e73407846ff"
+    },
+    {
+      "path": "crates/nf-identity/tests/private_blob_scan_capacity.rs",
+      "sha256": "ef5b4d6d03d2dd3fff141b4883df1675b1c7defe5730f1a2cab650b9f22c19df"
+    },
+    {
+      "path": "crates/nf-identity/tests/private_blob_scan_failures.rs",
+      "sha256": "c58d79875b277f20077978df2e81fd15ba2b04fc6430be7c1e2d8b132bc24f03"
+    },
+    {
+      "path": "crates/nf-identity/tests/private_blob_scan_windows.rs",
+      "sha256": "70d953d68e2da93e2d5c69702abd5540af4226b0d0ba1e8e018a980d9813a564"
+    },
+    {
+      "path": "crates/nf-identity/tests/private_blob_scan.rs",
+      "sha256": "ba8ca16d4eb584c51e578aa63a173ff77058245e859833fb22b3efd59f47791b"
+    },
+    {
+      "path": "crates/nf-identity/tests/support/blob_scan.rs",
+      "sha256": "ff35086e39639c7e9e1e27bd0b48747980d2e0bb699aade79873e2bac7923511"
+    },
+    {
+      "path": "crates/nf-transport/src/lib.rs",
+      "sha256": "8dccf94c61cf7f6f2e1ad4793d9e5d4d864172f3a4e279dd7452f1282eaf5467"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/codec.rs",
+      "sha256": "74ded6388974a04a914036afcc5a7f3bf5737629da6dab459cd58ceebefead0c"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/decode.rs",
+      "sha256": "9ed91b791a2e9d38ead32e1133ef625e78d317df91a06288891ab5ead8956b48"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/fields.rs",
+      "sha256": "5a6636f17bd638b093b06836dbc2a6bff10e23e5a864685a0e5bd55007fd5a92"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/framing.rs",
+      "sha256": "5e4388ac6e6fb7d4343e150175783eb5c374ae3d61808004b597dca2d0bed2f9"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/limits.rs",
+      "sha256": "7ef3871a3888d05b1df17fb901d59f029496cfd03bae83d74acef807a17824f9"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/mod.rs",
+      "sha256": "7d3da17f8b5c9a336e9dd160ec2d586346f3c5bf6a6dab4bff9386226758ede6"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/model.rs",
+      "sha256": "fa5a61c1c1bc09d397cb9374389a0bc1293835164fcdd4496a11cf31cf39bcab"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/transcript.rs",
+      "sha256": "b2e3f7ba19e2f4edc5a5cd1ccc61c62f56a389f96f107d499ad9606b1c1f0502"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/validation.rs",
+      "sha256": "8d07cf4940e1c7e07c2191331a033ea1b8670696ea9d4356083abb411a4d2f95"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/body.rs",
+      "sha256": "5c385a60e860cc69c67804fb9cca72da4339ac608e7fbb18e3471398f81e1441"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/decode.rs",
+      "sha256": "871e1fdc31531fa4ffb6ce059ce8c9bfcde400529ae8f1ee7b8ec0dbb9d25e40"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/encode.rs",
+      "sha256": "5f6a1eb88a363c2d69ce1ba6bfd694c1661b62fcbcb53b23d3db21fbeccadb01"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/fields.rs",
+      "sha256": "cd8d55ab7f3e80b3bb151500c8d0d594937fdea2f61a09e5d775e8abb9d9aeb4"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/framing.rs",
+      "sha256": "1591c5ef1e37c14bf6639a4d62253370f4a0768a1e2a57347b4ae0ae28dbdb6d"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/handshake.rs",
+      "sha256": "9a6cc2b41e258522592b44ec510bebf30d81bd6953e14345be1a051b6fd3902f"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/mod.rs",
+      "sha256": "63f1b56bea6aada923f7cf90118e78f8dc0d03a2392dd1a4702ddfb815421ce0"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/model.rs",
+      "sha256": "8606e66876d41ccd9ee318decbad6d79dd7ffcfd4e6cd8f976f231d3adef57a8"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/reader.rs",
+      "sha256": "329c62ca1c59f22db9db05d0e431d818a95db0b219930d4fab7ed9fd7ee5917e"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/session.rs",
+      "sha256": "0de9d9b5489cb75463c791001bddb4172d6d7f2ba32b9db132db6c06cbc3b6da"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/status.rs",
+      "sha256": "7b40d9fcc7c61497f257ee6307cc3477efdcfd7bad101ac9b0d4ad0d8be4dd01"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/transcript.rs",
+      "sha256": "a9542ebb7876d92bbbe20c8765c42f52ae140d5b8db8a397c3aa737f387e8554"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_framing.rs",
+      "sha256": "0ad88f9401433d6298f5b82985ab6f04d20870428f1be4f1ba750184584a9dc4"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_limits.rs",
+      "sha256": "a27d83046ee9e76159246c063bb4b319507a6ecbdac8a43b625c2bebb215c8aa"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_shape.rs",
+      "sha256": "253298bac05bde8a0f8c920d673496b1d573b8645b6760bac9f9529f4ae601c7"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_signatures.rs",
+      "sha256": "439101376f050a1fc286d0e70bd1c6ab0d9480a6cd624c6efb5f5e50873321e1"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_support/mod.rs",
+      "sha256": "cfed625d070afdd3ce6983b09f3312a59f96167649d03c36ff17a41d150ef8a1"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_transcripts.rs",
+      "sha256": "bcf89338e5fa5728ab1a0eabcc0b634191da2d09200f6b1ebaf5ec673f230100"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_vectors.rs",
+      "sha256": "a607a7d9b3908009c6696e5b1e76c86962eac9be874d8f4f1e9170c24f2c308a"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_committed.rs",
+      "sha256": "82112b0bc220111e16bf1dfe3ab0333367e648acfc13bbd0a4943ad2b428ed74"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_framing.rs",
+      "sha256": "d0de96b72adc1349aecfbb3083cbab36c3872ae2c547302b36d0886767135019"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_original.rs",
+      "sha256": "03c85ca7934c6babbfe5a6b3a2b9db2ebbe597025a75f4cbc5f1603ad182feb9"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_records.rs",
+      "sha256": "aa7e467379c9bb09eb4dd7fac7df9bbded1ed7e23330c9e5c5b2be49a93d8b63"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_session.rs",
+      "sha256": "f03f867459d578ae4e98bcb1cf5c6eb515d4791cb5129d4dd135122fa2944ad2"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_signatures.rs",
+      "sha256": "44647ee5e3eda22aa87723facfc398d4f56a7d4169c32bb03716d1e182631f76"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_support/corpus.rs",
+      "sha256": "2e79d924f32e050210ff81e2550d9adc3d1eec2c6a935a9fe0aa81936aecdc88"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_support/identities.rs",
+      "sha256": "a65673187792430a1a2219f314ca61a8b10bbcf35b1a1452ecd534d607bbaca0"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_transcript.rs",
+      "sha256": "b0437fba0812136fc9f753787750d8e34bc5435a7ae0e0c1c94cb8137bb2832c"
+    },
+    {
+      "path": "docs/transport/notification-contract.md",
+      "sha256": "f7aebf226c0d9c03bf8c6c97945f371b333abf180bbc7aae498a70a4fbc4dc8d"
+    },
+    {
+      "path": "docs/transport/receipt-contract.md",
+      "sha256": "763fbd65d5d6df42268c6b30d3ddaf3bea23972303fa7b0ab5f618ab58f31efd"
+    },
+    {
+      "path": "docs/transport/vectors/notify-v1.json",
+      "sha256": "79da1d1db8cd2631ada7252e0f0a920f36c4b47dcda45ac716121b66caa39c1a"
+    },
+    {
+      "path": "docs/transport/vectors/notify-v1.tsv",
+      "sha256": "29d22a604fb243635c5343dc7efaac3810ffbf0c10bece50c5ad08a126303d11"
+    },
+    {
+      "path": "docs/transport/vectors/receipt-v2.json",
+      "sha256": "97ba35ee58f6fb01d30bd2e2d6d3d07d8f82e75c3f6626f4cc056c8476e95e1e"
+    },
+    {
+      "path": "docs/transport/vectors/receipt-v2.tsv",
+      "sha256": "579f5b322ccf4075e8225f48bb2840e92eabdf9a9756e3b557d83e2c5726a945"
+    },
+    {
+      "path": "package.json",
+      "sha256": "a0d6cb890c854fbb17f9a6457d5fd363ef38c33449a1c62f24ca004568dc097f"
+    },
+    {
+      "path": "tools/notification-vectors/corpus.cjs",
+      "sha256": "4993a8fe9a1d70710498f3dd3936d348af213ba3edfd642c728d84a59b921d38"
+    },
+    {
+      "path": "tools/notification-vectors/corpus.test.cjs",
+      "sha256": "726f0696b8d35e60f087bfd0d5a028195125aa84f5978e692956c085289a1883"
+    },
+    {
+      "path": "tools/notification-vectors/fields.cjs",
+      "sha256": "33642bfc87f1d21bc14c51e3b5f164796be387c7d1e33ab70268dbfc9e756aa4"
+    },
+    {
+      "path": "tools/notification-vectors/fixture.cjs",
+      "sha256": "6bd420ec1e6c2418ff727e62fbde653ad6d3eb3c503400f04078491beb558503"
+    },
+    {
+      "path": "tools/notification-vectors/generate.cjs",
+      "sha256": "67a76ad4f03ffeb37711003f79bbb16094cd901dc6de695866e87cb81a9b1c79"
+    },
+    {
+      "path": "tools/notification-vectors/malformed.cjs",
+      "sha256": "20014e65b9de5add03b0e4fa640cb07b32fc0725c633702dc7193ff8adea9ba2"
+    },
+    {
+      "path": "tools/notification-vectors/profiles.cjs",
+      "sha256": "a927b39c14836d616925a3ef3cbe240a54aaf0ace1f4018c727619f81271422f"
+    },
+    {
+      "path": "tools/notification-vectors/profiles.test.cjs",
+      "sha256": "fe8f58175625a5471acf0fdbb0c58e91d05c7df049859e4869663a51a3b985a3"
+    },
+    {
+      "path": "tools/notification-vectors/scheduling.cjs",
+      "sha256": "24e8eb8a9d8a404c436ac8c91741ad0cd2fc02877673c0af807b2c8df39c306b"
+    },
+    {
+      "path": "tools/receipt-vectors/context.test.cjs",
+      "sha256": "66c5f9a670681d2e7852260f61cc54b6478449240f1caf6063fb75a8c918fd9f"
+    },
+    {
+      "path": "tools/receipt-vectors/corpus.cjs",
+      "sha256": "0a16da091e270165fd06ecb8917eac371b353324fa26a3da8171b4a6b9cecb98"
+    },
+    {
+      "path": "tools/receipt-vectors/corpus.test.cjs",
+      "sha256": "5a2f7fe92c9ff75834de8903aef351b802b6710778a51a3e8b98eb7c87921f12"
+    },
+    {
+      "path": "tools/receipt-vectors/fields.cjs",
+      "sha256": "16d89c0fb576e619595ca215dfda7df96a030b877c2001c7c63cf5497dd599b1"
+    },
+    {
+      "path": "tools/receipt-vectors/fixture.cjs",
+      "sha256": "db3c9bbebf5e933a1ce49149517546ffeca8b0097a222c57acde115452f532dc"
+    },
+    {
+      "path": "tools/receipt-vectors/generate.cjs",
+      "sha256": "1ea16ca0f3ef1e742dc0663fde8a2d9332951e041992b1a66b37d3d80066cd1d"
+    },
+    {
+      "path": "tools/receipt-vectors/malformed.cjs",
+      "sha256": "0b27ba37e58a9bdbad83c9f46f27379e7895241edc68dc4f9ba4a931674b838b"
+    },
+    {
+      "path": "tools/receipt-vectors/profiles.cjs",
+      "sha256": "ec4bbf3813f620b888d8eddb4813e4e0706e3c9915979aa9a6190059158a9669"
+    },
+    {
+      "path": "tools/receipt-vectors/profiles.test.cjs",
+      "sha256": "70af5c13b7f22bd5019db0e891eee5b42200f4f8e1b6cefcacb7e9b285acd46f"
+    },
+    {
+      "path": "tools/receipt-vectors/records.cjs",
+      "sha256": "5b4333d2e80eefa28ae4e41f2fcd617e5e48f136414cf9621ba7e915d418c472"
+    },
+    {
+      "path": "tools/receipt-vectors/recovery.cjs",
+      "sha256": "f2318c167481dc045ce9d5b4a56d7abcbe7ffda4f386c14c8688761badcf9115"
+    },
+    {
+      "sha256": "8dfaf59aaa7688d9c79d82987c861ebe91c6ce8eb47cfbc3e463ef6eb3496b84",
+      "path": ".gitattributes"
+    }
+  ],
+  "dependency_lock": "Cargo.lock unchanged from accepted main; no new dependencies or features"
+}
