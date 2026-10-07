@@ -1,0 +1,19 @@
+# Replica protocol foundations
+
+This slice exports the closed pure Sync records and transcript builders, maintained canonical PeerId envelope validation, and a branded cumulative logical resource scope. It does not activate replica data or grant writer, membership, session or source authority. Kernel/Store document accounting and authenticated semantic sync owners remain separate implementation work.
+
+The historical Sync README and its author checkpoint retain their original unexported state. This publication adds Root-owned module wiring after independent review. Peer validation is additive; existing application signatures, membership codecs and receipt/notification owners retain their baseline bytes. The direct nf-identity dependency edge is pinned at 0.3.0 with only the peerid feature. Existing transport dependencies retain their workspace feature union. The lock retains all 393 package records and registry identities.
+
+Root syntax integration passed five public peer tests and 13 Sync behavior groups, all-workspace formatting, strict all-target identity/transport Clippy and the frozen independent generator. Independent R1 passed against the actual f094 baseline; its exact seven-step native report is identified by SHA256 in the checkpoint.
+
+The accounting primitive has independent source R1 and a fresh six-step integration gate: 25 unchanged legacy contract cases plus seven new consumer/overflow/unwind cases, one positive and eight intended negative documentation checks, format and strict all-target contract Clippy. The gate bound all 929 candidate files, 128 held main files, 39 extra WIP files and 20 author inputs before and after execution. Independent fresh acceptance passed. Historical author jobs were captured before their final freeze; that qualification remains preserved.
+
+Limits are logical cumulative quotas: depth 1..32, entries 0..32768 and copied bytes 0..4194304. A lexical invariant scope shares private sticky counters and restores only dynamic depth on return/unwind. Callers must charge before growth. The primitive alone does not instrument existing validators, replay, clone/hash/reencode or durable installation, and cannot certify a complete replica document. It is not an allocator/RSS/time measurement.
+
+The exact 49 promoted source/manifest/lock/policy paths and accepted input-report digests are in replica-foundations-checkpoint.json. A single exact-path Git policy retains the frozen author checkpoint bytes; code/vector line-ending policies stay unchanged. The combined publication gate and hosted results will be recorded after observation. PR #65's Windows private-storage refusals remain unresolved at the parent head; this foundation does not claim to repair them. No whole issue is closed by this slice.
+
+## Combined publication verification
+
+The fresh ten-step gate passed under Windows Job Object ownership, with zero timeouts: 32 contract cases (25 legacy and seven new), nine documentation checks (one positive and eight intended compile failures), five peer cases and 13 Sync groups. The other 67 transport cases were filtered in this selected local step; hosted CI retains the full suite. All-workspace formatting, workspace all-target strict Clippy, architecture boundaries and the frozen independent Sync generator passed. Pre/post checks bound all 968 candidate files, 128 held main files, 39 extra WIP files and seven immutable evidence inputs.
+
+The source compatibility R1 and exact native report are identified in the checkpoint. Only these two metadata files were amended after the gate to append observed results; all 49 promoted source, manifest, lock and policy files remain byte-identical to the tested cut. Staged/committed Git blob audits and exact-head Windows/Linux hosted results are required before merge. Hosted acceptance remains pending.

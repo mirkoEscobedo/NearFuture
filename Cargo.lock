@@ -2075,6 +2075,7 @@ name = "nf-identity"
 version = "0.1.0"
 dependencies = [
  "getrandom 0.4.3",
+ "libp2p-identity",
  "nf-contract",
  "sha2 0.10.9",
  "zeroize",
