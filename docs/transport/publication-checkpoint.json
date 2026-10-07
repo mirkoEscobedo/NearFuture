@@ -1,0 +1,340 @@
+{
+  "schema": 1,
+  "date": "2026-10-07",
+  "method": "SHA256 exact normalized staged Git blobs under repository attributes; same 83 paths as historical raw working-byte checkpoint; text CRLF converted to LF without logical content changes",
+  "basis": "bc29e8cffefafa33e87e7ff4ab1aa5f3a1b3510e",
+  "files": [
+    {
+      "path": "crates/nf-transport/Cargo.toml",
+      "sha256": "116c4a95c44059ba4e2a8b6f4fce9f121cc817b19f140436a1d878e9ced1bb0f"
+    },
+    {
+      "path": "crates/nf-transport/src/auth/bulk.rs",
+      "sha256": "f98c4f9385d6b4dc4a7b987325af4af919fd9bdac6cdee64bcc15bd6c74255b8"
+    },
+    {
+      "path": "crates/nf-transport/src/auth/client.rs",
+      "sha256": "d0a137939471fbd5d8433b582030b0f4001b0c6f67ec95d01c4b94077569ed90"
+    },
+    {
+      "path": "crates/nf-transport/src/auth/mod.rs",
+      "sha256": "118ef2f465a6831c799d0bce314812ad9d9debc8dadd97e6f7097e028ca9884e"
+    },
+    {
+      "path": "crates/nf-transport/src/auth/query.rs",
+      "sha256": "abe349406c7c814647e8ba9fcca49b4cdd72997bc9542b35b10dfabf86a45cb5"
+    },
+    {
+      "path": "crates/nf-transport/src/bin/nf-peer/config.rs",
+      "sha256": "eeea513d3f32ece13931486dfb5c8b7a0787a7a8a6625b4860488001370496e6"
+    },
+    {
+      "path": "crates/nf-transport/src/bin/nf-peer/main.rs",
+      "sha256": "0ba274d6dbb22ce6948e0080362b05d801bdc3cf4b579db6c63c26eb224a99bc"
+    },
+    {
+      "path": "crates/nf-transport/src/budget.rs",
+      "sha256": "f0b84cc2c05cead6e5d3b2ecfc1a48bcd68f77c41b96a5bb15633e8b969e3f91"
+    },
+    {
+      "path": "crates/nf-transport/src/bulk/client.rs",
+      "sha256": "1e1d51cc54a295e8cf41caa602b37372ec8be9e2b75f293cf207f72648dbceb7"
+    },
+    {
+      "path": "crates/nf-transport/src/bulk/mod.rs",
+      "sha256": "b3c0113dc70e26e8f31eea5d66f4f20220f98456867d3184be2e2ef6605ea921"
+    },
+    {
+      "path": "crates/nf-transport/src/bulk/server.rs",
+      "sha256": "6c5851c7656be9a304f396e3fa4b3dec4689ceffdbaefb72344397ccdda761b2"
+    },
+    {
+      "path": "crates/nf-transport/src/error.rs",
+      "sha256": "26111348e24ce4eed0bcefdc4100b89651bb20cc592d39cf69f89b1a3324c903"
+    },
+    {
+      "path": "crates/nf-transport/src/framing.rs",
+      "sha256": "4887ce4024d262e63c40965135c018ab77b53677bbd1a6c4c8fa9f813e0326c9"
+    },
+    {
+      "path": "crates/nf-transport/src/identity.rs",
+      "sha256": "2ad8d7fd15997dce666d45e21bbdf34e312204843a17340ffae48d644e080d80"
+    },
+    {
+      "path": "crates/nf-transport/src/lib.rs",
+      "sha256": "25b01aaaf3cfbda98edac69b08a8fa364b6f9bb07c5f4a0a9ce93d183965b131"
+    },
+    {
+      "path": "crates/nf-transport/src/mux.rs",
+      "sha256": "5b09f57954318ff85c2282a09530e60b8335048604a0260934c30e67bf063bf0"
+    },
+    {
+      "path": "crates/nf-transport/src/network.rs",
+      "sha256": "d8dc4a60d2eb923738608f64b8aedf078d0de05d182d875161d123e18da2429e"
+    },
+    {
+      "path": "crates/nf-transport/src/node/bulk_client.rs",
+      "sha256": "3f12d4ddf621bd32f8e5a7a85fcf6234bc8793f64e56fd3ea4e996070b255538"
+    },
+    {
+      "path": "crates/nf-transport/src/node/client_pair.rs",
+      "sha256": "84be96df4d2643128d30106049679cee70fb693bd1d24af814b98589d29f65b5"
+    },
+    {
+      "path": "crates/nf-transport/src/node/client.rs",
+      "sha256": "80bd67f2c2cdfbeee0e2fe2de50ae3b198c0cf0424fe56eadbd84a29752ab10c"
+    },
+    {
+      "path": "crates/nf-transport/src/node/connection.rs",
+      "sha256": "8b020ae44d9d35992b592b148a1411b7e6db92df24ad4330eaa55f53db2e3a66"
+    },
+    {
+      "path": "crates/nf-transport/src/node/handler.rs",
+      "sha256": "c3c904505e1b4e641ce7298351e4e627b7300c345317b77d2380b781dbd91e90"
+    },
+    {
+      "path": "crates/nf-transport/src/node/mod.rs",
+      "sha256": "8ce52121cbf71f3692d9b7ec02a8bc39be4a2a2142a5e4099514c8ac8a87ddca"
+    },
+    {
+      "path": "crates/nf-transport/src/node/server.rs",
+      "sha256": "bfa4c478afa1c0ec0aef19afc9fb757290c849394ae652ac98c63f11b3a139c8"
+    },
+    {
+      "path": "crates/nf-transport/src/query/client.rs",
+      "sha256": "153c0ac1753a780a5f8e7e3058363b8d36913964666eb5e71ff61656dfb13b44"
+    },
+    {
+      "path": "crates/nf-transport/src/query/mod.rs",
+      "sha256": "ef7d5b499eab3f33dfc3f67b18ccd56efae6dcaaae2f7223f369f928f172ab2d"
+    },
+    {
+      "path": "crates/nf-transport/src/query/server.rs",
+      "sha256": "e9f4c2a5f0a35c571524eb0479abf749a08fd0cd011068fe16c7b42d77743856"
+    },
+    {
+      "path": "crates/nf-transport/src/records/bulk.rs",
+      "sha256": "e31628f44aa5f18cfff299bf6e76e30a4e7c71ed781b47038380852805ebcffc"
+    },
+    {
+      "path": "crates/nf-transport/src/records/encode.rs",
+      "sha256": "7fde40d83ebd1042e64ca5bfbd29f567e2bc0de6a032bc960fb87991f5909fc8"
+    },
+    {
+      "path": "crates/nf-transport/src/records/fields.rs",
+      "sha256": "ec7fb947fa30526c4725249ac44482752f087885bfa4acfd28dc8493666cb74f"
+    },
+    {
+      "path": "crates/nf-transport/src/records/mod.rs",
+      "sha256": "5f5ead054b4d4c0fc37e3354f6b2f7c7225856964a7bc5bb15610d184d8709e3"
+    },
+    {
+      "path": "crates/nf-transport/src/records/model.rs",
+      "sha256": "e2ef82c4c3490566e7fc1d4c75fe77f5bd0d7856909374ce0694974704bbf785"
+    },
+    {
+      "path": "crates/nf-transport/src/records/reader.rs",
+      "sha256": "4efd0baba0495715cde482ae2e44a4a53711c93883929e120d5eba52a567f630"
+    },
+    {
+      "path": "crates/nf-transport/src/records/reason.rs",
+      "sha256": "184d50ede686abd0ec9bd09687224dd649de7a6ea495fccf4209c01cebe44eec"
+    },
+    {
+      "path": "crates/nf-transport/src/records/status.rs",
+      "sha256": "a7717149f5da90f26f323ba4fde0e3a3a6cd3ac2d4b5ef8487dde30617178b80"
+    },
+    {
+      "path": "crates/nf-transport/src/session/binding.rs",
+      "sha256": "8ea4927799835f784515583ed9a8bb09908dd8e3501d242187b33ec1f3d3208b"
+    },
+    {
+      "path": "crates/nf-transport/src/session/client.rs",
+      "sha256": "75db2e53c4c5d5488ba92bc2b51f5f64133496e8f2f1584d89ae868c66e6ba03"
+    },
+    {
+      "path": "crates/nf-transport/src/session/mod.rs",
+      "sha256": "a8f2900e78fa0429d563f6a862462ec36138f5d58d7d736085af9da812b04998"
+    },
+    {
+      "path": "crates/nf-transport/src/session/server.rs",
+      "sha256": "057877a84fd8ba6a14353775b42c62f22316531b6eddbd2567874d5f78183777"
+    },
+    {
+      "path": "crates/nf-transport/tests/application_session.rs",
+      "sha256": "3b9103bbdab8f2d36fa7c4b9463f8510808f5d0860cba7b856550a92d39c6607"
+    },
+    {
+      "path": "crates/nf-transport/tests/auth_transcript.rs",
+      "sha256": "15f4c16d2e84d78452dbc10e9c6597d7ab10ab8ffe00b13ca64e246dc3262366"
+    },
+    {
+      "path": "crates/nf-transport/tests/backend_credits.rs",
+      "sha256": "5cbea7fba39dd22f32e1a94d20f4ddaa613c9e723f674cea7718bbebe09ec42b"
+    },
+    {
+      "path": "crates/nf-transport/tests/bulk_flow.rs",
+      "sha256": "e8f9183c4ffb69e7b1eb85e24a424de1006dbdd264256bda9adcfb56f16db529"
+    },
+    {
+      "path": "crates/nf-transport/tests/bulk_records.rs",
+      "sha256": "c3d9ffa2a0e5bbf9f7930875179de20269b573cd605fe3f1b851233139f9db9c"
+    },
+    {
+      "path": "crates/nf-transport/tests/bulk_transcript.rs",
+      "sha256": "a945439c42806c62fbf1f71bffe5dbb2fa517ca034365b8b59732de2567b1334"
+    },
+    {
+      "path": "crates/nf-transport/tests/current_server_policy.rs",
+      "sha256": "54ed8be203b8cef0aab7011be876d0c4eb6d601f9a6a122545a5bd10c39a07d5"
+    },
+    {
+      "path": "crates/nf-transport/tests/durable_query.rs",
+      "sha256": "120ad73d3368c909287bcb2fb210cfbca2c729d57dba8d4467fd6f2fe0bf218d"
+    },
+    {
+      "path": "crates/nf-transport/tests/durable_revocation.rs",
+      "sha256": "9f38c0d0e682ed73a7bf858d671522711d2e6b491c54b6084d7f526b33afd31f"
+    },
+    {
+      "path": "crates/nf-transport/tests/encrypted_device_auth.rs",
+      "sha256": "fb6f12ed1ced514c46ee695755ceb35f73c51e17f56a0023dd75bd35b0a5f01a"
+    },
+    {
+      "path": "crates/nf-transport/tests/encrypted_pair.rs",
+      "sha256": "192890b6d5753d3ed8527e3f3c06f7be56dd527b13995ff64cfa7c496d4bd73e"
+    },
+    {
+      "path": "crates/nf-transport/tests/foreground_bulk.rs",
+      "sha256": "2e1b0921ee1d05e23c8ebe33029aeab1a15139e2473739e65275f1c3d1f8dd9d"
+    },
+    {
+      "path": "crates/nf-transport/tests/foreground_peers.rs",
+      "sha256": "c17d1244fba8dfc67be20dbf0d80051cb7149aadba575c16eb08a4f4bedadcee"
+    },
+    {
+      "path": "crates/nf-transport/tests/foreground_rejections.rs",
+      "sha256": "eab77e937f10f561c990645676b1e8a4c30ad84f7373267b963f40e53913e985"
+    },
+    {
+      "path": "crates/nf-transport/tests/framing.rs",
+      "sha256": "097714970dd4aa72c28ec70a1416a8cb64e3c19865409af91a59278c5e41c953"
+    },
+    {
+      "path": "crates/nf-transport/tests/hello_admission.rs",
+      "sha256": "5f67d5b97b55ef84afc568770555b184eecc717ae5e997df10c02fa8f9dde115"
+    },
+    {
+      "path": "crates/nf-transport/tests/independent_vectors.rs",
+      "sha256": "f8ef7354aa691525fe0d76a5a99eff8cee985e865f06fd64cf9f4c067040ea27"
+    },
+    {
+      "path": "crates/nf-transport/tests/mux_limits.rs",
+      "sha256": "fa6099ac8729eba38920837829528be8769a729c06352a7ef0034caf895479a3"
+    },
+    {
+      "path": "crates/nf-transport/tests/peer_cli.rs",
+      "sha256": "6d704e22b68367ca20eede8f7f87d0da3204a3976b11ca43cce21d762a77828c"
+    },
+    {
+      "path": "crates/nf-transport/tests/peer_process.rs",
+      "sha256": "b8bfde235b88a58cac4c64a08eee5764cb0bc6919bc5e67b24f573b2f010424e"
+    },
+    {
+      "path": "crates/nf-transport/tests/private_transport_identity.rs",
+      "sha256": "f929e3d5a566931b50b5fb1ec2cdf28eedc17cedc03d1c67f5647f31f84d09dd"
+    },
+    {
+      "path": "crates/nf-transport/tests/proof_records.rs",
+      "sha256": "0649fdb78b696be7b9b2fec02d27e59bc00fc81cd09860869bc78144b0900dcc"
+    },
+    {
+      "path": "crates/nf-transport/tests/query_records.rs",
+      "sha256": "7192960b14040e32ae728c9ff2558032e53fc4f4f3a0ddb686f7fd8b4ba24af8"
+    },
+    {
+      "path": "crates/nf-transport/tests/query_transcript.rs",
+      "sha256": "2891cbd036da3bcf18d12805fbbdba0aed36b1d64a2d5c280754aa606f64c270"
+    },
+    {
+      "path": "crates/nf-transport/tests/reconnect_fence.rs",
+      "sha256": "4fa0210892c346396b3421c0c6dbbbe1bf2e032712a68a02ed0aaef5b52200de"
+    },
+    {
+      "path": "crates/nf-transport/tests/record_admission.rs",
+      "sha256": "be0443ac132bc5a7c4ed71e50d80cd6dfdcd35c84c00017879e4e94ab560bbca"
+    },
+    {
+      "path": "crates/nf-transport/tests/response_budget.rs",
+      "sha256": "122f25af7ef26a8936a5235ce713e93a742c4573eff92741b6595dfc1283a2d3"
+    },
+    {
+      "path": "crates/nf-transport/tests/retained_queries.rs",
+      "sha256": "5602dc6335808388a9ca7c729c0240fa394b048e16b72d486d39fe6a206a05b4"
+    },
+    {
+      "path": "crates/nf-transport/tests/retained_records.rs",
+      "sha256": "6edbb01ba3d40912f8ecc92e427b11142bc84bc371578420b54b8ee8df0177dc"
+    },
+    {
+      "path": "crates/nf-transport/tests/server_hello.rs",
+      "sha256": "b81cb7e5889a014255e6d1e936c4c0624740a9c745c9a1afb0e53252809bdea6"
+    },
+    {
+      "path": "crates/nf-transport/tests/support/bulk_pair.rs",
+      "sha256": "21877a38417f0adb39c056b8f6ab41ad8697a882b0cc032c12423985a972f2bd"
+    },
+    {
+      "path": "crates/nf-transport/tests/support/child.rs",
+      "sha256": "9f1a3d12f135c83f3a40bc189078d6c4eb7d307b3bdb0c1513ec0413ffcced31"
+    },
+    {
+      "path": "crates/nf-transport/tests/support/community.rs",
+      "sha256": "a6c95c3f4b73ed1bdc8656aae9cb5611a1d1cdb2356b628d33825dd77b703b55"
+    },
+    {
+      "path": "crates/nf-transport/tests/support/owned_community.rs",
+      "sha256": "983068716206a8305ed21a24a669fbe45f3def9e9037dbf3498c5ffe2078b198"
+    },
+    {
+      "path": "crates/nf-transport/tests/support/pipe.rs",
+      "sha256": "3f2f72caf7cda4ad3885e4e1c6384ea31f50ef359bca7865d619702014596080"
+    },
+    {
+      "path": "crates/nf-transport/tests/support/query_pair.rs",
+      "sha256": "4ccf58b22b67b67224a6274d47b29032ab719ad6aa2cc91fb06cc8e9a41ba876"
+    },
+    {
+      "path": "crates/nf-transport/tests/support/retained_store.rs",
+      "sha256": "d2c89dd06776c6b786758fcb365a6f7e41a31c5026e24fad964a146bbeec753b"
+    },
+    {
+      "path": "crates/nf-transport/tests/support/scratch.rs",
+      "sha256": "0762a14b1d49552ad22cf4a9e08a10a8a590f6a2d8f188039f883dbeca847c49"
+    },
+    {
+      "path": "crates/nf-transport/tests/unsupported_record.rs",
+      "sha256": "44e25f9d5d9c948fdadcdf88b65addfcd2626fdd511bee98965bf6418b748e72"
+    },
+    {
+      "path": "crates/nf-transport/tools/generate-peer-vectors.cjs",
+      "sha256": "63536d6d68b69b8614334ce2a6d1626a24aab697ed2d9a79d4574bd176ef7105"
+    },
+    {
+      "path": "docs/transport/proposal.md",
+      "sha256": "1bbf172c13924a3fa825f6bdc7acf3e7bce6aad0fef1e2eedff056b453716858"
+    },
+    {
+      "path": "docs/transport/protocol.md",
+      "sha256": "7bc42d4ded59609fa836d6541e3b92807a27fbdb14c5d3e7db7c286b2a6ec103"
+    },
+    {
+      "path": "docs/transport/run.md",
+      "sha256": "737209bac425eaeeb6348b8f09e70a3f4286176a3befad207d3fb136c894ebd6"
+    },
+    {
+      "path": "docs/transport/vectors/peer-v1.tsv",
+      "sha256": "49baafd8719d6854d39f26e8b8badaf2935c6b7730d5d2ad1d2fbda84c46b795"
+    }
+  ]
+}

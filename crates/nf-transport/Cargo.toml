@@ -1,0 +1,23 @@
+[package]
+name = "nf-transport"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+libp2p = { version = "=0.57.0", default-features = false, features = ["tokio", "tcp", "noise", "yamux", "ed25519", "macros", "request-response"] }
+tokio = { version = "=1.53.2", default-features = false, features = ["rt", "macros", "time", "sync"] }
+futures = { version = "=0.3.34", default-features = false, features = ["std", "async-await"] }
+yamux = "=0.14.1"
+getrandom = "=0.4.3"
+sha2 = { version = "=0.10.9", default-features = false }
+zeroize = "=1.9.0"
+nf-contract = { path = "../nf-contract" }
+nf-identity = { path = "../nf-identity" }
+nf-store = { path = "../nf-store" }
+
+[dev-dependencies]
+nf-kernel = { path = "../nf-kernel" }
