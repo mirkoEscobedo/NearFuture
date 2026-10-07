@@ -13,3 +13,5 @@
 /protocol/text/DerivedAge-13.0.0.txt -text
 /protocol/text/Unicode-LICENSE.txt -text
 /crates/nf-nex-shadow/fixtures/*.tsv text eol=lf
+/crates/nf-world/fixtures/*.tsv text eol=lf
+/java/nex-reference/src/test/resources/*.tsv text eol=lf

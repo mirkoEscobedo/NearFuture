@@ -78,3 +78,13 @@ test('Nex shadow permits only copied local domains and exact pure hash', () => {
     }
     assert.deepEqual(dependencyViolations([], [{path: 'crates/nf-nex-shadow/src/lib.rs', content: '#![no_std]\nuse std::net::TcpStream;'}]), ['crates/nf-nex-shadow/src/lib.rs: Rust domain must not access std']);
 });
+test('miniature World core accepts only its local contract and maintained pure hash', () => {
+    const name = 'nf-world';
+    const hash = {name: 'sha2', req: '=0.10.9', uses_default_features: false};
+    const contract = {name: 'nf-contract', path: '/checkout/crates/nf-contract'};
+    assert.deepEqual(dependencyViolations([{name, dependencies: [contract, hash]}], []), []);
+    for (const dependency of [{name: 'nf-store'}, {name: 'nf-kernel'}, {name: 'nf-contract', req: '^0.1.0'}, {...hash, uses_default_features: true}]) {
+        assert.deepEqual(dependencyViolations([{name, dependencies: [dependency]}], []), [`${name}: domain dependency ${dependency.name} is forbidden`]);
+    }
+    assert.deepEqual(dependencyViolations([], [{path: 'crates/nf-world/src/lib.rs', content: '#![no_std]\nuse std::time::SystemTime;'}]), ['crates/nf-world/src/lib.rs: Rust domain must not access std']);
+});

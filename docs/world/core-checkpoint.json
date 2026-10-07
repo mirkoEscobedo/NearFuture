@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "scope": "phase1 pure core only; repair1 frozen for independent R2",
+  "ruleset_digest": "693eb02d8e5d64ba12678e8f5429a4760f06c0187225a53cf98c15c068b41595",
+  "tests": 20,
+  "files": [
+    {
+      "path": "crates/nf-world/Cargo.toml",
+      "sha256": "e1b3fec546b7e745faca952d3c18b34345f1555edeb7996ab84ad4cee06c7336"
+    },
+    {
+      "path": "crates/nf-world/fixtures/generate.cjs",
+      "sha256": "8e47f69f3532a0660eda0893a5946280e8d431b63275b824821336763ecc2283"
+    },
+    {
+      "path": "crates/nf-world/fixtures/genesis-component.hex",
+      "sha256": "a3272c780fd5c58f9ec513137e510645003fdf4956dceeebe250c727fa1fe68a"
+    },
+    {
+      "path": "crates/nf-world/src/actions.rs",
+      "sha256": "434336be338b8c3a87762fe4a198112cce9efe9c91d5c0a670dab131557c6601"
+    },
+    {
+      "path": "crates/nf-world/src/codec/mod.rs",
+      "sha256": "399c57f7cefc2e37f721477d607b4fb207f7dce73a4d1ab48688643f05ec9ad8"
+    },
+    {
+      "path": "crates/nf-world/src/codec/read.rs",
+      "sha256": "4a437c74c2e0406046c90b218021d42f1f760f786ad05ec601781bf374d2939c"
+    },
+    {
+      "path": "crates/nf-world/src/codec/write.rs",
+      "sha256": "2d7f32587faed1869411b818214eabbad5e5df1f8c632f2891c0d7c7dc4310c8"
+    },
+    {
+      "path": "crates/nf-world/src/frontier.rs",
+      "sha256": "155984c2f5de3a46aead1e753e7726c248da987aa04c55039e7962e0813da3d1"
+    },
+    {
+      "path": "crates/nf-world/src/genesis.rs",
+      "sha256": "72ed4ea09510a58f6e66f78bf483c25c51918c13363d7eab29eab265ea34af7a"
+    },
+    {
+      "path": "crates/nf-world/src/lib.rs",
+      "sha256": "5d5f9a27828675c10f0ea728dc5aa579dd4c56021ba72c49a1629d543bb265e7"
+    },
+    {
+      "path": "crates/nf-world/src/model.rs",
+      "sha256": "ecb89b164b50476478d580bc1d194f861900cf8c15f413eeea73d170c35c3ba2"
+    },
+    {
+      "path": "crates/nf-world/src/schedules.rs",
+      "sha256": "d30eccc3f86e3a3ca5600c3e1de605d49b44b3eca1f4d4d784b82bf4a4f20b75"
+    },
+    {
+      "path": "crates/nf-world/src/validation.rs",
+      "sha256": "bc0de2c44d67ccc7a6782c54246162c91cfb3d64845fe107768ebdeec839c579"
+    },
+    {
+      "path": "crates/nf-world/tests/actions.rs",
+      "sha256": "b5fe541838275b51f9bad462dedb6576b6bc84d904cfbee4bcfff04c38c11637"
+    },
+    {
+      "path": "crates/nf-world/tests/codec.rs",
+      "sha256": "0f853b70ac26a7c3d4c78a8d90932abbc03297db32ac5dfee6e74a3974904e2c"
+    },
+    {
+      "path": "crates/nf-world/tests/frontier.rs",
+      "sha256": "aa398b02a9e82b211ef5191b56825e56f1786561137d704d2af3aef3c7f07cf6"
+    },
+    {
+      "path": "crates/nf-world/tests/genesis.rs",
+      "sha256": "8b37175a5f7fcbd66e741ae287b1459819bb1a972bf3c981b89714e9719919d2"
+    },
+    {
+      "path": "crates/nf-world/tests/horizons.rs",
+      "sha256": "3638e352b4c69fbf852a92f477f3f38fc8f8171b79dd6b6f4c01b6ddf4cf6267"
+    },
+    {
+      "path": "crates/nf-world/tests/invariants.rs",
+      "sha256": "ff01f60fe451dc9d1b65f0a269f6f50c95fe0f38b5b9129acb3a075aedfb4419"
+    },
+    {
+      "path": "crates/nf-world/tests/malformed.rs",
+      "sha256": "a0022f59f4a91abc9da019edf205c00413ff4aadaaff68773ee993ce98f9850c"
+    },
+    {
+      "path": "crates/nf-world/tests/ordering.rs",
+      "sha256": "0e01106c7bf317e9aa305e6671c98c8d2271b1889491bdee88a4cdefc175360e"
+    },
+    {
+      "path": "crates/nf-world/tests/overflow.rs",
+      "sha256": "aa331f0e3b304f9ec310f9e94e3983a147f48ca64f5d345ae9328b26f1bd3edd"
+    },
+    {
+      "path": "crates/nf-world/tests/plan_time.rs",
+      "sha256": "b7cd8afe588fab3cca3e722818eae86ff983a4bee25936c9a315bfab57d9987e"
+    },
+    {
+      "path": "crates/nf-world/tests/relations.rs",
+      "sha256": "7ba97b2d2936c0ec07afa56cfc540122cf3e7f57f79d65d70149b3f514e661ef"
+    },
+    {
+      "path": "crates/nf-world/tests/replay.rs",
+      "sha256": "6c5f75fb6a4ab5c4ec4ef1abd52d71034bc32acfb0e096d0f86c8f3838272f10"
+    },
+    {
+      "path": "crates/nf-world/tests/resources.rs",
+      "sha256": "41130d188f28179ac8d862bbefc96149a5eee2176633a8e5bbb0e7372420d429"
+    },
+    {
+      "path": "crates/nf-world/tests/schedules.rs",
+      "sha256": "0b5ec6ea69d8cfa8ca8a5922906635acaddb903d9a2b9f53b279738de00d1265"
+    },
+    {
+      "path": "crates/nf-world/tests/support/mod.rs",
+      "sha256": "7d5dff87f28c02b20339e999464bef66cbfb4969551fae47061ccf2044fc11b2"
+    },
+    {
+      "path": "crates/nf-world/tests/travel.rs",
+      "sha256": "88e233add5a219fb2b90e110481543199a21984516fe2c975fe42bf25897dfc5"
+    }
+  ]
+}
