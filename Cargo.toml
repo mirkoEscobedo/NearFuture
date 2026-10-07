@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/nf-contract", "crates/nf-wire", "crates/nf-kernel", "crates/nf-identity", "crates/nf-store", "crates/nf-nex-boundary"]
+members = [".", "crates/nf-contract", "crates/nf-wire", "crates/nf-kernel", "crates/nf-identity", "crates/nf-store", "crates/nf-nex-boundary", "crates/nf-ipc"]
 resolver = "3"
 
 [workspace.package]

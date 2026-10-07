@@ -3,6 +3,10 @@ fn required_fields(name: &str) -> &'static [i32] {
         "Sha256Digest" => &[1],
         id if id.ends_with("Id") => &[1],
         "ControlEnvelope" => &[1, 2, 3],
+        "LocalAuthEnvelope" => &[1, 2, 3, 4],
+        "LocalAuthHello" => &[1, 2, 3, 4, 5],
+        "LocalAuthChallenge" => &[1, 2, 3],
+        "LocalAuthProof" | "LocalAuthAccepted" => &[1],
         "Handshake" => &[1, 2, 4, 5, 6, 7, 8, 9, 10],
         "NegotiatedSession" => &[1, 2, 3, 4],
         "ProtocolRange" => &[1, 2],
@@ -227,6 +231,12 @@ impl Scanner {
                     } else {
                         self.limits.text_bytes
                     }
+                } else if message
+                    .rsplit('.')
+                    .next()
+                    .is_some_and(|name| name.starts_with("LocalAuth"))
+                {
+                    32.min(self.limits.field_bytes)
                 } else if field.name.as_deref() == Some("signature") || message.ends_with(".PeerId")
                 {
                     128.min(self.limits.field_bytes)
@@ -245,6 +255,7 @@ impl Scanner {
                     let kind = message.rsplit('.').next().unwrap_or_default();
                     if (kind.ends_with("Id") && kind != "PeerId" && length != 16)
                         || (kind == "Sha256Digest" && length != 32)
+                        || (kind.starts_with("LocalAuth") && length != 32)
                         || (kind == "Handshake"
                             && field.name.as_deref() == Some("session_token")
                             && length != 32)
@@ -345,6 +356,14 @@ impl<'a> Cursor<'a> {
     }
 }
 pub(crate) fn preflight(input: &[u8], message: &str, limits: Limits) -> Result<(), WireError> {
+    let qualified = format!(".nearfuture.protocol.v1.{message}");
+    preflight_qualified(input, &qualified, limits)
+}
+pub(crate) fn preflight_qualified(
+    input: &[u8],
+    message: &str,
+    limits: Limits,
+) -> Result<(), WireError> {
     limits.validate()?;
     if input.len() > limits.frame_bytes {
         return Err(WireError::Limit);
@@ -354,5 +373,5 @@ pub(crate) fn preflight(input: &[u8], message: &str, limits: Limits) -> Result<(
         entries: 0,
         decoded_bytes: 0,
     };
-    scanner.message(input, &format!(".nearfuture.protocol.v1.{message}"), 1)
+    scanner.message(input, message, 1)
 }

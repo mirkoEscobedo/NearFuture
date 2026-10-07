@@ -16,8 +16,11 @@ final class Preflight {
     static final class Budget {
         long bytes;
         int entries;
-        void charge(long amount) { bytes += amount; if (bytes > 1_048_576) throw new WireFailure(WireFailure.Code.LIMIT); }
-        void entry() { if (++entries > 16_384) throw new WireFailure(WireFailure.Code.LIMIT); }
+        final boolean auth;
+        Budget() { this(false); }
+        Budget(boolean auth) { this.auth=auth; }
+        void charge(long amount) { bytes += amount; if (bytes > (auth ? 4096 : 1_048_576)) throw new WireFailure(WireFailure.Code.LIMIT); }
+        void entry() { if (++entries > (auth ? 256 : 16_384)) throw new WireFailure(WireFailure.Code.LIMIT); }
     }
     private static final class Cursor {
         final byte[] bytes;
@@ -52,8 +55,23 @@ final class Preflight {
         if (input.length > 1_048_576) throw new WireFailure(WireFailure.Code.LIMIT);
         scan(new Cursor(input, 0, input.length), descriptor, 1, new Budget());
     }
+    static void inspectAuth(byte[] input, Descriptor descriptor) {
+        if (input.length>4096) throw new WireFailure(WireFailure.Code.LIMIT);
+        scan(new Cursor(input,0,input.length),descriptor,1,new Budget(true));
+    }
+    private static int[] authRequired(Descriptor descriptor) {
+        return switch (descriptor.getName()) {
+            case "LocalAuthEnvelope" -> new int[]{1,2,3,4};
+            case "LocalAuthHello" -> new int[]{1,2,3,4,5};
+            case "LocalAuthChallenge" -> new int[]{1,2,3};
+            case "LocalAuthProof", "LocalAuthAccepted", "RuntimeSession", "AccountId", "DeviceId" -> new int[]{1};
+            case "Principal", "ProtocolRange" -> new int[]{1,2};
+            case "ResourceLimits" -> new int[]{1,2,3,4,5,6,7,8};
+            default -> new int[0];
+        };
+    }
     private static void scan(Cursor cursor, Descriptor descriptor, int depth, Budget budget) {
-        if (depth > 32) throw new WireFailure(WireFailure.Code.LIMIT);
+        if (depth > (budget.auth ? 8 : 32)) throw new WireFailure(WireFailure.Code.LIMIT);
         budget.charge(256);
         Set<Integer> singular = new HashSet<>();
         Set<OneofDescriptor> oneofs = new HashSet<>();
@@ -89,16 +107,18 @@ final class Preflight {
                 Cursor values = new Cursor(cursor.bytes, cursor.position, end);
                 while (values.position < end) {
                     budget.entry();
-                    repeat(field, repeatedCount);
+                    repeat(field, repeatedCount, budget);
                     scalar(values, field, expected, budget);
                 }
                 cursor.position = end;
             } else {
-                if (field.isRepeated()) repeat(field, repeatedCount);
+                if (field.isRepeated()) repeat(field, repeatedCount, budget);
                 if (expected == 2) {
                     int maximum = field.getType() == FieldDescriptor.Type.MESSAGE ? 1_048_576
                             : field.getType() == FieldDescriptor.Type.STRING ? (descriptor.getName().equals("BoundedError") ? 512 : 4096) : 262_144;
                     if (field.getName().equals("signature") || field.getName().equals("multihash")) maximum = 128;
+                    if (budget.auth) maximum=Math.min(maximum,4096);
+                    if (descriptor.getFullName().startsWith("nearfuture.ipc.v1.") && field.getType()==FieldDescriptor.Type.BYTES) maximum=32;
                     int count = cursor.length(maximum);
                     if (field.getType() == FieldDescriptor.Type.MESSAGE) {
                         Cursor nested = new Cursor(cursor.bytes, cursor.position, cursor.position + count);
@@ -114,12 +134,14 @@ final class Preflight {
                 } else scalar(cursor, field, expected, budget);
             }
         }
+        if (budget.auth) for (int required:authRequired(descriptor)) if (!singular.contains(required)) throw new WireFailure(WireFailure.Code.SEMANTIC);
     }
-    private static void repeat(FieldDescriptor field, Map<Integer, Integer> counts) {
+    private static void repeat(FieldDescriptor field, Map<Integer, Integer> counts, Budget budget) {
         int count = counts.merge(field.getNumber(), 1, Integer::sum);
         int maximum = field.getContainingType().getName().equals("RequiredSemantics")
                 || field.getName().equals("optional_capability_ids")
                 || field.getName().startsWith("unsupported_") ? 64 : 4096;
+        if (budget.auth) maximum=Math.min(maximum,64);
         if (count > maximum) throw new WireFailure(WireFailure.Code.LIMIT);
     }
     private static int wireType(FieldDescriptor field) {

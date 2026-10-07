@@ -1,0 +1,26 @@
+syntax = "proto3";
+package nearfuture.ipc.v1;
+option java_package = "org.nearfuture.ipc.v1";
+option java_multiple_files = true;
+option java_outer_classname = "LocalAuthProtocol";
+import "near_future/v1/near_future.proto";
+// Local transport authentication only. This does not register a world/intent payload schema.
+enum LocalEndpointRole { LOCAL_ENDPOINT_ROLE_UNSPECIFIED = 0; LOCAL_ENDPOINT_ROLE_CONTROL = 1; LOCAL_ENDPOINT_ROLE_BULK = 2; }
+message LocalAuthHello {
+  bytes client_nonce = 1; LocalEndpointRole endpoint_role = 2;
+  nearfuture.protocol.v1.ResourceLimits offered_limits = 3;
+  nearfuture.protocol.v1.Principal principal = 4;
+  nearfuture.protocol.v1.ProtocolRange protocols = 5;
+}
+message LocalAuthChallenge {
+  bytes server_nonce = 1; nearfuture.protocol.v1.ResourceLimits selected_limits = 2;
+  bytes server_proof = 3;
+}
+message LocalAuthProof { bytes client_proof = 1; }
+message LocalAuthAccepted { bytes server_finished_proof = 1; }
+message LocalAuthEnvelope {
+  // All headers are required: auth version1, local capability2/schema2, exact runtime session.
+  uint32 auth_version = 1; uint32 capability_id = 2; uint32 schema_id = 3;
+  nearfuture.protocol.v1.RuntimeSession runtime_session = 4;
+  oneof body { LocalAuthHello hello = 10; LocalAuthChallenge challenge = 11; LocalAuthProof proof = 12; LocalAuthAccepted accepted = 13; }
+}

@@ -4,9 +4,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     config.protoc_executable(protoc_bin_vendored::protoc_bin_path()?);
     config.file_descriptor_set_path(output.join("near_future_descriptor.bin"));
     config.compile_protos(
-        &["../../protocol/near_future/v1/near_future.proto"],
+        &[
+            "../../protocol/near_future/v1/near_future.proto",
+            "../../protocol/near_future/ipc/v1/local_auth.proto",
+        ],
         &["../../protocol"],
     )?;
     println!("cargo:rerun-if-changed=../../protocol/near_future/v1/near_future.proto");
+    println!("cargo:rerun-if-changed=../../protocol/near_future/ipc/v1/local_auth.proto");
     Ok(())
 }

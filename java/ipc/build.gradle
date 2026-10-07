@@ -1,0 +1,41 @@
+repositories { mavenCentral() }
+dependencies {
+    implementation project(':contract')
+    implementation project(':wire')
+    implementation 'com.google.protobuf:protobuf-java:4.31.1'
+}
+
+def testJavaExecutable = providers.gradleProperty('testJavaExecutable')
+tasks.register('ipcSmoke', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.IpcSmoke'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'ipcSmoke' }
+
+
+tasks.register('authClientTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.AuthClientTest'
+    workingDir rootProject.projectDir.parentFile
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'authClientTest' }
+tasks.register('authSocketClient', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.AuthSocketClient'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+    doFirst {
+        if (!providers.gradleProperty('ipcDescriptor').isPresent()) throw new GradleException('Owned descriptor required: -PipcDescriptor=...')
+        args providers.gradleProperty('ipcDescriptor').get(), providers.gradleProperty('ipcEndpointRole').getOrElse('control')
+    }
+}
+tasks.register('exportAuthTestClasspath') {
+    dependsOn testClasses
+    def target = layout.buildDirectory.file('auth-test-classpath.txt')
+    outputs.file(target)
+    doLast { target.get().asFile.text = sourceSets.test.runtimeClasspath.asPath }
+}

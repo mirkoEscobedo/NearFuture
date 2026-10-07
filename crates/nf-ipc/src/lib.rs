@@ -1,0 +1,21 @@
+//! Local IPC effects around closed generated contracts. Never called from a game frame.
+mod error;
+pub use error::*;
+mod framing;
+pub use framing::*;
+mod queues;
+pub use queues::*;
+mod session;
+pub use session::*;
+mod transport;
+pub use transport::*;
+mod rendezvous;
+pub use rendezvous::*;
+mod server;
+pub use server::*;
+mod bulk;
+pub use bulk::*;
+mod store_query;
+pub use store_query::*;
+mod auth;
+pub use auth::*;
