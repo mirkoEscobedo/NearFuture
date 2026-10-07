@@ -1,0 +1,11 @@
+# name|weariness_f32|min_f32|already_ended|current_action|existing|traits|faction_mult|generated|ended|abort|valid|priority_writes
+below|456a5fff|459c4000|false|true|none|0|-|false|true|true|false|-
+equal|456a6000|459c4000|false|true|none|0|-|true|false|false|true|value:FLAT:42160000,alignment_diplomatic:MULTIPLIER:3f900000
+above|456a6001|459c4000|false|true|none|0|-|true|false|false|true|value:FLAT:42160001,alignment_diplomatic:MULTIPLIER:3f900000
+active_exact_class|459c4000|459c4000|false|false|active|0|-|false|false|false|true|-
+ended_exact_class|459c4000|459c4000|false|false|ended|0|-|true|false|false|true|value:FLAT:42480000,alignment_diplomatic:MULTIPLIER:3f900000
+active_other_class|459c4000|459c4000|false|false|other|0|-|true|false|false|true|value:FLAT:42480000,alignment_diplomatic:MULTIPLIER:3f900000
+ended_object_stays_ended|459c4000|459c4000|true|false|none|0|-|false|true|false|true|value:FLAT:42480000,alignment_diplomatic:MULTIPLIER:3f900000
+all_traits_and_faction|456a6000|459c4000|false|false|none|7|3f000000|true|false|false|true|value:FLAT:42160000,alignment_diplomatic:MULTIPLIER:3f900000,trait_pacifist:MULTIPLIER:3fa66666,trait_weak-willed:MULTIPLIER:3fa66666,trait_stalwart:MULTIPLIER:3f333333,faction:MULTIPLIER:3f000000
+raised_threshold|456a6000|45bb8000|false|true|none|0|-|false|true|true|false|-
+lowered_threshold|456a6000|457a0000|false|false|none|0|-|true|false|false|true|value:FLAT:42160000,alignment_diplomatic:MULTIPLIER:3f900000

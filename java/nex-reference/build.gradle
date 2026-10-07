@@ -1,0 +1,26 @@
+def testJavaExecutable = providers.gradleProperty('testJavaExecutable')
+
+tasks.register('referenceSmoke', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.nex.reference.ReferenceSmoke'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+
+tasks.named('check') { dependsOn 'referenceSmoke' }
+
+tasks.register('verifyReferenceBoundary') {
+    doLast {
+        if (!configurations.compileClasspath.files.empty) {
+            throw new GradleException('Isolated Nex reference must have no external or game compile inputs.')
+        }
+        fileTree('src/main/java').matching { include '**/*.java' }.each { source ->
+            def code = source.getText('UTF-8').replaceAll('(?s)/\\*.*?\\*/|//[^\\n]*', '').replaceAll(/"(?:\\.|[^"\\])*"/, '')
+            if (code =~ /\b(?:com\.fs\.starfarer|exerelin\.|java\.(?:io|net|sql)|java\.nio\.(?:file|channels)|Math\.random|System\.|Thread|Runtime|ProcessBuilder|ClassLoader)\b/) {
+                throw new GradleException('Reference production must contain ordinary values and effect traces only: ' + source.name)
+            }
+        }
+    }
+}
+tasks.named('compileJava') { dependsOn 'verifyReferenceBoundary' }
+tasks.named('check') { dependsOn 'verifyReferenceBoundary' }

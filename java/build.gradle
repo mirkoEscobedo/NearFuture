@@ -22,7 +22,7 @@ subprojects {
 tasks.register('syntheticCheck') {
     group = 'verification'
     description = 'Public Java contract and generated wire verification; does not require Starsector.'
-    dependsOn ':contract:check', ':contract:jar', ':wire:check', ':wire:jar', ':capture:check'
+    dependsOn ':contract:check', ':contract:jar', ':wire:check', ':wire:jar', ':capture:check', ':nex-reference:check'
 }
 tasks.register('gameAdapter') {
     group = 'verification'

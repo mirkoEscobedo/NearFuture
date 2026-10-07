@@ -1,0 +1,17 @@
+# name|gate|treaty_relation|chance_f64|treaty_f64_or_dash|decision|consumed|reduction_f32_or_dash
+chance_equal|none|false|3fe0000000000000|-|CEASEFIRE|1|c53b8000
+chance_above_double_precision|none|false|3fe0000000000001|-|NONE|1|-
+chance_below_double_precision|none|false|3fdfffffffffffff|-|CEASEFIRE|1|c53b8000
+treaty_below|none|true|3fe0000000000000|3fd333333fffffff|TREATY|2|c5bb8000
+treaty_equal|none|true|3fe0000000000000|3fd3333340000000|CEASEFIRE|2|c53b8000
+treaty_above|none|true|3fe0000000000000|3fd3333340000001|CEASEFIRE|2|c53b8000
+chance_failure_no_second_draw|none|true|3fe0000000000001|3fd0000000000000|NONE|1|-
+no_enemies|noEnemies|false|3fe0000000000000|-|NONE|0|-
+pirate_disabled|pirate|false|3fe0000000000000|-|NONE|0|-
+war_interval_below|warInterval|false|3fe0000000000000|-|NONE|0|-
+own_weariness_below|ownWeariness|false|3fe0000000000000|-|NONE|0|-
+enemy_weariness_below|enemyWeariness|false|3fe0000000000000|-|NONE|0|-
+recent_war|recentWar|false|3fe0000000000000|-|NONE|0|-
+ceasefire_disallowed|canCeasefire|false|3fe0000000000000|-|NONE|0|-
+commissioned_target|commissioned|false|3fe0000000000000|-|NONE|0|-
+offensive_blocked|offensive|false|3fe0000000000000|-|NONE|0|-
