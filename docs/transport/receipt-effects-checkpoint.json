@@ -1,0 +1,226 @@
+{
+  "method": "SHA256 of raw working file bytes; no line-ending normalization; final author source hold after Activation/query-expiry repair, not independent acceptance; root-owned owner_codec/network/events/framing included as review context",
+  "schemaVersion": 1,
+  "files": [
+    {
+      "path": "crates/nf-transport/src/receipt/effects/activation.rs",
+      "sha256": "86eaa9493d5b1e165b61fedab05af3f4882b80195964125211e3c374f564e942"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/anchor.rs",
+      "sha256": "add9c7d67596b5b9abc79139e37478a6dccdd67db4cee0bcc88178b3ce32fa49"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/codec.rs",
+      "sha256": "3bdf104db0bb2cbd8c2c65cab2ac7020facf598914a1895c550980442f7ece69"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/collision_test.rs",
+      "sha256": "ab4e74b578a3fd1b41e6793237fb739866a68ebcf752b957839c0438dbccffb1"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/inventory.rs",
+      "sha256": "4bd053742e53f2e4283ff54a6a67fc815ae8f06b51a74bd6c7f577253a083a87"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/mod.rs",
+      "sha256": "4650592ae7443a3693b3c21669c7bc0a79786cb87e3a57f46abc459a24fcf16c"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/model.rs",
+      "sha256": "8fd6f529c90ea09858ba1a94fb35647bf3546df784cfce1d58530387a4792888"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/persistence.rs",
+      "sha256": "42cd8906eb12724287453e273199750099fd185a539fb125b3853f0aed02c11a"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/book/reader.rs",
+      "sha256": "ff2dae1774d1a7fb5ce3bc48b6e8bba6087fca917126e2cc6d7974528fbec451"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/completion.rs",
+      "sha256": "fb5f87f9b6d44b044efc2d2aa87fec0297df04ce0e5746c9ecd6207d187941ca"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/handshake_custody.rs",
+      "sha256": "37c8d12e7d66e45623d645f17b4d984bf0488db18cebf71aead9dbd7f3def328"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/handshake_delivery.rs",
+      "sha256": "c16cdbf7bd982b7f26c26b2650114dafff53d59f96c261df0aeeac15164b99f3"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/handshake.rs",
+      "sha256": "a7c49d5b414cb83f0073265620c79e91c9477996ccfd062d6047641d52d22e00"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/inbound.rs",
+      "sha256": "8c67bc7b84efc758489990d4aa56aec6e93a5a998678d6a69fe772a889fee78a"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/activation_test.rs",
+      "sha256": "51ec3546673ea191898c6288261476c95130fa2cf608c6f684e96410fef01d3c"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/deadline.rs",
+      "sha256": "98ce91287ec271289dd2ff92dbe0322d2bfb89e9e6b15e7afcec05bb4c5435b4"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/events.rs",
+      "sha256": "881939360f6fc311e50d8e62423b576079957bf086e8fc365709d05adb3d0e1e"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/mod.rs",
+      "sha256": "292a5abd421421e4f9a43de577fdf61cfa35df9def951ea68fe626422bfbc3a1"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/lane/policy.rs",
+      "sha256": "4dbd985d1336f17c98a6b59bcc987e3214422b914f67563d81ba84666300bdd9"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/mod.rs",
+      "sha256": "b53e163dddd2f5a3960b74243dc7a2a26ed7d0063daea75909ab35a1e0b7110c"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/model.rs",
+      "sha256": "f54e2c86c43506d6df647e2190271d2cd15b7e44824002d304db84defca7917a"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/network.rs",
+      "sha256": "9f36d7c90ad53ed20f17aca4255f7edd331fa5150e878878fdb6faeaffc4ca02"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/observation.rs",
+      "sha256": "5be7bd6ed1fde876c7e34e5e3d49ae220c6b6016119bb947636b366c3914acee"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/client.rs",
+      "sha256": "06dfe21f2dcdcdee356825411e6024c4994159d79a96fe329461428324c67fe5"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/common.rs",
+      "sha256": "8bd1d6fe8fc9f02f74f41952651070686a5300e8d1583e3e7655321956259208"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/delivery_tests.rs",
+      "sha256": "701a96ec6c005a406ec48c67687e908444872208ed043a5882d96b361c2a3467"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/delivery.rs",
+      "sha256": "35dc7a4f3a7ad7c1fb14bb44bc1f581ee8e02335a8c751a6fb5480530a27cdec"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/mod.rs",
+      "sha256": "e6590799cb51b4c87f91dc093b9702313c826d46c38b5274438615803acf4cee"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/model.rs",
+      "sha256": "9babed7ad7acc5ffcb6475297d9255dd2fb4dcff073bcefa5d654573d03ba01d"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/outbound.rs",
+      "sha256": "d3db28a6dcea92560c8c1e4eb1c33bee453fd4513ed2b4244795607594649da8"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/operation/server.rs",
+      "sha256": "cf454d0aea625a069218611ee07e108b51cb0ea318fcc8562c88c95cf2b3901d"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/owner_codec.rs",
+      "sha256": "11f856f9b294ec25968b59909329627a0d3f573b811e457e8b85f58382d05ef9"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/read_delay.rs",
+      "sha256": "90cc6721788c8b5eb4785fa21475ae948bfe7959faf94bbc192467aafe3f0b85"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/repository.rs",
+      "sha256": "a5a1a30363e1428d8a7660712b346a96650f891ba9abaa695e35b939aaf915e7"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/revocation.rs",
+      "sha256": "07cc82a79b5eec5d735176e59591c6933eaa7c042c99a61440db7ca45ecf2eee"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/selector.rs",
+      "sha256": "1426458d4b4bd9351f6d943242428214ad9782db2b8b1097025e474a7649b804"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/tests.rs",
+      "sha256": "76fa3582b00d96ba7fa9c81e1cfaa8acf8fdd0549fb949e7e7e24129a790499e"
+    },
+    {
+      "path": "crates/nf-transport/src/receipt/effects/trusted_commit.rs",
+      "sha256": "86b196e5a4f1943365ec9cbda756fcd70c6e5741d1cfc586b0c41e7515fac340"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_capacity.rs",
+      "sha256": "dd886e5ef0e1eec55b0ce7a59c9ca1a3246d1db0c2552bf1e5f74f8db3456772"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_codec.rs",
+      "sha256": "40e695fb22caf36d28c6e77cacd8692f0a8e07098f891f5a2b144d4af8837f27"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_inventory.rs",
+      "sha256": "035c3401341928aa9f7dba9321ce26505fc641e2e80f85b7504f9e6f00acfde9"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_original.rs",
+      "sha256": "9af3aca0ccea509881ad3e09e77df291261ea337997e357851374856f5329981"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_book_recovery.rs",
+      "sha256": "a1c2fec8393a5b669c29fa1b0a90b72a1b4bbe130897ce8bc39a22aff47c7aaa"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/activation_cases.rs",
+      "sha256": "f0dc749527c89e29ccb953ab2eecf73736cccd7ec33153b1c25595ac75755d55"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/corpus.rs",
+      "sha256": "77531c919f52564a1dc6e699a4eba470d0f322895fc652e33effcccbe90f2465"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/fixture.rs",
+      "sha256": "70412072a6a82d84514ee75b3794af1b35b2254fb9fa1dff9d70c539aebff857"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/fork.rs",
+      "sha256": "d2a00ae76396e1afc90573bcbb00df4970acf2d5dff0ec5da521bf1232c893d9"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/lane_cases.rs",
+      "sha256": "4f67439691324f59c690d1a2d63aa8f32a2d7b488c467d63771f1584c61d6cce"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/malformed_cases.rs",
+      "sha256": "cd073acfe261f32e8be00b72841ee8a9c2c87c476026c38e5a7498ab4d6dfcca"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/scratch.rs",
+      "sha256": "123ba65cf5c1f8bab56228e16691104af44852f47712916ecc33698c3534c2c5"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/activation.rs",
+      "sha256": "42487b5b1d7b9d70801a38b090b2b6b24dd8fb45373eff88d65a3914097eb5a3"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/repository.rs",
+      "sha256": "47c1890ceee84b52c8dca74a78ccd7b67df80e8bab6f519c2f0d6804639d6f88"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/timing_origin.rs",
+      "sha256": "c9e5c123649a71fd4ddc2746012793ee6a4eead17cad8a892d4ebbd874c410ea"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_internal/timing.rs",
+      "sha256": "c366c5b51065f9d2560091bc93e20b79e3086c39fe360d456cd46d33dd6005bf"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_owner_framing.rs",
+      "sha256": "7900f8ed09909e82621e69978cefe8f9236a23d2c096f6d503773d1cc290651a"
+    }
+  ]
+}

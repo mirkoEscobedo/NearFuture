@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "base_commit": "46c3be66af3fd200f46847c0a51d60110edfba82",
+  "scope": "Additive bounded operator config/argument parser and one opened regular-file reader only; no Portal/Store/key/Network admission",
+  "grammar_sha256": "9a2b5bf02692d43748aacea64affa1db2f5632fc6db28740a603d90e6aae97e0",
+  "red_result_sha256": "9768ff0851a7ea55db4fce47c78ff225bd68d7ef7fe218d7cbf33d1b7da2adb8",
+  "initial_green_result_sha256": "b3534cbabe3f2dc7d6bcdd88243ea7904d572a804c1d23e17af75598a69ea65d",
+  "owned_raw_paths": [
+    {
+      "path": "crates/nf-transport/src/portal/config/mod.rs",
+      "sha256": "bf8ad9564d69ef549073ac4562924cda9f9c75a1f46eb4b8e8935e8ea892f95a"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/arguments.rs",
+      "sha256": "6f5c8f3aeb637dfe83960bac305e72a17919cbf2099a050a11873fc505f0652e"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/file.rs",
+      "sha256": "b87a90b9c9b1284a12df27c5a509aac9317fa03f23851c3b5f344bfe1371a4d7"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/parser.rs",
+      "sha256": "da818d63c73560f06d62fedadc1f7f51c2a8fcc8442d8e7de72a403543511158"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/primitives.rs",
+      "sha256": "89baf0da7e198d280e82f574d67d7c529a7aecaae2a82f087aac3d17df28891d"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/config/rows.rs",
+      "sha256": "412f089383018456054cdbd84c335bb0c0e659b2e6cbdcde7bd9afded90a09e3"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_arguments.rs",
+      "sha256": "bcae89b2192f39bb62652648494380c637105d2d6f1215d2e882980b5ae756ab"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_config.rs",
+      "sha256": "a57c1f9e678bee081924d525c9adb1376d9f5d3b31db5cdc2f5efa1c40d44019"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_config_file.rs",
+      "sha256": "89142af3e28b00ddccaabe327fd2018762c0548fd37db5f7d574ac9b43c3ee23"
+    }
+  ]
+}

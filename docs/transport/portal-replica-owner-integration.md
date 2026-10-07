@@ -1,0 +1,19 @@
+# Portal owner and bounded replica admission
+
+The foreground portal owner opens one real repository and owns receipt, notification and physical bulk listeners. Its Watch client prepares the repository and both control lanes before it starts the original finite run. It validates the actual three configured Ready addresses and peer pins, then reloads current SQL membership before its first deadline and dial.
+
+Actual receipt authentication and subscription schedule a correlated query for the selected immutable request. Only the validated completion can publish Status; the final protected cut checks current SQL and the unchanged original deadline. The client does not resubmit the strategic operation. Listener loss, signed revocation, SQL delay, finite shutdown and socket release are covered by real component tests. These are owner/component tests; the separate two-production-process CLI regression is not included in this checkpoint.
+
+The explicit borrowed nf_kernel::replica::admit_with_scope API composes cumulative fatal resource limits with the bounded World and Provider seams. It charges its declared logical frontier, ordering-reference, expected-revision, world-copy and canonical snapshot costs before those owned allocations. Ordinary semantic rejections remain inside the budget result. Default admit, evaluate, settle and encoder APIs are unchanged.
+
+Kernel tests compare canonical bytes and hashes with the existing encoder, exercise direct C/E/D boundaries, malformed and stale or unauthorized admissions, cumulative scopes, dedupe IDs, retained outcome collisions, and empty input. The combined legacy-limit witness builds 4,096 actual settlement outcomes before asserting the admission limit; it injects no fabricated outcome state. Logical cost accounting is not a measurement of allocator capacity, physical copies, RSS or end-to-end performance.
+
+Fresh combined Windows validation passed 216 cases: 52 identity, 67 kernel, 88 transport unit and 9 public receipt-book/portal cases. All ten supervised steps passed, including formatting, strict workspace all-target Clippy, architecture boundaries, the reference corpus and before/after source guards. The exact 1,031 tested inputs compose raw parent b21f026 with 47 accepted additions and five fieldwise changes; 979 parent blobs and all 957 protected working inputs remain unchanged. Independent source composition review found no issues.
+
+The current revocation witness gives positive fresh-SQL coverage. A separately accepted timing-mutant witness is not part of this source cut. The Watch client uses receipt and notification lanes; physical bulk readiness does not prove an application bulk transfer or fairness under load.
+
+At parent b21f026, both Linux CI jobs passed, including actual Java/Rust authentication, reference differential checks, both SQLite sync-fault gates and release builds. Both Windows jobs failed after 83/84 transport units passed. The PR job retained a BlobCreate/EntryAccess SingleAcl/Wait/Timeout diagnostic with 5,030 ms elapsed. The push job hid its actual open_owned error behind anchored_context’s assertion. Neither a helper-script phase nor the push failure cause is established; no deadline, ACL policy or retry was changed by this integration. Fresh publication CI remains pending and the PR remains draft.
+
+Issues #23 and #39 remain open. Actual production-peer processes, protocol rejection/reconnect/retry and bulk-progress coverage, semantic replica activation and budgeting of evaluation/settlement/replay/frontier/batch/Store paths remain required. Native Starsector acceptance is also pending. No full issue closure, native-game behavior or production storage repair is claimed.
+
+The companion checkpoint records source and evidence hashes. Its two metadata files were appended after the source-bound native run without changing any tested input.

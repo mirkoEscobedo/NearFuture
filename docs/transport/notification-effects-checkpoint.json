@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "scope": "Phase B notification effects only; opaque NotifyLane; no Portal/CLI/global fairness or whole issue23 acceptance",
+  "status": "AUTHOR_REPAIR_1_FROZEN_FOR_INDEPENDENT_R2",
+  "hash_method": "SHA256 of raw working file bytes without line-ending normalization; checkpoint excludes itself",
+  "contract_sha256": "f3e818776bb3ee9fe0c660424bc420f938e852c3f7d3ba0eec51466440aa0dce",
+  "pure_checkpoint_sha256": "8ce7bfd0bb2c72b1e219b45878276f94b448d6d7ed17a89e5cfbdb66ed91ab1e",
+  "independent_vectors_checkpoint_sha256": "790b128fca025856bfee99ae0f8659171db274e262893031575e2205c90742b0",
+  "author_result_sha256": "a14eef366d60a3e68fc8e20008d6bfeeca00cb69a0a5a596912b7efa1277709e",
+  "author_result_path": ".tmp/notification-effect-author/effects-r1-repair-final.json",
+  "source_inventory_sha256": "31d616a03aeb4fceb3700d76419cb2bb88404eced6cda7157ea933ec82ed22c7",
+  "coupled_receipt_hold_sha256": "f31da2c07f0b8811c66fca297cceac163805b75d9c6ba6af368523dda6725dec",
+  "verification": {
+    "test_count": 46,
+    "private_unit_count": 41,
+    "external_count": 5,
+    "native_steps": 8,
+    "process_ownership": "windows-job-object",
+    "all_status_zero": true,
+    "all_no_timeout": true,
+    "strict_clippy": true,
+    "owned_rustfmt": true,
+    "independent_vectors": true,
+    "actual_architecture": true,
+    "source_before_after_unchanged": 44,
+    "pure_before_after_unchanged": 17,
+    "coupled_receipt_before_after_unchanged": 55
+  },
+  "owned_raw_paths": [
+    {
+      "path": "crates/nf-transport/src/notification/effects/binding.rs",
+      "sha256": "3b37060d86167ca769797636a324d43c6fe757f5a00ae331b0f111540514474f"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/broker.rs",
+      "sha256": "83a9200c3e251b73e736b8864c40ca1201575a80ed596847db95774ce1d1a4fb"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/broker/control.rs",
+      "sha256": "62dc942c7492a2e1799fc6d3982ba4d5e48099bbc5ead98545b5973331d520db"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/broker/notice.rs",
+      "sha256": "faedbb57f2191ded5e07827606222f3929a3548d96026fa0926e7a45520857ea"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/client.rs",
+      "sha256": "d567164e6a4ec3e01e4da3e4d25b39bf6129d0d5fd6df72362d018f2f0842400"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/client/notice.rs",
+      "sha256": "7ad44a1bea4b4060349d6868185af664e9fd8b5ea5e77795ef2219fd6ff4adac"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/delivery.rs",
+      "sha256": "604baeb23ddecad49abbb7033c31622e5796edf3c430cb8be4b9e4992c28c0de"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/emission.rs",
+      "sha256": "d6c79ef243c0666c82a70db97ecfc3d526929f3bfc7f1247d66b46651d6d3b99"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/flow.rs",
+      "sha256": "22de28b2436500dce5c44c30d821e707d513710f996e5e62d16e7d4adb69e1cc"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/handshake.rs",
+      "sha256": "02e03eccb48b7a33a96e0e8ca93e0959e7a3c8202d074a0202e380c87f2ab844"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/completion_test.rs",
+      "sha256": "af610c8f1bc75a4c6cb6a21cb3fc17a6e6c0684127af1eb5adb679b58c76e305"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/deadline.rs",
+      "sha256": "61ab42d3e92fd92d49c9fac80d04463cc8046959486173f67afba0f8dafd487d"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/events.rs",
+      "sha256": "8f1026b4b80209e98f603a5617ed93f89e06d7f0dc27cc190822180fbb798a1b"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/guard.rs",
+      "sha256": "3b623c9cf145b3adb8c60c8b76e41c16b6bcc9dfc9c3b6eb8eff879e8bce266e"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/mod.rs",
+      "sha256": "6108da17741bf350498994a0ecae4e2a3b7dd5bf6a1336f545293ccd7bb6ab1c"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/query.rs",
+      "sha256": "713ff43436606235b751084d4185f26d56a90b61b8e511892fb9fce52a3492f8"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/lane/send.rs",
+      "sha256": "ef2798ccc652293fa0a5bdfc5b2e4f8686281855255247194d971250d4dcfb7d"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/mod.rs",
+      "sha256": "6197f16679c44961ee3bc72d6e06ff9ca6c301903edbfb9b1e8ebe8ecdf0b936"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/network/builder.rs",
+      "sha256": "cbf5b0329991c7f2a8fabf6a90a4aaedbe52c3446810bd4dd79e40c62fa10036"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/network/codec.rs",
+      "sha256": "0200f53d02ad36240253176c2d14d18f423239c86ccdb354b3f069dcfcbe914f"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/network/mod.rs",
+      "sha256": "582f24dd14fb5b61d9a1b99d199bb76e372a2d5f64dc1eb85af0170b9b3b5f99"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/network/owner_codec.rs",
+      "sha256": "4e9817fae5723de97e3cc3be90e30edeae97065d0df81e265e5bf962350d9422"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/owner.rs",
+      "sha256": "0401eef5eae448b2f54621fd31ea453607abf609a43502eaaaeeae5b19201b53"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/policy.rs",
+      "sha256": "721253c346fb6e8a0ff32881cd1d2d1d6a2e1280f26a5cb703df184e1648a9bb"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/quota.rs",
+      "sha256": "9de6b1252ea7955be0b2bd103f74fd5aaba427860eb4822d19b02883fe2ab5f3"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/tests.rs",
+      "sha256": "571f1c24e2294f95704a2112126bee099a96a9292f8082eb32914820c3fc33fc"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_effect_support/lanes.rs",
+      "sha256": "c2e7356db3608eb2398f3cf0f42a4030fba30d84e944bf1fefc6a922645bf9de"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_effect_support/mod.rs",
+      "sha256": "913cb202becc6fb7062bcaa00380203feea1e0259024b1dafa28596083d395e4"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_effect_support/repo.rs",
+      "sha256": "6986a8b5deaf79a090c6a8312c1137d5c39e15d978a30a171b48ab14eef46a3d"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_followup.rs",
+      "sha256": "b901a09319c957a28b9f70504a0350424e099d9c024cb1300382c2841fa3ce36"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/auth.rs",
+      "sha256": "5410577bd7162ed7f0f4d2acf54c65f967b4e7ef286a4c6d0492c8056db1dbcc"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/broker.rs",
+      "sha256": "caaa188c8e4f90ab87958fa8efe3f9eeb43b4456670d9c353d459b1418db9efb"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/completion_deadline.rs",
+      "sha256": "72dfb37cebecc4034e353545228b8ef556abdc3e4f0f8c8d55b596b2642b367f"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/deadline.rs",
+      "sha256": "0e5d7a49b63d1cb73347675d9339cd95034894687d4e23a516fe542f4ddfc0f4"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/delivery.rs",
+      "sha256": "8dbdd104f337c119ae8e090a87cd433dd587c85164250df9bb7b81ce7c4fdece"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/final_completion.rs",
+      "sha256": "d5ed380216ee324ee7302d5b8bd9b2c1e582c6328da94b95f431de7099da195d"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/notice.rs",
+      "sha256": "2451d919dbb04580d526dc8b0b87e9651d37289ce8fdebb7681de972fa087554"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/queue.rs",
+      "sha256": "fa79736143f224fd2fb9ddc73eedf1df99df70dbf17ca5695dde51ec9e7e1097"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/rate.rs",
+      "sha256": "ccd05d174a586f4cb971bfd944f40f6a8b1f23c46cdfe55abc542e2887b54cee"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/read_cuts.rs",
+      "sha256": "a4550a2bc13040d8eba888d7f6941e4cbb62aef1aca922434c761fd600f8979c"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/subscription.rs",
+      "sha256": "eb53d1612289b9efa869a6fe80f6ae8177efe33e68bce74cb5b63e5984533389"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/support_sessions.rs",
+      "sha256": "2ef9662b8ceeefc7cb76c809435f5799301dc3337c9db849eb975672b6ca8d2a"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_lane.rs",
+      "sha256": "00183131c3d8187b4542a52ad18337f3b4a76892095cb981422acc9c5064c56b"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_owner_framing.rs",
+      "sha256": "0fec544ed257994112491775f7434e7b8c781c11bbac4f1b08b3c4f77835dde5"
+    },
+    {
+      "path": "docs/transport/notification-effects.md",
+      "sha256": "03d2f16ad3b69eb32be1d4929f61285bf9c34b0f0957814714931546f0f6e9b1"
+    },
+    {
+      "path": "docs/transport/notification-effects-verification.md",
+      "sha256": "9a6eaf9d799faf897ad96e0a7b624eead4fc4667454fc2fb261b41e25dc944fa"
+    }
+  ],
+  "source_inventory_path": ".tmp/notification-effect-author/post-r1-repair-paths.json",
+  "previous_checkpoint_sha256": "bda010141e728517d9a5989fbca1bec298a7596a77b8568cf753a738d4d5628b",
+  "semantic_repair_round": 1,
+  "review_finding": "Original setup/awaited five-second origins must survive final protected completion before custody release/report/clear; author repaired, independent R2 pending",
+  "repair_evidence": [
+    {
+      "path": ".tmp/notification-effect-author/completion-r1-red.json",
+      "sha256": "4d97076a8f4ee8cb515ce059b05dff9424cb08f573e1e4d9d0db0da255285f73"
+    },
+    {
+      "path": ".tmp/notification-effect-author/completion-origin-r1-red.json",
+      "sha256": "419932ce8a17e054794aa53fbe2218a9fa852fc96cd90628bd49607b655645e0"
+    },
+    {
+      "path": ".tmp/notification-effect-author/completion-r1-green.json",
+      "sha256": "f9a958057742b5f940ddbf10778f6cfa9a1b258a56957c4ac04c4e4cd29d578d"
+    }
+  ]
+}

@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "status": "INDEPENDENT_SOURCE_REVIEW_AND_WINDOWS_INTEGRATION_PASS_HOSTED_PENDING",
+  "parent": "bb5a89f7d3c32888546756807e40218f428a4157",
+  "sourceFiles": [
+    {
+      "path": "crates/nf-identity/src/private_diagnostics.rs",
+      "sha256": "2d5e3fd98d632239d17337a4f5b70e230938edad5674d4cbf013620b7023da87"
+    },
+    {
+      "path": "crates/nf-identity/src/private_diagnostics/model.rs",
+      "sha256": "12a55f5f480b9b8edd07997f534af41de224de5b563098238379697175e3642a"
+    },
+    {
+      "path": "crates/nf-identity/src/private_diagnostics/vault.rs",
+      "sha256": "e663563db98ed4f585e33ccf32a3f6fab7d664320cdee1c6c4d2b18f16d57eb6"
+    },
+    {
+      "path": "crates/nf-identity/src/private_storage.rs",
+      "sha256": "42051e8bd501ff309b7917a005a22990d8bab0f6ad5db311db72b1b430bdb287"
+    },
+    {
+      "path": "crates/nf-identity/tests/private_vault_lifecycle_diagnostics.rs",
+      "sha256": "f9348233040d5fa4ac312d1641fe544c75f3488cf4fbf9dc033dd1178c58c469"
+    },
+    {
+      "path": "crates/nf-transport/tests/receipt_effect_support/scratch.rs",
+      "sha256": "76550cc3a11562c8cbd7027aeea6377f2fe8a7125b38d12ff37d853cb8db44db"
+    }
+  ],
+  "sourceCount": 6,
+  "unchangedParentFiles": 976,
+  "testedSourceInputs": 982,
+  "sourceSnapshotSha256": "8b38c94c0119b34fb88ce684e8bd74f7b565aac8f265f071d5d99b62a1d2d797",
+  "nativeReportSha256": "8b1abdd282ab75144bc515298be8932cd06532feaf4a30d45e75c9fddc27d52c",
+  "cases": {
+    "identity": 52,
+    "transportUnits": 84,
+    "publicBooks": 7,
+    "total": 143
+  },
+  "steps": [
+    {
+      "command": "node",
+      "args": [
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-native/guard-evidence-absolute.cjs",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-native/snapshot-final.json"
+      ],
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object",
+      "cases": 0
+    },
+    {
+      "command": "cargo",
+      "args": [
+        "test",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-author/Cargo.toml",
+        "--target-dir",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-target",
+        "--locked",
+        "--offline",
+        "-p",
+        "nf-identity",
+        "--",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object",
+      "cases": 52
+    },
+    {
+      "command": "cargo",
+      "args": [
+        "test",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-author/Cargo.toml",
+        "--target-dir",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-target",
+        "--locked",
+        "--offline",
+        "-p",
+        "nf-transport",
+        "--lib",
+        "--",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object",
+      "cases": 84
+    },
+    {
+      "command": "cargo",
+      "args": [
+        "test",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-author/Cargo.toml",
+        "--target-dir",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-target",
+        "--locked",
+        "--offline",
+        "-p",
+        "nf-transport",
+        "--test",
+        "receipt_book_capacity",
+        "--test",
+        "receipt_book_codec",
+        "--test",
+        "receipt_book_inventory",
+        "--test",
+        "receipt_book_original",
+        "--test",
+        "receipt_book_recovery",
+        "--",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object",
+      "cases": 7
+    },
+    {
+      "command": "cargo",
+      "args": [
+        "fmt",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-author/Cargo.toml",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object",
+      "cases": 0
+    },
+    {
+      "command": "cargo",
+      "args": [
+        "clippy",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-author/Cargo.toml",
+        "--target-dir",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-target",
+        "--locked",
+        "--offline",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object",
+      "cases": 0
+    },
+    {
+      "command": "node",
+      "args": [
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-author/tools/architecture/check.mjs"
+      ],
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object",
+      "cases": 0
+    },
+    {
+      "command": "node",
+      "args": [
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-author/tools/reference/sync/generate.cjs",
+        "--check"
+      ],
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object",
+      "cases": 0
+    },
+    {
+      "command": "node",
+      "args": [
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-native/guard-evidence-absolute.cjs",
+        "E:/github/NearFuture/.tmp/private-vault-lifecycle-diagnostic-r2-native/snapshot-final.json"
+      ],
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object",
+      "cases": 0
+    }
+  ],
+  "reviews": [
+    {
+      "sha256": "f5bf26d1bef306f76fe5335f2a9c5f7e73c44e8e50123975e103aacd5b39dbe5",
+      "semanticRepairs": 0
+    },
+    {
+      "sha256": "290034227eee990ebcbad2ffcb872f304d3821453456a7dec6ef871dadf04a52",
+      "semanticRepairs": 0
+    }
+  ],
+  "evidence": [
+    {
+      "path": ".tmp/private-vault-lifecycle-diagnostic-red-acceptance.json",
+      "sha256": "c9c73875754e3ede08ee15fd8bb9c2c12f006851f21533f63a5149ac99dfe319"
+    },
+    {
+      "path": ".tmp/private-vault-lifecycle-diagnostic-green-native/first-green-result.json",
+      "sha256": "f3cecb3f33337aaad00703ddb59b7de772e60597244d67c1770ce7a19f8435cb"
+    },
+    {
+      "path": ".tmp/private-vault-lifecycle-diagnostic-r2-native/format-result.json",
+      "sha256": "860e59232a73ac9d7f42ea58d60b64935ce312cfa45023345ee4c4f21d6a2f6e"
+    },
+    {
+      "path": ".tmp/private-vault-lifecycle-diagnostic-r2-evidence-path-amendment.json",
+      "sha256": "7c2d8d011bac4e2aab2122f933ccd6a2ab6716addb42935eb208d6f76a6933d6"
+    },
+    {
+      "path": ".tmp/private-vault-lifecycle-diagnostic-r2-native/format-corrected-result.json",
+      "sha256": "9fb7708961f21cb19e4e453c90ac05fe2be83b1038c156e3b833e59dc3740e6d"
+    },
+    {
+      "path": ".tmp/private-vault-lifecycle-diagnostic-r2-format-amendment.json",
+      "sha256": "6649767882e868106e040988b2a0c577ef0827ed7a996ed8b92a30457488c97e"
+    },
+    {
+      "path": ".tmp/receipt-bb5-windows-pr-failure-evidence.json",
+      "sha256": "9fa24d4e067db580d96cf0ba531e6001e819b230caeb01027700e51f30bbe264"
+    },
+    {
+      "path": ".tmp/receipt-bb5-windows-push-job.json",
+      "sha256": "c9c5ed363ad5ab0f72d39dc745d8122d704e38e065313ded81662c80d2403c02"
+    },
+    {
+      "path": ".tmp/receipt-bb5-windows-push-run.json",
+      "sha256": "48f4354f94a4fa1103a948f1f800b607bfc9351a0d5afab08356f969d2004730"
+    }
+  ],
+  "protectedMainFiles": 957,
+  "semanticRepairs": 0,
+  "hostedParent": {
+    "revision": "bb5a89f7d3c32888546756807e40218f428a4157",
+    "linux": "Two passed",
+    "windows": "Push passed; PR failed during legacy fixture create",
+    "cause": "UNOBSERVED"
+  },
+  "limits": [
+    "New exact-head hosted checks pending",
+    "No historical storage root cause or production repair established",
+    "ReceiptRepo::open_owned and legacy-only load/read/removal coverage incomplete",
+    "Actual peer processes, semantic replica activation and native Starsector acceptance remain required"
+  ],
+  "metadataAppend": "Two companion evidence files are appended after the exact982-input source gate; all tested source hashes remain identical."
+}

@@ -12,3 +12,8 @@ zeroize = "=1.9.0"
 
 [lints]
 workspace = true
+
+[dependencies.libp2p-identity]
+version = '=0.3.0'
+default-features = false
+features = ['peerid']

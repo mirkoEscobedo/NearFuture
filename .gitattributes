@@ -27,3 +27,5 @@
 /docs/transport/sync-contract.md text eol=lf
 /docs/transport/sync-vectors/*.tsv text eol=lf
 /tools/reference/sync/README.md text eol=lf
+
+/crates/nf-transport/src/sync/checkpoint.json -text

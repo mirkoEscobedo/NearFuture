@@ -5,7 +5,7 @@
   "description": "Local development tooling for the NearFuture Rust project.",
   "scripts": {
     "start": "cargo run --locked --offline",
-    "test:rust": "cargo test --workspace --locked --offline",
+    "test:rust": "cargo test --workspace --exclude nf-transport --locked --offline && cargo test -p nf-transport --locked --offline -- --test-threads=1",
     "test:tools": "node --test tests/architecture/*.test.mjs tests/build/*.test.mjs tests/runtime-manifest/*.test.mjs tests/performance/*.test.mjs tools/miniature-store-vectors/profile.test.cjs tools/receipt-vectors/*.test.cjs tools/notification-vectors/*.test.cjs tests/reference/sync/*.test.cjs",
     "test": "npm run test:rust && npm run test:tools",
     "lint:rust": "cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked --offline -- -D warnings",

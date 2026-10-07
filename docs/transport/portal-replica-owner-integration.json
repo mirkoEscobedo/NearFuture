@@ -1,0 +1,575 @@
+{
+  "schemaVersion": 1,
+  "status": "INDEPENDENT_SOURCE_REVIEW_AND_FRESH_COMBINED_WINDOWS_PASS_HOSTED_PENDING",
+  "parent": "b21f02659f16183b165fbdde92142e3426a9c876",
+  "testedInputs": 1031,
+  "sourceFiles": [
+    {
+      "path": "crates/nf-transport/tests/portal_readiness.rs",
+      "sha256": "4f61ea6ed99645c94a1da6dae41db3c2874ed11c95b892f0863dbbc08d309337"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_finite.rs",
+      "sha256": "eb258e08e75d32f00c5432eb41a0dc929bb73014eda495cc4a4d0382e63227f6"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_owner_support/mod.rs",
+      "sha256": "64528b46e548f9eda481d4fc3c74da1c7f0696efda06313cfe9f65879b127163"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_internal/bulk_listener.rs",
+      "sha256": "58c022d5e49cae0804782c96360d99cce16946dfb746f36dda31deda846590dc"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/owner/run/bulk.rs",
+      "sha256": "425ed82d9f85ba731e64321b3fc89b0674773fe2d3ff732c2e75314c357c1827"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_internal/lifecycle.rs",
+      "sha256": "90c2344e55aaf488c6fd178ae5a7be43711ac1b417e446b9ef17eb3c205d2903"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/owner/client/configuration.rs",
+      "sha256": "04cdea879365d34ebe777c4116bad1afbdea72b9e8aed1fe13430155f236f3bd"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_internal/sql_delay.rs",
+      "sha256": "3cd6cafc83e25da29a5cf63a161667fc813f9ec068343ff863cfd2f1569aef99"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_internal/watch_status.rs",
+      "sha256": "085341ef5139baa4c4c919f4ae727b65f293fe5d4c78ec0b2ee35b9ebe9f9198"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/owner/configuration.rs",
+      "sha256": "2c2a772eb49b367117570354712127211286ee34b95746f97c39db731adb975c"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/owner/mod.rs",
+      "sha256": "589e61a333411c6a78f26f7f32449a394e352a7dbff7cd3d3c6ea9fd495807b2"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/owner/network/mod.rs",
+      "sha256": "e39b8dd4c75cf8f4dfe16c6216aec19f36b6f71ff9ca76022a0d8222493014ef"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/owner/network/owner_codec.rs",
+      "sha256": "9c82d9f9ba650b67faf834fdf9d662a9cbc62b661cbf879d9972405f4d1a18e2"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/owner/run.rs",
+      "sha256": "8be33afe59899f17154be87bedcc4670b70d101fcf1918e4ae702802c7effeb6"
+    },
+    {
+      "path": "crates/nf-transport/tests/portal_internal/revocation.rs",
+      "sha256": "cc2c22e57494e05142cd8fc1adf91fabedf60eefcd8c3097459bc09fa244e943"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/owner/client/mod.rs",
+      "sha256": "7d5153c05bf7ac50b97f68ab37554478509806b957ad2c6eb5c2d943e2c65705"
+    },
+    {
+      "path": "crates/nf-transport/src/portal/owner/client/preparation.rs",
+      "sha256": "23026e32647bacf315095ec1814087f4ff60957c25d2455c12c2c355f4a6ed8e"
+    },
+    {
+      "path": "crates/nf-transport/src/lib.rs",
+      "sha256": "c030e386f578857dd54d7a1855fa385ed259e464fbfd5a7bccef8133fefa7be4"
+    },
+    {
+      "path": "crates/nf-transport/src/identity.rs",
+      "sha256": "900a77c9d9caf770738c2b257f36fcfdfd0b7da93bf1789bc724a7ea5b3c163c"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/mod.rs",
+      "sha256": "3dbf311e2cbcdf7afd6465895e42d7573763201c6bebb76f858c8a5ff68edd30"
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/tests.rs",
+      "sha256": "67a57d710a41ff02e076e13acdb56ce05500e143a6b94561ef3a2c82e12aa807"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/admission.rs",
+      "sha256": "3feb577f9916cc2b774d6c18e38b1ef9af76d648f983d6a529ba5b231b7cbb5d"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/admission/jobs.rs",
+      "sha256": "93e3f021ea51eb26ecef243b0f8e0fe881025616328b5dc9f17eda2715048417"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/admission/limits.rs",
+      "sha256": "647153c908c22502bdc3f9141a1a5d6e6975284a346c591636b68b8dc0c2cbe1"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/admission/ordering.rs",
+      "sha256": "0a660422b7e760b2e68a371cd38dd8941d638c095e29f61e238b88ab6a218704"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/mod.rs",
+      "sha256": "fddd912b4b1c68daf6ccd411be6355407e4ebc4d2723b7008f92ab9136479d65"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/provider.rs",
+      "sha256": "878c259e28593451af6e4bfb4878ab47e94d3947d3ed1baca9b3b2ed01f6d6b6"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/provider/access.rs",
+      "sha256": "980af2718e5f4c827bff6af816dfaa779c7b633b9949d53c65d150e6e4ce304c"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/snapshot.rs",
+      "sha256": "4d8aba9cfbbb0670162a104c2d75f10f98c3b02f9df8549992c6b7845575f7f8"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/snapshot/entities.rs",
+      "sha256": "00b3b580277b5b6256e48f4d80e731389cb1094d46ed9d17a49883d410a85389"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/snapshot/ordering.rs",
+      "sha256": "5ec218aa8b942877a60a88ed3798feeaba6d1d7c617ddf967a5f82b2069f603f"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/snapshot/preflight.rs",
+      "sha256": "72fcb0278f86cfdcde9884b78a440573484fea8adbbf485a5656c362776ab000"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/snapshot/registry.rs",
+      "sha256": "240a329c09d0c408e1cd6f4d61a7c73768c80fc9e3d40676b645afbb30adf580"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/snapshot/remainder.rs",
+      "sha256": "ac4681c57e17eb6171ea86a1afdf541df71c187a1ba56b7cb1a0cc182ca2aba8"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/snapshot/writer.rs",
+      "sha256": "613bde57e3df5b4848e173f50c35efbb8713520c7df73a7a44be397a38ae29fa"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/tests/mod.rs",
+      "sha256": "43c97ce72c10dd228e5147277a8bec6b3609827182ac925831f12f8240f42614"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/tests/provider.rs",
+      "sha256": "695c6b336bf856e39b5809297c7d5c2cd1036a4888dde9baa6e0e99d1d576d83"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/tests/provider_boundaries.rs",
+      "sha256": "22536a93a1a2c7a26482bb78b25f79d1d2f7ee55cc46da1073b1efd9e5ec8453"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/tests/snapshot.rs",
+      "sha256": "b652fb3bf1ae2acd5cd16d2166ef43df5e5e3da7e8f9fab12630a853b2e9dd89"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/tests/snapshot_support.rs",
+      "sha256": "8e68dc5924801dce8bdb0fabeebe165dc6fae6da6f32d6d79d663b02fc242f8a"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/tests/support.rs",
+      "sha256": "e87fb5cdd1dbc79fa7fe4e52edf474a5c0c6bd7d2be11dfcbe006763ca57e6e3"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/world_copy.rs",
+      "sha256": "9df1d43a93e9c37bab67f20fd51c13ffaa4b4ac3ef27874c1db12ae8c865548b"
+    },
+    {
+      "path": "crates/nf-kernel/src/replica/world_copy/reservation.rs",
+      "sha256": "d4b94456cee2f2edbd8fe45683cf03b5614e22dc21833b8e064a823a418dd97c"
+    },
+    {
+      "path": "crates/nf-kernel/tests/replica_admission.rs",
+      "sha256": "27fd21485187fac32736783145480f34066c4da9f450050acc84c9a5d6229f7b"
+    },
+    {
+      "path": "crates/nf-kernel/tests/replica_admission_boundaries.rs",
+      "sha256": "a129716b5f8f1777212ba5aac7b29af4ac7230dd5d0b10ad4b8e8481827ee354"
+    },
+    {
+      "path": "crates/nf-kernel/tests/replica_admission_combined/support.rs",
+      "sha256": "0cc84ee9249011e20a722915a6f08eb4687c055a2932b8fd34a134500fc32b0b"
+    },
+    {
+      "path": "crates/nf-kernel/tests/replica_admission_combined_limit.rs",
+      "sha256": "72698a66f6c3be845787dbad5a308353245e607d73da95a1654b3f52cd4c4f2d"
+    },
+    {
+      "path": "crates/nf-kernel/tests/replica_admission_outcomes.rs",
+      "sha256": "c7537c9f39db1ad4eb984d08a000ba8a349aeffff815e14fd9f44dd1c363c34c"
+    },
+    {
+      "path": "crates/nf-kernel/tests/replica_admission_semantics.rs",
+      "sha256": "fa960162abbca6cdf127f21a1bbc1102515f99d2ba26ef9be8bd8cbe76352f6a"
+    },
+    {
+      "path": "crates/nf-kernel/tests/replica_world_copy.rs",
+      "sha256": "d801223f4d498a137d20b0ccce9d1aa7547aa74f02934d2ff12b8a839347b09f"
+    },
+    {
+      "path": "crates/nf-kernel/tests/replica_world_copy_boundaries.rs",
+      "sha256": "e889aa370b8cf83744ec65de6e4779ca4d274680aefdab009f6566f5635c9f74"
+    },
+    {
+      "path": "crates/nf-kernel/src/lib.rs",
+      "sha256": "a6c0713d491dc9a6f6aa3dff7ad39400c10a2b5d950f675702f4bf6f0fa7f611"
+    }
+  ],
+  "sourceCount": 52,
+  "newSourceFiles": 47,
+  "fieldwiseChanges": 5,
+  "unchangedParentFiles": 979,
+  "protectedMainFiles": 957,
+  "sourceSnapshotSha256": "c4c26f580e12011c630b72c9aa5d0e674eb70afe12b5a13fd6f121e4f07ac633",
+  "nativeReportSha256": "5fabf40dbd94896f1534f6d519a736d3f2dc28c04717c44f4d6e4d23c0179e52",
+  "cases": {
+    "identity": 52,
+    "kernel": 67,
+    "transportUnits": 88,
+    "publicBooksAndPortal": 9,
+    "total": 216
+  },
+  "steps": [
+    {
+      "program": "node",
+      "args": [
+        "E:/github/NearFuture/.tmp/portal-replica-composition-native/guard.cjs",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-native/snapshot.json"
+      ],
+      "cases": 0,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    },
+    {
+      "program": "cargo",
+      "args": [
+        "test",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-author/Cargo.toml",
+        "--target-dir",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-target",
+        "--locked",
+        "--offline",
+        "-p",
+        "nf-identity",
+        "--",
+        "--test-threads=1"
+      ],
+      "cases": 52,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    },
+    {
+      "program": "cargo",
+      "args": [
+        "test",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-author/Cargo.toml",
+        "--target-dir",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-target",
+        "--locked",
+        "--offline",
+        "-p",
+        "nf-kernel",
+        "--",
+        "--test-threads=1"
+      ],
+      "cases": 67,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    },
+    {
+      "program": "cargo",
+      "args": [
+        "test",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-author/Cargo.toml",
+        "--target-dir",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-target",
+        "--locked",
+        "--offline",
+        "-p",
+        "nf-transport",
+        "--lib",
+        "--",
+        "--test-threads=1"
+      ],
+      "cases": 88,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    },
+    {
+      "program": "cargo",
+      "args": [
+        "test",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-author/Cargo.toml",
+        "--target-dir",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-target",
+        "--locked",
+        "--offline",
+        "-p",
+        "nf-transport",
+        "--test",
+        "receipt_book_capacity",
+        "--test",
+        "receipt_book_codec",
+        "--test",
+        "receipt_book_inventory",
+        "--test",
+        "receipt_book_original",
+        "--test",
+        "receipt_book_recovery",
+        "--test",
+        "portal_readiness",
+        "--test",
+        "portal_finite",
+        "--",
+        "--test-threads=1"
+      ],
+      "cases": 9,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    },
+    {
+      "program": "cargo",
+      "args": [
+        "fmt",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-author/Cargo.toml",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cases": 0,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    },
+    {
+      "program": "cargo",
+      "args": [
+        "clippy",
+        "--manifest-path",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-author/Cargo.toml",
+        "--target-dir",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-target",
+        "--locked",
+        "--offline",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cases": 0,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    },
+    {
+      "program": "node",
+      "args": [
+        "E:/github/NearFuture/.tmp/portal-replica-composition-author/tools/architecture/check.mjs"
+      ],
+      "cases": 0,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    },
+    {
+      "program": "node",
+      "args": [
+        "E:/github/NearFuture/.tmp/portal-replica-composition-author/tools/reference/sync/generate.cjs",
+        "--check"
+      ],
+      "cases": 0,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    },
+    {
+      "program": "node",
+      "args": [
+        "E:/github/NearFuture/.tmp/portal-replica-composition-native/guard.cjs",
+        "E:/github/NearFuture/.tmp/portal-replica-composition-native/snapshot.json"
+      ],
+      "cases": 0,
+      "status": 0,
+      "timedOut": false,
+      "processOwnership": "windows-job-object"
+    }
+  ],
+  "sourceReview": {
+    "sha256": "67240649774c57a37e141cc450ba6100dcad18375d7cfe07bd1d18b0320f76c4",
+    "semanticRepairs": 0,
+    "findings": 0
+  },
+  "fieldwisePorts": [
+    {
+      "path": "crates/nf-transport/src/lib.rs",
+      "before": "pub mod sync;\n",
+      "after": "#[path = \"portal/owner/mod.rs\"]\npub mod portal;\n\npub mod sync;\n",
+      "parentSha256": "de60d5a1affee87c8c0427b312cea6458d4a5e447a8aae747102544c3fa257c8",
+      "sha256": "c030e386f578857dd54d7a1855fa385ed259e464fbfd5a7bccef8133fefa7be4",
+      "inverseByteExact": true
+    },
+    {
+      "path": "crates/nf-transport/src/identity.rs",
+      "before": "        crate::notification_effects::build_notify_swarm(self.key.clone())\n    }\n}",
+      "after": "        crate::notification_effects::build_notify_swarm(self.key.clone())\n    }\n    /// Uses the loaded private Noise identity and fixed portal bulk-verification bounds.\n    pub fn build_portal_bulk_lane(\n        &self,\n    ) -> Result<libp2p::Swarm<crate::portal::PortalBulkBehaviour>, PeerError> {\n        crate::portal::build_portal_bulk_swarm(self.key.clone())\n    }\n}",
+      "parentSha256": "7e38f5862eb1de49e72015a9170bfdc890b23d75ca798610e4a69dce6c544003",
+      "sha256": "900a77c9d9caf770738c2b257f36fcfdfd0b7da93bf1789bc724a7ea5b3c163c",
+      "inverseByteExact": true
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/mod.rs",
+      "before": "#[cfg(test)]\nmod tests;\n",
+      "after": "#[cfg(test)]\nmod tests;\n#[cfg(test)]\npub(crate) use tests::support as owner_test_support;\n",
+      "parentSha256": "6197f16679c44961ee3bc72d6e06ff9ca6c301903edbfb9b1e8ebe8ecdf0b936",
+      "sha256": "3dbf311e2cbcdf7afd6465895e42d7573763201c6bebb76f858c8a5ff68edd30",
+      "inverseByteExact": true
+    },
+    {
+      "path": "crates/nf-transport/src/notification/effects/tests.rs",
+      "before": "#[path = \"../../../tests/notification_effect_support/mod.rs\"]\nmod support;",
+      "after": "#[path = \"../../../tests/notification_effect_support/mod.rs\"]\npub(crate) mod support;",
+      "parentSha256": "571f1c24e2294f95704a2112126bee099a96a9292f8082eb32914820c3fc33fc",
+      "sha256": "67a57d710a41ff02e076e13acdb56ce05500e143a6b94561ef3a2c82e12aa807",
+      "inverseByteExact": true
+    },
+    {
+      "path": "crates/nf-kernel/src/lib.rs",
+      "before": "",
+      "after": "\npub mod replica;\n",
+      "parentSha256": "98db1cbf1fb4726fbe90937431ad42c3db3ec1bd124bf42fd58d5e5da6c0d8f0",
+      "sha256": "a6c0713d491dc9a6f6aa3dff7ad39400c10a2b5d950f675702f4bf6f0fa7f611",
+      "inverseByteExact": true
+    }
+  ],
+  "parentHosted": {
+    "revision": "b21f02659f16183b165fbdde92142e3426a9c876",
+    "linux": "Both passed",
+    "windows": "Both failed after83/84 transport units",
+    "pr": {
+      "run": 37646444514,
+      "job": 112878344535,
+      "diagnostic": {
+        "operation": "BlobCreate",
+        "stage": "EntryAccess",
+        "helper": "SingleAcl",
+        "step": "Wait",
+        "cause": "Timeout",
+        "elapsed_ms": 5030
+      }
+    },
+    "push": {
+      "run": 37646435053,
+      "job": 112878326137,
+      "cause": "UNOBSERVED_GENERIC_OPEN_OWNED_RESULT"
+    },
+    "captureSha256": "2f285b3b963062122b0ac3407629b994f640395e1ec95e9cc4044029a5139081",
+    "evidence": [
+      {
+        "kind": "pr",
+        "part": "job",
+        "path": ".tmp/vault-b21-windows-pr-job.json",
+        "endpoint": "repos/mirkoEscobedo/NearFuture/actions/jobs/112878344535",
+        "run": 37646444514,
+        "job": 112878344535,
+        "sha256": "e0cc8082794e0aa29cdae335abe079f79ed87817017c97fc02561e3c443a4c83",
+        "bytes": 4398
+      },
+      {
+        "kind": "pr",
+        "part": "run",
+        "path": ".tmp/vault-b21-windows-pr-run.json",
+        "endpoint": "repos/mirkoEscobedo/NearFuture/actions/runs/37646444514",
+        "run": 37646444514,
+        "job": 112878344535,
+        "sha256": "e6713a33682b3f02d29b4a29c69235b19e5fd697785f1cd96b11587e310cd354",
+        "bytes": 13227
+      },
+      {
+        "kind": "pr",
+        "part": "jobs",
+        "path": ".tmp/vault-b21-windows-pr-jobs.json",
+        "endpoint": "repos/mirkoEscobedo/NearFuture/actions/runs/37646444514/jobs?per_page=100",
+        "run": 37646444514,
+        "job": 112878344535,
+        "sha256": "05e6b8a931f63931b167834d65c9706326fddf6d068cd67583f5e79e06bbb232",
+        "bytes": 8822
+      },
+      {
+        "kind": "pr",
+        "part": "full-log",
+        "path": ".tmp/vault-b21-windows-pr-full-log.txt",
+        "endpoint": "repos/mirkoEscobedo/NearFuture/actions/jobs/112878344535/logs",
+        "run": 37646444514,
+        "job": 112878344535,
+        "sha256": "2d017ed1c2c9a813f042d795cb561649fec57a9bdf085e8a467c213c0131e556",
+        "bytes": 191889
+      },
+      {
+        "kind": "push",
+        "part": "job",
+        "path": ".tmp/vault-b21-windows-push-job.json",
+        "endpoint": "repos/mirkoEscobedo/NearFuture/actions/jobs/112878326137",
+        "run": 37646435053,
+        "job": 112878326137,
+        "sha256": "b07f66a7f2d60477bcbf8a641213f25c1bf681175517848bc89a718f15df6e4e",
+        "bytes": 4398
+      },
+      {
+        "kind": "push",
+        "part": "run",
+        "path": ".tmp/vault-b21-windows-push-run.json",
+        "endpoint": "repos/mirkoEscobedo/NearFuture/actions/runs/37646435053",
+        "run": 37646435053,
+        "job": 112878326137,
+        "sha256": "297ff8c5097f16465bdd54cb7642fc6bd4e8bde63fc8dacce2943d5a02b78b2f",
+        "bytes": 13217
+      },
+      {
+        "kind": "push",
+        "part": "jobs",
+        "path": ".tmp/vault-b21-windows-push-jobs.json",
+        "endpoint": "repos/mirkoEscobedo/NearFuture/actions/runs/37646435053/jobs?per_page=100",
+        "run": 37646435053,
+        "job": 112878326137,
+        "sha256": "528b87dd8742bdd546f1a2249566618be2e8078d1aed9e24f1911941f3cc07bb",
+        "bytes": 8822
+      },
+      {
+        "kind": "push",
+        "part": "full-log",
+        "path": ".tmp/vault-b21-windows-push-full-log.txt",
+        "endpoint": "repos/mirkoEscobedo/NearFuture/actions/jobs/112878326137/logs",
+        "run": 37646435053,
+        "job": 112878326137,
+        "sha256": "f8d640ecdbf906065f96a1ac360c1a42a3e0852d2347e4e49a1e9fd33dc35900",
+        "bytes": 190684
+      }
+    ]
+  },
+  "limits": [
+    "No manifests/locks/default API changes",
+    "Current revocation witness is positive fresh-SQL coverage; separately accepted timing mutant is not in this cut",
+    "No whole issue23/39 or native game acceptance",
+    "Only logical profile costs; no physical allocation/RSS/p99 evidence",
+    "Default unbounded APIs and semantic replica activation remain unchanged",
+    "Production peer-process/CLI tests are a separate pending source slice",
+    "No parent hosted cause repair claimed; fresh hosted checks pending"
+  ],
+  "metadataAppend": {
+    "files": [
+      "docs/transport/portal-replica-owner-integration.md",
+      "docs/transport/portal-replica-owner-integration.json"
+    ],
+    "afterNativeRun": true,
+    "testedInputsUnchanged": true
+  }
+}

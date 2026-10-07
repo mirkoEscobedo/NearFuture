@@ -1,0 +1,36 @@
+# Portable receipt and notification owner review checkpoint
+
+This records independent implementation review before the combined publication gate. It implements bounded authenticated Store1 receipt observation and notification effects, together with the independently reviewed local portal configuration parser. Whole issue23, a three-lane portal process, semantic replica installation and native Starsector integration remain separate acceptance criteria.
+
+## Reviewed behavior
+
+One ReceiptRepo owns the Store, private vault and loaded identity. Receipt queries bind the immutable original, actual authenticated peer/connection/request tuple, current SQL membership, source minima and one-use proof. Only a verified correlated receipt can advance the observational book; a Notice or its Ack does not acknowledge a strategic operation. The book scans the complete64-name reserved inventory and requires separately retained external anchors/minima for freshness. Corrupt/gapped history refuses without recreating a missing original.
+
+The receipt owner retains its genuine handshake creation deadline and admitted policy epoch through the final SQL activation cut. Its public facade exposes observations, not signer/Store/connection handles. Notification owners retain original setup and awaited deadlines, exact delivery custody, bounded body/framing charges and one dirty generation. A fresh receipt query covers only its captured generation. Synchronous SQL, filesystem and ACL work can block; elapsed checks refuse after returning and are not hard realtime guarantees.
+
+## Independent review and repair
+
+Receipt implementation R1 passed source inspection without an Important finding. Notification R1 found one Important completion category: client Subscribed admission, server Subscribed flush and server NoticeAck completion could consume the original pending state, perform another SQL read and then complete using a later owner or30-second active lifetime. The original five-second component cut had to remain effective through that final read.
+
+One semantic repair retained the actual original component ends before consuming Pending/Awaited state and enforced the earliest original/owner/lifetime end after final SQL, before permit release, pending clear or successful report. Four genuine compiled REDs and corresponding GREENs cover the three final reads and the case where the original end has expired while the later owner timer remains live. No production clock setter, widened protocol deadline or supplied membership callback was introduced. The immutable author evidence preserves earlier compiler/lint/setup failures and aggregate failures without relabeling them.
+
+Formal independent notification R2 and receipt R1 both passed. Private review record SHA256616b94c57b929b8d9ddc322ff7e06d36c6913fa4e1af76452f440a9ddcd80ac7; independent native report SHA256770791c00ec527b3392ae6caf2ff16e5cb1c2c7470e273d99274ad7bd16d4fcd. All nine Windows Job Object steps had status0 and no timeout in a fresh dedicated target: four repaired completion cases, two receipt activation cases, four receipt lane cases, thirteen external paired-Noise/follow-up/book/framing cases, one custody compile-fail example, formatting, strict all-target Clippy and before/after source checks. These are24 independently exercised cases; focused checks do not imply a full repository pass.
+
+The independent pre/post checks matched101 author-scoped raw paths, all919 candidate files, all124 held working overlays and the mandatory serialized transport test command. The isolated candidate used accepted PR64 head921948739e43dabb7560d6206c10ccaa844019c9 plus exact raw reviewed overlays; snapshot SHA256042562edca18f7ce3e03ab3f05851e0f4a605682665d058b2c96b96caf20fda8. The unwired pure sync decoder was excluded.
+
+## Author evidence and publication identity
+
+[Receipt evidence](receipt-effects-evidence.md) records35 behavioral/privacy checks and the separately passing formatting/lint remainder for the final55-path raw hold f31da2c07f0b8811c66fca297cceac163805b75d9c6ba6af368523dda6725dec. The earlier aggregate remains FAIL in its original log. [Notification evidence](notification-effects-verification.md) records the repaired46 cases and all eight passing author steps, final report a14eef366d60a3e68fc8e20008d6bfeeca00cb69a0a5a596912b7efa1277709e and46-path raw checkpoint41c2dddb4ee4d6779731fed3a59b66e15716507b052f6ebace5c86d7842fee04. [Parser evidence](portal-config-verification.md) records its separately passed independent12-case review.
+
+Those checkpoints preserve historical Windows working bytes. [effects-publication-checkpoint.json](effects-publication-checkpoint.json) separately records the exact LF Git representation of125 code/test/config/documentation paths, excluding itself. Publication audits must compare actual staged and committed blobs, an exact fresh archive and reviewed raw bytes after only CRLF-to-LF transformation. No dependency versions/features or lock data change in this slice; nf-kernel moves from a test-only edge to the existing local production dependency required by opaque trusted prepared-commit custody.
+
+The mandatory test script runs the complete workspace excluding transport, then all transport targets with one test thread. This prevents real SQL/ACL deadline fixtures within the same transport library from competing with each other. Every existing target remains enabled. The hosted outer job budget is45 minutes to cover the expanded serialized suite and cold build; protocol operation limits remain unchanged.
+
+## Remaining publication and product evidence
+
+At this independent review checkpoint, the combined committed-candidate full repository gate and exact-head hosted Windows/Linux checks have not run. They are required before merging this slice and must include generators, Node/static checks, synthetic Java, actual Java interoperability/differential tests and release compilation. Hosted Linux also must retain required calibrated Store1/Miniature commit-sync fault checks. Earlier accepted PR63/64 evidence remains scoped to their exact heads.
+
+The proposed [portal owner](portal-owner-design.md), actual finite two-process restart/flood/bulk-progress behavior, receive-credit stalls, semantic export/cache activation, replica roles, game-frame responsiveness and native campaign effects are not accepted by this review. Public saved observations, pure records and compiled source consistency cannot manufacture current authority or prove hardware power-loss durability.
+## Subsequent test-only publication amendment
+
+[Fixture verification](effects-fixture-verification.md) supersedes three historical test/helper hashes after the initial hosted gate. The original author/R1/R2 snapshots above remain scoped to their recorded inputs. Current publication identities and explicit deltas are recorded separately; production owner behavior and protocol deadlines are unchanged.

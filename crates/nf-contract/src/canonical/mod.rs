@@ -261,3 +261,5 @@ pub mod binding;
 pub mod records;
 
 pub mod text;
+
+pub mod replica_budget;

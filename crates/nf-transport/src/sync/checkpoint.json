@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "scope": "Unwired NF-SYNC-1 pure data only; no network, SQL, cache, document semantics or authority",
+  "status": "AUTHOR_FROZEN_FOR_INDEPENDENT_R1",
+  "method": "SHA256 raw author file bytes; excludes checkpoint itself",
+  "accepted_candidate_base": "46c3be66af3fd200f46847c0a51d60110edfba82",
+  "contract_sha256": "e4223a690379b3c76db543a08dc8c8179da2d75df55dc96c8b473b2aed8c65bc",
+  "independent_vectors_checkpoint_sha256": "f1f123732a861686de05e4383c3f419870d555a18172d8b73b82e8ac43b10a27",
+  "author_result_path": ".tmp/sync-pure-final-native.json",
+  "author_result_sha256": "91edb9e64e96bf348d0fe0c3e447f7a18495ab280ba27e19d8be35dacdb5264d",
+  "verification": {
+    "groups": 13,
+    "steps": 6,
+    "windows_job_object": true,
+    "all_status_zero": true,
+    "all_no_timeout": true,
+    "scoped_format": true,
+    "strict_all_target_clippy": true,
+    "independent_generator": true,
+    "rs_files_matched_tested_copy_afterward": 32,
+    "source_prepost_checkpoint_claim": false
+  },
+  "files": [
+    {
+      "path": "crates/nf-transport/src/sync/body.rs",
+      "sha256": "ccbf3fb0ef5c60f0aba8a9da4db896df4056f896ba67aa3ea77b4bb0f6be2e7d"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/decode_auth.rs",
+      "sha256": "e97af239ba5b177642b76f0a607684d9237822de73b77540fd224dcd8c1af17c"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/decode_control.rs",
+      "sha256": "aacf798c981626fae7076a45c1d97795ef704a01f9335a38692d2eaea28e3952"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/decode_transfer.rs",
+      "sha256": "9eba0b84fde56b1af049732b44fa595032cbd0d8fce8951032d86e1662258086"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/decode.rs",
+      "sha256": "0e029664776c99d5fcbfe4b71d9bd8f9b25d469c02d4322ceb1e4777c60a3d59"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/encode_auth.rs",
+      "sha256": "48c2e2778794cb7d5485a81680124f438218c9d0fbfe18145ca58db04a5936d9"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/encode_control.rs",
+      "sha256": "a9ea8e1e3ec5276ddc012e31debc597b253b170dd5f1063b47c7dd270a805ed2"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/encode_transfer.rs",
+      "sha256": "30f12041665a990a14876297a71cf46562c1220d596e537d0cf9f8a470953cbc"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/encode.rs",
+      "sha256": "6155752eb2fd8d5f26ecd11d5c89231745f1649a5833b369c76de3b1b5757da0"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/fields.rs",
+      "sha256": "bc1ffdfc6c93b0b160ab02f1bf4463b01b20f49fdc9c77231af74e5d7eaeff64"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/frame.rs",
+      "sha256": "fb58b2410156272ef64da464ece5118f381bed2a2cd8436ad9dca24a93e988c0"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/layout.rs",
+      "sha256": "533ddaca8eb3383041a21f2b4f97a1ea6e3a0ff93823c1b5fb4bbf43be24624f"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/limits.rs",
+      "sha256": "1c29fdbadc8b2d4ab9c54e208c9c4d3c8a9e25298a474b413be52248f2e44589"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/mod.rs",
+      "sha256": "5a7711b298f349802637ac03c41aebfcc9d78034d0488be7e5e53be485a06de2"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/model.rs",
+      "sha256": "1af181c0215af887716c9992520ff3a2793d0a41507b9bc6c21dfcb7b44746c9"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/operation.rs",
+      "sha256": "ff23481688e71bc368690ec6a053a796cc272b338b63bfe0f777fccd49114cb6"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/reader.rs",
+      "sha256": "769c198437053110217bd2e0081cb0a91b60b0943aa89db040e51da8234b1504"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/README.md",
+      "sha256": "20f09a1d086c134a85889ded757344f8ff4011373f0145be52ef003d45fe8b2f"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/context.rs",
+      "sha256": "b2a18141ba02dae39e06d5f13d9f601e2d57e081db1af843659addb35a3258d6"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/corpus.rs",
+      "sha256": "f5913b9e9236104d31cad2ead3c7137001b6943df4a1dcd3556724354334cbb8"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/fuzz.rs",
+      "sha256": "2b2f08120ad5d525819f5fe5bd7c0f3e060f25b99933c1810a0e78a4f204826b"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/mod.rs",
+      "sha256": "32b8cd64b6b760338089227bb646b87eef331d7d7700ba8894c8bc533899f6f5"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/operation_transcripts.rs",
+      "sha256": "a204daf80368d8863ccd457f673bc3b08aa27dfa9ac95c90fefe348158cf29f3"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/resources.rs",
+      "sha256": "7151d7cf15ae913ad1c9c312a007a6b9f1f9049deb2f4aa74891e6dfb33007dc"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/sensitivity.rs",
+      "sha256": "a3c67977c8cd15ae428947651dbf068fac72093fa2f205d50a3f6e19269ee602"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/support.rs",
+      "sha256": "13aad842c2aac36ee13e181221a4fa09269bd69048a30575b253318662669903"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/supported.rs",
+      "sha256": "478ffc5b8ce44df5535e1f1e830a0c327eb6e78c632a88aa9125648b0f0087f0"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/transcripts.rs",
+      "sha256": "665cc51a0716790e41ed8687fbb988d7dc790d900e8273e3eca43078bdad5fa3"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/typed_control.rs",
+      "sha256": "eb603028855d28ff83d3a0cc4c8d58f5c16111e2855251550c8a33d56ea5d482"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/typed_transfer.rs",
+      "sha256": "c3477ba0411589b3d576778ac80c21ab17665d1747cde7d3d1bb6697bca27ef7"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/typed.rs",
+      "sha256": "6db137908fd61f43762689df93403dfc68c97dd0e93d141e05654af931b2e6b5"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/transcript.rs",
+      "sha256": "f38f4a47e9d472ae46ca4306365139799de787e56e9c51cf685b76aa217216fb"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/validation.rs",
+      "sha256": "0ef8ac50c186632453d894236dca7fb4d8f793fc77c9ad84da7d722c51af6251"
+    }
+  ]
+}

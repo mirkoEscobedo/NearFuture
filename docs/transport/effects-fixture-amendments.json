@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "scope": "Test-only fixture reliability and static failure labels; all production source unchanged",
+  "previousPublicationHead": "5ef940f110100df71add0565c3317344f49b9453",
+  "previousPublicationCheckpointSha256": "4e21aaded2fa92dc1997df59bafa0169b9df12f5cf79bdfe1e021b6f578dd4fd",
+  "historicalAuthorCheckpoint": "docs/transport/notification-effects-checkpoint.json",
+  "historicalAuthorCheckpointSha256": "41c2dddb4ee4d6779731fed3a59b66e15716507b052f6ebace5c86d7842fee04",
+  "supersededRawPaths": [
+    {
+      "path": "crates/nf-transport/tests/notification_internal/deadline.rs",
+      "previousRawSha256": "0e5d7a49b63d1cb73347675d9339cd95034894687d4e23a516fe542f4ddfc0f4",
+      "currentRawSha256": "63d5bf7c0e18e74a97a0ebc1be8e44894a7605ce0d2f272fed6747fea1c4190d",
+      "currentGitLfSha256": "1378014c4a079af106131313a04631c02fc6a165f9fc9fad9115b5d8132131d1"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_internal/completion_deadline.rs",
+      "previousRawSha256": "72dfb37cebecc4034e353545228b8ef556abdc3e4f0f8c8d55b596b2642b367f",
+      "currentRawSha256": "c7313fb9a035a8694269b0a94a3d4a187059945dc1b9d08d40f4d7fef8a8e7f7",
+      "currentGitLfSha256": "c7313fb9a035a8694269b0a94a3d4a187059945dc1b9d08d40f4d7fef8a8e7f7"
+    },
+    {
+      "path": "crates/nf-transport/tests/notification_effect_support/lanes.rs",
+      "previousRawSha256": "c2e7356db3608eb2398f3cf0f42a4030fba30d84e944bf1fefc6a922645bf9de",
+      "currentRawSha256": "d65dc9a77b3ceef767bdbe988412769d92d28be095b668aaee3958a1601ee61e",
+      "currentGitLfSha256": "d65dc9a77b3ceef767bdbe988412769d92d28be095b668aaee3958a1601ee61e"
+    }
+  ],
+  "evidence": [
+    {
+      "path": ".tmp/notification-deadline-repair/evidence.json",
+      "sha256": "044f38d95a3bad018039e0358246007d3227ba46f0da59640867fe76bddbdc7e"
+    },
+    {
+      "path": ".tmp/notification-completion-repair/evidence.json",
+      "sha256": "72303b1eb9cf9164ff50f78f2121b310033ebfc563619d832f19f56ba631dfd3"
+    },
+    {
+      "path": ".tmp/notification-completion-repair/labels-evidence.json",
+      "sha256": "26d01dc8f2631f56c0d155d36c5cdf70304e65a4494dda631969af00077b401b"
+    },
+    {
+      "path": ".tmp/notification-fixture-final-guide-review.json",
+      "sha256": "b0ddef44006cd4fe9553f4aa70c61c46929ce95c263933da33df8e43d18af4f1"
+    },
+    {
+      "path": ".tmp/receipt-windows-storage-diagnosis-runtime.md",
+      "sha256": "201e095e86be75057e5a9cc1872b5946a160a4c2f67b525fe9e3bc4557f6a9c6"
+    }
+  ],
+  "hostedInitialTrees": {
+    "head": "5ef940f110100df71add0565c3317344f49b9453",
+    "prMerge": "5038050b9c433f12963691d04e0a47365a7d6c8f",
+    "identicalTrackedTree": "9367bc15a56021e72ccc58a43d2497789c3bad16"
+  },
+  "unresolved": [
+    "Underlying Windows private-book setup Storage cause",
+    "Fresh exact-head hosted acceptance after this amendment"
+  ],
+  "excluded": [
+    "Production protocol/ACL/proof/operation deadline changes",
+    "Native Starsector acceptance",
+    "Whole issue23 or39 completion"
+  ]
+}
