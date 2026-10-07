@@ -81,6 +81,40 @@ impl PrivateVault {
         }
         Ok(record[14..14 + count].to_vec())
     }
+    /// None means a genuinely absent entry in a valid private vault. Present corruption is Err.
+    /// Caller owns returned private bytes and must keep them out of diagnostics.
+    /// Admission assumes the existing cooperative, exclusive lifecycle for these names.
+    pub fn read_optional_private_blob(&self, name: &str) -> Result<Option<Vec<u8>>, IdentityError> {
+        let path = self.blob_path(name)?;
+        self.validate_optional_blob_root()?;
+        let entry = match fs::symlink_metadata(&path) {
+            Ok(entry) => entry,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                self.validate_optional_blob_root()?;
+                return Ok(None);
+            }
+            Err(_) => return Err(IdentityError::PrivateStorage),
+        };
+        if !entry.is_file() || entry.file_type().is_symlink() {
+            return Err(IdentityError::PrivateStorage);
+        }
+        #[cfg(windows)]
+        {
+            use std::os::windows::fs::MetadataExt;
+            if entry.file_attributes() & 0x400 != 0 {
+                return Err(IdentityError::PrivateStorage);
+            }
+        }
+        self.read_private_blob(name).map(Some)
+    }
+    fn validate_optional_blob_root(&self) -> Result<(), IdentityError> {
+        private_access(&self.root, false)?;
+        let entry = fs::symlink_metadata(&self.root).map_err(|_| IdentityError::PrivateStorage)?;
+        if !entry.is_dir() {
+            return Err(IdentityError::PrivateStorage);
+        }
+        Ok(())
+    }
     pub fn remove_private_blob(&self, name: &str) -> Result<(), IdentityError> {
         let path = self.blob_path(name)?;
         private_access(&self.root, false)?;
