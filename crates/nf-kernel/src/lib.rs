@@ -17,3 +17,4 @@ pub use provider::evaluate;
 mod reducer;
 mod replay;
 pub use replay::*;
+pub mod miniature;

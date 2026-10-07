@@ -88,3 +88,13 @@ test('miniature World core accepts only its local contract and maintained pure h
     }
     assert.deepEqual(dependencyViolations([], [{path: 'crates/nf-world/src/lib.rs', content: '#![no_std]\nuse std::time::SystemTime;'}]), ['crates/nf-world/src/lib.rs: Rust domain must not access std']);
 });
+
+test('miniature kernel admits its local pure World core but rejects registry replacement and effects', () => {
+    const name = 'nf-kernel';
+    for (const path of ['/checkout/crates/nf-world', 'E:\\checkout\\crates\\nf-world']) {
+        assert.deepEqual(dependencyViolations([{name, dependencies: [{name: 'nf-world', path}]}], []), []);
+    }
+    for (const dependency of [{name: 'nf-world', req: '^0.1.0'}, {name: 'nf-world', path: '/checkout/crates/other'}, {name: 'nf-store'}, {name: 'getrandom'}]) {
+        assert.deepEqual(dependencyViolations([{name, dependencies: [dependency]}], []), [`${name}: domain dependency ${dependency.name} is forbidden`]);
+    }
+});

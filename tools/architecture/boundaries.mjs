@@ -20,7 +20,9 @@ export function dependencyViolations(packages, sources) {
             const pureHash = dependency.name === 'sha2' && dependency.req === '=0.10.9' && dependency.uses_default_features === false;
             const permitted = pkg.name === 'nf-contract' ?
                 pureDependencies.get(dependency.name) === dependency.req && dependency.uses_default_features === false :
-                localContract || (['nf-kernel', 'nf-nex-shadow', 'nf-world'].includes(pkg.name) && pureHash) ||
+                localContract || (pkg.name === 'nf-kernel' && dependency.name === 'nf-world' &&
+                    typeof dependency.path === 'string' && dependency.path.replaceAll('\\', '/').endsWith('/crates/nf-world')) ||
+                (['nf-kernel', 'nf-nex-shadow', 'nf-world'].includes(pkg.name) && pureHash) ||
                 (pkg.name === 'nf-nex-shadow' && dependency.name === 'nf-nex-boundary' &&
                     typeof dependency.path === 'string' && dependency.path.replaceAll('\\', '/').endsWith('/crates/nf-nex-boundary'));
             if (!permitted) {

@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "scope": "Frozen typed miniature kernel implementation for independent R1; schema1 remains unchanged except additive export; Store/driver unimplemented",
+  "hash_normalization": "UTF-8 CRLF to LF, no other rewriting",
+  "source_bundle_sha256": "9261c94ec6e936e9c14c0af0ac7984dfd5fa1de59cf26b7fd6deb80c2fcbe5f6",
+  "new_tests": 18,
+  "unchanged_tests": 22,
+  "native_steps": 6,
+  "native_provider": "windows-job-object",
+  "native_result": ".tmp/miniature-kernel-author/result.json",
+  "all_native_status_zero": true,
+  "all_native_timed_out": false,
+  "files": [
+    {
+      "path": "crates/nf-kernel/src/lib.rs",
+      "bytes": 314,
+      "sha256": "98db1cbf1fb4726fbe90937431ad42c3db3ec1bd124bf42fd58d5e5da6c0d8f0"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/cancel.rs",
+      "bytes": 2452,
+      "sha256": "aa982d2a45761583034b976d557557d2cbbddfad0c91dabb6426c4124d25aa79"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/actions.rs",
+      "bytes": 2182,
+      "sha256": "40e72abd3e8b38f1360349b9a9a86dd683e48b3bae670f20d6f515c71e92dd5f"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/batch.rs",
+      "bytes": 3695,
+      "sha256": "c4e1679d0a82a7f78a9ae9c7e4b270ad26239d41c5d3379f7dc46837c66febdc"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/events.rs",
+      "bytes": 3165,
+      "sha256": "b86c21bff082c6799316b61f34382a6096421f040b2d69e1d7680812f3a81123"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/frontier.rs",
+      "bytes": 2531,
+      "sha256": "922cdb93388cdd593e4d4cf4702d35e1f702ec0e350bbcfadc657bbaf19432c8"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/holds.rs",
+      "bytes": 581,
+      "sha256": "8d4ce56b0e01e3f11fb2f4beae0a85d80c53d21104acaa4895f88b0bb505efa0"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/intent.rs",
+      "bytes": 2620,
+      "sha256": "fc91cccf8a7995db2c5ccaebf087e60ada6606d40e484a55833c1a3e33df83bb"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/mod.rs",
+      "bytes": 2771,
+      "sha256": "472c163c2d0e0c1678731aa9197633f40e7176e465d4b3d64f3e715afc7da2c5"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/primitives.rs",
+      "bytes": 4365,
+      "sha256": "6cd9e4965e91ef4426947efbca3e4670920eddb356d6414fff118a322f4a8fb2"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/codec/snapshot.rs",
+      "bytes": 2642,
+      "sha256": "574e45fcf9ef5e5e98cc535381b867ace73c52c386166dd387b68f4b78a8bedb"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/frontier.rs",
+      "bytes": 3882,
+      "sha256": "c1364a020c9fd32b4e3bfad0f9a048a989d8a1b17212067ff7fdd07f7c7dc46e"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/generated_pin.rs",
+      "bytes": 242,
+      "sha256": "ee81da6d2962d674c2a295677e9e89e9ef614ee80b2d83a03772976b273a3507"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/mod.rs",
+      "bytes": 410,
+      "sha256": "ae27976295b913f36388a64fe82ff2eb08f4bd23e26a01a9032d4b833535b5a7"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/model.rs",
+      "bytes": 7483,
+      "sha256": "c1153ef078e2a1ce8718cca76e056fba03f2c2be39e592be03ea8eb0856b2182"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/profile.rs",
+      "bytes": 354,
+      "sha256": "ceb3e385bd2a48552e465f4b2fe83af6bce1b92bc361ea53c730fe311e946999"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/reducer.rs",
+      "bytes": 4730,
+      "sha256": "b3f3c8e18209ca78de3fa1e9ee215a014364f08357d116a7c6bdc6f1178a81df"
+    },
+    {
+      "path": "crates/nf-kernel/src/miniature/world.rs",
+      "bytes": 1379,
+      "sha256": "49eb9cfe368ea429753dc896bd01386ce1559234920d6ba6c5ff653e9466aa37"
+    },
+    {
+      "path": "crates/nf-kernel/tests/fixtures/miniature/batch-cancel.hex",
+      "bytes": 805,
+      "sha256": "011c9661c3f5d40a3a5f7c389d74ee1748cfe6be3628a580e578991fd5a0dbee"
+    },
+    {
+      "path": "crates/nf-kernel/tests/fixtures/miniature/batch-empty.hex",
+      "bytes": 271,
+      "sha256": "be120d408331abb256531a6d55b5fd4d81991a8956f2e5381deb3f44efd23dca"
+    },
+    {
+      "path": "crates/nf-kernel/tests/fixtures/miniature/frontier-colony.hex",
+      "bytes": 3167,
+      "sha256": "0b4b6f13528b06d2e347569ea125cbbb084a3a26333726fcdf1f502d487e4989"
+    },
+    {
+      "path": "crates/nf-kernel/tests/fixtures/miniature/generate.cjs",
+      "bytes": 2582,
+      "sha256": "9648dfb2eb23d535a5838a67ce98ae6d31de59bdfca7117a694782ee56db08b5"
+    },
+    {
+      "path": "crates/nf-kernel/tests/fixtures/miniature/intent-colony.hex",
+      "bytes": 461,
+      "sha256": "06942f39f1cd75e841337b3b25973827d9196cf57f37b34f955b3695059c336f"
+    },
+    {
+      "path": "crates/nf-kernel/tests/fixtures/miniature/snapshot-genesis.hex",
+      "bytes": 2423,
+      "sha256": "6b1e0d49c360be023bc8429bbe74b97bbc5a9fa540e328f9284f93b37cf5b3aa"
+    },
+    {
+      "path": "crates/nf-kernel/tests/fixtures/miniature/source-bundle.json",
+      "bytes": 4782,
+      "sha256": "bcb7937223b18db96bfe5ecb3dceab9abb53c799d8a568e2aa142cff5c524e82"
+    },
+    {
+      "path": "crates/nf-kernel/tests/miniature_actions.rs",
+      "bytes": 7359,
+      "sha256": "51e77b48dbebcc8e659a2179384ce2c6b94ea9f9cb3351a11bb9e4471f215782"
+    },
+    {
+      "path": "crates/nf-kernel/tests/miniature_batch_codec.rs",
+      "bytes": 2099,
+      "sha256": "8771640532e82c15d6a1c290088509638e3ca28b1d97707cfb54ed1178fc3fb9"
+    },
+    {
+      "path": "crates/nf-kernel/tests/miniature_boundaries.rs",
+      "bytes": 5600,
+      "sha256": "60b3e49ac04de5b7da828f2ad2cd4e13f936ecd0de311c9005ee1d2fe6f0967e"
+    },
+    {
+      "path": "crates/nf-kernel/tests/miniature_codec.rs",
+      "bytes": 1927,
+      "sha256": "e175f6c2399d726f676595438a9de1e66bedf45c83e6eb5d5981c75ef253a6fe"
+    },
+    {
+      "path": "crates/nf-kernel/tests/miniature_frontier.rs",
+      "bytes": 3460,
+      "sha256": "323480c7d2c5f9ba7753c417d9563ec119ab60ce50472ddeb5d7c7cfe9087242"
+    },
+    {
+      "path": "crates/nf-kernel/tests/miniature_intent.rs",
+      "bytes": 2495,
+      "sha256": "6d681e7289c6e04ea1e612b775d7781f1fe4f6e54b7a17785f25de8d81ec8686"
+    },
+    {
+      "path": "crates/nf-kernel/tests/miniature_replay.rs",
+      "bytes": 3342,
+      "sha256": "755f7ff0c1541a1614ed4094b608e5853df7fd701d4b4fd7eb1feb1f64acbb58"
+    },
+    {
+      "path": "crates/nf-kernel/tests/miniature_support/mod.rs",
+      "bytes": 2248,
+      "sha256": "c6fd8dbbee5c11a65889df257e59c5ece81dafa2040d709ad6f8880e00431402"
+    },
+    {
+      "path": "crates/nf-kernel/tests/miniature_world.rs",
+      "bytes": 352,
+      "sha256": "2bb50888f55f486c4551cd9cd1ed27db5d6a7d5535c0d35e2c4949f31da7f1b6"
+    },
+    {
+      "path": "crates/nf-kernel/tools/generate-miniature-source.cjs",
+      "bytes": 2401,
+      "sha256": "c11f7400668436031d192ec7c0918d58c8a8cdc030a2b8675b137fffc42edd4c"
+    },
+    {
+      "path": "docs/world/integration-contract.md",
+      "bytes": 31730,
+      "sha256": "5d133fc99f240a6da008d263291c06f6180ca779a6f7a8fe2d331f79d2ad8eb1"
+    },
+    {
+      "path": "docs/world/kernel-README.md",
+      "bytes": 4784,
+      "sha256": "f9d098ef9f69171846f63db2a5d231a70649aca5611666e2a2ae5be33b0f0b5f"
+    },
+    {
+      "path": "docs/world/kernel-verification.md",
+      "bytes": 4097,
+      "sha256": "99ea5630cf32319020a121d092e2c2eff8634beb302f2377093398a0248bf5b7"
+    },
+    {
+      "path": "docs/world/README.md",
+      "bytes": 5082,
+      "sha256": "8b05d12955b7bc559e083b86d64cd9719f62c45d7707c94726fd20d414c258f2"
+    }
+  ]
+}
