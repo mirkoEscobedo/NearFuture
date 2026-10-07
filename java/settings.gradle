@@ -1,2 +1,2 @@
 rootProject.name = 'near-future-java'
-include 'contract', 'adapter', 'wire', 'capture'
+include 'contract', 'adapter', 'wire', 'capture', 'nex-reference'
