@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "base": "f09423ac0094c0557d6ae2f401a60eefd178121c",
+  "scope": "Pure syntax, peer-envelope validation and branded logical accounting primitives; no semantic replica activation or new authority",
+  "sourceFiles": [
+    {
+      "path": ".gitattributes",
+      "sha256": "f9d9fec7b2a090de8652b0824fcc8b723512703b0f53e872aaecded427875ee3"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "c9cecdb74713839c24aed71a5c67e9de09bbbbb6ddd8bd0e1372312bf9730cdc"
+    },
+    {
+      "path": "crates/nf-contract/src/canonical/mod.rs",
+      "sha256": "b3b5db209f954d28d8a3315054cbf4a6791e67eabd0c7045db0c1ee2911d2e54"
+    },
+    {
+      "path": "crates/nf-contract/src/canonical/replica_budget_api.md",
+      "sha256": "1e7395f8f647aa925813fb720108ec2ddb192a240073db1ebb020e1cfbe4cdd1"
+    },
+    {
+      "path": "crates/nf-contract/src/canonical/replica_budget.rs",
+      "sha256": "f237a7deb734a1fc8ad8f9b4837f42d7302de915db22d515a239234b0f6ab3e2"
+    },
+    {
+      "path": "crates/nf-contract/src/canonical/replica_budget/accounting.rs",
+      "sha256": "20e9168a13ad9ffd2ea34d8a8b7855003f08ac522faeeae26de49327a89f1f5f"
+    },
+    {
+      "path": "crates/nf-contract/src/canonical/replica_budget/scope.rs",
+      "sha256": "8a74469685a685163a73c9b382ada215bbd5173fa75a9640b64ca7f8bd0584dc"
+    },
+    {
+      "path": "crates/nf-contract/tests/replica_budget_unwind.rs",
+      "sha256": "8c83e23e590ba49787daf59b3a8131330a8fcc1dc47feca1dc7269996b80194f"
+    },
+    {
+      "path": "crates/nf-contract/tests/replica_budget.rs",
+      "sha256": "2482a8e65f079e2a5ca0522cb4de23992f1ec2c6136f3a0b38892242d4262f60"
+    },
+    {
+      "path": "crates/nf-identity/Cargo.toml",
+      "sha256": "e38c2e6d539c070da4d7caf4c5d9be40c1f2b16e8638a69df7ee3ab4a69a0498"
+    },
+    {
+      "path": "crates/nf-identity/src/lib.rs",
+      "sha256": "de1547afe13fd33ae6ab477409168a422f9c925362340068f07a2744eb27a04a"
+    },
+    {
+      "path": "crates/nf-identity/src/peer.rs",
+      "sha256": "97ce56f39f9ff8c65bfed6a1d3e6455efcd7a06c346518286ff4c95c559f35bb"
+    },
+    {
+      "path": "crates/nf-identity/tests/canonical_peer_support/mod.rs",
+      "sha256": "f7fc382d1b2870e84fb44f90f1c5a0d968ede4355c3e2f99ddef0bb7c9c930c0"
+    },
+    {
+      "path": "crates/nf-identity/tests/canonical_peer.rs",
+      "sha256": "a6a198e31b4b0f9db16249de6225bc840dd7d5a2636a5124e34df0b0b07d455f"
+    },
+    {
+      "path": "crates/nf-transport/src/lib.rs",
+      "sha256": "de60d5a1affee87c8c0427b312cea6458d4a5e447a8aae747102544c3fa257c8"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/body.rs",
+      "sha256": "ccbf3fb0ef5c60f0aba8a9da4db896df4056f896ba67aa3ea77b4bb0f6be2e7d"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/checkpoint.json",
+      "sha256": "c86a1a0558f19a00e1884bd51f29ecc4ae3f7f1887cb1d548da34ba83b1898e8"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/decode_auth.rs",
+      "sha256": "e97af239ba5b177642b76f0a607684d9237822de73b77540fd224dcd8c1af17c"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/decode_control.rs",
+      "sha256": "aacf798c981626fae7076a45c1d97795ef704a01f9335a38692d2eaea28e3952"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/decode_transfer.rs",
+      "sha256": "9eba0b84fde56b1af049732b44fa595032cbd0d8fce8951032d86e1662258086"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/decode.rs",
+      "sha256": "0e029664776c99d5fcbfe4b71d9bd8f9b25d469c02d4322ceb1e4777c60a3d59"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/encode_auth.rs",
+      "sha256": "48c2e2778794cb7d5485a81680124f438218c9d0fbfe18145ca58db04a5936d9"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/encode_control.rs",
+      "sha256": "a9ea8e1e3ec5276ddc012e31debc597b253b170dd5f1063b47c7dd270a805ed2"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/encode_transfer.rs",
+      "sha256": "30f12041665a990a14876297a71cf46562c1220d596e537d0cf9f8a470953cbc"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/encode.rs",
+      "sha256": "6155752eb2fd8d5f26ecd11d5c89231745f1649a5833b369c76de3b1b5757da0"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/fields.rs",
+      "sha256": "bc1ffdfc6c93b0b160ab02f1bf4463b01b20f49fdc9c77231af74e5d7eaeff64"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/frame.rs",
+      "sha256": "fb58b2410156272ef64da464ece5118f381bed2a2cd8436ad9dca24a93e988c0"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/layout.rs",
+      "sha256": "533ddaca8eb3383041a21f2b4f97a1ea6e3a0ff93823c1b5fb4bbf43be24624f"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/limits.rs",
+      "sha256": "1c29fdbadc8b2d4ab9c54e208c9c4d3c8a9e25298a474b413be52248f2e44589"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/mod.rs",
+      "sha256": "5a7711b298f349802637ac03c41aebfcc9d78034d0488be7e5e53be485a06de2"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/model.rs",
+      "sha256": "1af181c0215af887716c9992520ff3a2793d0a41507b9bc6c21dfcb7b44746c9"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/operation.rs",
+      "sha256": "ff23481688e71bc368690ec6a053a796cc272b338b63bfe0f777fccd49114cb6"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/reader.rs",
+      "sha256": "769c198437053110217bd2e0081cb0a91b60b0943aa89db040e51da8234b1504"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/README.md",
+      "sha256": "20f09a1d086c134a85889ded757344f8ff4011373f0145be52ef003d45fe8b2f"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/context.rs",
+      "sha256": "b2a18141ba02dae39e06d5f13d9f601e2d57e081db1af843659addb35a3258d6"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/corpus.rs",
+      "sha256": "f5913b9e9236104d31cad2ead3c7137001b6943df4a1dcd3556724354334cbb8"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/fuzz.rs",
+      "sha256": "2b2f08120ad5d525819f5fe5bd7c0f3e060f25b99933c1810a0e78a4f204826b"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/mod.rs",
+      "sha256": "32b8cd64b6b760338089227bb646b87eef331d7d7700ba8894c8bc533899f6f5"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/operation_transcripts.rs",
+      "sha256": "a204daf80368d8863ccd457f673bc3b08aa27dfa9ac95c90fefe348158cf29f3"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/resources.rs",
+      "sha256": "7151d7cf15ae913ad1c9c312a007a6b9f1f9049deb2f4aa74891e6dfb33007dc"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/sensitivity.rs",
+      "sha256": "a3c67977c8cd15ae428947651dbf068fac72093fa2f205d50a3f6e19269ee602"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/support.rs",
+      "sha256": "13aad842c2aac36ee13e181221a4fa09269bd69048a30575b253318662669903"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/supported.rs",
+      "sha256": "478ffc5b8ce44df5535e1f1e830a0c327eb6e78c632a88aa9125648b0f0087f0"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/transcripts.rs",
+      "sha256": "665cc51a0716790e41ed8687fbb988d7dc790d900e8273e3eca43078bdad5fa3"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/typed_control.rs",
+      "sha256": "eb603028855d28ff83d3a0cc4c8d58f5c16111e2855251550c8a33d56ea5d482"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/typed_transfer.rs",
+      "sha256": "c3477ba0411589b3d576778ac80c21ab17665d1747cde7d3d1bb6697bca27ef7"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/tests/typed.rs",
+      "sha256": "6db137908fd61f43762689df93403dfc68c97dd0e93d141e05654af931b2e6b5"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/transcript.rs",
+      "sha256": "f38f4a47e9d472ae46ca4306365139799de787e56e9c51cf685b76aa217216fb"
+    },
+    {
+      "path": "crates/nf-transport/src/sync/validation.rs",
+      "sha256": "0ef8ac50c186632453d894236dca7fb4d8f793fc77c9ad84da7d722c51af6251"
+    }
+  ],
+  "publicationOnlyAmendments": [
+    {
+      "path": ".gitattributes",
+      "originalSha256": "f95dc1ccafdc550c3547385666f709b97e0345283605da49d865e608fbadfc2e",
+      "sha256": "f9d9fec7b2a090de8652b0824fcc8b723512703b0f53e872aaecded427875ee3",
+      "reason": "Preserve exact frozen author checkpoint bytes (including CRLF) in this one JSON path; all vector/code LF policies remain unchanged"
+    }
+  ],
+  "evidence": [
+    {
+      "label": "syntaxRoot",
+      "path": ".tmp/replica-syntax-integration-native.json",
+      "sha256": "d4712f0495a370a0ccf0ff5613f8ce1f5b984fc017a4e0ab8c23df51349cce29"
+    },
+    {
+      "label": "syntaxIndependentR1",
+      "path": ".tmp/replica-syntax-independent-r1.json",
+      "sha256": "b1ee80992c5c767200f0f32d2e3c8a0145708d6ff312a8156a630e4f32a05cae"
+    },
+    {
+      "label": "budgetAuthor",
+      "path": ".tmp/replica-budget-author/checkpoint.json",
+      "sha256": "771ab479eb89348cfeb4e4a0d6e4121bca7ea24041609c12cf68f4da99865258"
+    },
+    {
+      "label": "budgetIndependentR1",
+      "path": ".tmp/replica-budget-independent-r1.json",
+      "sha256": "87aa60d665c2f3d1da4d61ed79dfc0b024204f72f22ca40ddf5616f6516b02e6"
+    },
+    {
+      "label": "budgetRoot",
+      "path": ".tmp/replica-budget-root-native.json",
+      "sha256": "51d650494b5d45bdf815aa27f6436c17fb555877066aeaa15a02cf1ff7ed6117"
+    },
+    {
+      "label": "budgetPostAudit",
+      "path": ".tmp/replica-budget-integration-native/post-audit.json",
+      "sha256": "39e7a20475215c78fd738819d431feff9467fdaa98813346d2557116b3e91085"
+    },
+    {
+      "label": "budgetFreshIndependentAcceptance",
+      "path": ".tmp/replica-budget-independent-acceptance.json",
+      "sha256": "829b9790e2a0da27176d528d62b9a8542387227783047211e2fd1cf064b9534c"
+    }
+  ],
+  "excludedClaims": [
+    "semantic sync installation/export/cache",
+    "composed Kernel/Store shared budget",
+    "new role/session/source authority",
+    "whole issues23/39 completion",
+    "native Starsector or RSS/p99 acceptance"
+  ],
+  "publicationSourceReview": {
+    "path": ".tmp/replica-publication-independent-r1.json",
+    "sha256": "b428119b9ee2d0318159afad3b0e0cb842c5897cbb24a2336ea22f952468d933",
+    "verdict": "PASS",
+    "round": 1,
+    "semanticRepairs": 0
+  },
+  "combinedNativeGate": {
+    "path": ".tmp/replica-publication-root-native.json",
+    "sha256": "d8e33534b7e891233aaf9c3eed8fb80e8bfad600c803fa7d838d6d56e1fe4aa0",
+    "verdict": "PASS",
+    "steps": 10,
+    "allWindowsJobOwned": true,
+    "timeouts": 0,
+    "contractCases": 32,
+    "legacyContractCases": 25,
+    "newPrimitiveCases": 7,
+    "positiveDocs": 1,
+    "intendedNegativeDocs": 8,
+    "canonicalPeerCases": 5,
+    "syncBehaviorGroups": 13,
+    "otherTransportCasesFiltered": 67,
+    "workspaceFormat": true,
+    "workspaceAllTargetClippy": true,
+    "architecturalBoundaries": true,
+    "frozenSyncGenerator": true,
+    "prePostFiles": 968,
+    "heldMain": 128,
+    "extraWip": 39,
+    "evidenceInputs": 7
+  },
+  "finalMetadataAmendment": {
+    "before": {
+      "checkpointSha256": "1209ed628ff0a7122413fd8d8312341d314d682d232c8b0ea9b2e4371ea2b3df",
+      "verificationSha256": "c64b2958a8b586c0006a761ed4459a39511ade1cdbee6c964be44d1f074d947e"
+    },
+    "reason": "Append observed combined gate and source review after terminal execution; all49 promoted source/policy/manifest/lock paths remain byte-identical to tested candidate",
+    "hostedGate": "PENDING"
+  }
+}

@@ -15,3 +15,5 @@ mod private_blob_scan;
 pub mod private_storage;
 pub mod rotation;
 pub mod signing;
+
+pub mod peer;
