@@ -238,7 +238,8 @@
       "path": "protocol/vectors/local-auth-v1.json"
     }
   ],
-  "status": "uncommitted-portable-checkpoint-native-gates-unmeasured",
+  "status": "reviewed-portable-implementation-native-gates-unmeasured",
   "basisCommit": "296d3a40d0454407a7b55ad62e50cd6039012442",
-  "hashingMethod": "SHA-256 of staged normalized Git file bytes exported by checkout-index; Cargo EOF whitespace normalized before hashing"
+  "hashingMethod": "SHA-256 of staged normalized Git file bytes exported by checkout-index; Cargo EOF whitespace normalized before hashing",
+  "implementationCommit": "fb40be51d3aa13b1ad97f8944624611bf8847164"
 }
