@@ -29,7 +29,7 @@ impl Drop for Scratch {
 #[test]
 fn early_helper_exit_unblocks_owned_full_pipe_writer() {
     let root = Scratch::new();
-    assert_eq!(run(&root.script("exit 0"), vec![]), Ok(()));
+    assert_eq!(run_with_reason(&root.script("exit 0"), vec![]), Ok(()));
     let start = Instant::now();
     assert_eq!(
         run(&root.script("exit 2"), vec![b'x'; INPUT_LIMIT]),
