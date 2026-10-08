@@ -144,3 +144,6 @@ fn real_java_oracle_matches_rust_from_same_raw_inputs_without_expected_column_or
     }
     assert_eq!(oracle("peace", "peace-v1.tsv"), expected);
 }
+
+#[path = "differential/action.rs"]
+mod action;

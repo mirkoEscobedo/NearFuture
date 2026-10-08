@@ -11,7 +11,7 @@ public final class DifferentialOracleMain {
         try {run(args);}catch(Exception rejected) {System.err.println("REFERENCE_UNAVAILABLE");System.exit(1);}
     }
     private static void run(String[] args) throws Exception {
-        if(args.length!=2||!java.util.Set.of("war","peace").contains(args[0])) throw new IllegalArgumentException("Invalid corpus mode");
+        if(args.length!=2||!java.util.Set.of("war","peace","action").contains(args[0])) throw new IllegalArgumentException("Invalid corpus mode");
         byte[] bytes;try(var input=Files.newInputStream(Path.of(args[1]))) {bytes=input.readNBytes(65537);}if(bytes.length>65536) throw new IllegalArgumentException("Corpus limit");
         String text=new String(bytes,StandardCharsets.UTF_8);if(!java.util.Arrays.equals(bytes,text.getBytes(StandardCharsets.UTF_8))) throw new IllegalArgumentException("Invalid UTF8");
         StringBuilder output=new StringBuilder();int rows=0;
@@ -21,6 +21,10 @@ public final class DifferentialOracleMain {
             if(args[0].equals("war")) {
                 WarInput input=DifferentialWarReader.input(f);WarResult result=WarWearinessReference.generate(input);
                 output.append("war|").append(f[0]).append('|').append(result.generated()).append('|').append(result.ended()).append('|').append(result.abortCurrentAction()).append('|').append(WarWearinessReference.isValid(input)).append('|').append(priority(result.existingPriority())).append('|').append(priority(result.writes())).append('\n');
+            } else if(args[0].equals("action")) {
+                if(f.length!=6) throw new IllegalArgumentException("Invalid public corpus shape");
+                boolean eligible=PeaceReference.canUseAction(DifferentialWarReader.bool(f[1]),DifferentialWarReader.bool(f[2]),DifferentialWarReader.bool(f[3]),DifferentialWarReader.bool(f[4]),DifferentialWarReader.bool(f[5]));
+                output.append("action|").append(f[0]).append('|').append(eligible).append('\n');
             } else {
                 PeaceResult result=PeaceReference.evaluateSelectedEnemy(DifferentialPeaceReader.input(f));
                 String effects=result.effects().stream().map(effect->effect instanceof PeaceResult.DiplomacyEventCall e?"event:"+e.faction()+":"+e.enemy()+":"+e.eventId():effect instanceof PeaceResult.WearinessCall w?"weariness:"+w.faction()+":"+String.format(Locale.ROOT,"%08x",w.amountFloatBits()):"unsupported").collect(Collectors.joining(","));
