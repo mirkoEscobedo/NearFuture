@@ -27,4 +27,4 @@
 /docs/transport/sync-contract.md text eol=lf
 /docs/transport/sync-vectors/*.tsv text eol=lf
 /tools/reference/sync/README.md text eol=lf
-/crates/nf-identity/tests/support/getter_contract/original-private-acl.ps1 text eol=lf
+/crates/nf-identity/tests/support/getter_contract/original-private-acl.ps1 -text
