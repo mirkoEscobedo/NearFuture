@@ -7,7 +7,7 @@ mod connection;
 mod handler;
 mod server;
 use crate::{PeerError, session::SessionPolicy};
-pub use client::request_status;
+pub use client::{request_status, request_status_diagnosed};
 use nf_identity::{
     model::{MembershipRepository, MembershipState},
     private_storage::LocalIdentity,
