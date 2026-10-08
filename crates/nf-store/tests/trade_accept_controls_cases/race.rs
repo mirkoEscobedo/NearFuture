@@ -41,7 +41,6 @@ fn signed_accept_cancel_race_has_one_finality_on_one_canonical_owner() {
         barrier.wait();
         (accepting.join().unwrap(), cancelling.join().unwrap())
     });
-    drop(owner);
     let conflict = Error::Rejected(TradeRejection::Conflict);
     let winner = match (a, c) {
         (Ok(receipt), Err(error)) => {
