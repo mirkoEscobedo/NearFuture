@@ -83,7 +83,7 @@ export function analyzeTrace(metadata, records, budgets) {
     bridge: { ...bridge, p99BudgetUs: budgets.bridgeP99Us, ungroupedSpans: ungroupedBridgeSpans, incompleteFrames,
       status: bridge.count && !ungroupedBridgeSpans && !incompleteFrames && !run.droppedEvents && !run.invalidEvents ? 'observed-sample-only' : 'unmeasured',
       exceedsBudget: bridge.count ? Number(bridge.p99Us) > budgets.bridgeP99Us : null },
-    phases: Object.fromEntries(['capture','encode','apply','save','load','gc_pause','gc_cycle'].map(kind => [kind, percentiles(durations(kind))])),
+    phases: Object.fromEntries(['capture','encode','apply','save','load','gc_pause','gc_cycle','campaign_callback'].map(kind => [kind, percentiles(durations(kind))])),
     allocations: { samples: allocations.length, sampledWeightedBytes: allocations.length ? allocationBytes : null,
       estimatedBytesPerSecond: allocations.length ? allocationBytes / (run.durationUs / 1000000) : null },
     threads, resources: { node: resources('node'), adapter: resources('adapter') },
