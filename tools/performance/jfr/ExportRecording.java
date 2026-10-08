@@ -11,6 +11,7 @@ public final class ExportRecording {
     private static String kind(String name) {
         return switch (name) {
             case "nf.Frame" -> "frame";
+            case "nf.CampaignCallback" -> "campaign_callback";
             case "nf.Capture" -> "capture";
             case "nf.Apply" -> "apply";
             case "nf.Encode" -> "encode";
@@ -46,7 +47,11 @@ public final class ExportRecording {
                     if (atUs < 0 || atUs > 9_007_199_254_740_991L) throw new IllegalArgumentException();
                     StringBuilder out = new StringBuilder(256);
                     out.append("{\"traceId\":\"").append(args[1]).append("\",\"source\":\"jfr\",\"kind\":\"").append(category).append("\",\"atUs\":").append(atUs);
-                    RecordedThread thread = event.hasField("sampledThread") ? event.getThread("sampledThread") : event.getThread();
+                    RecordedThread thread = category.equals("campaign_callback") ? event.getThread() :
+                        event.hasField("sampledThread") ? event.getThread("sampledThread") : event.getThread();
+                    if (category.equals("campaign_callback") &&
+                        (!event.hasField("traceId") || thread == null || thread.getJavaThreadId() <= 0 || event.hasField("frameId")))
+                        throw new IllegalArgumentException();
                     if (thread != null) out.append(",\"threadId\":").append(thread.getJavaThreadId());
                     if (!category.equals("thread_running_sample") && !category.equals("allocation_sample") && !category.equals("thread_cpu"))
                         out.append(",\"durationUs\":").append(event.getDuration().toNanos() / 1000);

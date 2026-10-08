@@ -1,8 +1,8 @@
 // @ts-check
 /** @typedef {'adapter'|'node'|'jfr'} Source */
 /** @typedef {{traceId: string, source: Source, kind: string, atUs: number, durationUs?: number, bytes?: number, threadId?: number, queueItems?: number, queueBytes?: number, rssBytes?: number, cpuUs?: number, sentBytes?: number, receivedBytes?: number, frameId?: number, requestId?: string}} TraceEvent */
-const kinds = new Set(['frame', 'capture', 'encode', 'apply', 'queue', 'resource', 'stale', 'save', 'load', 'gc_pause', 'gc_cycle', 'allocation_sample', 'thread_running_sample', 'thread_cpu', 'thread_blocked', 'thread_io', 'thread_sleep']);
-const durationKinds = new Set(['frame', 'capture', 'encode', 'apply', 'save', 'load', 'gc_pause', 'gc_cycle', 'thread_blocked', 'thread_io', 'thread_sleep']);
+const kinds = new Set(['frame', 'campaign_callback', 'capture', 'encode', 'apply', 'queue', 'resource', 'stale', 'save', 'load', 'gc_pause', 'gc_cycle', 'allocation_sample', 'thread_running_sample', 'thread_cpu', 'thread_blocked', 'thread_io', 'thread_sleep']);
+const durationKinds = new Set(['frame', 'campaign_callback', 'capture', 'encode', 'apply', 'save', 'load', 'gc_pause', 'gc_cycle', 'thread_blocked', 'thread_io', 'thread_sleep']);
 export const hashPattern = /^[a-f0-9]{64}$/;
 export const tracePattern = /^[a-f0-9]{32}$/;
 /** @param {unknown} value @returns {TraceEvent} */
@@ -20,6 +20,8 @@ export function sanitizeEvent(value) {
   }
   if (durationKinds.has(String(raw.kind)) && raw.durationUs === undefined)
     throw new Error('INVALID_EVENT: this event kind requires durationUs.');
+  if (raw.kind === 'campaign_callback' && (raw.threadId === undefined || Number(raw.threadId) < 1 || raw.frameId !== undefined))
+    throw new Error('INVALID_EVENT: campaign callbacks require a numeric thread identity and cannot identify whole frames.');
   if (raw.kind === 'queue' && (raw.queueItems === undefined || raw.queueBytes === undefined)) throw new Error('INVALID_EVENT: queue samples require item and byte counts.');
   if (raw.kind === 'allocation_sample' && raw.bytes === undefined)
     throw new Error('INVALID_EVENT: allocation samples require bytes.');
@@ -45,7 +47,7 @@ export function validateRun(value) {
     if (typeof raw[key] !== 'number' || !Number.isSafeInteger(raw[key]) || Number(raw[key]) < 0) throw new Error(`INVALID_RUN: ${key} must be a nonnegative safe integer.`);
   if (Number(raw.repeat) < 1 || Number(raw.repeat) > 50 || Number(raw.durationUs) < 1 ||
     typeof raw.speed !== 'number' || !Number.isFinite(raw.speed) || raw.speed <= 0 || raw.speed > 10 ||
-    typeof raw.paused !== 'boolean' || !['none','frame','frame+jfr'].includes(String(raw.instrumentation)) ||
+    typeof raw.paused !== 'boolean' || !['none','frame','frame+jfr','callback+jfr'].includes(String(raw.instrumentation)) ||
     !['baseline','control','shadow','offload','parallel','instrumentation-off'].includes(String(raw.scenario)) ||
     !['synthetic','game'].includes(String(raw.baseline))) throw new Error('INVALID_RUN: scenario, repetitions, duration, speed/pause and instrumentation must be explicit.');
   if (raw.scenario === 'control' && (typeof raw.controlEvidenceSha256 !== 'string' || !hashPattern.test(raw.controlEvidenceSha256)))
