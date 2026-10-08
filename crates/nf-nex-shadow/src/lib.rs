@@ -21,3 +21,6 @@ mod world_session;
 pub use world_session::*;
 mod world_commitment;
 pub use world_commitment::{WorldCommitment, commit_world};
+
+mod action;
+pub use action::{MakePeaceEligibility, make_peace_action_eligible};
