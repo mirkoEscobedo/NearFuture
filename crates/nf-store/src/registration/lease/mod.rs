@@ -13,3 +13,6 @@ pub use model::{
     LeaseError, LeaseGranted,
 };
 pub use owner::LeaseStore;
+
+// Explicit headless self-report owner; existing lease profile semantics remain separate.
+pub mod taint;
