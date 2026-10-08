@@ -18,3 +18,5 @@ pub use store::{ImmutableSnapshot, Store};
 
 /// Guarded private miniature profile; schema1 storage APIs remain separate.
 pub mod miniature;
+
+pub mod supplies;
