@@ -35,6 +35,14 @@ impl Drop for Scratch {
         let _ = std::fs::remove_dir_all(&self.0);
     }
 }
+pub trait ChallengeSource<R> {
+    fn issued(&mut self, request: R) -> IssuedChallenge;
+}
+impl<'a> ChallengeSource<ChallengeRequest<'a>> for SuppliesStore {
+    fn issued(&mut self, request: ChallengeRequest<'a>) -> IssuedChallenge {
+        self.issue_challenge(request).unwrap()
+    }
+}
 pub struct Fixture {
     pub policy: SuppliesPolicy,
     pub membership: MembershipState,
@@ -130,12 +138,10 @@ impl Fixture {
             origin: self.policy.issuers[0].origin,
         }
     }
-    pub fn attempt(
-        &self,
-        store: &mut SuppliesStore,
-        request: ChallengeRequest<'_>,
-    ) -> ProofAttempt {
-        let issued = store.issue_challenge(request).unwrap();
+    pub fn attempt<R, S: ChallengeSource<R>>(&self, store: &mut S, request: R) -> ProofAttempt {
+        self.sign_issued(store.issued(request))
+    }
+    pub fn sign_issued(&self, issued: IssuedChallenge) -> ProofAttempt {
         let mut proof = issued.template;
         let key = if proof.account == self.issuer.account {
             &self.issuer_key

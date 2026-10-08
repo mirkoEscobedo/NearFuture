@@ -13,7 +13,7 @@ pub enum SuppliesStoreError {
     Expired,
     Entropy,
 }
-pub(super) type Result<T> = std::result::Result<T, SuppliesStoreError>;
+pub(crate) type Result<T> = std::result::Result<T, SuppliesStoreError>;
 impl From<crate::StoreError> for SuppliesStoreError {
     fn from(value: crate::StoreError) -> Self {
         Self::Storage(value)

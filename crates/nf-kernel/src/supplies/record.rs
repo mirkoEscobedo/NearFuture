@@ -23,12 +23,12 @@ pub fn origin_bytes(origin: Origin) -> [u8; 36] {
     bytes[4..].copy_from_slice(&origin.lineage);
     bytes
 }
-pub(super) struct Reader<'a> {
-    pub(super) bytes: &'a [u8],
-    pub(super) offset: usize,
+pub(crate) struct Reader<'a> {
+    pub(crate) bytes: &'a [u8],
+    pub(crate) offset: usize,
 }
 impl Reader<'_> {
-    pub(super) fn take<const N: usize>(&mut self) -> Result<[u8; N], SuppliesRejection> {
+    pub(crate) fn take<const N: usize>(&mut self) -> Result<[u8; N], SuppliesRejection> {
         let end = self
             .offset
             .checked_add(N)

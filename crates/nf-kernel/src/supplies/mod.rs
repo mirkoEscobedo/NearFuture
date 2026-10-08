@@ -3,7 +3,7 @@ mod burn;
 mod codec;
 mod model;
 mod policy;
-mod record;
+pub(crate) mod record;
 mod reserve;
 pub use burn::{burn_binding, burn_bytes, burn_digest, decode_burn, economic_burn_digest};
 pub use codec::issuance_bytes;
