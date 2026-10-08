@@ -27,7 +27,9 @@ impl WorldShadowEvaluation {
     pub fn output(&self) -> &WarResult {
         match self.copied.output() {
             ShadowOutput::War(v) => v,
-            ShadowOutput::SelectedPeace(_) => unreachable!("private war-only construction"),
+            ShadowOutput::SelectedPeace(_) | ShadowOutput::MakePeaceEligibility(_) => {
+                unreachable!("private war-only construction")
+            }
         }
     }
     pub fn authority(&self) -> ShadowAuthority {

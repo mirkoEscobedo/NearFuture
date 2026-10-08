@@ -31,7 +31,11 @@ pub fn input_digest(
 ) -> Result<[u8; 32], Unavailable> {
     Ok(Sha256::digest(encode_input(metadata, input)?).into())
 }
-pub fn encode_input(m: &ShadowMetadata, input: &ShadowInput) -> Result<Vec<u8>, Unavailable> {
+enum DiagnosticProfile {
+    LegacyV1,
+    MakePeaceEligibilityV2,
+}
+fn metadata_writer(m: &ShadowMetadata, profile: DiagnosticProfile) -> Result<Writer, Unavailable> {
     crate::validation::text(&m.subject_faction)?;
     if m.subject_faction.len() > 128 {
         return Err(Unavailable::Limit);
@@ -57,8 +61,16 @@ pub fn encode_input(m: &ShadowMetadata, input: &ShadowInput) -> Result<Vec<u8>, 
         bytes: Vec::new(),
         entries: 0,
     };
-    w.put(b"NF-NEX-SHADOW-1\0")?;
-    w.put(&1_u16.to_le_bytes())?;
+    match profile {
+        DiagnosticProfile::LegacyV1 => {
+            w.put(b"NF-NEX-SHADOW-1\0")?;
+            w.put(&1_u16.to_le_bytes())?;
+        }
+        DiagnosticProfile::MakePeaceEligibilityV2 => {
+            w.put(b"NF-NEX-SHADOW-2\0")?;
+            w.put(&2_u16.to_le_bytes())?;
+        }
+    }
     w.text(&p.source_commit)?;
     for digest in [
         p.source_digest,
@@ -93,6 +105,10 @@ pub fn encode_input(m: &ShadowMetadata, input: &ShadowInput) -> Result<Vec<u8>, 
         Observation::CapturedUnverified => 2,
     })?;
     w.u8(1)?;
+    Ok(w)
+}
+pub fn encode_input(m: &ShadowMetadata, input: &ShadowInput) -> Result<Vec<u8>, Unavailable> {
+    let mut w = metadata_writer(m, DiagnosticProfile::LegacyV1)?;
     match input {
         ShadowInput::War { operation, facts } => {
             crate::validation::war(facts)?;
@@ -114,6 +130,28 @@ pub fn encode_input(m: &ShadowMetadata, input: &ShadowInput) -> Result<Vec<u8>, 
         }
     }
     Ok(w.bytes)
+}
+/// Closed action-only V2 diagnostic identity; it never certifies a native world.
+pub fn encode_action_input(
+    metadata: &ShadowMetadata,
+    facts: &crate::MakePeaceEligibility,
+) -> Result<Vec<u8>, Unavailable> {
+    let mut w = metadata_writer(metadata, DiagnosticProfile::MakePeaceEligibilityV2)?;
+    w.u8(1)?; // V2 kind1 means the exact MakePeaceAction.canUse supplied-facts override.
+    w.bool(facts.diplomacy_enabled)?;
+    w.bool(facts.concern_can_make_peace)?;
+    w.bool(facts.target_hostile.is_some())?;
+    if let Some(hostile) = facts.target_hostile {
+        w.bool(hostile)?;
+    }
+    w.bool(facts.faction_diplomacy_disabled)?;
+    Ok(w.bytes)
+}
+pub fn action_input_digest(
+    metadata: &ShadowMetadata,
+    facts: &crate::MakePeaceEligibility,
+) -> Result<[u8; 32], Unavailable> {
+    Ok(Sha256::digest(encode_action_input(metadata, facts)?).into())
 }
 pub(crate) struct Writer {
     bytes: Vec<u8>,

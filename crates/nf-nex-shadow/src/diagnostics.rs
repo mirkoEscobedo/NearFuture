@@ -91,6 +91,11 @@ pub fn compare_outputs(expected: &ShadowOutput, actual: &ShadowOutput) -> Vec<Di
                 result.push(Difference::Effects);
             }
         }
+        (ShadowOutput::MakePeaceEligibility(a), ShadowOutput::MakePeaceEligibility(b)) => {
+            if a != b {
+                result.push(Difference::Decision);
+            }
+        }
         _ => result.push(Difference::Kind),
     }
     result

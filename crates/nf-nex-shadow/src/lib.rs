@@ -13,7 +13,10 @@ pub use peace::evaluate_selected_peace;
 pub use peace_model::*;
 mod identity;
 mod session;
-pub use identity::{ShadowInput, ShadowMetadata, encode_input, input_digest};
+pub use identity::{
+    ShadowInput, ShadowMetadata, action_input_digest, encode_action_input, encode_input,
+    input_digest,
+};
 pub use session::*;
 mod diagnostics;
 pub use diagnostics::*;
