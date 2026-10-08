@@ -23,3 +23,5 @@ pub mod supplies;
 
 pub mod registration;
 pub mod trade;
+
+pub mod chat;
