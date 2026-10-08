@@ -27,3 +27,6 @@ pub use world_commitment::{WorldCommitment, commit_world};
 
 mod action;
 pub use action::{MakePeaceEligibility, make_peace_action_eligible};
+
+mod action_replay;
+pub use action_replay::{DecodedActionInput, decode_action_input, replay_synthetic_action};
