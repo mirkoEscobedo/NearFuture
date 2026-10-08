@@ -12,3 +12,6 @@ zeroize = "=1.9.0"
 
 [lints]
 workspace = true
+
+[target.'cfg(windows)'.dependencies]
+subc-jobobject = '=0.2.0'

@@ -8,7 +8,15 @@ impl PrivateVault {
     pub fn scan_optional_private_blobs(
         &self,
         names: &[&str],
+        visit: impl for<'a> FnMut(usize, Option<&'a [u8]>) -> Result<(), IdentityError>,
+    ) -> Result<(), IdentityError> {
+        self.scan_optional_private_blobs_with_access(names, visit, checked_access)
+    }
+    pub(crate) fn scan_optional_private_blobs_with_access(
+        &self,
+        names: &[&str],
         mut visit: impl for<'a> FnMut(usize, Option<&'a [u8]>) -> Result<(), IdentityError>,
+        mut access: impl FnMut(&[&Path]) -> Result<(), IdentityError>,
     ) -> Result<(), IdentityError> {
         if names.is_empty() || names.len() > 64 {
             return Err(IdentityError::Limit);
@@ -45,7 +53,7 @@ impl PrivateVault {
                 admitted_paths.push(path.as_path());
             }
         }
-        checked_access(&admitted_paths)?;
+        access(&admitted_paths)?;
         checked_root_type(&self.root)?;
         for (index, (path, exists)) in paths.iter().zip(present).enumerate() {
             if exists {
@@ -55,7 +63,7 @@ impl PrivateVault {
                 visit(index, None)?;
             }
         }
-        checked_access(&[self.root.as_path()])?;
+        access(&[self.root.as_path()])?;
         checked_root_type(&self.root)
     }
 }

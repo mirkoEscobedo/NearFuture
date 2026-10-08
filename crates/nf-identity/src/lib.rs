@@ -15,3 +15,7 @@ mod private_blob_scan;
 pub mod private_storage;
 pub mod rotation;
 pub mod signing;
+
+#[cfg(windows)]
+mod private_acl_session;
+mod protected_blob_scope;

@@ -12,11 +12,19 @@ use zeroize::Zeroizing;
 
 impl PrivateVault {
     pub fn create_private_blob(&self, name: &str, bytes: &[u8]) -> Result<(), IdentityError> {
+        self.create_private_blob_with_access(name, bytes, private_access)
+    }
+    pub(crate) fn create_private_blob_with_access(
+        &self,
+        name: &str,
+        bytes: &[u8],
+        mut access: impl FnMut(&Path, bool) -> Result<(), IdentityError>,
+    ) -> Result<(), IdentityError> {
         let path = self.blob_path(name)?;
         if bytes.len() > 4096 {
             return Err(IdentityError::Limit);
         }
-        private_access(&self.root, false)?;
+        access(&self.root, false)?;
         let mut options = OpenOptions::new();
         options.write(true).create_new(true);
         #[cfg(unix)]
@@ -27,7 +35,7 @@ impl PrivateVault {
         let mut file = options
             .open(&path)
             .map_err(|_| IdentityError::PrivateStorage)?;
-        private_access(&path, true)?;
+        access(&path, true)?;
         let mut record = Zeroizing::new(Vec::with_capacity(46 + bytes.len()));
         record.extend_from_slice(b"NF-BLOB-1\0");
         record.extend_from_slice(&(bytes.len() as u32).to_le_bytes());

@@ -201,3 +201,5 @@ pub(crate) fn private_access(path: &Path, initialize: bool) -> Result<(), Identi
 pub(crate) fn private_access(_path: &Path, _initialize: bool) -> Result<(), IdentityError> {
     Err(IdentityError::PrivateStorage)
 }
+
+pub use crate::protected_blob_scope::ProtectedBlobScope;
