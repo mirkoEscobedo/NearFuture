@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "recordedDate": "2026-10-08",
+  "authority": "Direct human instructions in the NearFuture issue-completion chat; permissions persist across restarts.",
+  "paths": {
+    "repository": "E:\\github\\NearFuture",
+    "github": "https://github.com/mirkoEscobedo/NearFuture",
+    "starsector": "H:\\Games\\Starsector",
+    "trios": "H:\\Games\\Starsector\\TriOS"
+  },
+  "profilingIssue12": {
+    "authorized": [
+      "Create disposable new saves and controlled campaign or combat scenarios.",
+      "Open Console Commands with Ctrl+Backspace and spawn or configure the scenario as needed.",
+      "Save each prepared scenario as a separate checkpoint and reload it before every measurement run.",
+      "Choose and document game speed, pause settings and a repeatable action route.",
+      "Enable or disable mods before launching; TriOS may be used as the mod manager."
+    ],
+    "preferencesAndConstraints": [
+      "Prefer controlled disposable scenarios; preserve all original saves.",
+      "Existing saves are available if useful, but controlled setup is preferred.",
+      "Finish console setup before measuring.",
+      "Record active mods and use compatible checkpoints for comparisons.",
+      "Distinguish controlled synthetic workloads from representative late-game measurements.",
+      "Consult AutoColonyManager's Starsector debugging guidance."
+    ],
+    "debuggingReference": "docs/starsector-debugging.md",
+    "evidenceStatusAtRecording": "Permissions granted; no new controlled game scenario or representative late-game measurement completed."
+  },
+  "scopedAclSession": {
+    "approved": true,
+    "humanReply": "Approve the scoped ACL session implementation",
+    "proposalPath": ".tmp/portal-receipt-wake-checks/scoped-acl-session-proposal.md",
+    "proposalSha256": "65950cf9712e26839b3a58502ade146acc47607756d4bd89f66cad2eb9f15c4a",
+    "scope": "The exact proposal: one contained helper for receipt append, six fresh ACL checks, original five-second helper and one-second Status limits, qualified synchronous Windows Job provider, strict bounded protocol and owned cleanup.",
+    "previousRejection": "Automatic approval review previously rejected this security-sensitive implementation for lack of direct human authorization. Direct approval above supplies authorization for the exact proposal.",
+    "evidenceStatusAtRecording": "Implementation approved; production changes and latency/security acceptance still require review and actual verification."
+  },
+  "gameLaunchAndCapture": {
+    "humanConstraint": "Start Starsector through its launcher.",
+    "launcherPath": "H:\\Games\\Starsector\\starsector.exe",
+    "launcherExists": true,
+    "procedure": "Activate the launcher before Play; rediscover the actual game window after the launcher exits because the window ID changes.",
+    "captureCautions": [
+      "Idle/paused LWJGL captures may be stale, including Print Screen. Defocus/refocus and verify state before repeating a click.",
+      "Human F12 saved screenshots in the documented setup; synthetic F12 failed there.",
+      "Paused map clicks may be ignored even when UI buttons work. Unpausing advances campaign state; do not advance an unprepared measurement scenario as a capture workaround.",
+      "Old MCP scaling/coordinate rules are specific to that tool. Confirm current tool coordinates and actual game process; browser titles and Gradle workers can be false matches."
+    ],
+    "source": "https://github.com/mirkoEscobedo/AutoColonyManager/blob/fae8d11b317c96231cf56e85eb8e0abb2131fe6e/starsector-ui-tester.md",
+    "agentRechecked": true,
+    "currentFailure": "Codex computer-control trusted Node exits before launcher/game startup; no observed Starsector crash or game input."
+  }
+}
