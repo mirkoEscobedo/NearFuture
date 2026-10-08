@@ -1,6 +1,9 @@
 //! Pure accepting-profile arithmetic: coalesce every leg before any durable write.
 use super::*;
 
+type ConservationGroupKey = ([u8; 32], Origin);
+type ConservationTotals = (u128, u128, u128, u128);
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub(in crate::supplies) struct Flow {
     pub received: u64,
@@ -62,7 +65,7 @@ pub(super) fn validate(
     {
         return Err(SuppliesStoreError::Corrupt);
     }
-    let mut groups: BTreeMap<([u8; 32], Origin), (u128, u128, u128, u128)> = BTreeMap::new();
+    let mut groups: BTreeMap<ConservationGroupKey, ConservationTotals> = BTreeMap::new();
     for (key, stock) in balances {
         let flow = flows.get(key).copied().unwrap_or_default();
         conservation(*stock, flow)?;
