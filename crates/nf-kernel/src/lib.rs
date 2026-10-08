@@ -20,3 +20,5 @@ pub use replay::*;
 pub mod miniature;
 
 pub mod supplies;
+
+pub mod trade;

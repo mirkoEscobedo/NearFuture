@@ -11,13 +11,15 @@ pub(super) fn initialize(
     scope: Scope,
     policy: &SuppliesPolicy,
     membership: &MembershipState,
+    trade: Option<&crate::trade::policy::SelectedPolicy>,
 ) -> Result<()> {
     let body = nf_identity::codec::encode_state(membership)?;
     let config = policy_bytes(policy)?;
     let tx = connection.transaction()?;
-    tx.execute_batch(SCHEMA)?;
+    let selected = selected_schema(trade);
+    tx.execute_batch(&selected)?;
     tx.pragma_update(None, "application_id", APPLICATION_ID)?;
-    tx.pragma_update(None, "user_version", 4)?;
+    tx.pragma_update(None, "user_version", selected_version(trade))?;
     tx.execute(
         "INSERT INTO supplies_meta VALUES(1,?1,?2,?3,?4,?5,?6)",
         params![
@@ -25,7 +27,7 @@ pub(super) fn initialize(
             scope.history.as_bytes(),
             counter(0),
             policy_digest(policy)?,
-            hash(SCHEMA.as_bytes()),
+            hash(selected.as_bytes()),
             config
         ],
     )?;
@@ -33,6 +35,9 @@ pub(super) fn initialize(
         "INSERT INTO supplies_membership VALUES(1,?1,?2,?3)",
         params![counter(membership.revision), body, hash(&body)],
     )?;
+    if let Some(trade) = trade {
+        crate::trade::schema::initialize(&tx, trade)?;
+    }
     tx.commit()?;
     Ok(())
 }
@@ -40,17 +45,19 @@ pub(super) fn verify(
     connection: &Connection,
     scope: Scope,
     policy: &SuppliesPolicy,
+    trade: Option<&crate::trade::policy::SelectedPolicy>,
 ) -> Result<u64> {
     let id: i32 = connection.pragma_query_value(None, "application_id", |r| r.get(0))?;
     let version: i32 = connection.pragma_query_value(None, "user_version", |r| r.get(0))?;
-    if id != APPLICATION_ID || version != 4 {
+    if id != APPLICATION_ID || version != selected_version(trade) {
         return Err(SuppliesStoreError::UnsupportedProfile);
     }
     let integrity: String = connection.query_row("PRAGMA integrity_check(1)", [], |r| r.get(0))?;
     if integrity != "ok" {
         return Err(SuppliesStoreError::Corrupt);
     }
-    let expected: std::collections::BTreeMap<_, _> = SCHEMA
+    let selected = selected_schema(trade);
+    let expected: std::collections::BTreeMap<_, _> = selected
         .split(';')
         .map(str::trim)
         .filter(|s| !s.is_empty())
@@ -65,9 +72,11 @@ pub(super) fn verify(
         })
         .collect();
     let extra: bool = connection.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE type<>'table' AND (type<>'index' OR sql IS NOT NULL OR name NOT LIKE 'sqlite_autoindex_%'))", [], |r|r.get(0))?;
-    let mut statement = connection.prepare("SELECT name,sql FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name LIMIT 6")?;
+    let mut statement = connection.prepare("SELECT name,sql FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name LIMIT ?1")?;
     let actual: std::collections::BTreeMap<String, String> = statement
-        .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
+        .query_map(params![(expected.len() + 1) as i64], |r| {
+            Ok((r.get(0)?, r.get(1)?))
+        })?
         .collect::<rusqlite::Result<_>>()?;
     if extra || actual != expected {
         return Err(SuppliesStoreError::UnsupportedProfile);
@@ -76,10 +85,42 @@ pub(super) fn verify(
     if universe != scope.universe.as_bytes()
         || history != scope.history.as_bytes()
         || stored_policy != policy_digest(policy)?
-        || schema != hash(SCHEMA.as_bytes())
+        || schema != hash(selected.as_bytes())
         || config != policy_bytes(policy)?
     {
         return Err(SuppliesStoreError::Corrupt);
     }
+    if let Some(trade) = trade {
+        crate::trade::schema::verify(connection, trade)?;
+    }
     Ok(read_counter(&revision)?)
+}
+
+fn selected_version(trade: Option<&crate::trade::policy::SelectedPolicy>) -> i32 {
+    match trade {
+        None => 4,
+        Some(crate::trade::policy::SelectedPolicy::Legacy2(_)) => 6,
+        Some(crate::trade::policy::SelectedPolicy::Accepting3(_)) => 7,
+    }
+}
+fn selected_schema(trade: Option<&crate::trade::policy::SelectedPolicy>) -> String {
+    if matches!(
+        trade,
+        Some(crate::trade::policy::SelectedPolicy::Accepting3(_))
+    ) {
+        format!(
+            "{}{}{}",
+            SCHEMA.replace("length(body)<=384", "length(body)<=512"),
+            crate::trade::schema::SCHEMA,
+            super::ledger::FLOW_SCHEMA
+        )
+    } else if trade.is_some() {
+        format!(
+            "{}{}",
+            SCHEMA.replace("length(body)<=384", "length(body)<=512"),
+            crate::trade::schema::SCHEMA
+        )
+    } else {
+        SCHEMA.to_owned()
+    }
 }

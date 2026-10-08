@@ -6,23 +6,32 @@ use super::{
 };
 use nf_identity::model::{MembershipState, Scope};
 use nf_kernel::supplies::{
-    BalanceQuery, Balances, Burn, BurnOutcome, Issuance, IssuanceOutcome, RejectedOutcome,
-    RequestOutcome, RequestRejection, Reserve, ReserveOutcome, SUPPLIES_CONTENT, StatusQuery,
-    SuppliesPolicy, SuppliesRejection, policy_digest,
+    BalanceQuery, Balances, Burn, BurnOutcome, Issuance, IssuanceOutcome, RequestOutcome, Reserve,
+    ReserveOutcome, SUPPLIES_CONTENT, StatusQuery, SuppliesPolicy, SuppliesRejection,
+    policy_digest,
 };
 use rusqlite::{Connection, TransactionBehavior};
 use std::path::Path;
 pub struct SuppliesStore {
-    pub(super) connection: Connection,
+    pub(crate) connection: Connection,
     policy: SuppliesPolicy,
-    auth: AuthRuntime,
-    pub(super) quarantined: bool,
+    pub(crate) auth: AuthRuntime,
+    pub(crate) trade: Option<crate::trade::policy::SelectedPolicy>,
+    pub(crate) quarantined: bool,
 }
 impl SuppliesStore {
     pub fn create(
         path: impl AsRef<Path>,
         policy: &SuppliesPolicy,
         membership: &MembershipState,
+    ) -> Result<Self> {
+        Self::create_profile(path, policy, membership, None)
+    }
+    pub(crate) fn create_profile(
+        path: impl AsRef<Path>,
+        policy: &SuppliesPolicy,
+        membership: &MembershipState,
+        trade: Option<crate::trade::policy::SelectedPolicy>,
     ) -> Result<Self> {
         policy.validate()?;
         let scope = Scope {
@@ -46,11 +55,12 @@ impl SuppliesStore {
         crate::schema::reserve(path.as_ref())?;
         let mut connection = crate::schema::connection(path.as_ref())?;
         crate::schema::configure(&connection)?;
-        schema::initialize(&mut connection, scope, policy, membership)?;
+        schema::initialize(&mut connection, scope, policy, membership, trade.as_ref())?;
         Ok(Self {
             connection,
             policy: policy.clone(),
             auth: AuthRuntime::new()?,
+            trade,
             quarantined: false,
         })
     }
@@ -58,6 +68,14 @@ impl SuppliesStore {
         path: impl AsRef<Path>,
         policy: &SuppliesPolicy,
         known: KnownSuppliesFrontiers,
+    ) -> Result<Self> {
+        Self::open_profile(path, policy, known, None)
+    }
+    pub(crate) fn open_profile(
+        path: impl AsRef<Path>,
+        policy: &SuppliesPolicy,
+        known: KnownSuppliesFrontiers,
+        trade: Option<crate::trade::policy::SelectedPolicy>,
     ) -> Result<Self> {
         policy.validate()?;
         let length = std::fs::metadata(path.as_ref())
@@ -75,7 +93,7 @@ impl SuppliesStore {
         }
         let mut connection = crate::schema::connection(path.as_ref())?;
         let tx = connection.transaction()?;
-        let revision = ledger::verify(&tx, policy)?.revision;
+        let revision = ledger::verify(&tx, policy, trade.as_ref())?.revision;
         let membership = membership::load(&tx, scope)?;
         if revision < known.revision || membership.revision < known.membership_revision {
             return Err(SuppliesStoreError::StaleBackup);
@@ -86,16 +104,17 @@ impl SuppliesStore {
             connection,
             policy: policy.clone(),
             auth: AuthRuntime::new()?,
+            trade,
             quarantined: false,
         })
     }
-    pub(super) fn scope(&self) -> Scope {
+    pub(crate) fn scope(&self) -> Scope {
         Scope {
             universe: self.policy.universe,
             history: self.policy.history,
         }
     }
-    fn current(&self) -> Result<MembershipState> {
+    pub(crate) fn current(&self) -> Result<MembershipState> {
         if self.quarantined {
             return Err(crate::StoreError::Quarantined.into());
         }
@@ -107,7 +126,7 @@ impl SuppliesStore {
         }
         let tx = self.connection.unchecked_transaction()?;
         let membership = membership::load(&tx, self.scope())?;
-        let revision = ledger::verify(&tx, &self.policy)?.revision;
+        let revision = ledger::verify(&tx, &self.policy, self.trade.as_ref())?.revision;
         tx.commit()?;
         Ok(KnownSuppliesFrontiers {
             scope: self.scope(),
@@ -117,8 +136,11 @@ impl SuppliesStore {
     }
     pub fn issue_challenge(&mut self, request: ChallengeRequest<'_>) -> Result<IssuedChallenge> {
         let membership = self.current()?;
-        self.auth
-            .issue(request, &membership, policy_digest(&self.policy)?)
+        let digest = match &self.trade {
+            Some(trade) => trade.digest().map_err(|_| SuppliesRejection::Policy)?,
+            None => policy_digest(&self.policy)?,
+        };
+        self.auth.issue(request, &membership, digest)
     }
     /// One-use authorization and all durable issuance effects share one immediate transaction.
     pub fn issue(
@@ -140,7 +162,7 @@ impl SuppliesStore {
         if !membership.accounts.contains_key(&issuance.beneficiary) {
             return Err(SuppliesRejection::Unauthorized.into());
         }
-        let state = ledger::verify(&tx, &self.policy)?;
+        let state = ledger::verify(&tx, &self.policy, self.trade.as_ref())?;
         let revision = ledger::apply(&tx, ledger::Operation::Issue(*issuance), &state)?.revision;
         let outcome = IssuanceOutcome {
             issuance: issuance.issuance,
@@ -170,7 +192,7 @@ impl SuppliesStore {
         if !membership.accounts.contains_key(&burn.owner) {
             return Err(SuppliesRejection::Unauthorized.into());
         }
-        let state = ledger::verify(&tx, &self.policy)?;
+        let state = ledger::verify(&tx, &self.policy, self.trade.as_ref())?;
         let entry = ledger::apply(&tx, ledger::Operation::Burn(*burn), &state)?;
         auth::live(&evidence)?;
         if let Err(error) = tx.commit() {
@@ -188,6 +210,28 @@ impl SuppliesStore {
     }
     /// Signed own-account balance from one fresh membership and ledger snapshot.
     pub fn balance(&mut self, query: &BalanceQuery, proof: ProofAttempt) -> Result<Balances> {
+        self.read_own_balance(query, proof, |stock, _| Ok(stock))
+    }
+    pub(crate) fn trade_balance(
+        &mut self,
+        query: &BalanceQuery,
+        proof: ProofAttempt,
+    ) -> Result<nf_kernel::trade::TradeBalance> {
+        self.read_own_balance(query, proof, |stock, state| {
+            let flow = state.flow(&(query.owner, query.content, query.origin));
+            Ok(nf_kernel::trade::TradeBalance {
+                stock,
+                received: flow.received,
+                sent: flow.sent,
+            })
+        })
+    }
+    fn read_own_balance<T>(
+        &mut self,
+        query: &BalanceQuery,
+        proof: ProofAttempt,
+        project: impl FnOnce(Balances, &ledger::State) -> Result<T>,
+    ) -> Result<T> {
         let evidence = self.auth.take(proof)?;
         if self.quarantined {
             return Err(crate::StoreError::Quarantined.into());
@@ -205,19 +249,20 @@ impl SuppliesStore {
         if query.content != SUPPLIES_CONTENT {
             return Err(SuppliesRejection::UnsupportedContent.into());
         }
-        let state = ledger::verify(&tx, &self.policy)?;
+        let state = ledger::verify(&tx, &self.policy, self.trade.as_ref())?;
         let balance = state
             .balances
             .get(&(query.owner, query.content, query.origin))
             .copied()
             .unwrap_or_default();
-        ledger::conservation(balance)?;
+        state.conservation(&(query.owner, query.content, query.origin), balance)?;
+        let outcome = project(balance, &state)?;
         let current = membership::load(&tx, scope)?;
         auth::verify(&evidence, ChallengeRequest::Balance(query), &current)?;
         auth::live(&evidence)?;
         tx.commit()?;
         auth::live(&evidence)?;
-        Ok(balance)
+        Ok(outcome)
     }
     /// Authenticated own-stock lookup returns the original immutable journal outcome.
     pub fn status(
@@ -225,6 +270,17 @@ impl SuppliesStore {
         query: &StatusQuery,
         proof: ProofAttempt,
     ) -> Result<Option<RequestOutcome>> {
+        match self.status_mixed(query, proof)? {
+            Some(nf_kernel::trade::TradeRequestOutcome::Supplies(outcome)) => Ok(Some(outcome)),
+            None => Ok(None),
+            _ => Err(SuppliesStoreError::Corrupt),
+        }
+    }
+    pub(crate) fn status_mixed(
+        &mut self,
+        query: &StatusQuery,
+        proof: ProofAttempt,
+    ) -> Result<Option<nf_kernel::trade::TradeRequestOutcome>> {
         let evidence = self.auth.take(proof)?;
         if self.quarantined {
             return Err(crate::StoreError::Quarantined.into());
@@ -239,46 +295,8 @@ impl SuppliesStore {
         if query.owner != query.actor {
             return Err(SuppliesRejection::Unauthorized.into());
         }
-        let state = ledger::verify(&tx, &self.policy)?;
-        let outcome = if let Some((_, operation)) = state.requests.get(&query.request) {
-            let entry = state
-                .operations
-                .get(operation)
-                .ok_or(SuppliesStoreError::Corrupt)?;
-            if entry.operation.key().0 != query.owner {
-                return Err(SuppliesRejection::Unauthorized.into());
-            }
-            Some(
-                if entry.decision == ledger::Decision::InsufficientAvailable {
-                    RequestOutcome::Rejected(RejectedOutcome {
-                        operation: entry.operation.id(),
-                        revision: entry.revision,
-                        reason: RequestRejection::InsufficientAvailable,
-                    })
-                } else {
-                    match entry.operation {
-                        ledger::Operation::Issue(issuance) => {
-                            RequestOutcome::Issued(IssuanceOutcome {
-                                issuance: issuance.issuance,
-                                revision: entry.revision,
-                            })
-                        }
-                        ledger::Operation::Burn(burn) => RequestOutcome::Burned(BurnOutcome {
-                            burn: burn.burn,
-                            revision: entry.revision,
-                        }),
-                        ledger::Operation::Reserve(reserve) => {
-                            RequestOutcome::Reserved(ReserveOutcome {
-                                reservation: reserve.reservation,
-                                revision: entry.revision,
-                            })
-                        }
-                    }
-                },
-            )
-        } else {
-            None
-        };
+        let state = ledger::verify(&tx, &self.policy, self.trade.as_ref())?;
+        let outcome = ledger::status(&state, query)?;
         auth::live(&evidence)?;
         tx.commit()?;
         auth::live(&evidence)?;
@@ -312,7 +330,7 @@ impl SuppliesStore {
         if reserve.content != SUPPLIES_CONTENT {
             return Err(SuppliesRejection::UnsupportedContent.into());
         }
-        let state = ledger::verify(&tx, &self.policy)?;
+        let state = ledger::verify(&tx, &self.policy, self.trade.as_ref())?;
         if reserve.amount == 0 {
             return Err(SuppliesRejection::Limit.into());
         }
@@ -341,9 +359,9 @@ impl SuppliesStore {
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
         membership::load(&tx, scope)?;
-        let before = ledger::verify(&tx, &self.policy)?;
+        let before = ledger::verify(&tx, &self.policy, self.trade.as_ref())?;
         super::compact::checkpoint(&tx, &before)?;
-        let after = ledger::verify(&tx, &self.policy)?;
+        let after = ledger::verify(&tx, &self.policy, self.trade.as_ref())?;
         if before != after {
             return Err(SuppliesStoreError::Corrupt);
         }

@@ -31,6 +31,7 @@ jobs:
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
+        if: runner.os == 'Linux'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -40,6 +41,7 @@ jobs:
           $env:NF_IPC_JAVA_CLASSPATH_FILE = Join-Path (Get-Location) 'java/ipc/build/auth-test-classpath.txt'
           cargo test -p nf-ipc --test java_process --locked --offline -- --ignored
       - name: Compare Rust shadow against actual Java reference outputs
+        if: runner.os == 'Linux'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -64,6 +66,44 @@ jobs:
         env:
           NF_MINIATURE_REQUIRE_SYNC_FAULT: '1'
         run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture
+  # A fresh, required Windows job preserves the hosted 20-minute bound for each gate.
+  windows-interop:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '21.0.8'
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.98.1 --profile minimal
+      - name: Fetch only locked open-source Rust dependencies
+        run: cargo fetch --locked
+      - name: Build fresh synthetic Java prerequisites
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java syntheticCheck --no-daemon
+      - name: Observe Java and Rust mutual authentication on both local endpoints
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :ipc:exportAuthTestClasspath --no-daemon
+          $env:NF_IPC_JAVA = 'java'
+          $env:NF_IPC_JAVA_CLASSPATH_FILE = Join-Path (Get-Location) 'java/ipc/build/auth-test-classpath.txt'
+          cargo test -p nf-ipc --test java_process --locked --offline -- --ignored
+      - name: Compare Rust shadow against actual Java reference outputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :nex-reference:exportDifferentialClasspath --no-daemon
+          $env:NF_SHADOW_JAVA = 'java'
+          $env:NF_SHADOW_CLASSPATH_FILE = Join-Path (Get-Location) 'java/nex-reference/build/differential-classpath.txt'
+          cargo test -p nf-nex-shadow --test differential --locked --offline -- --ignored
   release-build:
     strategy:
       fail-fast: false

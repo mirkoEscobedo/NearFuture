@@ -26,31 +26,37 @@ pub struct ProofAttempt {
     pub proof: DeviceProof,
 }
 #[derive(Clone, Copy, Eq, PartialEq)]
-enum Purpose {
+pub(crate) enum Purpose {
     Issue = 1,
     Balance = 2,
     Burn = 3,
     Status = 4,
     Reserve = 5,
+    TradeMaker = 6,
+    TradeTaker = 7,
+    TradeOfferStatus = 8,
+    TradeOutbox = 9,
+    TradeCancel = 10,
+    TradeAccept = 11,
 }
 #[derive(Clone, Copy, Eq, PartialEq)]
-struct Context {
-    purpose: Purpose,
-    actor: AccountId,
-    device: DeviceId,
-    membership: u64,
-    digest: [u8; 32],
+pub(crate) struct Context {
+    pub(crate) purpose: Purpose,
+    pub(crate) actor: AccountId,
+    pub(crate) device: DeviceId,
+    pub(crate) membership: u64,
+    pub(crate) digest: [u8; 32],
 }
 struct Issued {
     context: Context,
     challenge: [u8; 32],
     deadline: Instant,
 }
-pub(super) struct Evidence {
+pub(crate) struct Evidence {
     issued: Issued,
     proof: DeviceProof,
 }
-pub(super) struct AuthRuntime {
+pub(crate) struct AuthRuntime {
     runtime: [u8; 32],
     sequence: u64,
     issued: BTreeMap<u64, Issued>,
@@ -113,11 +119,18 @@ impl AuthRuntime {
         state: &MembershipState,
         policy: [u8; 32],
     ) -> Result<IssuedChallenge> {
+        self.issue_context(context(request, state.revision), state, policy)
+    }
+    pub(crate) fn issue_context(
+        &mut self,
+        context: Context,
+        state: &MembershipState,
+        policy: [u8; 32],
+    ) -> Result<IssuedChallenge> {
         self.issued.retain(|_, v| Instant::now() < v.deadline);
         if self.issued.len() >= 64 {
             return Err(crate::StoreError::Backpressure.into());
         }
-        let context = context(request, state.revision);
         let device = state
             .devices
             .get(&context.device)
@@ -182,21 +195,27 @@ impl AuthRuntime {
         })
     }
 }
-pub(super) fn live(evidence: &Evidence) -> Result<()> {
+pub(crate) fn live(evidence: &Evidence) -> Result<()> {
     if Instant::now() >= evidence.issued.deadline {
         return Err(SuppliesStoreError::Expired);
     }
     Ok(())
 }
-pub(super) fn verify(
+pub(crate) fn verify(
     evidence: &Evidence,
     request: ChallengeRequest<'_>,
+    state: &MembershipState,
+) -> Result<()> {
+    verify_context(evidence, context(request, state.revision), state)
+}
+pub(crate) fn verify_context(
+    evidence: &Evidence,
+    expected: Context,
     state: &MembershipState,
 ) -> Result<()> {
     if Instant::now() >= evidence.issued.deadline {
         return Err(SuppliesStoreError::Expired);
     }
-    let expected = context(request, state.revision);
     if evidence.issued.context != expected
         || evidence.proof.account != expected.actor
         || evidence.proof.device != expected.device
@@ -209,7 +228,15 @@ pub(super) fn verify(
         .ok_or(IdentityError::UnknownDevice)?;
     let operation = match expected.purpose {
         Purpose::Issue | Purpose::Burn => ProtectedOperation::Administration,
-        Purpose::Balance | Purpose::Status | Purpose::Reserve => ProtectedOperation::Economic,
+        Purpose::Balance
+        | Purpose::Status
+        | Purpose::Reserve
+        | Purpose::TradeMaker
+        | Purpose::TradeTaker
+        | Purpose::TradeOfferStatus
+        | Purpose::TradeOutbox
+        | Purpose::TradeCancel
+        | Purpose::TradeAccept => ProtectedOperation::Economic,
     };
     state.authorize(
         &evidence.proof,

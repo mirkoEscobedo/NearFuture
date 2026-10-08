@@ -56,6 +56,10 @@ pub(super) fn checkpoint(
     connection: &rusqlite::Connection,
     state: &super::ledger::State,
 ) -> super::error::Result<()> {
+    // Profile7 compaction is not implemented; refuse before deleting any checkpoint row.
+    if state.mode == super::ledger::LedgerMode::Accepting {
+        return Err(super::error::SuppliesStoreError::UnsupportedProfile);
+    }
     connection
         .execute("DELETE FROM supplies_balances", [])
         .map_err(|error| denied(CompactStage::CheckpointDelete, error))?;

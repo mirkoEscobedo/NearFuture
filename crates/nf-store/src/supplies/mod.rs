@@ -1,9 +1,9 @@
 //! Explicit supplies ledger profile; accepted storage profiles are unchanged.
-mod auth;
+pub(crate) mod auth;
 mod compact;
 mod error;
-mod ledger;
-mod membership;
+pub(crate) mod ledger;
+pub(crate) mod membership;
 mod model;
 mod owner;
 mod schema;

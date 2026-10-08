@@ -5,7 +5,7 @@ use super::{
 use crate::schema::{counter, hash, read_counter};
 use nf_identity::model::{IdentityError, MembershipRepository, MembershipState, Scope};
 use rusqlite::{Connection, params};
-pub(super) fn load(connection: &Connection, scope: Scope) -> Result<MembershipState> {
+pub(crate) fn load(connection: &Connection, scope: Scope) -> Result<MembershipState> {
     let (revision, body, digest): (Vec<u8>, Vec<u8>, Vec<u8>) = connection.query_row(
         "SELECT revision,body,digest FROM supplies_membership WHERE singleton=1",
         [],
