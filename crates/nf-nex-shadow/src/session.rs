@@ -3,6 +3,7 @@ use crate::{PeaceResult, ShadowInput, ShadowMetadata, Unavailable, WarResult, in
 pub enum ShadowOutput {
     War(WarResult),
     SelectedPeace(PeaceResult),
+    MakePeaceEligibility(bool),
 }
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ShadowAuthority {
@@ -62,6 +63,19 @@ pub fn evaluate_shadow(
         output,
     })
 }
+fn evaluate_action_shadow(
+    metadata: &ShadowMetadata,
+    facts: &crate::MakePeaceEligibility,
+) -> Result<ShadowEvaluation, Unavailable> {
+    let digest = crate::action_input_digest(metadata, facts)?;
+    let output = ShadowOutput::MakePeaceEligibility(crate::make_peace_action_eligible(facts)?);
+    Ok(ShadowEvaluation {
+        metadata: metadata.clone(),
+        binding_scope: BindingScope::CopiedFacts,
+        input_digest: digest,
+        output,
+    })
+}
 /// Cooperative value-only fence; native hook coverage is never inferred from it.
 pub struct ShadowSession {
     metadata: ShadowMetadata,
@@ -84,11 +98,50 @@ impl ShadowSession {
         }
         result
     }
+    /// Explicit supplied-fact action diagnostic; no world publication or native authority.
+    pub fn evaluate_action(
+        &mut self,
+        facts: &crate::MakePeaceEligibility,
+    ) -> Result<ShadowEvaluation, Unavailable> {
+        if !self.active {
+            return Err(Unavailable::Disabled);
+        }
+        let result = evaluate_action_shadow(&self.metadata, facts);
+        if result.is_err() {
+            self.active = false;
+        }
+        result
+    }
     pub fn invalidate(&mut self) {
         self.active = false;
     }
     pub fn disable_provider(&mut self) {
         self.active = false;
+    }
+    /// Checks current supplied action facts; copied diagnostics never confer world authority.
+    pub fn accept_action<'a>(
+        &self,
+        result: &'a ShadowEvaluation,
+        current_metadata: &ShadowMetadata,
+        current: &crate::MakePeaceEligibility,
+    ) -> Result<&'a ShadowOutput, Unavailable> {
+        if !self.active {
+            return Err(Unavailable::Disabled);
+        }
+        let current_digest = crate::action_input_digest(current_metadata, current)?;
+        if !matches!(&result.output, ShadowOutput::MakePeaceEligibility(_)) {
+            return Err(Unavailable::Unsupported);
+        }
+        if self.metadata != result.metadata
+            || self.metadata != *current_metadata
+            || current_digest != result.input_digest
+        {
+            return Err(Unavailable::Stale);
+        }
+        if result.binding_scope != BindingScope::CopiedFacts {
+            return Err(Unavailable::MissingFact);
+        }
+        Ok(&result.output)
     }
     /// Accepts a copied-facts diagnostic only after checking the actual current owner binding.
     pub fn accept<'a>(
