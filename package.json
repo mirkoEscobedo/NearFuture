@@ -18,7 +18,9 @@
     "workspace-template": "workspace-template",
     "skills": "workspace-template skills list",
     "check:schemas": "node protocol/vectors/generate-fixtures.cjs --check && node protocol/vectors/generate-wire-fixtures.cjs --check && node protocol/text/generate-ranges.cjs --check && node protocol/vectors/generate-local-auth-fixtures.cjs --check && node crates/nf-nex-shadow/fixtures/generate-identity.cjs --check && node crates/nf-nex-shadow/fixtures/generate-world.cjs --check && node crates/nf-world/fixtures/generate.cjs --check && node crates/nf-transport/tools/generate-peer-vectors.cjs --check && node crates/nf-kernel/tests/fixtures/miniature/generate.cjs --check && node crates/nf-kernel/tools/generate-miniature-source.cjs --check && node tools/miniature-store-vectors/generate.cjs --check && node crates/nf-world-driver/tools/generate-action-vectors.cjs --check && node tools/receipt-vectors/generate.cjs --check && node tools/notification-vectors/generate.cjs --check && node tools/reference/sync/generate.cjs --check",
-    "check:performance": "node --test tests/performance/*.test.mjs"
+    "check:performance": "node --test tests/performance/*.test.mjs",
+    "test:rust:ci-public": "cargo test --workspace --exclude nf-identity --exclude nf-transport --locked --offline",
+    "check:ci-public": "npm run lint && npm run check:schemas && npm run test:rust:ci-public && npm run test:tools && npm run check:java"
   },
   "devDependencies": {
     "@types/node": "file:vendor/types-node-24.13.2.tgz",
