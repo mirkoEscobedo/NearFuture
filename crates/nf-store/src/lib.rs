@@ -20,3 +20,5 @@ pub use store::{ImmutableSnapshot, Store};
 pub mod miniature;
 
 pub mod supplies;
+
+pub mod registration;
