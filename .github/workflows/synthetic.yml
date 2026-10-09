@@ -161,13 +161,35 @@ jobs:
           $taskProject = Get-Content -LiteralPath (Join-Path $taskRoot '.agentic/project.json') -Raw | ConvertFrom-Json -AsHashtable
           $taskProject.execution.limits.flakyReruns = 0
           $taskProject.execution.limits.semanticRepairs = 0
-          $taskProject.overrides = @{ workspace = @{ commands = @{ 'node:.' = @(@{ program = (Get-Command node -CommandType Application).Source; args = @((Join-Path $taskModule 'batch.cjs')); cwd = '.' }) } } }
+          $taskNode = (Get-Command node -CommandType Application | Select-Object -First 1).Source
+          if ($taskNode -isnot [string] -or [string]::IsNullOrWhiteSpace($taskNode)) { throw 'NODE_EXECUTABLE_SCALAR_REQUIRED' }
+          $taskProject.overrides = @{ workspace = @{ commands = @{ 'node:.' = @(@{ program = $taskNode; args = @((Join-Path $taskModule 'batch.cjs')); cwd = '.' }) } } }
           $taskConfig = Join-Path $taskModule '.agentic/project.json'
           $taskStream = [IO.File]::Open($taskConfig, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
           try {
             $taskBytes = [Text.UTF8Encoding]::new($false).GetBytes(($taskProject | ConvertTo-Json -Depth 16) + [Environment]::NewLine)
             $taskStream.Write($taskBytes, 0, $taskBytes.Length)
           } finally { $taskStream.Dispose() }
+      - name: Inspect the exact confined command before execution
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $taskInspect = npm exec -- workspace-template inspect tools/private-acl-observation --json
+          if ($LASTEXITCODE -ne 0) { throw 'DIAGNOSTIC_GRAPH_INSPECTION_FAILED' }
+          $taskStream = [IO.File]::Open('.tmp/private-acl-observation/inspect.raw.json', [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+          try {
+            $taskBytes = [Text.UTF8Encoding]::new($false).GetBytes(($taskInspect -join [Environment]::NewLine) + [Environment]::NewLine)
+            $taskStream.Write($taskBytes, 0, $taskBytes.Length)
+          } finally { $taskStream.Dispose() }
+          $taskGraph = ($taskInspect -join [Environment]::NewLine) | ConvertFrom-Json -Depth 64
+          $taskModules = @($taskGraph.result.workspace.modules)
+          if (-not $taskGraph.ok -or -not $taskGraph.result.thinState -or -not $taskGraph.result.workspace.valid -or @($taskGraph.result.workspace.conflicts).Count -ne 0 -or $taskModules.Count -ne 1) { throw 'DIAGNOSTIC_GRAPH_SHAPE_MISMATCH' }
+          $taskSelected = $taskModules[0]
+          if ($taskSelected.id -ne 'node:.' -or $taskSelected.root -ne '.' -or $taskSelected.manifest -ne 'package.json' -or @($taskSelected.commands).Count -ne 1) { throw 'DIAGNOSTIC_COMMAND_SELECTION_MISMATCH' }
+          $taskCommand = $taskSelected.commands[0]
+          $taskNode = (Get-Command node -CommandType Application | Select-Object -First 1).Source
+          $taskBatch = Join-Path (Join-Path (Get-Location).Path 'tools/private-acl-observation') 'batch.cjs'
+          if ($taskCommand.program -isnot [string] -or $taskCommand.program -ne $taskNode -or $taskCommand.cwd -ne '.' -or @($taskCommand.args).Count -ne 1 -or $taskCommand.args[0] -ne $taskBatch) { throw 'DIAGNOSTIC_COMMAND_VECTOR_MISMATCH' }
       - name: Observe one original-deadline single ACL helper
         shell: pwsh
         run: |
@@ -182,6 +204,7 @@ jobs:
           name: private-acl-phase-observation
           path: |
             .tmp/private-acl-observation/observation.json
+            .tmp/private-acl-observation/inspect.raw.json
             .tmp/private-acl-observation/verify.raw.json
             .tmp/private-acl-observation/verify.stderr.txt
           include-hidden-files: true
