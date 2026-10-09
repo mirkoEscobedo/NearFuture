@@ -103,6 +103,19 @@ impl QueryPort for ChatCommandPort {
     fn query(&mut self, _: g::QueryOperation) -> Result<g::OperationStatus, IpcError> {
         Err(IpcError::Unsupported)
     }
+    fn query_chat_outgoing(
+        &mut self,
+        query: g::QueryChatOutgoing,
+    ) -> Result<g::ChatOutgoingStatus, IpcError> {
+        crate::chat_query::query_outgoing(
+            &self.store,
+            &self.outbox,
+            &self.identity,
+            self.policy.scope,
+            &mut self.minimum_membership,
+            query,
+        )
+    }
     fn enqueue_chat(&mut self, command: g::EnqueueChat) -> Result<g::ChatOutgoingStatus, IpcError> {
         nf_wire::validate_enqueue_chat(&command).map_err(crate::session::wire_error)?;
         let principal = command.principal.as_ref().ok_or(IpcError::Unauthorized)?;
