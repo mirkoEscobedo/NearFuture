@@ -1,7 +1,7 @@
 use super::{
     ChallengeRequest, ChatPolicy, ChatReceipt, ChatStoreError, HistoryPage, HistoryQuery,
-    IssuedChallenge, KnownChatFrontiers, ProofAttempt, Result, SignedMessage, auth::AuthRuntime,
-    codec, history, membership, schema, write,
+    IssuedChallenge, KnownChatFrontiers, LocalReceiptIssuer, ProofAttempt, Result, SignedMessage,
+    auth::AuthRuntime, codec, history, membership, receipt_issuer, schema, write,
 };
 use nf_contract::identity::RequestId;
 use nf_identity::model::{AdmissionProof, DeviceRevocation, MembershipState, SignedInvitation};
@@ -81,6 +81,41 @@ impl ChatStore {
             revision: state.revision,
             membership_revision: membership.revision,
         })
+    }
+    /// Verified current stored membership snapshot for trusted LOCAL foreground policy checks.
+    /// Read-only: no membership enrollment, ticket consumption, or history/frontier mutation.
+    pub fn current_membership(&self) -> Result<MembershipState> {
+        self.live()?;
+        let tx = self.connection.unchecked_transaction()?;
+        schema::verify(&tx, &self.policy)?;
+        let current = schema::current(&tx, self.policy.scope)?;
+        tx.commit()?;
+        self.live()?;
+        Ok(current)
+    }
+    /// Trusted LOCAL signing port. No receipt fields or public keys are accepted from a peer.
+    /// Derives delivery evidence from the first durable original and never advances history.
+    pub fn issue_delivery_receipt(
+        &mut self,
+        original_request: RequestId,
+        issuer: LocalReceiptIssuer<'_>,
+    ) -> Result<super::outbox::SignedChatReceipt> {
+        self.live()?;
+        let tx = self.connection.transaction()?;
+        let state = schema::verify(&tx, &self.policy)?;
+        let current = schema::current(&tx, self.policy.scope)?;
+        let receipt =
+            receipt_issuer::issue(&self.policy, &current, &state, original_request, &issuer)?;
+        live_path(&self.path, self.quarantined)?;
+        if tx.commit().is_err() {
+            self.quarantined = true;
+            return Err(ChatStoreError::Storage);
+        }
+        if let Err(error) = self.live() {
+            self.quarantined = true;
+            return Err(error);
+        }
+        Ok(receipt)
     }
     /// Applies the existing account-signed revocation policy; never a raw remote state commit.
     pub fn revoke_device(

@@ -1,9 +1,10 @@
 use super::model::{OutboxProfile, OutgoingEntry};
 use crate::chat::{
-    Author, Channel, ChatReceipt, ChatStoreError, Result, SignedMessage, codec as chat_codec,
+    Author, Channel, ChatPolicy, ChatReceipt, ChatStoreError, Result, SignedMessage,
+    codec as chat_codec,
 };
 use nf_contract::identity::{AccountId, DeviceId, HistoryId, RequestId, UniverseId};
-use nf_identity::model::Scope;
+use nf_identity::{keys::SecretSeed, model::Scope};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ChatDeliveryReceipt {
@@ -19,6 +20,27 @@ pub struct ChatDeliveryReceipt {
 pub struct SignedChatReceipt {
     pub receipt: ChatDeliveryReceipt,
     pub signature: [u8; 64],
+}
+/// Internal issuer path: the caller has verified current local authority and durable originals.
+pub(in crate::chat) fn sign_delivery(
+    policy: &ChatPolicy,
+    receiver: Author,
+    peer: &[u8],
+    original: &ChatReceipt,
+    signed: &SignedMessage,
+    key: &SecretSeed,
+) -> Result<SignedChatReceipt> {
+    let receipt = ChatDeliveryReceipt {
+        policy_digest: chat_codec::policy_digest(policy),
+        scope: policy.scope,
+        channel: signed.message.channel,
+        receiver,
+        receiver_peer_digest: peer_digest(peer),
+        original: *original,
+        signed_message_digest: signed_message_digest(signed)?,
+    };
+    let signature = key.sign(&chat_codec::hash(&bytes(&receipt)?));
+    Ok(SignedChatReceipt { receipt, signature })
 }
 pub(super) fn validate(
     profile: &OutboxProfile,
@@ -168,4 +190,15 @@ fn signed_message_digest(signed: &SignedMessage) -> Result<[u8; 32]> {
     body.extend_from_slice(&chat_codec::message_bytes(&signed.message)?);
     body.extend_from_slice(&signed.signature);
     Ok(chat_codec::hash(&body))
+}
+
+impl SignedChatReceipt {
+    /// Canonical value encoding only; it does not establish remote delivery authority.
+    pub fn to_canonical_bytes(&self) -> Result<Vec<u8>> {
+        encode(self)
+    }
+    /// Exact323-byte canonical shape only. ClientOutbox verifies retained receiver authority.
+    pub fn from_canonical_bytes(encoded: &[u8]) -> Result<Self> {
+        decode(encoded)
+    }
 }

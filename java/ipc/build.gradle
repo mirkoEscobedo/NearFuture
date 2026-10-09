@@ -34,7 +34,7 @@ tasks.register('authSocketClient', JavaExec) {
     }
 }
 tasks.register('exportAuthTestClasspath') {
-    dependsOn testClasses
+    dependsOn testClasses, ':wire:jar', ':contract:jar'
     def target = layout.buildDirectory.file('auth-test-classpath.txt')
     outputs.file(target)
     doLast { target.get().asFile.text = sourceSets.test.runtimeClasspath.asPath }

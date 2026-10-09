@@ -19,3 +19,7 @@ mod store_query;
 pub use store_query::*;
 mod auth;
 pub use auth::*;
+mod chat_query;
+pub use chat_query::ChatQueryPort;
+mod chat_command;
+pub use chat_command::ChatCommandPort;

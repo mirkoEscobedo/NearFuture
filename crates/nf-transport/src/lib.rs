@@ -14,3 +14,5 @@ pub mod query;
 pub mod receipt;
 pub mod records;
 pub mod session;
+
+pub mod chat;

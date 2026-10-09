@@ -69,6 +69,108 @@ impl ClientOutbox {
         self.live()?;
         Ok(entry)
     }
+    /// Read-only trusted local composition check. Wire data cannot enroll or replace lifetime pins.
+    pub fn validate_local_sender(
+        &self,
+        policy: &crate::chat::ChatPolicy,
+        identity: &nf_identity::model::PublicIdentity,
+    ) -> Result<()> {
+        self.live()?;
+        let tx = self.connection.unchecked_transaction()?;
+        schema::verify(&tx, &self.profile)?;
+        if self.profile.policy != *policy {
+            return Err(crate::chat::ChatStoreError::Policy);
+        }
+        if self.profile.sender.actor.account != identity.account
+            || self.profile.sender.actor.device != identity.device
+            || self.profile.sender.key != identity.device_key
+            || self.profile.sender.peer != identity.peer
+        {
+            return Err(crate::chat::ChatStoreError::Signature);
+        }
+        tx.commit()?;
+        self.live()
+    }
+    /// Allocate a trusted local original atomically; callers cannot supply a message ID or sequence.
+    /// Exact retries return the retained original before capacity or allocation, including Delivered.
+    pub fn enqueue_local(
+        &mut self,
+        request: RequestId,
+        text: &str,
+        device_key: &nf_identity::keys::SecretSeed,
+    ) -> Result<(OutgoingEntry, u64)> {
+        self.live()?;
+        if request.as_bytes() == &[0; 16] || text.is_empty() {
+            return Err(ChatStoreError::Malformed);
+        }
+        if text.len() > crate::chat::MAX_TEXT_BYTES {
+            return Err(ChatStoreError::Limit);
+        }
+        if !nf_contract::canonical::text::is_canonical_text(text) {
+            return Err(ChatStoreError::Malformed);
+        }
+        if device_key.public_key() != self.profile.sender.key {
+            return Err(ChatStoreError::Signature);
+        }
+        let tx = self
+            .connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let state = schema::verify(&tx, &self.profile)?;
+        let (entry, revision) = if let Some(original) = state
+            .entries
+            .values()
+            .find(|entry| entry.original_request == request)
+        {
+            if original.signed.message.author != self.profile.sender.actor
+                || original.signed.message.scope != self.profile.policy.scope
+                || original.signed.message.channel != crate::chat::Channel::General
+                || original.signed.message.text != text
+            {
+                return Err(ChatStoreError::Conflict);
+            }
+            (original.clone(), state.revision)
+        } else {
+            if state.entries.len() >= 4096 {
+                return Err(ChatStoreError::Limit);
+            }
+            let sequence = state
+                .entries
+                .values()
+                .filter(|entry| entry.signed.message.author == self.profile.sender.actor)
+                .map(|entry| entry.signed.message.sequence)
+                .max()
+                .unwrap_or(0)
+                .checked_add(1)
+                .ok_or(ChatStoreError::Limit)?;
+            let revision = state.revision.checked_add(1).ok_or(ChatStoreError::Limit)?;
+            let message_id = nf_identity::keys::random_id()?;
+            if message_id == [0; 16] || state.entries.contains_key(&message_id) {
+                return Err(ChatStoreError::Conflict);
+            }
+            let message = crate::chat::ChatMessage {
+                scope: self.profile.policy.scope,
+                channel: crate::chat::Channel::General,
+                author: self.profile.sender.actor,
+                message: message_id,
+                sequence,
+                text: text.to_owned(),
+            };
+            let signature = device_key.sign(&crate::chat::codec::message_digest(&message)?);
+            let signed = SignedMessage { message, signature };
+            codec::validate(&self.profile, request, &signed)?;
+            (write::enqueue(&tx, &state, request, &signed)?, revision)
+        };
+        live_path(&self.path, self.quarantined)?;
+        if tx.commit().is_err() {
+            self.quarantined = true;
+            return Err(ChatStoreError::Storage);
+        }
+        if let Err(error) = self.live() {
+            self.quarantined = true;
+            return Err(error);
+        }
+        Ok((entry, revision))
+    }
     /// Only local outgoing originals: no remote membership, wire proof or financial authority.
     pub fn enqueue(&mut self, request: RequestId, signed: &SignedMessage) -> Result<OutgoingEntry> {
         self.live()?;

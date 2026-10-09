@@ -75,3 +75,10 @@ tasks.register('AuthWireTest', JavaExec) {
     if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
 }
 tasks.named('check') { dependsOn 'AuthWireTest' }
+tasks.register('ChatEnqueueReplyAdmissionTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.wire.ChatEnqueueReplyAdmissionTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'ChatEnqueueReplyAdmissionTest' }

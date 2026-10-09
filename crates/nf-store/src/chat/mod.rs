@@ -7,6 +7,7 @@ mod ledger;
 mod membership;
 mod model;
 mod owner;
+mod receipt_issuer;
 mod schema;
 pub use error::{ChatStoreError, Result};
 pub use model::{
@@ -15,6 +16,7 @@ pub use model::{
     SignedMessage,
 };
 pub use owner::ChatStore;
+pub use receipt_issuer::LocalReceiptIssuer;
 mod write;
 
 pub mod outbox;

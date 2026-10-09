@@ -157,3 +157,23 @@ fn fixed<const N: usize>(bytes: &[u8], at: &mut usize) -> Result<[u8; N]> {
         .try_into()
         .map_err(|_| ChatStoreError::Malformed)
 }
+
+/// Canonical value encoding only. A signature is carried but no sender authority is granted.
+pub fn encode_signed_message(signed: &SignedMessage) -> Result<Vec<u8>> {
+    let mut encoded = message_bytes(&signed.message)?;
+    encoded.extend_from_slice(&signed.signature);
+    Ok(encoded)
+}
+/// Bounded canonical value decoding only; ChatStore remains responsible for authentication.
+pub fn decode_signed_message(encoded: &[u8]) -> Result<SignedMessage> {
+    if !(174..=2221).contains(&encoded.len()) {
+        return Err(ChatStoreError::Limit);
+    }
+    let split = encoded.len() - 64;
+    Ok(SignedMessage {
+        message: decode_message(&encoded[..split])?,
+        signature: encoded[split..]
+            .try_into()
+            .map_err(|_| ChatStoreError::Malformed)?,
+    })
+}

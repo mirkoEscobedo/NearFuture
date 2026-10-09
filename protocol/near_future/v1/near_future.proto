@@ -62,6 +62,27 @@ message QueryOperation {
   RequestId request_id = 1; Principal principal = 2;
   UniverseId universe_id = 3; HistoryId history_id = 4;
 }
+// Read-only local Chat profile3; request_id is the query, original_request_id is the immutable outgoing original.
+message ChatMessageId { bytes value = 1; }
+message QueryChatOutgoing {
+  RequestId request_id = 1; Principal principal = 2; UniverseId universe_id = 3;
+  HistoryId history_id = 4; RequestId original_request_id = 5; ChatMessageId message_id = 6;
+}
+enum ChatOutgoingPhase {
+  CHAT_OUTGOING_PHASE_UNSPECIFIED = 0; CHAT_OUTGOING_PHASE_PENDING = 1; CHAT_OUTGOING_PHASE_DELIVERED = 2;
+}
+message ChatOutgoingStatus {
+  RequestId request_id = 1; Principal principal = 2; UniverseId universe_id = 3;
+  HistoryId history_id = 4; RequestId original_request_id = 5; ChatMessageId message_id = 6;
+  fixed64 source_sequence = 7; fixed64 outbox_revision = 8; ChatOutgoingPhase phase = 9;
+  bytes signed_message = 10; bytes receiver_receipt = 11;
+}
+// Dedicated bounded local Chat command profile4. Caller never supplies keys, messageID or sequence.
+message EnqueueChat {
+  RequestId request_id = 1; Principal principal = 2; UniverseId universe_id = 3;
+  HistoryId history_id = 4; RequestId original_request_id = 5; uint32 channel = 6; string text = 7;
+}
+message ChatEnqueueResult { ChatOutgoingStatus status = 1; }
 message CancelOperation { QueryOperation target = 1; RequestId cancellation_request_id = 2; }
 enum OperationPhase {
   OPERATION_PHASE_UNSPECIFIED = 0; OPERATION_PHASE_ACCEPTED = 1;
@@ -123,6 +144,8 @@ message ControlEnvelope {
     QueryOperation query_operation = 13; CancelOperation cancel_operation = 14;
     OperationStatus operation_status = 15; Proposal proposal = 16;
     EventBatch event_batch = 17; BoundedError error = 18;
+    QueryChatOutgoing query_chat_outgoing = 19; ChatOutgoingStatus chat_outgoing_status = 20;
+    EnqueueChat enqueue_chat = 21; ChatEnqueueResult chat_enqueue_result = 22;
   }
   TransportMetadata transport = 30;
 }

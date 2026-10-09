@@ -21,3 +21,7 @@ nf-contract = { path = "crates/nf-contract" }
 
 [lints]
 workspace = true
+
+# Keep full signature/profile verification and debug assertions; optimize maintained test arithmetic only.
+[profile.test.package.curve25519-dalek]
+opt-level = 3

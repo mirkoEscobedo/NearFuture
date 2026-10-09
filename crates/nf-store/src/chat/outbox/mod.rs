@@ -7,4 +7,5 @@ pub use model::{OutboxProfile, OutgoingEntry, OutgoingState};
 pub use owner::ClientOutbox;
 mod receipt;
 mod write;
+pub(super) use receipt::sign_delivery;
 pub use receipt::{ChatDeliveryReceipt, SignedChatReceipt};
