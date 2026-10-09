@@ -275,8 +275,8 @@ fn production_watch_renders_correlated_original_pending_without_resubmitting() {
     // Run only after the first actual sent observation slice is GREEN.
     let mut scenario = Scenario::start();
     scenario.actual_sent();
-    let watchdog = (Instant::now() + Duration::from_secs(1))
-        .min(scenario.server_until_lower_bound)
+    let watchdog = scenario
+        .server_until_lower_bound
         .min(scenario.watcher_until_lower_bound);
     let observed = scenario.watcher.line_before("NF_PORTAL_STATUS", watchdog);
     scenario.original_live();
