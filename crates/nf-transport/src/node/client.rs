@@ -5,13 +5,16 @@ use crate::{
     identity::TransportIdentity,
     network::PeerBehaviourEvent,
     query::{QueryClient, QueryResult},
+    reachability::{
+        Diagnostic, EndpointRefusal, Failure, Observation, StatusReport, classify_dial_error,
+        validate_explicit_bootstrap,
+    },
     records::{Lane, PeerBody},
     session::{ClientSession, SessionPolicy},
 };
 use futures::StreamExt;
 use libp2p::{
     Multiaddr,
-    multiaddr::Protocol,
     request_response::{Event, Message},
     swarm::SwarmEvent,
 };
@@ -28,26 +31,59 @@ pub async fn request_status(
     address: Multiaddr,
     request: RequestId,
 ) -> Result<QueryResult, PeerError> {
-    tokio::time::timeout(
+    request_status_diagnosed(store, vault, policy, pin, Some(address), request)
+        .await
+        .result
+}
+
+/// Runs the same bounded, authenticated query and reports only closed diagnostic codes.
+/// A connection observation alone does not grant authority or prove NAT reachability.
+pub async fn request_status_diagnosed(
+    store: Store,
+    vault: &PrivateVault,
+    policy: SessionPolicy,
+    pin: ServerPin,
+    address: Option<Multiaddr>,
+    request: RequestId,
+) -> StatusReport {
+    let mut diagnostic = Diagnostic::default();
+    let result = match tokio::time::timeout(
         Duration::from_secs(5),
-        request_inner(store, vault, policy, pin, address, request),
+        request_inner(store, vault, policy, pin, address, request, &mut diagnostic),
     )
     .await
-    .map_err(|_| PeerError::Offline)?
+    {
+        Ok(result) => result,
+        Err(_) => {
+            diagnostic.failure = Some(Failure::Deadline);
+            Err(PeerError::Offline)
+        }
+    };
+    if let Err(error) = &result
+        && diagnostic.failure.is_none()
+    {
+        diagnostic.failure = Some(Failure::Operation(*error));
+    }
+    StatusReport { result, diagnostic }
 }
 async fn request_inner(
     mut store: Store,
     vault: &PrivateVault,
     policy: SessionPolicy,
     pin: ServerPin,
-    address: Multiaddr,
+    address: Option<Multiaddr>,
     request: RequestId,
+    diagnostic: &mut Diagnostic,
 ) -> Result<QueryResult, PeerError> {
-    let fields: Vec<_> = address.iter().collect();
-    if !matches!(fields.as_slice(),[Protocol::Ip4(ip),Protocol::Tcp(port),Protocol::P2p(peer)]if ip.is_loopback()&&*port!=0&&*peer==pin.peer)
-    {
-        return Err(PeerError::Unauthorized);
+    if let Err(refusal) = validate_explicit_bootstrap(pin.peer, address.as_ref()) {
+        diagnostic.failure = Some(Failure::Endpoint(refusal));
+        return Err(if refusal == EndpointRefusal::NoConfiguredPeer {
+            PeerError::Offline
+        } else {
+            PeerError::Unauthorized
+        });
     }
+    let address = address.ok_or(PeerError::Offline)?;
     let identity = TransportIdentity::load(vault)?;
     let local = vault
         .load_identity(identity.peer_id().to_bytes())
@@ -62,7 +98,11 @@ async fn request_inner(
         policy,
     )?;
     let mut swarm = identity.build_lane(Lane::Control)?;
-    swarm.dial(address).map_err(|_| PeerError::Offline)?;
+    if let Err(error) = swarm.dial(address) {
+        diagnostic.failure = Some(Failure::Dial(classify_dial_error(&error)));
+        return Err(PeerError::Offline);
+    }
+    diagnostic.observation = Observation::DialAttempted;
     let mut auth = Some(auth);
     let mut store = Some(store);
     let mut query = None;
@@ -79,6 +119,7 @@ async fn request_inner(
                     return Err(PeerError::Unauthorized);
                 }
                 connected = Some(connection_id);
+                diagnostic.observation = Observation::DirectConnectionObserved;
                 expected = Some(
                     swarm
                         .behaviour_mut()
@@ -132,24 +173,37 @@ async fn request_inner(
                         )?
                     }
                     PeerBody::RetainedStatus { .. } | PeerBody::Unsupported { .. } => {
-                        return query.as_mut().ok_or(PeerError::Session)?.reply(
+                        let result = query.as_mut().ok_or(PeerError::Session)?.reply(
                             response,
                             peer,
                             connection_id,
                             Instant::now(),
                         );
+                        if result.is_ok() {
+                            diagnostic.observation = Observation::ReplyValidated;
+                        }
+                        return result;
                     }
                     _ => return Err(PeerError::Unsupported),
                 };
                 expected = Some(swarm.behaviour_mut().messages.send_request(&pin.peer, next));
             }
-            SwarmEvent::OutgoingConnectionError { .. }
-            | SwarmEvent::ConnectionClosed { .. }
-            | SwarmEvent::Behaviour(PeerBehaviourEvent::Messages(
+            SwarmEvent::OutgoingConnectionError { error, .. } => {
+                diagnostic.failure = Some(Failure::Dial(classify_dial_error(&error)));
+                return Err(PeerError::Offline);
+            }
+            SwarmEvent::ConnectionClosed { .. } => {
+                diagnostic.failure = Some(Failure::ConnectionClosed);
+                return Err(PeerError::Offline);
+            }
+            SwarmEvent::Behaviour(PeerBehaviourEvent::Messages(
                 Event::OutboundFailure { .. }
                 | Event::InboundFailure { .. }
                 | Event::Message { .. },
-            )) => return Err(PeerError::Offline),
+            )) => {
+                diagnostic.failure = Some(Failure::RequestResponse);
+                return Err(PeerError::Offline);
+            }
             _ => {}
         }
     }
