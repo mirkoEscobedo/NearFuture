@@ -29,6 +29,20 @@ public final class ControlDecoder {
     public static ControlEnvelope decodeControl(byte[] bytes) { return decode(bytes, ControlEnvelope.getDescriptor(), ControlEnvelope.parser()); }
     /** Receive admission under already negotiated limits; legacy generic decoders retain their defaults. */
     public static ControlEnvelope decodeControl(byte[] bytes,org.nearfuture.protocol.v1.ResourceLimits limits) {
+        byte[] admitted=admitControl(bytes,limits);
+        int frameBytes=(int)Math.min(1_048_576,Integer.toUnsignedLong(limits.getControlFrameBytes()));
+        int depth=(int)Math.min(32,Integer.toUnsignedLong(limits.getNestingDepth()));
+        CodedInputStream input=CodedInputStream.newInstance(admitted);
+        input.setSizeLimit(frameBytes);
+        input.setRecursionLimit(depth);
+        try {ControlEnvelope value=ControlEnvelope.parser().parseFrom(input);SemanticAdmission.validate(value);return value;}
+        catch(java.io.IOException malformed) {throw new WireFailure(WireFailure.Code.MALFORMED);}
+    }
+    /** Bounded descriptor admission only; this does not authenticate or authorize an outgoing command. */
+    public static void preflightControl(byte[] bytes,org.nearfuture.protocol.v1.ResourceLimits limits) {
+        admitControl(bytes,limits);
+    }
+    private static byte[] admitControl(byte[] bytes,org.nearfuture.protocol.v1.ResourceLimits limits) {
         if(bytes==null || limits==null) throw new WireFailure(WireFailure.Code.SEMANTIC);
         int frameBytes=(int)Math.min(1_048_576,Integer.toUnsignedLong(limits.getControlFrameBytes()));
         int depth=(int)Math.min(32,Integer.toUnsignedLong(limits.getNestingDepth()));
@@ -37,11 +51,7 @@ public final class ControlDecoder {
         if(frameBytes<1 || bytes.length>frameBytes) throw new WireFailure(WireFailure.Code.LIMIT);
         byte[] admitted=bytes.clone();
         Preflight.inspectNegotiated(admitted,ControlEnvelope.getDescriptor(),depth,items,decodedBytes);
-        CodedInputStream input=CodedInputStream.newInstance(admitted);
-        input.setSizeLimit(frameBytes);
-        input.setRecursionLimit(depth);
-        try {ControlEnvelope value=ControlEnvelope.parser().parseFrom(input);SemanticAdmission.validate(value);return value;}
-        catch(java.io.IOException malformed) {throw new WireFailure(WireFailure.Code.MALFORMED);}
+        return admitted;
     }
     public static WorldSnapshot decodeSnapshot(byte[] bytes) { return decode(bytes, WorldSnapshot.getDescriptor(), WorldSnapshot.parser()); }
     public static SnapshotChunk decodeSnapshotChunk(byte[] bytes) { return decode(bytes, SnapshotChunk.getDescriptor(), SnapshotChunk.parser()); }

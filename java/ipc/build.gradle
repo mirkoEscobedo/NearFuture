@@ -39,3 +39,10 @@ tasks.register('exportAuthTestClasspath') {
     outputs.file(target)
     doLast { target.get().asFile.text = sourceSets.test.runtimeClasspath.asPath }
 }
+tasks.register('chatEnqueueClientTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.ChatEnqueueClientTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'chatEnqueueClientTest' }
