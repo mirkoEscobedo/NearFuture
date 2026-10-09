@@ -147,18 +147,31 @@ fn real_java_composite_facets_and_actual_rust_reproduction_match() {
         .collect::<String>();
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../.tmp/nex-first-proposal-reproductions-v1");
-    assert!(root.is_dir() && !root.symlink_metadata().unwrap().file_type().is_symlink());
     let destination = root.join(format!("{digest}.bin"));
-    assert!(
-        !destination.exists(),
-        "fresh exact canonical reproduction required"
-    );
+    let existing_stat = match fs::symlink_metadata(&destination) {
+        Ok(stat) => {
+            assert!(root.is_dir() && !root.symlink_metadata().unwrap().file_type().is_symlink());
+            assert!(stat.is_file() && !stat.file_type().is_symlink());
+            assert_eq!(stat.len(), bytes.len() as u64);
+            assert_eq!(fs::read(&destination).unwrap(), bytes);
+            Some(stat)
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(error) => panic!("canonical reproduction metadata failed: {error}"),
+    };
     let expected_json = format!(
         "{{\"sha256\":\"{digest}\",\"byteLength\":{}}}\n",
         bytes.len()
     );
     assert_eq!(persist_public_fixture(&bytes), expected_json);
+    assert!(root.is_dir() && !root.symlink_metadata().unwrap().file_type().is_symlink());
     let first_stat = fs::symlink_metadata(&destination).unwrap();
+    if let Some(existing_stat) = &existing_stat {
+        assert_eq!(
+            first_stat.modified().unwrap(),
+            existing_stat.modified().unwrap()
+        );
+    }
     assert!(first_stat.is_file() && !first_stat.file_type().is_symlink());
     assert_eq!(first_stat.len(), bytes.len() as u64);
     assert_eq!(fs::read(&destination).unwrap(), bytes);
@@ -172,8 +185,9 @@ fn real_java_composite_facets_and_actual_rust_reproduction_match() {
     assert_eq!(fs::read(&destination).unwrap(), bytes);
     assert_eq!(input, original);
     println!(
-        "ACTUAL_PUBLIC_RUST_CANONICAL_REPRODUCTION sha256={digest} byteLength={}",
-        bytes.len()
+        "ACTUAL_PUBLIC_RUST_CANONICAL_REPRODUCTION sha256={digest} byteLength={} preexisting={}",
+        bytes.len(),
+        existing_stat.is_some()
     );
 }
 fn persist_public_fixture(bytes: &[u8]) -> String {
