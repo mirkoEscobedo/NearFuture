@@ -87,6 +87,11 @@ public final class PeaceTraversalReference {
         }
         return new Result(ids, visits, nullAttempts, null, List.of());
     }
+    // DiplomacyBrain.checkPeace lines622-639: a supplied target is a singleton, even outside enemies.
+    // All outer gates remain prerequisites; no fallback or game lookup is performed here.
+    public static Result evaluateSelectionPassedOuterGates(List<Enemy> supplied, Enemy suppliedTarget) {
+        return evaluatePassedOuterGates(suppliedTarget == null ? supplied : List.of(suppliedTarget));
+    }
     private static Step skip(Enemy enemy) {
         if (enemy.recentWar()) return Step.RECENT_WAR;
         if (!enemy.canCeasefire()) return Step.CANNOT_CEASEFIRE;

@@ -147,3 +147,15 @@ fn real_java_oracle_matches_rust_from_same_raw_inputs_without_expected_column_or
 
 #[path = "differential/action.rs"]
 mod action;
+
+#[path = "differential/traversal.rs"]
+mod traversal;
+
+#[path = "differential/traversal_protocol.rs"]
+mod traversal_protocol;
+
+#[path = "differential/traversal_targeted.rs"]
+mod traversal_targeted;
+
+#[path = "differential/first_proposal.rs"]
+mod first_proposal;

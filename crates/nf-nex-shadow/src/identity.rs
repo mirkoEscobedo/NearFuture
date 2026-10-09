@@ -295,3 +295,46 @@ fn peace(w: &mut Writer, v: &PeaceFacts) -> Result<(), Unavailable> {
     }
     Ok(())
 }
+
+/// Private framed identity for one requested concern/action/selected-proposal transaction.
+/// Existing V1/V2 byte layouts remain unchanged; no world or public wire profile is granted.
+pub fn encode_first_proposal_input(
+    metadata: &ShadowMetadata,
+    input: &crate::FirstProposalInput,
+) -> Result<Vec<u8>, Unavailable> {
+    let concern = encode_input(
+        metadata,
+        &ShadowInput::War {
+            operation: input.concern_operation,
+            facts: input.concern.clone(),
+        },
+    )?;
+    let action = encode_action_input(metadata, &input.eligibility)?;
+    let selected = encode_input(
+        metadata,
+        &ShadowInput::SelectedPeace(input.selected.clone()),
+    )?;
+    let mut w = Writer {
+        bytes: Vec::new(),
+        entries: 0,
+    };
+    w.put(b"NF-NEX-FIRST-PROPOSAL-1\0")?;
+    w.put(&1_u16.to_le_bytes())?;
+    w.u8(match metadata.provenance.observation {
+        Observation::Synthetic => 1,
+        Observation::CapturedUnverified => 2,
+    })?;
+    for (selector, bytes) in [(1_u8, concern), (2, action), (3, selected)] {
+        w.u8(selector)?;
+        w.u32(u32::try_from(bytes.len()).map_err(|_| Unavailable::Limit)?)?;
+        w.put(&bytes)?;
+    }
+    Ok(w.bytes)
+}
+/// Binds every raw requested facet and selector plus exact metadata, even for equal outputs.
+pub fn first_proposal_input_digest(
+    metadata: &ShadowMetadata,
+    input: &crate::FirstProposalInput,
+) -> Result<[u8; 32], Unavailable> {
+    Ok(Sha256::digest(encode_first_proposal_input(metadata, input)?).into())
+}
