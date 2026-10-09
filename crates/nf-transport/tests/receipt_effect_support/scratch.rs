@@ -14,7 +14,7 @@ impl Scratch {
         Self { root }
     }
     pub fn vault(&self, name: &str) -> PrivateVault {
-        PrivateVault::create(&self.root.join(name), &self.root.join("saves")).unwrap()
+        PrivateVault::create_detailed(&self.root.join(name), &self.root.join("saves")).unwrap()
     }
 }
 impl Drop for Scratch {
