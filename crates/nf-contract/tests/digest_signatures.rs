@@ -1,4 +1,4 @@
-use nf_contract::signatures::{sign_digest, verify_digest};
+use nf_contract::signatures::{public_key_from_seed, sign_digest, verify_digest};
 
 #[test]
 fn a_signature_is_bound_to_the_exact_canonical_digest() {
@@ -33,6 +33,12 @@ fn ed25519_matches_independent_shared_digest_signatures() {
             support::bytes(vector["signature_hex"].as_str().unwrap())
                 .try_into()
                 .unwrap();
+        assert_eq!(
+            public_key_from_seed(&seed),
+            expected_key,
+            "{}",
+            vector["name"]
+        );
         let actual = sign_digest(&seed, &digest);
         assert_eq!(actual.public_key, expected_key, "{}", vector["name"]);
         assert_eq!(actual.signature, expected_signature, "{}", vector["name"]);

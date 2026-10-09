@@ -5,6 +5,8 @@
   "description": "Local development tooling for the NearFuture Rust project.",
   "scripts": {
     "start": "cargo run --locked --offline",
+    "test:rust:ci-public": "cargo test --workspace --exclude nf-identity --exclude nf-transport --locked --offline",
+    "check:ci-public": "npm run lint && npm run check:schemas && npm run test:rust:ci-public && npm run test:tools && npm run check:java",
     "test:rust": "cargo test --workspace --locked --offline",
     "test:tools": "node --test tests/architecture/*.test.mjs tests/build/*.test.mjs tests/runtime-manifest/*.test.mjs tests/performance/*.test.mjs tools/miniature-store-vectors/profile.test.cjs tools/receipt-vectors/*.test.cjs tools/notification-vectors/*.test.cjs tests/reference/sync/*.test.cjs",
     "test": "npm run test:rust && npm run test:tools",

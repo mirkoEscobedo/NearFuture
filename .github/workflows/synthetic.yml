@@ -28,8 +28,8 @@ jobs:
         run: cargo fetch --locked
       - name: Install vendored developer tools offline
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
-      - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
-        run: npm run check
+      - name: Format, lint, boundaries, public Rust and tooling tests, synthetic Java contracts
+        run: npm run check:ci-public
       - name: Observe Java and Rust mutual authentication on both local endpoints
         if: runner.os == 'Linux'
         shell: pwsh
@@ -66,6 +66,54 @@ jobs:
         env:
           NF_MINIATURE_REQUIRE_SYNC_FAULT: '1'
         run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture
+  # Fresh crate jobs keep critical I/O tests serial within the original 20-minute bound.
+  critical-io-contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        crate: [nf-identity]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.98.1 --profile minimal
+      - name: Fetch only locked open-source Rust dependencies
+        run: cargo fetch --locked
+      - name: Run every crate unit, integration and documentation test serially
+        run: cargo test -p ${{ matrix.crate }} --locked --offline -- --test-threads=1
+  # Each transport gate retains serial tests and the original 20-minute job bound.
+  critical-transport-contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        gate: [notification-units, other-units, integration, binary, documentation]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.98.1 --profile minimal
+      - name: Fetch only locked open-source Rust dependencies
+        run: cargo fetch --locked
+      - name: Run notification library units serially
+        if: matrix.gate == 'notification-units'
+        run: "cargo test -p nf-transport --lib --locked --offline -- notification_effects:: --test-threads=1"
+      - name: Run every other library unit serially
+        if: matrix.gate == 'other-units'
+        run: "cargo test -p nf-transport --lib --locked --offline -- --skip notification_effects:: --test-threads=1"
+      - name: Run every integration target serially
+        if: matrix.gate == 'integration'
+        run: cargo test -p nf-transport --test '*' --locked --offline -- --test-threads=1
+      - name: Run every binary unit target serially
+        if: matrix.gate == 'binary'
+        run: cargo test -p nf-transport --bins --locked --offline -- --test-threads=1
+      - name: Run every library documentation test serially
+        if: matrix.gate == 'documentation'
+        run: cargo test -p nf-transport --doc --locked --offline -- --test-threads=1
+
   # A fresh, required Windows job preserves the hosted 20-minute bound for each gate.
   windows-interop:
     runs-on: windows-latest
@@ -119,3 +167,77 @@ jobs:
         run: cargo fetch --locked
       - name: Build headless node
         run: cargo build --workspace --locked --offline --release
+  # One owned synthetic observation; existing production tests and deadlines stay intact.
+  private-acl-phase-observation:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/receipt-main'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install only vendored developer tools
+        run: npm ci --offline --ignore-scripts --no-audit --no-fund
+      - name: Prepare the confined diagnostic module
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $taskRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $taskModule = Join-Path $taskRoot 'tools/private-acl-observation'
+          $taskOutput = Join-Path $taskRoot '.tmp/private-acl-observation'
+          if (Test-Path -LiteralPath $taskOutput) { throw 'FRESH_DIAGNOSTIC_OUTPUT_REQUIRED' }
+          [IO.Directory]::CreateDirectory($taskOutput) | Out-Null
+          [IO.Directory]::CreateDirectory((Join-Path $taskModule '.agentic')) | Out-Null
+          $taskProject = Get-Content -LiteralPath (Join-Path $taskRoot '.agentic/project.json') -Raw | ConvertFrom-Json -AsHashtable
+          $taskProject.execution.limits.flakyReruns = 0
+          $taskProject.execution.limits.semanticRepairs = 0
+          $taskNode = (Get-Command node -CommandType Application | Select-Object -First 1).Source
+          if ($taskNode -isnot [string] -or [string]::IsNullOrWhiteSpace($taskNode)) { throw 'NODE_EXECUTABLE_SCALAR_REQUIRED' }
+          $taskProject.overrides = @{ workspace = @{ commands = @{ 'node:.' = @(@{ program = $taskNode; args = @((Join-Path $taskModule 'batch.cjs')); cwd = '.' }) } } }
+          $taskConfig = Join-Path $taskModule '.agentic/project.json'
+          $taskStream = [IO.File]::Open($taskConfig, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+          try {
+            $taskBytes = [Text.UTF8Encoding]::new($false).GetBytes(($taskProject | ConvertTo-Json -Depth 16) + [Environment]::NewLine)
+            $taskStream.Write($taskBytes, 0, $taskBytes.Length)
+          } finally { $taskStream.Dispose() }
+      - name: Inspect the exact confined command before execution
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $taskInspect = npm exec -- workspace-template inspect tools/private-acl-observation --json
+          if ($LASTEXITCODE -ne 0) { throw 'DIAGNOSTIC_GRAPH_INSPECTION_FAILED' }
+          $taskStream = [IO.File]::Open('.tmp/private-acl-observation/inspect.raw.json', [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+          try {
+            $taskBytes = [Text.UTF8Encoding]::new($false).GetBytes(($taskInspect -join [Environment]::NewLine) + [Environment]::NewLine)
+            $taskStream.Write($taskBytes, 0, $taskBytes.Length)
+          } finally { $taskStream.Dispose() }
+          $taskGraph = ($taskInspect -join [Environment]::NewLine) | ConvertFrom-Json -Depth 64
+          $taskModules = @($taskGraph.result.workspace.modules)
+          if (-not $taskGraph.ok -or -not $taskGraph.result.thinState -or -not $taskGraph.result.workspace.valid -or @($taskGraph.result.workspace.conflicts).Count -ne 0 -or $taskModules.Count -ne 1) { throw 'DIAGNOSTIC_GRAPH_SHAPE_MISMATCH' }
+          $taskSelected = $taskModules[0]
+          if ($taskSelected.id -ne 'node:.' -or $taskSelected.root -ne '.' -or $taskSelected.manifest -ne 'package.json' -or @($taskSelected.commands).Count -ne 1) { throw 'DIAGNOSTIC_COMMAND_SELECTION_MISMATCH' }
+          $taskCommand = $taskSelected.commands[0]
+          $taskNode = (Get-Command node -CommandType Application | Select-Object -First 1).Source
+          $taskBatch = Join-Path (Join-Path (Get-Location).Path 'tools/private-acl-observation') 'batch.cjs'
+          if ($taskCommand.program -isnot [string] -or $taskCommand.program -ne $taskNode -or $taskCommand.cwd -ne '.' -or @($taskCommand.args).Count -ne 1 -or $taskCommand.args[0] -ne $taskBatch) { throw 'DIAGNOSTIC_COMMAND_VECTOR_MISMATCH' }
+      - name: Observe one original-deadline single ACL helper
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          npm exec -- workspace-template verify tools/private-acl-observation --scope module --module node:. --concurrency 1 --timeout 240000 --json 1> .tmp/private-acl-observation/verify.raw.json 2> .tmp/private-acl-observation/verify.stderr.txt
+          exit $LASTEXITCODE
+      - name: Retain bounded diagnostic records
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: private-acl-phase-observation
+          path: |
+            .tmp/private-acl-observation/observation.json
+            .tmp/private-acl-observation/inspect.raw.json
+            .tmp/private-acl-observation/verify.raw.json
+            .tmp/private-acl-observation/verify.stderr.txt
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7

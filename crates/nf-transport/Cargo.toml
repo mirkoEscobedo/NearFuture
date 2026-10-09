@@ -19,5 +19,4 @@ nf-contract = { path = "../nf-contract" }
 nf-identity = { path = "../nf-identity" }
 nf-store = { path = "../nf-store" }
 
-[dev-dependencies]
 nf-kernel = { path = "../nf-kernel" }

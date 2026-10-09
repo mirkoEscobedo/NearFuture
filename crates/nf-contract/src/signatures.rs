@@ -9,6 +9,11 @@ pub struct DigestSignature {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct InvalidSignature;
 
+/// Derives the Ed25519 public key without creating a signature.
+pub fn public_key_from_seed(seed: &[u8; 32]) -> [u8; 32] {
+    SigningKey::from_bytes(seed).verifying_key().to_bytes()
+}
+
 pub fn sign_digest(seed: &[u8; 32], digest: &[u8; 32]) -> DigestSignature {
     let key = SigningKey::from_bytes(seed);
     DigestSignature {

@@ -8,7 +8,36 @@ impl PrivateVault {
     pub fn scan_optional_private_blobs(
         &self,
         names: &[&str],
+        visit: impl for<'a> FnMut(usize, Option<&'a [u8]>) -> Result<(), IdentityError>,
+    ) -> Result<(), IdentityError> {
+        self.scan_optional_private_blobs_with_access(names, visit, checked_access)
+    }
+    /// Retains only this ordinary scan's access-cut diagnostics. Other errors keep their class.
+    /// The existing callback engine and protected-session path are unchanged.
+    pub fn scan_optional_private_blobs_detailed(
+        &self,
+        names: &[&str],
+        visit: impl for<'a> FnMut(usize, Option<&'a [u8]>) -> Result<(), IdentityError>,
+    ) -> crate::private_diagnostics::PrivateResult<()> {
+        use crate::private_diagnostics::{PrivateFailure, PrivateStage};
+        let mut next_cut = PrivateStage::ProvisionalAccess;
+        let mut access_failure = None;
+        let result = self.scan_optional_private_blobs_with_access(names, visit, |paths| {
+            let cut = next_cut;
+            next_cut = PrivateStage::FinalAccess;
+            checked_access_detailed(paths, cut).map_err(|failure| {
+                let error = failure.identity_error();
+                access_failure = Some(failure);
+                error
+            })
+        });
+        result.map_err(|error| access_failure.unwrap_or_else(|| PrivateFailure::legacy(error)))
+    }
+    pub(crate) fn scan_optional_private_blobs_with_access(
+        &self,
+        names: &[&str],
         mut visit: impl for<'a> FnMut(usize, Option<&'a [u8]>) -> Result<(), IdentityError>,
+        mut access: impl FnMut(&[&Path]) -> Result<(), IdentityError>,
     ) -> Result<(), IdentityError> {
         if names.is_empty() || names.len() > 64 {
             return Err(IdentityError::Limit);
@@ -45,7 +74,7 @@ impl PrivateVault {
                 admitted_paths.push(path.as_path());
             }
         }
-        checked_access(&admitted_paths)?;
+        access(&admitted_paths)?;
         checked_root_type(&self.root)?;
         for (index, (path, exists)) in paths.iter().zip(present).enumerate() {
             if exists {
@@ -55,7 +84,7 @@ impl PrivateVault {
                 visit(index, None)?;
             }
         }
-        checked_access(&[self.root.as_path()])?;
+        access(&[self.root.as_path()])?;
         checked_root_type(&self.root)
     }
 }
@@ -103,6 +132,29 @@ fn checked_access(paths: &[&Path]) -> Result<(), IdentityError> {
     {
         for path in paths {
             crate::private_storage::private_access(path, false)?;
+        }
+        Ok(())
+    }
+}
+
+fn checked_access_detailed(
+    paths: &[&Path],
+    stage: crate::private_diagnostics::PrivateStage,
+) -> crate::private_diagnostics::PrivateResult<()> {
+    #[cfg(windows)]
+    {
+        crate::private_blob_acl::check_detailed(paths, stage)
+    }
+    #[cfg(not(windows))]
+    {
+        for path in paths {
+            crate::private_diagnostics::access_cause(path, false).map_err(|cause| {
+                crate::private_diagnostics::PrivateFailure::with_cause(
+                    crate::private_diagnostics::PrivateOperation::BlobScan,
+                    stage,
+                    cause,
+                )
+            })?;
         }
         Ok(())
     }
