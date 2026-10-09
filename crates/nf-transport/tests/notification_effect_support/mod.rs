@@ -82,7 +82,7 @@ impl Fixture {
         let saves = scratch.original.join("saves");
         std::fs::create_dir(&saves).unwrap();
         let private = scratch.original.join("private");
-        nf_identity::private_storage::PrivateVault::create(&private, &saves).unwrap();
+        nf_identity::private_storage::PrivateVault::create_detailed(&private, &saves).unwrap();
         let server_peer = libp2p::identity::Keypair::generate_ed25519()
             .public()
             .to_peer_id();

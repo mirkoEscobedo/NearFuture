@@ -25,7 +25,35 @@ enum AclHelperFailure {
     UnexpectedStdout,
     UnexpectedStderr,
 }
+use crate::private_diagnostics::helper_exit_stage as exit_stage;
+use crate::private_diagnostics::{
+    HelperCause, HelperDiagnostic, HelperKind, HelperStep, PrivateCause, PrivateFailure,
+    PrivateOperation, PrivateResult, PrivateStage,
+};
+
 pub(crate) fn check(paths: &[&Path]) -> Result<(), IdentityError> {
+    run(batch_script(), encode_paths(paths)?)
+}
+
+pub(crate) fn check_detailed(paths: &[&Path], stage: PrivateStage) -> PrivateResult<()> {
+    let input = encode_paths(paths).map_err(PrivateFailure::legacy)?;
+    run_detailed(batch_script(), input).map_err(|helper| {
+        PrivateFailure::with_cause(
+            PrivateOperation::BlobScan,
+            stage,
+            PrivateCause::Helper(helper),
+        )
+    })
+}
+
+fn batch_script() -> &'static Path {
+    Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/private-acl-batch.ps1"
+    ))
+}
+
+fn encode_paths(paths: &[&Path]) -> Result<Vec<u8>, IdentityError> {
     if paths.is_empty() || paths.len() > 65 {
         return Err(IdentityError::Limit);
     }
@@ -43,18 +71,60 @@ pub(crate) fn check(paths: &[&Path]) -> Result<(), IdentityError> {
         input.extend_from_slice(text.as_bytes());
         input.push(b'\n');
     }
-    run(
-        Path::new(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/src/private-acl-batch.ps1"
-        )),
-        input,
-    )
+    Ok(input)
 }
+
 fn run(script: &Path, input: Vec<u8>) -> Result<(), IdentityError> {
     run_with_reason(script, input).map_err(|_| IdentityError::PrivateStorage)
 }
+
 fn run_with_reason(script: &Path, input: Vec<u8>) -> Result<(), AclHelperFailure> {
+    run_detailed(script, input).map_err(legacy_reason)
+}
+
+fn legacy_reason(helper: HelperDiagnostic) -> AclHelperFailure {
+    match helper.step() {
+        HelperStep::Spawn => AclHelperFailure::Spawn,
+        HelperStep::InputPipe => AclHelperFailure::StdinPipe,
+        HelperStep::OutputPipe => AclHelperFailure::StdoutPipe,
+        HelperStep::ErrorPipe => AclHelperFailure::StderrPipe,
+        HelperStep::Wait => {
+            if matches!(helper.cause(), HelperCause::Timeout { .. }) {
+                AclHelperFailure::Deadline
+            } else {
+                AclHelperFailure::Wait
+            }
+        }
+        HelperStep::Exit => AclHelperFailure::Exit,
+        HelperStep::InputJoin => AclHelperFailure::InputJoin,
+        HelperStep::InputWrite => AclHelperFailure::InputIo,
+        HelperStep::OutputJoin => AclHelperFailure::StdoutJoin,
+        HelperStep::OutputRead => AclHelperFailure::StdoutIo,
+        HelperStep::ErrorJoin => AclHelperFailure::StderrJoin,
+        HelperStep::ErrorRead => AclHelperFailure::StderrIo,
+        HelperStep::OutputPolicy => {
+            if matches!(
+                helper.cause(),
+                HelperCause::UnexpectedOutput { stdout: true, .. }
+            ) {
+                AclHelperFailure::UnexpectedStdout
+            } else {
+                AclHelperFailure::UnexpectedStderr
+            }
+        }
+        // These pre-spawn steps are not emitted by this batch lifecycle; legacy callers still refuse.
+        HelperStep::Metadata | HelperStep::Reparse => AclHelperFailure::Exit,
+    }
+}
+
+fn failed(step: HelperStep, cause: HelperCause) -> HelperDiagnostic {
+    HelperDiagnostic::new(HelperKind::BatchAcl, step, cause)
+}
+fn io(step: HelperStep, error: std::io::Error) -> HelperDiagnostic {
+    HelperDiagnostic::io(HelperKind::BatchAcl, step, error)
+}
+
+fn run_detailed(script: &Path, input: Vec<u8>) -> Result<(), HelperDiagnostic> {
     std::thread::scope(|scope| {
         use std::os::windows::process::CommandExt;
         let started = Instant::now();
@@ -73,47 +143,65 @@ fn run_with_reason(script: &Path, input: Vec<u8>) -> Result<(), AclHelperFailure
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .map_err(|_| AclHelperFailure::Spawn)?;
+            .map_err(|error| io(HelperStep::Spawn, error))?;
         let stdin = child.stdin.take();
         let stdout = child.stdout.take();
         let stderr = child.stderr.take();
         // Installed before any fallible extraction/thread work; closure locals drop before scope joins.
         let mut child = OwnedChild::new(child);
-        let mut stdin = stdin.ok_or(AclHelperFailure::StdinPipe)?;
-        let mut stdout = stdout.ok_or(AclHelperFailure::StdoutPipe)?;
-        let mut stderr = stderr.ok_or(AclHelperFailure::StderrPipe)?;
+        let mut stdin = stdin.ok_or(failed(HelperStep::InputPipe, HelperCause::MissingPipe))?;
+        let mut stdout = stdout.ok_or(failed(HelperStep::OutputPipe, HelperCause::MissingPipe))?;
+        let mut stderr = stderr.ok_or(failed(HelperStep::ErrorPipe, HelperCause::MissingPipe))?;
         let writer = scope.spawn(move || stdin.write_all(&input));
         let output = scope.spawn(move || stdout.read(&mut [0u8; 1]));
         let errors = scope.spawn(move || stderr.read(&mut [0u8; 1]));
         loop {
-            if let Some(status) = child.try_wait().map_err(|_| AclHelperFailure::Wait)? {
+            if let Some(status) = child
+                .try_wait()
+                .map_err(|error| io(HelperStep::Wait, error))?
+            {
                 if !status.success() {
-                    return Err(AclHelperFailure::Exit);
+                    return Err(failed(
+                        HelperStep::Exit,
+                        HelperCause::ChildExit {
+                            code: status.code(),
+                            stage: exit_stage(HelperKind::BatchAcl, status.code()),
+                        },
+                    ));
                 }
                 break;
             }
             if started.elapsed() >= Duration::from_secs(5) {
-                return Err(AclHelperFailure::Deadline);
+                return Err(failed(
+                    HelperStep::Wait,
+                    HelperCause::Timeout {
+                        elapsed_ms: u64::try_from(started.elapsed().as_millis())
+                            .unwrap_or(u64::MAX),
+                    },
+                ));
             }
             std::thread::sleep(Duration::from_millis(10));
         }
         writer
             .join()
-            .map_err(|_| AclHelperFailure::InputJoin)?
-            .map_err(|_| AclHelperFailure::InputIo)?;
+            .map_err(|_| failed(HelperStep::InputJoin, HelperCause::ThreadPanic))?
+            .map_err(|error| io(HelperStep::InputWrite, error))?;
         let out = output
             .join()
-            .map_err(|_| AclHelperFailure::StdoutJoin)?
-            .map_err(|_| AclHelperFailure::StdoutIo)?;
+            .map_err(|_| failed(HelperStep::OutputJoin, HelperCause::ThreadPanic))?
+            .map_err(|error| io(HelperStep::OutputRead, error))?;
         let err = errors
             .join()
-            .map_err(|_| AclHelperFailure::StderrJoin)?
-            .map_err(|_| AclHelperFailure::StderrIo)?;
-        if out != 0 {
-            return Err(AclHelperFailure::UnexpectedStdout);
-        }
-        if err != 0 {
-            return Err(AclHelperFailure::UnexpectedStderr);
+            .map_err(|_| failed(HelperStep::ErrorJoin, HelperCause::ThreadPanic))?
+            .map_err(|error| io(HelperStep::ErrorRead, error))?;
+        if out != 0 || err != 0 {
+            return Err(failed(
+                HelperStep::OutputPolicy,
+                HelperCause::UnexpectedOutput {
+                    stdout: out != 0,
+                    stderr: err != 0,
+                },
+            ));
         }
         Ok(())
     })

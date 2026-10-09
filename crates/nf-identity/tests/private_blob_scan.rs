@@ -15,7 +15,7 @@ fn absence_does_not_end_the_complete_reserved_inventory() {
     let names: Vec<_> = names.iter().map(String::as_str).collect();
     let mut visited = 0;
     vault
-        .scan_optional_private_blobs(&names, |index, payload| {
+        .scan_optional_private_blobs_detailed(&names, |index, payload| {
             assert_eq!(index, visited);
             if index == 63 {
                 assert_eq!(payload, Some([7].as_slice()));
