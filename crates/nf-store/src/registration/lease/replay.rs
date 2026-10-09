@@ -44,6 +44,16 @@ pub(super) fn verify(
     admission: &AdmissionPolicy,
 ) -> Result<State> {
     let profile = schema::verify(connection, registration, admission)?;
+    from_validated_profile(connection, registration, admission, profile)
+}
+
+/// Row replay after the caller has verified the complete selected profile shape/metadata.
+pub(super) fn from_validated_profile(
+    connection: &Connection,
+    registration: &RegistrationPolicy,
+    admission: &AdmissionPolicy,
+    profile: schema::Profile,
+) -> Result<State> {
     let membership = membership::load(connection, registration.scope)?;
     let mut state = State {
         registrations: profile.registrations,

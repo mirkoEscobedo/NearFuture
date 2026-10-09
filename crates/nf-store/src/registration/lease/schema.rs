@@ -28,7 +28,7 @@ pub(super) struct Profile {
     pub admission: Option<Meta>,
     pub version: i32,
 }
-fn full_schema() -> String {
+pub(super) fn full_schema() -> String {
     format!("{}{}", registration_schema::SCHEMA, LEASE_SCHEMA)
 }
 
@@ -50,6 +50,17 @@ pub(super) fn verify(
         return Err(crate::registration::RegistrationError::UnsupportedProfile.into());
     }
     registration_schema::verify_shape(connection, 2, &full_schema())?;
+    from_validated_shape(connection, registration, admission, version)
+}
+
+/// Private metadata seam: caller already verified its complete selected table shape.
+/// Admission metadata still binds the unchanged original seven-table schema hash.
+pub(super) fn from_validated_shape(
+    connection: &Connection,
+    registration: &RegistrationPolicy,
+    admission: &AdmissionPolicy,
+    version: i32,
+) -> Result<Profile> {
     let registration_meta = registration_schema::read_meta(connection, registration)?;
     let registrations =
         registration_replay::from_validated_meta(connection, registration, registration_meta)?;

@@ -97,6 +97,9 @@ pub(super) fn verify_shape(
         2 => {
             "SELECT name,sql FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name LIMIT 8"
         }
+        3 => {
+            "SELECT name,sql FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name LIMIT 11"
+        }
         _ => return Err(RegistrationError::UnsupportedProfile),
     };
     let mut statement = connection.prepare(query)?;
