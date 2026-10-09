@@ -27,3 +27,16 @@ pub use world_commitment::{WorldCommitment, commit_world};
 
 mod action;
 pub use action::{MakePeaceEligibility, make_peace_action_eligible};
+
+mod traversal;
+pub use traversal::{
+    PeaceTraversalResult, ReportedPeaceReturn, TraversalEnemy, TraversalStep, TraversalVisit,
+    evaluate_passed_outer_gates, evaluate_selection_passed_outer_gates,
+};
+
+mod action_priority;
+pub use action_priority::make_peace_weariness_modifier;
+
+mod first_proposal;
+pub use first_proposal::{FirstProposalEvaluation, FirstProposalInput, FirstProposalOutput};
+pub use identity::{encode_first_proposal_input, first_proposal_input_digest};
