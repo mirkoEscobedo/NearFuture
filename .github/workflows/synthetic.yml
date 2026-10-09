@@ -48,7 +48,7 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :nex-reference:exportDifferentialClasspath --no-daemon
           $env:NF_SHADOW_JAVA = 'java'
-          $env:NF_SHADOW_NODE = (Get-Command node -CommandType Application).Source
+          $env:NF_SHADOW_NODE = (Get-Command node -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
           $env:NF_SHADOW_CLASSPATH_FILE = Join-Path (Get-Location) 'java/nex-reference/build/differential-classpath.txt'
           cargo test -p nf-nex-shadow --test differential --locked --offline -- --ignored
       - name: Install maintained Linux sync fault injector
@@ -106,7 +106,7 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :nex-reference:exportDifferentialClasspath --no-daemon
           $env:NF_SHADOW_JAVA = 'java'
-          $env:NF_SHADOW_NODE = (Get-Command node -CommandType Application).Source
+          $env:NF_SHADOW_NODE = (Get-Command node -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
           $env:NF_SHADOW_CLASSPATH_FILE = Join-Path (Get-Location) 'java/nex-reference/build/differential-classpath.txt'
           cargo test -p nf-nex-shadow --test differential --locked --offline -- --ignored
   release-build:
