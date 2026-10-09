@@ -32,16 +32,24 @@ fn hidden(command: &mut Command) {
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
+struct ExpectedStatus<'a> {
+    revision: u64,
+    phase: u8,
+    receipt: &'a [u8],
+}
 fn physical(
     f: &Fixture,
     java: &Path,
     classpath: &str,
     name: &str,
     known: KnownChatFrontiers,
-    revision: u64,
-    phase: u8,
-    receipt: &[u8],
+    expected: ExpectedStatus<'_>,
 ) {
+    let ExpectedStatus {
+        revision,
+        phase,
+        receipt,
+    } = expected;
     let config = f.config(1);
     let mut command = Command::new(env!("CARGO_BIN_EXE_nf-ipc-node"));
     hidden(&mut command);
@@ -167,9 +175,11 @@ fn java_production_consumer_reports_pending_then_genuine_delivered_original_thro
         classpath.trim(),
         "chat-java-pending",
         f.initial_known(),
-        1,
-        1,
-        &[],
+        ExpectedStatus {
+            revision: 1,
+            phase: 1,
+            receipt: &[],
+        },
     );
     assert_eq!(fs::read(&f.store_path).unwrap(), initial_store);
     assert_eq!(fs::read(&f.outbox_path).unwrap(), initial_outbox);
@@ -192,9 +202,11 @@ fn java_production_consumer_reports_pending_then_genuine_delivered_original_thro
         classpath.trim(),
         "chat-java-delivered",
         known,
-        2,
-        2,
-        &f.expected_receipt(),
+        ExpectedStatus {
+            revision: 2,
+            phase: 2,
+            receipt: &f.expected_receipt(),
+        },
     );
     assert_eq!(fs::read(&f.store_path).unwrap(), final_store);
     assert_eq!(fs::read(&f.outbox_path).unwrap(), final_outbox);
