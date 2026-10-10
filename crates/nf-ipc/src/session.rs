@@ -135,6 +135,8 @@ impl SessionFence {
 pub enum AdmittedClient {
     Intent(g::Intent),
     Query(g::QueryOperation),
+    ChatOutgoing(g::QueryChatOutgoing),
+    ChatEnqueue(g::EnqueueChat),
 }
 #[derive(Debug)]
 pub enum AdmittedServer {
@@ -186,6 +188,22 @@ impl AuthenticatedSession {
             return Err(IpcError::SessionMismatch);
         }
         let required = e.required.ok_or(IpcError::Malformed)?;
+        if let Some(g::control_envelope::Body::QueryChatOutgoing(v)) = &e.body {
+            if required.capability_ids != [3] || required.schema_ids != [3] {
+                return Err(IpcError::Unsupported);
+            }
+            self.check_principal(v.principal.as_ref(), principal)?;
+            self.check_scope(v.universe_id.as_ref(), v.history_id.as_ref())?;
+            return Ok(AdmittedClient::ChatOutgoing(v.clone()));
+        }
+        if let Some(g::control_envelope::Body::EnqueueChat(command)) = &e.body {
+            if required.capability_ids != [4] || required.schema_ids != [4] {
+                return Err(IpcError::Unsupported);
+            }
+            self.check_principal(command.principal.as_ref(), principal)?;
+            self.check_scope(command.universe_id.as_ref(), command.history_id.as_ref())?;
+            return Ok(AdmittedClient::ChatEnqueue(command.clone()));
+        }
         if required.capability_ids != [1] || required.schema_ids != [1] {
             return Err(IpcError::Unsupported);
         }
@@ -211,6 +229,243 @@ impl AuthenticatedSession {
             }
             _ => Err(IpcError::Unsupported),
         }
+    }
+    /// Shape/correlation admission for a token-authenticated local status only; no projection or remote signature authority.
+    pub fn admit_chat_response(
+        &self,
+        bytes: &[u8],
+        query: &g::QueryChatOutgoing,
+        fence: &SessionFence,
+    ) -> Result<g::ChatOutgoingStatus, IpcError> {
+        fence.check(self.runtime_session)?;
+        nf_wire::validate_query_chat_outgoing(query).map_err(wire_error)?;
+        self.check_scope(query.universe_id.as_ref(), query.history_id.as_ref())?;
+        let e = nf_wire::decode_control_with_limits(bytes, wire_limits(&self.limits))
+            .map_err(wire_error)?;
+        if e.runtime_session.ok_or(IpcError::Malformed)?.value != self.runtime_session {
+            return Err(IpcError::SessionMismatch);
+        }
+        let status = match e.body.ok_or(IpcError::Malformed)? {
+            g::control_envelope::Body::ChatOutgoingStatus(status) => status,
+            g::control_envelope::Body::Error(error) => {
+                return Err(match g::ErrorCode::try_from(error.code) {
+                    Ok(g::ErrorCode::Unauthorized) => IpcError::Unauthorized,
+                    Ok(g::ErrorCode::HistoryMismatch) => IpcError::HistoryMismatch,
+                    Ok(g::ErrorCode::SessionMismatch) => IpcError::SessionMismatch,
+                    Ok(g::ErrorCode::LimitExceeded) => IpcError::Limit,
+                    Ok(g::ErrorCode::Backpressure) => IpcError::Backpressure,
+                    _ => IpcError::Unsupported,
+                });
+            }
+            _ => return Err(IpcError::Unsupported),
+        };
+        if status.request_id != query.request_id
+            || status.original_request_id != query.original_request_id
+            || status.principal != query.principal
+            || status.universe_id != query.universe_id
+            || status.history_id != query.history_id
+            || status.message_id != query.message_id
+        {
+            return Err(IpcError::Malformed);
+        }
+        let original = nf_store::chat::codec::decode_signed_message(&status.signed_message)
+            .map_err(|_| IpcError::Malformed)?;
+        let principal = status.principal.as_ref().ok_or(IpcError::Malformed)?;
+        if original.message.scope.universe.as_bytes()
+            != query
+                .universe_id
+                .as_ref()
+                .ok_or(IpcError::Malformed)?
+                .value
+                .as_slice()
+            || original.message.scope.history.as_bytes()
+                != query
+                    .history_id
+                    .as_ref()
+                    .ok_or(IpcError::Malformed)?
+                    .value
+                    .as_slice()
+            || original.message.author.account.as_bytes()
+                != principal
+                    .account_id
+                    .as_ref()
+                    .ok_or(IpcError::Malformed)?
+                    .value
+                    .as_slice()
+            || original.message.author.device.as_bytes()
+                != principal
+                    .device_id
+                    .as_ref()
+                    .ok_or(IpcError::Malformed)?
+                    .value
+                    .as_slice()
+            || original.message.message.as_slice()
+                != query
+                    .message_id
+                    .as_ref()
+                    .ok_or(IpcError::Malformed)?
+                    .value
+                    .as_slice()
+            || original.message.sequence != status.source_sequence
+        {
+            return Err(IpcError::Malformed);
+        }
+        if status.phase == g::ChatOutgoingPhase::Delivered as i32 {
+            let receipt = nf_store::chat::outbox::SignedChatReceipt::from_canonical_bytes(
+                &status.receiver_receipt,
+            )
+            .map_err(|_| IpcError::Malformed)?
+            .receipt;
+            use sha2::{Digest, Sha256};
+            let mut bytes = b"NF-CHAT-SIGNED-MESSAGE-1\0".to_vec();
+            bytes.extend_from_slice(&status.signed_message);
+            let digest: [u8; 32] = Sha256::digest(bytes).into();
+            if receipt.scope != original.message.scope
+                || receipt.channel != original.message.channel
+                || receipt.original.message != original.message.message
+                || receipt.original.author != original.message.author
+                || receipt.original.source_sequence != original.message.sequence
+                || receipt.original.original_request.as_bytes()
+                    != query
+                        .original_request_id
+                        .as_ref()
+                        .ok_or(IpcError::Malformed)?
+                        .value
+                        .as_slice()
+                || receipt.signed_message_digest != digest
+                || receipt.policy_digest
+                    != nf_store::chat::codec::policy_digest(&nf_store::chat::ChatPolicy {
+                        scope: original.message.scope,
+                    })
+            {
+                return Err(IpcError::Malformed);
+            }
+        }
+        Ok(status)
+    }
+    /// Correlated owner-local status under profile4; token authentication never substitutes for remote receipt verification.
+    pub fn admit_chat_enqueue_response(
+        &self,
+        bytes: &[u8],
+        command: &g::EnqueueChat,
+        fence: &SessionFence,
+    ) -> Result<g::ChatOutgoingStatus, IpcError> {
+        fence.check(self.runtime_session)?;
+        nf_wire::validate_enqueue_chat(command).map_err(wire_error)?;
+        self.check_scope(command.universe_id.as_ref(), command.history_id.as_ref())?;
+        let e = nf_wire::decode_control_with_limits(bytes, wire_limits(&self.limits))
+            .map_err(wire_error)?;
+        if e.runtime_session.ok_or(IpcError::Malformed)?.value != self.runtime_session {
+            return Err(IpcError::SessionMismatch);
+        }
+        let required = e.required.ok_or(IpcError::Malformed)?;
+        let status = match e.body.ok_or(IpcError::Malformed)? {
+            g::control_envelope::Body::ChatEnqueueResult(result) => {
+                if required.capability_ids != [4] || required.schema_ids != [4] {
+                    return Err(IpcError::Unsupported);
+                }
+                result.status.ok_or(IpcError::Malformed)?
+            }
+            g::control_envelope::Body::Error(error) => {
+                if required.capability_ids != [1] || required.schema_ids != [1] {
+                    return Err(IpcError::Unsupported);
+                }
+                return Err(match g::ErrorCode::try_from(error.code) {
+                    Ok(g::ErrorCode::Malformed) => IpcError::Malformed,
+                    Ok(g::ErrorCode::Unauthorized) => IpcError::Unauthorized,
+                    Ok(g::ErrorCode::HistoryMismatch) => IpcError::HistoryMismatch,
+                    Ok(g::ErrorCode::SessionMismatch) => IpcError::SessionMismatch,
+                    Ok(g::ErrorCode::LimitExceeded) => IpcError::Limit,
+                    Ok(g::ErrorCode::Backpressure) => IpcError::Backpressure,
+                    _ => IpcError::Unsupported,
+                });
+            }
+            _ => return Err(IpcError::Unsupported),
+        };
+        if status.request_id != command.request_id
+            || status.original_request_id != command.original_request_id
+            || status.principal != command.principal
+            || status.universe_id != command.universe_id
+            || status.history_id != command.history_id
+        {
+            return Err(IpcError::Malformed);
+        }
+        let original = nf_store::chat::codec::decode_signed_message(&status.signed_message)
+            .map_err(|_| IpcError::Malformed)?;
+        let principal = command.principal.as_ref().ok_or(IpcError::Malformed)?;
+        if original.message.scope.universe.as_bytes()
+            != command
+                .universe_id
+                .as_ref()
+                .ok_or(IpcError::Malformed)?
+                .value
+                .as_slice()
+            || original.message.scope.history.as_bytes()
+                != command
+                    .history_id
+                    .as_ref()
+                    .ok_or(IpcError::Malformed)?
+                    .value
+                    .as_slice()
+            || original.message.author.account.as_bytes()
+                != principal
+                    .account_id
+                    .as_ref()
+                    .ok_or(IpcError::Malformed)?
+                    .value
+                    .as_slice()
+            || original.message.author.device.as_bytes()
+                != principal
+                    .device_id
+                    .as_ref()
+                    .ok_or(IpcError::Malformed)?
+                    .value
+                    .as_slice()
+            || original.message.message.as_slice()
+                != status
+                    .message_id
+                    .as_ref()
+                    .ok_or(IpcError::Malformed)?
+                    .value
+                    .as_slice()
+            || original.message.sequence != status.source_sequence
+            || original.message.channel != nf_store::chat::Channel::General
+            || original.message.text != command.text
+        {
+            return Err(IpcError::Malformed);
+        }
+        if status.phase == g::ChatOutgoingPhase::Delivered as i32 {
+            let receipt = nf_store::chat::outbox::SignedChatReceipt::from_canonical_bytes(
+                &status.receiver_receipt,
+            )
+            .map_err(|_| IpcError::Malformed)?
+            .receipt;
+            use sha2::{Digest, Sha256};
+            let mut bytes = b"NF-CHAT-SIGNED-MESSAGE-1\0".to_vec();
+            bytes.extend_from_slice(&status.signed_message);
+            let digest: [u8; 32] = Sha256::digest(bytes).into();
+            if receipt.scope != original.message.scope
+                || receipt.channel != original.message.channel
+                || receipt.original.message != original.message.message
+                || receipt.original.author != original.message.author
+                || receipt.original.source_sequence != original.message.sequence
+                || receipt.original.original_request.as_bytes()
+                    != command
+                        .original_request_id
+                        .as_ref()
+                        .ok_or(IpcError::Malformed)?
+                        .value
+                        .as_slice()
+                || receipt.signed_message_digest != digest
+                || receipt.policy_digest
+                    != nf_store::chat::codec::policy_digest(&nf_store::chat::ChatPolicy {
+                        scope: original.message.scope,
+                    })
+            {
+                return Err(IpcError::Malformed);
+            }
+        }
+        Ok(status)
     }
     fn check_principal(
         &self,

@@ -34,8 +34,15 @@ tasks.register('authSocketClient', JavaExec) {
     }
 }
 tasks.register('exportAuthTestClasspath') {
-    dependsOn testClasses
+    dependsOn testClasses, ':wire:jar', ':contract:jar'
     def target = layout.buildDirectory.file('auth-test-classpath.txt')
     outputs.file(target)
     doLast { target.get().asFile.text = sourceSets.test.runtimeClasspath.asPath }
 }
+tasks.register('chatEnqueueClientTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.ChatEnqueueClientTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'chatEnqueueClientTest' }

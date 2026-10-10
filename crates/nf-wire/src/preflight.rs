@@ -15,6 +15,10 @@ fn required_fields(name: &str) -> &'static [i32] {
         "SchemaPayload" => &[1, 2],
         "Intent" => &[1, 2, 3, 4, 5, 7, 8, 10],
         "QueryOperation" => &[1, 2, 3, 4],
+        "QueryChatOutgoing" => &[1, 2, 3, 4, 5, 6],
+        "EnqueueChat" => &[1, 2, 3, 4, 5, 6, 7],
+        "ChatEnqueueResult" => &[1],
+        "ChatOutgoingStatus" => &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         "OperationStatus" => &[1, 2, 3, 4, 5],
         "EntityState" | "ModuleState" | "ScheduledEvent" | "DeduplicationEntry" => &[1, 2, 3],
         "WorldSnapshot" => &[1, 2, 3, 4, 5, 13, 14],
@@ -228,6 +232,10 @@ impl Scanner {
                 let cap = if field.r#type() == Type::String {
                     if message.ends_with(".BoundedError") {
                         512.min(self.limits.text_bytes)
+                    } else if message.ends_with(".EnqueueChat")
+                        && field.name.as_deref() == Some("text")
+                    {
+                        2048.min(self.limits.text_bytes)
                     } else {
                         self.limits.text_bytes
                     }
@@ -237,6 +245,14 @@ impl Scanner {
                     .is_some_and(|name| name.starts_with("LocalAuth"))
                 {
                     32.min(self.limits.field_bytes)
+                } else if message.ends_with(".ChatOutgoingStatus")
+                    && field.name.as_deref() == Some("signed_message")
+                {
+                    2221.min(self.limits.field_bytes)
+                } else if message.ends_with(".ChatOutgoingStatus")
+                    && field.name.as_deref() == Some("receiver_receipt")
+                {
+                    323.min(self.limits.field_bytes)
                 } else if field.name.as_deref() == Some("signature") || message.ends_with(".PeerId")
                 {
                     128.min(self.limits.field_bytes)
