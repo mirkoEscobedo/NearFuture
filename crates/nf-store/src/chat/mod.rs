@@ -22,3 +22,5 @@ mod write;
 pub mod outbox;
 
 pub mod local_view;
+
+pub mod local_preferences;

@@ -78,10 +78,36 @@ jobs:
           $file = [IO.File]::Open((Join-Path $directory 'caller.json'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
           try { $file.Write($bytes, 0, $bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
           [IO.File]::AppendAllText($env:GITHUB_OUTPUT, ('directory=' + $directory + [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+      - name: Prepare retained local-mute preferences capture directory
+        id: chat-local-mute-preferences-evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP) -or [string]::IsNullOrWhiteSpace($env:GITHUB_OUTPUT)) {
+            throw 'Runner-owned temp and step output paths are required'
+          }
+          $runnerTemp = (Resolve-Path -LiteralPath $env:RUNNER_TEMP).ProviderPath
+          $name = 'near-future-chat-local-mute-preferences-' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT + '-' + [Guid]::NewGuid().ToString('N')
+          $directory = Join-Path $runnerTemp $name
+          if (Test-Path -LiteralPath $directory) { throw 'Fresh Chat evidence directory required' }
+          $null = New-Item -ItemType Directory -Path $directory -ErrorAction Stop
+          $directory = (Resolve-Path -LiteralPath $directory).ProviderPath
+          if (-not [IO.Path]::IsPathRooted($directory)) { throw 'Absolute Chat evidence directory required' }
+          $receipt = [ordered]@{
+            state = 'CALLER_DIRECTORY_CREATED_NOT_TEST_SUCCESS'
+            runId = $env:GITHUB_RUN_ID
+            runAttempt = $env:GITHUB_RUN_ATTEMPT
+            runnerOS = $env:RUNNER_OS
+          }
+          $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($receipt | ConvertTo-Json) + [Environment]::NewLine)
+          $file = [IO.File]::Open((Join-Path $directory 'caller.json'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+          try { $file.Write($bytes, 0, $bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
+          [IO.File]::AppendAllText($env:GITHUB_OUTPUT, ('directory=' + $directory + [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         env:
           NF_CHAT_COMMAND_QUERY_EVIDENCE_DIR: ${{ steps.chat-command-evidence.outputs.directory }}
           NF_CHAT_LOCAL_MUTE_EVIDENCE_DIR: ${{ steps.chat-local-mute-evidence.outputs.directory }}
+          NF_CHAT_LOCAL_MUTE_PREFERENCES_EVIDENCE_DIR: ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -119,6 +145,29 @@ jobs:
             ${{ steps.chat-local-mute-evidence.outputs.directory }}/authenticated-history.before.original.sqlite
             ${{ steps.chat-local-mute-evidence.outputs.directory }}/signed-original.before.original.bin
             ${{ steps.chat-local-mute-evidence.outputs.directory }}/authenticated-history.after.original.sqlite
+          if-no-files-found: error
+          overwrite: 'false'
+      - name: Retain local-mute preferences caller and owned originals after success or failure
+        if: ${{ always() && steps.chat-local-mute-preferences-evidence.outputs.directory != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: chat-local-mute-preferences-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.os }}
+          path: |
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/caller.json
+            ${{ steps.chat-local-mute-evidence.outputs.directory }}/check.original.stdout
+            ${{ steps.chat-local-mute-evidence.outputs.directory }}/check.original.stderr
+            ${{ steps.chat-local-mute-evidence.outputs.directory }}/check.original.result.json
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/authenticated-history.before.original.sqlite
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/signed-original.before.original.bin
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/local-mute.preferences.original.bin
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/authenticated-history.after.original.sqlite
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/local-mute.preferences.after-reopen.original.bin
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/controls-scope/**
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/controls-raw-cap/**
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/controls-zero/**
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/controls-corrupt/**
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/controls-bounded/**
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/controls-storage/**
           if-no-files-found: error
           overwrite: 'false'
       - name: Retain command-query captures after success or failure
