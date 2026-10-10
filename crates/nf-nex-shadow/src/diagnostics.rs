@@ -8,6 +8,16 @@ pub enum Difference {
     Decision,
     Draws,
     Effects,
+    FirstConcernKind,
+    FirstConcernLifecycle,
+    FirstConcernPriority,
+    FirstEligibilityKind,
+    FirstEligibilityDecision,
+    FirstActionPriority,
+    FirstProposalKind,
+    FirstProposalDecision,
+    FirstProposalDraws,
+    FirstProposalEffects,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Diagnostic {
@@ -110,4 +120,80 @@ pub fn synthetic_reproduction(
         return Err(Unavailable::Unsupported);
     }
     crate::encode_input(m, input)
+}
+
+/// Independent reference observations; wrong facet kinds remain explicit differences.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FirstProposalObservation {
+    pub concern: ShadowOutput,
+    pub eligibility: ShadowOutput,
+    pub additional_priority: nf_nex_boundary::Modifier,
+    pub selected: ShadowOutput,
+}
+/// At most seven differences; facet identity survives DiagnosticStream coalescing.
+pub fn compare_first_proposal_outputs(
+    expected: &FirstProposalObservation,
+    actual: &crate::FirstProposalOutput,
+) -> Vec<Difference> {
+    let mut differences = Vec::with_capacity(7);
+    for difference in compare_outputs(
+        &expected.concern,
+        &ShadowOutput::War(actual.concern.clone()),
+    ) {
+        differences.push(match difference {
+            Difference::Lifecycle => Difference::FirstConcernLifecycle,
+            Difference::Priority => Difference::FirstConcernPriority,
+            _ => Difference::FirstConcernKind,
+        });
+    }
+    for difference in compare_outputs(
+        &expected.eligibility,
+        &ShadowOutput::MakePeaceEligibility(actual.eligible),
+    ) {
+        differences.push(match difference {
+            Difference::Decision => Difference::FirstEligibilityDecision,
+            _ => Difference::FirstEligibilityKind,
+        });
+    }
+    if expected.additional_priority != actual.additional_priority {
+        differences.push(Difference::FirstActionPriority);
+    }
+    for difference in compare_outputs(
+        &expected.selected,
+        &ShadowOutput::SelectedPeace(actual.selected.clone()),
+    ) {
+        differences.push(match difference {
+            Difference::Decision => Difference::FirstProposalDecision,
+            Difference::Draws => Difference::FirstProposalDraws,
+            Difference::Effects => Difference::FirstProposalEffects,
+            _ => Difference::FirstProposalKind,
+        });
+    }
+    differences
+}
+impl Diagnostic {
+    pub fn from_first_proposal(
+        result: &crate::FirstProposalEvaluation,
+        difference: Difference,
+    ) -> Self {
+        let metadata = result.metadata();
+        Self {
+            source_digest: metadata.provenance.source_digest,
+            config_digest: metadata.provenance.merged_config_digest,
+            input_digest: result.input_digest(),
+            corpus_digest: metadata.corpus_digest,
+            implementation_digest: metadata.implementation_digest,
+            difference,
+        }
+    }
+}
+/// Value-only public synthetic bytes. Persistence is an explicit confined host responsibility.
+pub fn synthetic_first_proposal_reproduction(
+    metadata: &ShadowMetadata,
+    input: &crate::FirstProposalInput,
+) -> Result<Vec<u8>, Unavailable> {
+    if metadata.provenance.observation != nf_nex_boundary::Observation::Synthetic {
+        return Err(Unavailable::Unsupported);
+    }
+    crate::encode_first_proposal_input(metadata, input)
 }

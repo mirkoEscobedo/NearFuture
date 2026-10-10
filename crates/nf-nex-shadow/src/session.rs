@@ -166,3 +166,41 @@ impl ShadowSession {
         Ok(&result.output)
     }
 }
+
+impl ShadowSession {
+    /// All requested facets share the existing optional-provider active/error fence.
+    pub fn evaluate_first_proposal(
+        &mut self,
+        input: &crate::FirstProposalInput,
+    ) -> Result<crate::FirstProposalEvaluation, Unavailable> {
+        if !self.active {
+            return Err(Unavailable::Disabled);
+        }
+        let result = crate::first_proposal::evaluate_first_proposal(&self.metadata, input);
+        if result.is_err() {
+            self.active = false;
+        }
+        result
+    }
+    pub fn accept_first_proposal<'a>(
+        &self,
+        result: &'a crate::FirstProposalEvaluation,
+        current_metadata: &ShadowMetadata,
+        current: &crate::FirstProposalInput,
+    ) -> Result<&'a crate::FirstProposalOutput, Unavailable> {
+        if !self.active {
+            return Err(Unavailable::Disabled);
+        }
+        let digest = crate::first_proposal_input_digest(current_metadata, current)?;
+        if self.metadata != *result.metadata()
+            || self.metadata != *current_metadata
+            || digest != result.input_digest()
+        {
+            return Err(Unavailable::Stale);
+        }
+        if result.binding_scope() != BindingScope::CopiedFacts {
+            return Err(Unavailable::MissingFact);
+        }
+        Ok(result.output())
+    }
+}

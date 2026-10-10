@@ -29,7 +29,7 @@ jobs:
       - name: Install vendored developer tools offline
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
-        run: npm run check
+        run: npm run lint && npm run check:schemas && npm run test:rust -- -- --test-threads=1 && npm run test:tools && npm run check:java
       - name: Observe Java and Rust mutual authentication on both local endpoints
         if: runner.os == 'Linux'
         shell: pwsh
@@ -39,7 +39,7 @@ jobs:
           java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :ipc:exportAuthTestClasspath --no-daemon
           $env:NF_IPC_JAVA = 'java'
           $env:NF_IPC_JAVA_CLASSPATH_FILE = Join-Path (Get-Location) 'java/ipc/build/auth-test-classpath.txt'
-          cargo test -p nf-ipc --test java_process --locked --offline -- --ignored
+          cargo test -p nf-ipc --test java_process --locked --offline -- --ignored --test-threads=1
       - name: Compare Rust shadow against actual Java reference outputs
         if: runner.os == 'Linux'
         shell: pwsh
@@ -48,8 +48,9 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :nex-reference:exportDifferentialClasspath --no-daemon
           $env:NF_SHADOW_JAVA = 'java'
+          $env:NF_SHADOW_NODE = (Get-Command node -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
           $env:NF_SHADOW_CLASSPATH_FILE = Join-Path (Get-Location) 'java/nex-reference/build/differential-classpath.txt'
-          cargo test -p nf-nex-shadow --test differential --locked --offline -- --ignored
+          cargo test -p nf-nex-shadow --test differential --locked --offline -- --ignored --test-threads=1
       - name: Install maintained Linux sync fault injector
         if: runner.os == 'Linux'
         run: |
@@ -60,18 +61,21 @@ jobs:
         if: runner.os == 'Linux'
         env:
           NF_STORE_REQUIRE_SYNC_FAULT: '1'
-        run: cargo test -p nf-store --test fsync_failure --locked --offline -- --nocapture
+        run: cargo test -p nf-store --test fsync_failure --locked --offline -- --nocapture --test-threads=1
       - name: Observe miniature SQLite sync failure and pending recovery
         if: runner.os == 'Linux'
         env:
           NF_MINIATURE_REQUIRE_SYNC_FAULT: '1'
-        run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture
+        run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture --test-threads=1
   # A fresh, required Windows job preserves the hosted 20-minute bound for each gate.
   windows-interop:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
       - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
@@ -94,7 +98,7 @@ jobs:
           java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :ipc:exportAuthTestClasspath --no-daemon
           $env:NF_IPC_JAVA = 'java'
           $env:NF_IPC_JAVA_CLASSPATH_FILE = Join-Path (Get-Location) 'java/ipc/build/auth-test-classpath.txt'
-          cargo test -p nf-ipc --test java_process --locked --offline -- --ignored
+          cargo test -p nf-ipc --test java_process --locked --offline -- --ignored --test-threads=1
       - name: Compare Rust shadow against actual Java reference outputs
         shell: pwsh
         run: |
@@ -102,8 +106,9 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :nex-reference:exportDifferentialClasspath --no-daemon
           $env:NF_SHADOW_JAVA = 'java'
+          $env:NF_SHADOW_NODE = (Get-Command node -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
           $env:NF_SHADOW_CLASSPATH_FILE = Join-Path (Get-Location) 'java/nex-reference/build/differential-classpath.txt'
-          cargo test -p nf-nex-shadow --test differential --locked --offline -- --ignored
+          cargo test -p nf-nex-shadow --test differential --locked --offline -- --ignored --test-threads=1
   release-build:
     strategy:
       fail-fast: false

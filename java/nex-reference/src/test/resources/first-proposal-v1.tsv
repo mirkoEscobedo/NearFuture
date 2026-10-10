@@ -1,0 +1,13 @@
+# case|operation|concernWearinessBits|minimumBits|alreadyEnded|currentAction|existingClass|traitsMask|factionMultiplierBits|diplomacyEnabled|concernCanMakePeace|optionalTargetHostile|factionDisabled|selectedGate|treatyRelation|chanceDrawDoubleBits|optionalTreatyDrawDoubleBits|enemy|enemyWearinessBits|ownEventBits|enemyEventBits|enemyIsPlayer|selectedOwnWearinessBits|selectedMinimumBits
+equal_output_base|GENERATE|459c4000|459c4000|false|false|other|0|-|true|true|-|false|none|false|3fe0000000000001|-|tritachyon|459c4000|00000000|00000000|false|459c4000|459c4000
+chance_equal|GENERATE|459c4000|459c4000|false|false|other|0|-|true|true|-|false|none|false|3fe0000000000000|-|tritachyon|459c4000|00000000|00000000|false|459c4000|459c4000
+treaty_below|GENERATE|459c4000|459c4000|false|false|other|0|-|true|true|-|false|none|true|3fe0000000000000|3fd3333330000000|tritachyon|459c4000|00000000|00000000|false|459c4000|459c4000
+treaty_equal|GENERATE|459c4000|459c4000|false|false|other|0|-|true|true|-|false|none|true|3fe0000000000000|3fd3333340000000|tritachyon|459c4000|00000000|00000000|false|459c4000|459c4000
+action_disabled|GENERATE|459c4000|459c4000|false|false|other|0|-|false|true|-|false|none|false|3fe0000000000001|-|tritachyon|459c4000|00000000|00000000|false|459c4000|459c4000
+target_not_hostile|GENERATE|459c4000|459c4000|false|false|other|0|-|true|true|false|false|none|false|3fe0000000000001|-|tritachyon|459c4000|00000000|00000000|false|459c4000|459c4000
+active_concern_duplicate|GENERATE|459c4000|459c4000|false|false|active|0|-|true|true|-|false|none|false|3fe0000000000001|-|tritachyon|459c4000|00000000|00000000|false|459c4000|459c4000
+update_below_abort|UPDATE|456a4fff|459c4000|false|true|other|0|-|true|true|-|false|none|false|3fe0000000000001|-|tritachyon|459c4000|00000000|00000000|false|456a4fff|459c4000
+valid_only|VALID|456a4fff|459c4000|false|false|other|0|-|true|true|-|false|none|false|3fe0000000000001|-|tritachyon|459c4000|00000000|00000000|false|456a4fff|459c4000
+capped_multiplier|GENERATE|41400000|40000000|false|false|other|0|-|true|true|-|false|none|false|3fe0000000000001|-|tritachyon|459c4000|00000000|00000000|false|41400000|40000000
+positive_ratio_overflow|GENERATE|7f7fffff|00000001|false|false|other|0|-|true|true|-|false|none|false|3fe0000000000001|-|tritachyon|459c4000|00000000|00000000|false|7f7fffff|00000001
+changed_enemy_equal_output|GENERATE|459c4000|459c4000|false|false|other|0|-|true|true|-|false|none|false|3fe0000000000001|-|pirates|459c4000|00000000|00000000|false|459c4000|459c4000
