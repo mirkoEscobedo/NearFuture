@@ -293,3 +293,61 @@ fn combined_outputs_and_identities_repeat_across_worker_completion_orders() {
     }
     assert_eq!(jobs, before);
 }
+
+#[test]
+fn composite_provider_error_disables_all_diagnostic_entrypoints() {
+    let metadata = metadata();
+    let supplied = input();
+    let before = supplied.clone();
+    let war = ShadowInput::War {
+        operation: supplied.concern_operation,
+        facts: supplied.concern.clone(),
+    };
+    let mut session = ShadowSession::new(metadata.clone());
+    let composite_result = session.evaluate_first_proposal(&supplied).unwrap();
+    let war_result = session.evaluate(&war).unwrap();
+    let action_result = session.evaluate_action(&supplied.eligibility).unwrap();
+    assert_eq!(
+        session.accept(&war_result, &metadata, &war),
+        Ok(&ShadowOutput::War(literal().concern))
+    );
+    assert_eq!(
+        session.accept_action(&action_result, &metadata, &supplied.eligibility),
+        Ok(&ShadowOutput::MakePeaceEligibility(true))
+    );
+    assert_eq!(
+        session.accept_first_proposal(&composite_result, &metadata, &supplied),
+        Ok(&literal())
+    );
+
+    let mut unsupported = supplied.clone();
+    unsupported.selected.enemy_is_player = true;
+    let unsupported_before = unsupported.clone();
+    assert_eq!(
+        session.evaluate_first_proposal(&unsupported),
+        Err(Unavailable::Unsupported)
+    );
+    assert_eq!(session.evaluate(&war), Err(Unavailable::Disabled));
+    assert_eq!(
+        session.evaluate_action(&supplied.eligibility),
+        Err(Unavailable::Disabled)
+    );
+    assert_eq!(
+        session.evaluate_first_proposal(&supplied),
+        Err(Unavailable::Disabled)
+    );
+    assert_eq!(
+        session.accept(&war_result, &metadata, &war),
+        Err(Unavailable::Disabled)
+    );
+    assert_eq!(
+        session.accept_action(&action_result, &metadata, &supplied.eligibility),
+        Err(Unavailable::Disabled)
+    );
+    assert_eq!(
+        session.accept_first_proposal(&composite_result, &metadata, &supplied),
+        Err(Unavailable::Disabled)
+    );
+    assert_eq!(supplied, before);
+    assert_eq!(unsupported, unsupported_before);
+}
