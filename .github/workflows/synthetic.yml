@@ -168,6 +168,7 @@ jobs:
             ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/controls-corrupt/**
             ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/controls-bounded/**
             ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/controls-storage/**
+            ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}/receiver-order/**
           if-no-files-found: error
           overwrite: 'false'
       - name: Retain command-query captures after success or failure

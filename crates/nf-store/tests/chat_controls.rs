@@ -428,3 +428,186 @@ fn signed_stored_projection_tamper_refuses_before_configuration() {
     );
     tampered.assert_unchanged(&fixture);
 }
+
+#[test]
+fn independent_receiver_histories_preserve_opposite_arrival_without_global_sender_order() {
+    use std::{fs, fs::OpenOptions, io::Write, path::PathBuf};
+
+    fn retain(path: &std::path::Path, bytes: &[u8]) {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)
+            .unwrap();
+        file.write_all(bytes).unwrap();
+        file.sync_all().unwrap();
+    }
+
+    let started = Instant::now();
+    let evidence = PathBuf::from(
+        std::env::var_os("NF_CHAT_LOCAL_MUTE_PREFERENCES_EVIDENCE_DIR")
+            .expect("Caller must supply one owned external evidence directory"),
+    );
+    assert!(evidence.is_absolute());
+    let evidence = evidence.canonicalize().unwrap();
+    assert!(evidence.is_dir());
+    let fixture = Fixture::new();
+    assert!(!evidence.starts_with(fixture.scratch.0.canonicalize().unwrap()));
+    let evidence = evidence.join("receiver-order");
+    fs::create_dir(&evidence).unwrap();
+
+    // Both complete originals exist before either independent receiver admits one.
+    let alice = fixture.signed_message();
+    let bob = signed(
+        &fixture,
+        &fixture.bob,
+        82,
+        1,
+        "public Bob independent sequence one",
+    );
+    nf_contract::signatures::verify_digest(
+        &fixture.alice.public.device_key,
+        &codec::message_digest(&alice.message).unwrap(),
+        &alice.signature,
+    )
+    .unwrap();
+    nf_contract::signatures::verify_digest(
+        &fixture.bob.public.device_key,
+        &codec::message_digest(&bob.message).unwrap(),
+        &bob.signature,
+    )
+    .unwrap();
+    assert_ne!(alice.message.author.account, bob.message.author.account);
+    assert_eq!(alice.message.sequence, 1);
+    assert_eq!(bob.message.sequence, 1);
+    retain(
+        &evidence.join("alice.signed.original.bin"),
+        &codec::encode_signed_message(&alice).unwrap(),
+    );
+    retain(
+        &evidence.join("bob.signed.original.bin"),
+        &codec::encode_signed_message(&bob).unwrap(),
+    );
+
+    let left_path = fixture.scratch.0.join("receiver-left.sqlite");
+    let right_path = fixture.scratch.0.join("receiver-right.sqlite");
+    let mut left = ChatStore::create(&left_path, &fixture.policy, &fixture.membership).unwrap();
+    let mut right = ChatStore::create(&right_path, &fixture.policy, &fixture.membership).unwrap();
+    let left_alice = post(&fixture, &mut left, &fixture.alice, 101, &alice).unwrap();
+    let left_bob = post(&fixture, &mut left, &fixture.bob, 202, &bob).unwrap();
+    let right_bob = post(&fixture, &mut right, &fixture.bob, 202, &bob).unwrap();
+    let right_alice = post(&fixture, &mut right, &fixture.alice, 101, &alice).unwrap();
+    assert_eq!(
+        (left_alice.receiver_cursor, left_bob.receiver_cursor),
+        (1, 2)
+    );
+    assert_eq!(
+        (right_alice.receiver_cursor, right_bob.receiver_cursor),
+        (2, 1)
+    );
+    for receipt in [left_alice, left_bob, right_alice, right_bob] {
+        assert_eq!(receipt.source_sequence, 1);
+    }
+    let left_expected = HistoryPage {
+        entries: vec![
+            HistoryEntry {
+                receiver_cursor: 1,
+                signed: alice.clone(),
+            },
+            HistoryEntry {
+                receiver_cursor: 2,
+                signed: bob.clone(),
+            },
+        ],
+        next_cursor: 2,
+    };
+    let right_expected = HistoryPage {
+        entries: vec![
+            HistoryEntry {
+                receiver_cursor: 1,
+                signed: bob.clone(),
+            },
+            HistoryEntry {
+                receiver_cursor: 2,
+                signed: alice.clone(),
+            },
+        ],
+        next_cursor: 2,
+    };
+    assert_eq!(
+        fixture.permitted_history(&mut left, 210).unwrap(),
+        left_expected
+    );
+    assert_eq!(
+        fixture.permitted_history(&mut right, 211).unwrap(),
+        right_expected
+    );
+    let left_known = left.known_frontiers().unwrap();
+    let right_known = right.known_frontiers().unwrap();
+    assert_eq!(
+        left_known,
+        KnownChatFrontiers {
+            scope: fixture.policy.scope,
+            revision: 2,
+            membership_revision: 1
+        }
+    );
+    assert_eq!(right_known, left_known);
+    drop(left);
+    drop(right);
+    let left_before = fs::read(&left_path).unwrap();
+    let right_before = fs::read(&right_path).unwrap();
+    retain(
+        &evidence.join("left.before-reopen.original.sqlite"),
+        &left_before,
+    );
+    retain(
+        &evidence.join("right.before-reopen.original.sqlite"),
+        &right_before,
+    );
+
+    let mut left = ChatStore::open_existing(&left_path, &fixture.policy, left_known).unwrap();
+    let mut right = ChatStore::open_existing(&right_path, &fixture.policy, right_known).unwrap();
+    // New runtime challenges reauthorize retries; each receiver keeps its own receipt.
+    assert_eq!(
+        post(&fixture, &mut left, &fixture.alice, 101, &alice),
+        Ok(left_alice)
+    );
+    assert_eq!(
+        post(&fixture, &mut left, &fixture.bob, 202, &bob),
+        Ok(left_bob)
+    );
+    assert_eq!(
+        post(&fixture, &mut right, &fixture.alice, 101, &alice),
+        Ok(right_alice)
+    );
+    assert_eq!(
+        post(&fixture, &mut right, &fixture.bob, 202, &bob),
+        Ok(right_bob)
+    );
+    assert_eq!(
+        fixture.permitted_history(&mut left, 212).unwrap(),
+        left_expected
+    );
+    assert_eq!(
+        fixture.permitted_history(&mut right, 213).unwrap(),
+        right_expected
+    );
+    assert_eq!(left.known_frontiers().unwrap(), left_known);
+    assert_eq!(right.known_frontiers().unwrap(), right_known);
+    drop(left);
+    drop(right);
+    let left_after = fs::read(&left_path).unwrap();
+    let right_after = fs::read(&right_path).unwrap();
+    retain(
+        &evidence.join("left.after-reopen.original.sqlite"),
+        &left_after,
+    );
+    retain(
+        &evidence.join("right.after-reopen.original.sqlite"),
+        &right_after,
+    );
+    assert_eq!(left_after, left_before);
+    assert_eq!(right_after, right_before);
+    assert!(started.elapsed() < Duration::from_secs(20));
+}
