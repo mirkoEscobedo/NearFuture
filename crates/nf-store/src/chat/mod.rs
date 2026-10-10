@@ -20,3 +20,5 @@ pub use receipt_issuer::LocalReceiptIssuer;
 mod write;
 
 pub mod outbox;
+
+pub mod local_view;
