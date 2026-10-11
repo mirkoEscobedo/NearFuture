@@ -3,7 +3,7 @@ use nf_identity::model::DeviceProof;
 use nf_store::chat::{IssuedChallenge, SignedMessage, outbox::SignedChatReceipt};
 
 pub const MAX_FRAME_BYTES: usize = 4096;
-pub const PROTOCOL: &str = "/nearfuture/chat/1";
+pub const PROTOCOL: &str = "/nearfuture/chat/2";
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct WireContext {
     pub policy_digest: [u8; 32],
@@ -38,6 +38,10 @@ pub enum ChatFrame {
     Delivered {
         context: WireContext,
         signed: Box<SignedChatReceipt>,
+    },
+    RateLimited {
+        context: WireContext,
+        retry_after_ms: u32,
     },
     Refused {
         context: WireContext,

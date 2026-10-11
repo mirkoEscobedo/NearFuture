@@ -157,7 +157,8 @@ pub async fn deliver_pending(
                 let received_context = match &response {
                     ChatFrame::Issued { context, .. }
                     | ChatFrame::Delivered { context, .. }
-                    | ChatFrame::Refused { context, .. } => *context,
+                    | ChatFrame::Refused { context, .. }
+                    | ChatFrame::RateLimited { context, .. } => *context,
                     _ => return Err(PeerError::Malformed),
                 };
                 if received_context != context {
@@ -207,10 +208,17 @@ pub async fn deliver_pending(
                         // This existing synchronous commit cannot be preempted; it may finish after the deadline.
                         return outbox.acknowledge(&signed).map_err(store_error);
                     }
+                    ChatFrame::RateLimited { retry_after_ms, .. } if !awaiting_challenge => {
+                        return Err(PeerError::RateLimited { retry_after_ms });
+                    }
                     ChatFrame::Refused { reason, .. } => return Err(refused(reason)),
                     _ => return Err(PeerError::Session),
                 }
             }
+            SwarmEvent::Behaviour(ChatBehaviourEvent::Messages(Event::OutboundFailure {
+                error: libp2p::request_response::OutboundFailure::UnsupportedProtocols,
+                ..
+            })) => return Err(PeerError::Unsupported),
             SwarmEvent::OutgoingConnectionError { .. }
             | SwarmEvent::ConnectionClosed { .. }
             | SwarmEvent::Behaviour(ChatBehaviourEvent::Messages(

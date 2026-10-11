@@ -6,6 +6,7 @@ pub enum ChatStoreError {
     Policy,
     Malformed,
     Limit,
+    RateLimited { retry_after_ms: u32 },
     Signature,
     Replay,
     Expired,

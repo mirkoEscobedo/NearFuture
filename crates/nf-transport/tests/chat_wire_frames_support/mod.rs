@@ -254,8 +254,9 @@ pub fn literal_frame(frame: &ChatFrame) -> Vec<u8> {
         ChatFrame::Issued { context, .. } => (3, context),
         ChatFrame::Delivered { context, .. } => (4, context),
         ChatFrame::Refused { context, .. } => (5, context),
+        ChatFrame::RateLimited { context, .. } => (6, context),
     };
-    let mut out = b"NF-CHAT-WIRE-1\0".to_vec();
+    let mut out = b"NF-CHAT-WIRE-2\0".to_vec();
     out.push(tag);
     out.extend_from_slice(&context.policy_digest);
     out.extend_from_slice(context.request.as_bytes());
@@ -287,6 +288,9 @@ pub fn literal_frame(frame: &ChatFrame) -> Vec<u8> {
         ChatFrame::Delivered { signed, .. } => {
             out.extend_from_slice(&receipt_bytes(&signed.receipt));
             out.extend_from_slice(&signed.signature);
+        }
+        ChatFrame::RateLimited { retry_after_ms, .. } => {
+            out.extend_from_slice(&retry_after_ms.to_be_bytes())
         }
         ChatFrame::Refused { reason, .. } => out.push(match reason {
             Refusal::Unsupported => 1,

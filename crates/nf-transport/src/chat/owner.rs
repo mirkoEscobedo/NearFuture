@@ -89,6 +89,7 @@ pub(super) fn local_current(
 pub(super) fn store_error(error: ChatStoreError) -> PeerError {
     match error {
         ChatStoreError::Limit => PeerError::Limit,
+        ChatStoreError::RateLimited { retry_after_ms } => PeerError::RateLimited { retry_after_ms },
         ChatStoreError::Replay | ChatStoreError::Expired => PeerError::Replay,
         ChatStoreError::UnsupportedOperation => PeerError::Unsupported,
         ChatStoreError::Storage
@@ -209,6 +210,18 @@ impl ChatPeerServer {
             announced: false,
             admission: super::admission::Admission::new(Instant::now()),
         })
+    }
+    /// Trusted LOCAL operator port; no sender frame can change receiver admission policy.
+    /// The owned store and its account baselines survive this update.
+    pub fn reload_receiver_rate_policy(
+        &mut self,
+        expected_generation: u64,
+        policy: nf_store::chat::ChatRatePolicy,
+    ) -> Result<u64, PeerError> {
+        self.current()?;
+        self.store
+            .reload_receiver_rate_policy(expected_generation, policy)
+            .map_err(store_error)
     }
     pub fn into_store(self) -> ChatStore {
         self.store
@@ -622,6 +635,13 @@ impl ChatPeerServer {
         {
             Ok(response) => (response, None),
             Err(PeerError::Storage) => return Err(PeerError::Storage),
+            Err(PeerError::RateLimited { retry_after_ms }) => (
+                ChatFrame::RateLimited {
+                    context,
+                    retry_after_ms,
+                },
+                Some(PeerError::RateLimited { retry_after_ms }),
+            ),
             Err(error) => (
                 ChatFrame::Refused {
                     context,

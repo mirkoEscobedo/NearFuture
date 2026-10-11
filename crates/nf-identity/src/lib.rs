@@ -1,6 +1,7 @@
 //! Account/device admission policy and explicitly separated private-key effects.
 pub mod authorization;
 pub mod codec;
+pub mod enrollment;
 mod key_staging;
 pub mod keys;
 pub mod membership;

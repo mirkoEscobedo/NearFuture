@@ -1,6 +1,7 @@
 use super::{ChatPolicy, ChatStoreError, Result, schema};
 use nf_identity::model::{
-    AdmissionProof, DeviceRevocation, MembershipState, Roles, SignedInvitation,
+    AdmissionProof, DeviceEnrollment, DeviceEnrollmentProof, DeviceRevocation, MembershipState,
+    Roles, SignedInvitation,
 };
 use rusqlite::{Connection, params};
 
@@ -62,6 +63,37 @@ pub(super) fn admit(
         ],
     )? != 1
     {
+        return Err(ChatStoreError::Conflict);
+    }
+    Ok(next)
+}
+
+// Only the owner supplies this verified same-transaction snapshot, never a remote raw state.
+pub(super) fn enroll(
+    connection: &Connection,
+    policy: &ChatPolicy,
+    current: &MembershipState,
+    change: &DeviceEnrollment,
+    proof: &DeviceEnrollmentProof,
+) -> Result<MembershipState> {
+    if current.scope != policy.scope {
+        return Err(ChatStoreError::Scope);
+    }
+    let account = current
+        .accounts
+        .get(&change.account)
+        .ok_or(nf_identity::model::IdentityError::UnknownAccount)?;
+    if !account.roles.contains(Roles::PLAYER) {
+        return Err(nf_identity::model::IdentityError::RolePolicy.into());
+    }
+    let next = current.enroll_device(change, proof)?;
+    let body = nf_identity::codec::encode_state(&next)?;
+    if connection.execute(
+        "UPDATE membership SET revision=?1,public_state=?2,digest=?3 WHERE universe=?4 AND history=?5 AND revision=?6",
+        params![crate::schema::counter(next.revision), body, super::codec::hash(&body),
+            policy.scope.universe.as_bytes(), policy.scope.history.as_bytes(),
+            crate::schema::counter(current.revision)],
+    )? != 1 {
         return Err(ChatStoreError::Conflict);
     }
     Ok(next)

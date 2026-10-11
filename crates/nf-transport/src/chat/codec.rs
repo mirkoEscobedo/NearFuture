@@ -5,7 +5,7 @@ use nf_identity::model::{DeviceProof, Scope};
 use nf_store::chat::{
     ChatPolicy, ChatStoreError, IssuedChallenge, SignedMessage, codec, outbox::SignedChatReceipt,
 };
-const DOMAIN: &[u8; 15] = b"NF-CHAT-WIRE-1\0";
+const DOMAIN: &[u8; 15] = b"NF-CHAT-WIRE-2\0";
 
 pub fn encode(frame: &ChatFrame) -> Result<Vec<u8>, PeerError> {
     let (tag, context) = match frame {
@@ -14,6 +14,7 @@ pub fn encode(frame: &ChatFrame) -> Result<Vec<u8>, PeerError> {
         ChatFrame::Issued { context, .. } => (3, context),
         ChatFrame::Delivered { context, .. } => (4, context),
         ChatFrame::Refused { context, .. } => (5, context),
+        ChatFrame::RateLimited { context, .. } => (6, context),
     };
     if context.request.as_bytes() == &[0; 16] {
         return Err(PeerError::Malformed);
@@ -58,6 +59,12 @@ pub fn encode(frame: &ChatFrame) -> Result<Vec<u8>, PeerError> {
             }
             out.extend_from_slice(&signed.to_canonical_bytes().map_err(shape_error)?);
         }
+        ChatFrame::RateLimited { retry_after_ms, .. } => {
+            if !(1..=86_400_000).contains(retry_after_ms) {
+                return Err(PeerError::Malformed);
+            }
+            out.extend_from_slice(&retry_after_ms.to_be_bytes());
+        }
         ChatFrame::Refused { reason, .. } => out.push(match reason {
             Refusal::Unsupported => 1,
             Refusal::Unauthorized => 2,
@@ -86,7 +93,11 @@ fn parse(bytes: &[u8]) -> Result<ChatFrame, PeerError> {
         return Err(PeerError::Limit);
     }
     let mut r = Reader { bytes, at: 0 };
-    if r.take(15)? != DOMAIN {
+    let domain = r.take(15)?;
+    if domain == b"NF-CHAT-WIRE-1\0" {
+        return Err(PeerError::Unsupported);
+    }
+    if domain != DOMAIN {
         return Err(PeerError::Malformed);
     }
     let tag = r.fixed::<1>()?[0];
@@ -167,6 +178,16 @@ fn parse(bytes: &[u8]) -> Result<ChatFrame, PeerError> {
                 _ => return Err(PeerError::Malformed),
             };
             ChatFrame::Refused { context, reason }
+        }
+        6 => {
+            let retry_after_ms = u32::from_be_bytes(r.fixed()?);
+            if !(1..=86_400_000).contains(&retry_after_ms) {
+                return Err(PeerError::Malformed);
+            }
+            ChatFrame::RateLimited {
+                context,
+                retry_after_ms,
+            }
         }
         _ => return Err(PeerError::Malformed),
     };
