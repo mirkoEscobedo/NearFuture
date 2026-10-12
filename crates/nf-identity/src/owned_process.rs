@@ -1,5 +1,9 @@
 //! Owns an ACL helper so every early return closes its process lifetime.
 use std::process::{Child, ExitStatus};
+
+// Serialize synthetic helper fixtures without changing production deadlines.
+#[cfg(test)]
+pub(crate) static ACL_HELPER_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 pub(crate) struct OwnedChild {
     child: Child,
     reaped: bool,
@@ -37,6 +41,9 @@ mod tests {
     };
     #[test]
     fn early_wait_fault_kills_and_reaps_owned_helper() {
+        let _fixture_guard = ACL_HELPER_TEST_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let child = Command::new("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
             .args([
                 "-NoProfile",
