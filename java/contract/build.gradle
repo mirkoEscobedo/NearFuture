@@ -66,3 +66,11 @@ tasks.register('CanonicalSemanticLimitsTest', JavaExec) {
 tasks.named('check') { dependsOn 'CanonicalSemanticLimitsTest' }
 
 tasks.register('lockDependencies') { doLast { configurations.findAll { it.canBeResolved }.each { it.resolve() } } }
+
+tasks.register('SystemPackageTopologyTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.system.SystemPackageTopologyTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'SystemPackageTopologyTest' }
