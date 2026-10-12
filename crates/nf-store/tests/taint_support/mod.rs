@@ -1,0 +1,300 @@
+use nf_contract::identity::{BranchId, CampaignId, HistoryId, RequestId, UniverseId};
+use nf_identity::{
+    keys::{SecretSeed, generate_identity},
+    model::{Invitation, MembershipRepository, MembershipState, PublicIdentity, Roles, Scope},
+    persistence::redeem_persisted,
+    signing::{admission_proof, device_digest, sign_invitation},
+};
+use nf_store::registration::lease::taint::{
+    AuthorityLineageId, CampaignLineage, KnownTaintFrontier, MarkProhibitedManifest,
+    ProofAttempt as TaintProofAttempt, TaintMode, TaintPolicy, TaintStore,
+};
+use nf_store::registration::{
+    AllowedBranch, BranchRegistrar, CampaignBinding, KnownRegistrationFrontier, RegisterBranch,
+    RegisteredBranch, RegistrationMode, RegistrationPolicy,
+    lease::{
+        AdmissionMode, AdmissionPolicy, AdmitLease, ClientSessionId, KnownAdmissionFrontier,
+        LeaseGranted, LeaseStore, ProofAttempt,
+    },
+};
+use std::{
+    path::PathBuf,
+    sync::atomic::{AtomicU64, Ordering},
+};
+
+static NEXT: AtomicU64 = AtomicU64::new(0);
+pub struct Fixture {
+    root: PathBuf,
+    pub registration_policy: RegistrationPolicy,
+    pub admission_policy: AdmissionPolicy,
+    founder: PublicIdentity,
+    founder_key: SecretSeed,
+    player: PublicIdentity,
+    account_key: SecretSeed,
+    device_key: SecretSeed,
+}
+impl Fixture {
+    pub fn new() -> Self {
+        let parent = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".tmp");
+        std::fs::create_dir_all(&parent).unwrap();
+        let root = parent.join(format!(
+            "taint-contract-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::fs::create_dir(&root).unwrap();
+        let (founder, founder_key, _) = generate_identity(b"taint-founder".to_vec()).unwrap();
+        let (player, account_key, device_key) =
+            generate_identity(b"taint-player".to_vec()).unwrap();
+        let registration_policy = RegistrationPolicy {
+            scope: Scope {
+                universe: UniverseId::from_bytes([31; 16]),
+                history: HistoryId::from_bytes([32; 16]),
+            },
+            mode: RegistrationMode::HeadlessRegistrationOnly,
+            allowed: vec![AllowedBranch {
+                campaign: CampaignId::from_bytes([33; 16]),
+                branch: BranchId::from_bytes([34; 16]),
+                account: player.account,
+            }],
+        };
+        let admission_policy = AdmissionPolicy {
+            mode: AdmissionMode::HeadlessLeaseOnly,
+            registration_policy_digest: registration_policy.digest().unwrap(),
+        };
+        Self {
+            root,
+            registration_policy,
+            admission_policy,
+            founder,
+            founder_key,
+            player,
+            account_key,
+            device_key,
+        }
+    }
+    pub fn db(&self) -> PathBuf {
+        self.root.join("lease.sqlite")
+    }
+    fn register(&self) -> (RegisteredBranch, KnownRegistrationFrontier) {
+        let founder =
+            MembershipState::bootstrap(self.registration_policy.scope, &self.founder).unwrap();
+        let mut registrar =
+            BranchRegistrar::create(self.db(), &self.registration_policy, &founder).unwrap();
+        let invitation = Invitation {
+            scope: self.registration_policy.scope,
+            id: [36; 16],
+            issuer: self.founder.account,
+            recipient: self.player.clone(),
+            roles: Roles::PLAYER,
+            expires_at: 100,
+            issued_revision: founder.revision,
+            reusable: false,
+        };
+        let proof = admission_proof(&invitation, &self.account_key, &self.device_key).unwrap();
+        let invitation = sign_invitation(invitation, &self.founder_key).unwrap();
+        let member = redeem_persisted(
+            &mut registrar,
+            self.registration_policy.scope,
+            &invitation,
+            &proof,
+            1,
+        )
+        .unwrap();
+        assert_eq!(member.revision, 1);
+        assert_eq!(
+            member.accounts.get(&self.player.account).unwrap().roles,
+            Roles::PLAYER
+        );
+        assert_eq!(
+            registrar
+                .load_membership(self.registration_policy.scope)
+                .unwrap(),
+            Some(member)
+        );
+        let request = RegisterBranch {
+            request: RequestId::from_bytes([35; 16]),
+            scope: self.registration_policy.scope,
+            campaign: CampaignId::from_bytes([33; 16]),
+            branch: BranchId::from_bytes([34; 16]),
+            account: self.player.account,
+            device: self.player.device,
+            policy_digest: self.registration_policy.digest().unwrap(),
+        };
+        let issued = registrar.issue_registration_challenge(&request).unwrap();
+        let mut proof = issued.template;
+        proof.signature = self.device_key.sign(&device_digest(&proof).unwrap());
+        let registered = registrar
+            .register_branch(
+                &request,
+                nf_store::registration::ProofAttempt {
+                    ticket: issued.ticket,
+                    proof,
+                },
+            )
+            .unwrap();
+        let expected = RegisteredBranch {
+            binding: CampaignBinding {
+                scope: request.scope,
+                campaign: request.campaign,
+                branch: request.branch,
+                account: request.account,
+            },
+            original_request: request.request,
+            revision: 1,
+        };
+        assert_eq!(registered, expected);
+        let known = registrar.known_frontier().unwrap();
+        assert_eq!((known.revision, known.minimum_membership_revision), (1, 1));
+        assert_ne!(known.head, [0; 32]);
+        drop(registrar);
+        (registered, known)
+    }
+    fn admission_request(
+        &self,
+        registration: RegisteredBranch,
+        known_registration: KnownRegistrationFrontier,
+        known_admission: KnownAdmissionFrontier,
+    ) -> AdmitLease {
+        AdmitLease {
+            request: RequestId::from_bytes([40; 16]),
+            binding: registration.binding,
+            device: self.player.device,
+            session: ClientSessionId::from_bytes([41; 16]).unwrap(),
+            registration,
+            known_registration,
+            known_admission,
+            policy_digest: self.admission_policy.digest(),
+        }
+    }
+    fn admission_attempt(&self, owner: &mut LeaseStore, request: &AdmitLease) -> ProofAttempt {
+        let issued = owner
+            .issue_admission_challenge(request)
+            .expect("actual fresh distinct admission challenge");
+        let mut proof = issued.template;
+        assert_eq!(
+            (proof.account, proof.device, proof.frontier),
+            (self.player.account, self.player.device, 1)
+        );
+        proof.signature = self.device_key.sign(&device_digest(&proof).unwrap());
+        ProofAttempt {
+            ticket: issued.ticket,
+            proof,
+        }
+    }
+    pub fn lease(
+        &self,
+    ) -> (
+        RegisteredBranch,
+        KnownRegistrationFrontier,
+        LeaseGranted,
+        KnownAdmissionFrontier,
+    ) {
+        let (registration, known_registration) = self.register();
+        let genesis = KnownAdmissionFrontier {
+            scope: self.registration_policy.scope,
+            revision: 0,
+            head: [0; 32],
+            minimum_membership_revision: 1,
+        };
+        let mut owner = LeaseStore::open_existing(
+            self.db(),
+            &self.registration_policy,
+            &self.admission_policy,
+            known_registration,
+            genesis,
+        )
+        .unwrap();
+        let request = self.admission_request(registration, known_registration, genesis);
+        let proof = self.admission_attempt(&mut owner, &request);
+        let grant = owner.admit(&request, proof).unwrap();
+        assert_eq!(
+            grant,
+            LeaseGranted {
+                mode: AdmissionMode::HeadlessLeaseOnly,
+                registration,
+                original_request: request.request,
+                device: self.player.device,
+                session: request.session,
+                generation: 1,
+                revision: 1
+            }
+        );
+        let known_admission = owner.known_admission_frontier().unwrap();
+        assert_eq!(
+            (
+                known_admission.revision,
+                known_admission.minimum_membership_revision
+            ),
+            (1, 1)
+        );
+        assert_ne!(known_admission.head, [0; 32]);
+        drop(owner);
+        (registration, known_registration, grant, known_admission)
+    }
+    pub fn taint_policy(&self) -> TaintPolicy {
+        TaintPolicy {
+            mode: TaintMode::HeadlessTaintOnly,
+            registration_policy_digest: self.registration_policy.digest().unwrap(),
+            admission_policy_digest: self.admission_policy.digest(),
+            expected_detector: [43; 32],
+            expected_detector_version: 1,
+            expected_manifest: [44; 32],
+            campaigns: vec![CampaignLineage {
+                campaign: CampaignId::from_bytes([33; 16]),
+                lineage: AuthorityLineageId::from_bytes([42; 32]).unwrap(),
+            }],
+        }
+    }
+    pub fn request(
+        &self,
+        grant: LeaseGranted,
+        known_registration: KnownRegistrationFrontier,
+        known_admission: KnownAdmissionFrontier,
+        known_taint: KnownTaintFrontier,
+    ) -> MarkProhibitedManifest {
+        let policy = self.taint_policy();
+        MarkProhibitedManifest {
+            request: RequestId::from_bytes([46; 16]),
+            binding: grant.registration.binding,
+            device: self.player.device,
+            session: grant.session,
+            grant,
+            lineage: policy.campaigns[0].lineage,
+            known_registration,
+            known_admission,
+            known_taint,
+            policy_digest: policy.digest().unwrap(),
+            expected_detector: policy.expected_detector,
+            expected_detector_version: policy.expected_detector_version,
+            expected_manifest: policy.expected_manifest,
+            observed_manifest: [45; 32],
+        }
+    }
+    pub fn attempt(
+        &self,
+        owner: &mut TaintStore,
+        request: &MarkProhibitedManifest,
+    ) -> TaintProofAttempt {
+        let issued = owner
+            .issue_taint_challenge(request)
+            .expect("actual distinct self-report challenge");
+        let mut proof = issued.template;
+        assert_eq!(
+            (proof.account, proof.device, proof.frontier),
+            (self.player.account, self.player.device, 1)
+        );
+        proof.signature = self.device_key.sign(&device_digest(&proof).unwrap());
+        TaintProofAttempt {
+            ticket: issued.ticket,
+            proof,
+        }
+    }
+}
+impl Drop for Fixture {
+    fn drop(&mut self) {
+        let parent = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".tmp");
+        assert!(self.root.starts_with(&parent));
+        let _ = std::fs::remove_dir_all(&self.root);
+    }
+}
