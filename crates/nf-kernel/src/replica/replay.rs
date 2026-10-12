@@ -1,6 +1,6 @@
 //! Opt-in committed-batch data replay under one borrowed cumulative scope.
 //! Authentication, durable ordering and candidate installation belong to the driver.
-use crate::{CommittedBatch, Outcome, Rejection, World, MAX_FRONTIER, MAX_OUTCOMES};
+use crate::{CommittedBatch, MAX_FRONTIER, MAX_OUTCOMES, Outcome, Rejection, World};
 use alloc::collections::BTreeSet;
 use nf_contract::canonical::replica_budget::{
     BudgetResult, ReplicaDecodeScope, ScopedError, ScopedResult,
