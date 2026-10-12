@@ -1,6 +1,5 @@
 package nf.contract.system;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
@@ -152,20 +151,20 @@ public final class SystemPackageTopology {
         for(Dependency d:value.dependencies()) if(d.required() && keyIndex(knownKeys,d.semanticKey())<0) missing.add(d.semanticKey());
         return new ContentStatus(missing);
     }
-    private static void number(ByteArrayOutputStream out,long n,int bytes) { for(int i=0;i<bytes;i++) out.write((int)(n>>>(8*i))&255); }
+    private static void number(ByteBuffer out,long n,int bytes) { for(int i=0;i<bytes;i++) out.put((byte)(n>>>(8*i))); }
     public static byte[] encode(Topology value, Limits limits) {
-        validate(value,limits); ByteArrayOutputStream out=new ByteArrayOutputStream(measured(value)); out.writeBytes(HEADER);
-        for(Id id:List.of(value.universe(),value.history(),value.owner(),value.system())) out.writeBytes(id.value);
+        validate(value,limits); ByteBuffer out=ByteBuffer.allocate(measured(value)); out.put(HEADER);
+        for(Id id:List.of(value.universe(),value.history(),value.owner(),value.system())) out.put(id.value);
         number(out,value.revision(),8); number(out,value.campaignDayMillis(),8); number(out,1,1); number(out,value.dependencies().size(),2);
-        for(Dependency d:value.dependencies()) { out.writeBytes(d.semanticKey().value); number(out,d.required()?1:0,1); }
+        for(Dependency d:value.dependencies()) { out.put(d.semanticKey().value); number(out,d.required()?1:0,1); }
         number(out,value.entities().size(),2);
         for(Entity e:value.entities()) {
-            out.writeBytes(e.id().value); number(out,e.kind().ordinal()+1,1);
-            number(out,e.parent()==null?0:1,1); if(e.parent()!=null) out.writeBytes(e.parent().value);
+            out.put(e.id().value); number(out,e.kind().ordinal()+1,1);
+            number(out,e.parent()==null?0:1,1); if(e.parent()!=null) out.put(e.parent().value);
             number(out,e.dependency()==null?0:1,1); if(e.dependency()!=null) number(out,e.dependency(),2);
-            number(out,e.label()==null?0:1,1); if(e.label()!=null) { byte[] bytes=label(e.label(),limits); number(out,bytes.length,2); out.writeBytes(bytes); }
+            number(out,e.label()==null?0:1,1); if(e.label()!=null) { byte[] bytes=label(e.label(),limits); number(out,bytes.length,2); out.put(bytes); }
         }
-        return out.toByteArray();
+        return out.array();
     }
     public static byte[] digest(Topology value, Limits limits) { return Canonical.sha256(encode(value,limits)); }
     private static final class Reader {
