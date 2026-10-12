@@ -31,7 +31,10 @@ impl ProvenanceRefusal {
 
     /// Fixed explanation, accepting no paths, identifiers or command arguments.
     pub const fn message(self) -> &'static str {
-        "Campaign provenance is unverified."
+        match self {
+            Self::NetworkTainted => "The verified network lineage has recorded taint.",
+            _ => "Campaign provenance is unverified.",
+        }
     }
 }
 
