@@ -13,3 +13,7 @@ pub use model::{
     TaintError, TaintMode, TaintPolicy, TaintRecorded,
 };
 pub use owner::TaintStore;
+
+mod provenance_refusal;
+
+pub use provenance_refusal::ProvenanceRefusal;
