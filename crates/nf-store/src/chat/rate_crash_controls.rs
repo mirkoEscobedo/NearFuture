@@ -242,9 +242,7 @@ fn run_cut(operation: &str, stage: &str, committed: bool) {
         std::env::var_os("NF_CHAT_RATE_ATOMIC_CUT").is_none(),
         "parent must not inherit a child-only cut selector"
     );
-    let parent = PathBuf::from(
-        std::env::var_os("NF_CHAT_RATE_ATOMIC_EVIDENCE_DIR").expect("external evidence"),
-    );
+    let parent = super::rate_test_inputs::atomic_evidence_parent();
     assert!(parent.is_absolute());
     let name = format!("{operation}-{stage}");
     let evidence = parent.join(&name);

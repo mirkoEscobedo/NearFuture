@@ -182,6 +182,21 @@ jobs:
             ${{ steps.chat-command-evidence.outputs.directory }}/command-query.stderr
           if-no-files-found: error
           overwrite: 'false'
+      - name: Retain freshly generated Chat rate test evidence after success or failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: chat-rate-generated-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.os }}
+          path: |
+            .tmp/chat-rate-atomic-evidence-*/**
+            .tmp/chat-nonempty-v2-generated-evidence-*/**
+            .tmp/chat-nonempty-v2-generated-inputs-*/genuine-v2.sqlite.bin
+            .tmp/chat-nonempty-v2-generated-inputs-*/signed.original.bin
+            .tmp/chat-nonempty-v2-generated-inputs-*/fixture-origin.original.txt
+          include-hidden-files: true
+          if-no-files-found: warn
+          overwrite: 'false'
+
       - name: Observe Java and Rust mutual authentication on both local endpoints
         if: runner.os == 'Linux'
         shell: pwsh

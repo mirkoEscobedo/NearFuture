@@ -5,7 +5,7 @@ use super::{
 use std::{
     fs,
     io::Write,
-    path::{Path, PathBuf},
+    path::Path,
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -115,14 +115,10 @@ fn genuine_nonempty_v2_owned_copy_preserves_history_requests_and_empty_migration
         std::env::var_os("NF_CHAT_RATE_ATOMIC_CUT").is_none(),
         "CHILD_ONLY_CUT_SELECTOR_REFUSED"
     );
-    let inputs = PathBuf::from(
-        std::env::var_os("NF_CHAT_NONEMPTY_V2_OWNED_INPUT_DIR")
-            .expect("OWNED_FIXTURE_INPUT_DIR_REQUIRED"),
-    );
-    let parent = PathBuf::from(
-        std::env::var_os("NF_CHAT_NONEMPTY_V2_EVIDENCE_DIR")
-            .expect("OWNED_FIXTURE_EVIDENCE_PARENT_REQUIRED"),
-    );
+    let fixture = super::rate_test_inputs::nonempty_fixture();
+    let generated_synthetic = fixture.generated_synthetic;
+    let inputs = fixture.inputs;
+    let parent = fixture.evidence;
     assert!(inputs.is_absolute() && parent.is_absolute());
     let inputs = inputs.canonicalize().unwrap();
     let parent = parent.canonicalize().unwrap();
@@ -130,7 +126,8 @@ fn genuine_nonempty_v2_owned_copy_preserves_history_requests_and_empty_migration
         !inputs.starts_with(&parent) && !parent.starts_with(&inputs),
         "OWNED_INPUT_AND_OUTPUT_BOUNDARIES_OVERLAP"
     );
-    // Root supplies hash-qualified CreateNew copies, never original SQLite paths or keys.
+    // Supplied mode remains Root hash-qualified copies; absent inputs use separately tagged
+    // fresh synthetic signed v2 data, never retained historical fixtures or signer keys.
     let original_bytes = input(&inputs, "genuine-v2.sqlite.bin", 45_056);
     let signed_bytes = input(&inputs, "signed.original.bin", 193);
     let signed = codec::decode_signed_message(&signed_bytes).unwrap();
@@ -138,8 +135,19 @@ fn genuine_nonempty_v2_owned_copy_preserves_history_requests_and_empty_migration
     let policy = ChatPolicy {
         scope: signed.message.scope,
     };
-    let evidence = parent.join("genuine-nonempty-v2");
+    let evidence = parent.join(if generated_synthetic {
+        "generated-signed-nonempty-v2"
+    } else {
+        "genuine-nonempty-v2"
+    });
     fs::create_dir(&evidence).expect("FRESH_OWNED_EVIDENCE_LEAF_REQUIRED");
+    if generated_synthetic {
+        retain(
+            &evidence,
+            "fixture-origin.original.txt",
+            b"GENERATED_SYNTHETIC_SIGNED_V2_NOT_HISTORICAL_RETAINED_FIXTURE\n",
+        );
+    }
     retain(&evidence, "before.sqlite", &original_bytes);
     retain(&evidence, "signed.original.bin", &signed_bytes);
     retain(&evidence, "owned.sqlite", &original_bytes);
@@ -163,6 +171,11 @@ fn genuine_nonempty_v2_owned_copy_preserves_history_requests_and_empty_migration
             .signed,
         signed
     );
+    if generated_synthetic {
+        assert_eq!(state.revision, 1, "SYNTHETIC_V2_EXACT_ORIGINAL_CURSOR");
+        assert_eq!(state.messages.len(), 1, "SYNTHETIC_V2_ONE_SIGNED_ORIGINAL");
+        assert_eq!(state.requests.len(), 10, "SYNTHETIC_V2_NINE_FRESH_ALIASES");
+    }
     let members = legacy_schema::current(&connection, policy.scope).unwrap();
     assert!(!members.accounts.is_empty());
     let known = KnownChatFrontiers {

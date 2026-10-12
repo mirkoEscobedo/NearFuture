@@ -37,3 +37,6 @@ mod rate_crash_controls;
 
 #[cfg(test)]
 mod rate_nonempty_v2_controls;
+
+#[cfg(test)]
+mod rate_test_inputs;
