@@ -7,3 +7,6 @@ pub use admission::admit_with_scope;
 mod snapshot;
 #[cfg(test)]
 mod tests;
+
+mod replay;
+pub use replay::apply_batch_with_scope;
