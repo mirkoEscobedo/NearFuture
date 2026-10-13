@@ -12,9 +12,7 @@ impl OwnedChild {
         }
     }
     /// Preserve the original kill-then-wait once while returning its actual outcomes.
-    pub(crate) fn cleanup(
-        &mut self,
-    ) -> Option<(std::io::Result<()>, std::io::Result<ExitStatus>)> {
+    pub(crate) fn cleanup(&mut self) -> Option<(std::io::Result<()>, std::io::Result<ExitStatus>)> {
         if self.reaped {
             return None;
         }

@@ -35,9 +35,13 @@ impl PrivateVault {
         path: &Path,
         game_save_root: &Path,
     ) -> Result<Self, PrivateStorageFailure> {
-        fs::create_dir(path).map_err(|error| PrivateStorageFailure::with_io(
-            PrivateStorageStage::CreateDirectory, PrivateStorageReason::Io, &error,
-        ))?;
+        fs::create_dir(path).map_err(|error| {
+            PrivateStorageFailure::with_io(
+                PrivateStorageStage::CreateDirectory,
+                PrivateStorageReason::Io,
+                &error,
+            )
+        })?;
         private_access_diagnosed(path, true)?;
         Self::open_diagnosed(path, game_save_root)
     }
@@ -47,20 +51,30 @@ impl PrivateVault {
         game_save_root: &Path,
     ) -> Result<Self, PrivateStorageFailure> {
         private_access_diagnosed(path, false)?;
-        let root = fs::canonicalize(path).map_err(|error| PrivateStorageFailure::with_io(
-            PrivateStorageStage::CanonicalizeVault, PrivateStorageReason::Io, &error,
-        ))?;
-        let saves = fs::canonicalize(game_save_root).map_err(|error| PrivateStorageFailure::with_io(
-            PrivateStorageStage::CanonicalizeSaves, PrivateStorageReason::Io, &error,
-        ))?;
+        let root = fs::canonicalize(path).map_err(|error| {
+            PrivateStorageFailure::with_io(
+                PrivateStorageStage::CanonicalizeVault,
+                PrivateStorageReason::Io,
+                &error,
+            )
+        })?;
+        let saves = fs::canonicalize(game_save_root).map_err(|error| {
+            PrivateStorageFailure::with_io(
+                PrivateStorageStage::CanonicalizeSaves,
+                PrivateStorageReason::Io,
+                &error,
+            )
+        })?;
         if root.starts_with(&saves) {
             return Err(PrivateStorageFailure::new(
-                PrivateStorageStage::Placement, PrivateStorageReason::InsideSaves,
+                PrivateStorageStage::Placement,
+                PrivateStorageReason::InsideSaves,
             ));
         }
         if !root.is_dir() {
             return Err(PrivateStorageFailure::new(
-                PrivateStorageStage::Placement, PrivateStorageReason::DirectoryCheck,
+                PrivateStorageStage::Placement,
+                PrivateStorageReason::DirectoryCheck,
             ));
         }
         Ok(Self { root })
@@ -157,7 +171,11 @@ pub(crate) fn private_access(path: &Path, initialize: bool) -> Result<(), Identi
     private_access_diagnosed(path, initialize).map_err(PrivateStorageFailure::legacy)
 }
 fn acl_stage(initialize: bool) -> PrivateStorageStage {
-    if initialize { PrivateStorageStage::InitializeAcl } else { PrivateStorageStage::VerifyAcl }
+    if initialize {
+        PrivateStorageStage::InitializeAcl
+    } else {
+        PrivateStorageStage::VerifyAcl
+    }
 }
 
 #[cfg(windows)]
@@ -168,16 +186,24 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
         time::{Duration, Instant},
     };
     let stage = acl_stage(initialize);
-    let metadata = fs::symlink_metadata(path).map_err(|error|
+    let metadata = fs::symlink_metadata(path).map_err(|error| {
         PrivateStorageFailure::with_io(stage, PrivateStorageReason::Metadata, &error)
-    )?;
+    })?;
     if metadata.file_attributes() & 0x400 != 0 {
-        return Err(PrivateStorageFailure::new(stage, PrivateStorageReason::Reparse));
+        return Err(PrivateStorageFailure::new(
+            stage,
+            PrivateStorageReason::Reparse,
+        ));
     }
     let mut command = Command::new("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe");
     command
         .args([
-            "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
+            "-NoLogo",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
         ])
         .arg(concat!(env!("CARGO_MANIFEST_DIR"), "/src/private-acl.ps1"))
         .arg("-PrivatePath")
@@ -196,11 +222,13 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
     let child = match spawned {
         Ok(child) => child,
         Err(error) => {
-            let mut failure = PrivateStorageFailure::with_io(
-                stage, PrivateStorageReason::Spawn, &error,
-            );
+            let mut failure =
+                PrivateStorageFailure::with_io(stage, PrivateStorageReason::Spawn, &error);
             failure.helper = Some(HelperObservation {
-                spawn_micros, poll_micros: None, exit_code: None, cleanup: None,
+                spawn_micros,
+                poll_micros: None,
+                exit_code: None,
+                cleanup: None,
             });
             return Err(failure);
         }
@@ -217,15 +245,17 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
                 }
                 let mut failure = PrivateStorageFailure::new(stage, PrivateStorageReason::Exit);
                 failure.helper = Some(HelperObservation {
-                    spawn_micros, poll_micros: Some(poll_started.elapsed().as_micros()),
-                    exit_code: status.code(), cleanup: None,
+                    spawn_micros,
+                    poll_micros: Some(poll_started.elapsed().as_micros()),
+                    exit_code: status.code(),
+                    cleanup: None,
                 });
                 return Err(failure);
             }
             Ok(None) => {}
-            Err(error) => break PrivateStorageFailure::with_io(
-                stage, PrivateStorageReason::Wait, &error,
-            ),
+            Err(error) => {
+                break PrivateStorageFailure::with_io(stage, PrivateStorageReason::Wait, &error);
+            }
         }
         if Instant::now() >= deadline {
             break PrivateStorageFailure::new(stage, PrivateStorageReason::Deadline);
@@ -235,12 +265,16 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
     let poll_micros = poll_started.elapsed().as_micros();
     let cleanup = child.cleanup().map(|(killed, waited)| HelperCleanup {
         kill_error: killed.err().as_ref().map(StorageIoFailure::from),
-        wait_result: waited.map(|status| status.code())
+        wait_result: waited
+            .map(|status| status.code())
             .map_err(|error| StorageIoFailure::from(&error)),
     });
     let mut refusal = refusal;
     refusal.helper = Some(HelperObservation {
-        spawn_micros, poll_micros: Some(poll_micros), exit_code: None, cleanup,
+        spawn_micros,
+        poll_micros: Some(poll_micros),
+        exit_code: None,
+        cleanup,
     });
     Err(refusal)
 }
@@ -248,34 +282,46 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
 fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), PrivateStorageFailure> {
     use std::os::unix::fs::{MetadataExt, PermissionsExt};
     let stage = acl_stage(initialize);
-    let metadata = fs::symlink_metadata(path).map_err(|error|
+    let metadata = fs::symlink_metadata(path).map_err(|error| {
         PrivateStorageFailure::with_io(stage, PrivateStorageReason::Metadata, &error)
-    )?;
+    })?;
     if metadata.file_type().is_symlink() || (!metadata.is_file() && !metadata.is_dir()) {
-        return Err(PrivateStorageFailure::new(stage, PrivateStorageReason::UnsafeType));
+        return Err(PrivateStorageFailure::new(
+            stage,
+            PrivateStorageReason::UnsafeType,
+        ));
     }
     if initialize {
         fs::set_permissions(
             path,
             fs::Permissions::from_mode(if metadata.is_dir() { 0o700 } else { 0o600 }),
-        ).map_err(|error| PrivateStorageFailure::with_io(
-            stage, PrivateStorageReason::Permissions, &error,
-        ))?;
+        )
+        .map_err(|error| {
+            PrivateStorageFailure::with_io(stage, PrivateStorageReason::Permissions, &error)
+        })?;
     }
-    let checked = fs::symlink_metadata(path).map_err(|error|
+    let checked = fs::symlink_metadata(path).map_err(|error| {
         PrivateStorageFailure::with_io(stage, PrivateStorageReason::Metadata, &error)
-    )?;
-    let owner = fs::metadata("/proc/self").map_err(|error|
-        PrivateStorageFailure::with_io(stage, PrivateStorageReason::Metadata, &error)
-    )?.uid();
+    })?;
+    let owner = fs::metadata("/proc/self")
+        .map_err(|error| {
+            PrivateStorageFailure::with_io(stage, PrivateStorageReason::Metadata, &error)
+        })?
+        .uid();
     if checked.uid() != owner
         || checked.mode() & 0o777 != if checked.is_dir() { 0o700 } else { 0o600 }
     {
-        return Err(PrivateStorageFailure::new(stage, PrivateStorageReason::Permissions));
+        return Err(PrivateStorageFailure::new(
+            stage,
+            PrivateStorageReason::Permissions,
+        ));
     }
     Ok(())
 }
 #[cfg(not(any(windows, unix)))]
 fn private_access_diagnosed(_path: &Path, initialize: bool) -> Result<(), PrivateStorageFailure> {
-    Err(PrivateStorageFailure::new(acl_stage(initialize), PrivateStorageReason::UnsupportedPlatform))
+    Err(PrivateStorageFailure::new(
+        acl_stage(initialize),
+        PrivateStorageReason::UnsupportedPlatform,
+    ))
 }
