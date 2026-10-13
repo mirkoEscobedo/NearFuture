@@ -28,12 +28,23 @@ jobs:
         run: cargo fetch --locked
       - name: Install vendored developer tools offline
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
+      - name: Prepare caller-owned public restore refusal evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $restoreEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-restore-refusals-' + [Guid]::NewGuid().ToString('N'))))
+          [void][IO.Directory]::CreateDirectory($restoreEvidence)
+          [IO.File]::WriteAllText((Join-Path $restoreEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-restore-refusal-fixtures","secretFiles":false}' + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+          'NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT=' + $restoreEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Check isolated restore public test formatting
         id: restore-format
-        run: rustfmt --edition 2024 --check crates/nf-store/tests/miniature_backup_restore.rs
+        run: rustfmt --edition 2024 --check crates/nf-store/tests/miniature_backup_restore.rs crates/nf-store/tests/miniature_backup_restore_refusals.rs
       - name: Observe isolated backup restore public seam
         if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
         run: cargo test -p nf-store --test miniature_backup_restore --locked --offline isolated_backup_restore_preserves_originals_and_refuses_newer_known_same_history -- --exact --nocapture
+      - name: Observe isolated restore source and destination refusals
+        if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        run: cargo test -p nf-store --test miniature_backup_restore_refusals --locked --offline -- --nocapture --test-threads=1
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
@@ -72,6 +83,14 @@ jobs:
         env:
           NF_MINIATURE_REQUIRE_SYNC_FAULT: '1'
         run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture
+      - name: Retain only caller-owned public restore refusal fixtures
+        if: ${{ always() && env.NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: restore-refusal-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT }}
+          if-no-files-found: error
+          retention-days: 90
   # A fresh, required Windows job preserves the hosted 20-minute bound for each gate.
   windows-interop:
     runs-on: windows-latest
