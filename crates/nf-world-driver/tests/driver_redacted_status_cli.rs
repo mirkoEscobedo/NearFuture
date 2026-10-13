@@ -629,3 +629,6 @@ fn redacted_status_reads_read_only_media_and_preserves_all_protected_minima() {
         "complete read-only status case deadline"
     );
 }
+
+#[path = "driver_redacted_status_cli/support_preview.rs"]
+mod support_preview;
