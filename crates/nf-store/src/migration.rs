@@ -39,11 +39,18 @@ impl Composition {
         if providers.is_empty() || providers.len() > MAX_PROVIDERS {
             return Err(CompositionError::Limit);
         }
-        if storage_schema == 0 || providers.iter().any(|p| p.version == 0 || p.state_schema == 0) {
+        if storage_schema == 0
+            || providers
+                .iter()
+                .any(|p| p.version == 0 || p.state_schema == 0)
+        {
             return Err(CompositionError::ZeroVersion);
         }
         providers.sort_unstable_by_key(|p| p.provider);
-        if providers.windows(2).any(|pair| pair[0].provider == pair[1].provider) {
+        if providers
+            .windows(2)
+            .any(|pair| pair[0].provider == pair[1].provider)
+        {
             return Err(CompositionError::DuplicateProvider);
         }
         Ok(Self {
