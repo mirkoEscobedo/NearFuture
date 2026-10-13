@@ -317,9 +317,11 @@ fn minimum(known: KnownFrontiers, expected: KnownFrontiers) -> Result<(), Upgrad
     }
     if known.store_revision < expected.store_revision
         || known.event_sequence < expected.event_sequence
-        || expected
-            .membership_revision
-            .is_some_and(|minimum| known.membership_revision.is_none_or(|value| value < minimum))
+        || expected.membership_revision.is_some_and(|minimum| {
+            known
+                .membership_revision
+                .is_none_or(|value| value < minimum)
+        })
     {
         return Err(UpgradeError::Storage(StoreError::StaleBackup));
     }

@@ -60,7 +60,10 @@ fn descriptor(input: &mut Reader<'_>) -> Result<Vec<u8>, UpgradeError> {
         return Err(UpgradeError::Corrupt);
     }
     let end = input.at.checked_add(size).ok_or(UpgradeError::Corrupt)?;
-    let value = input.bytes.get(input.at..end).ok_or(UpgradeError::Corrupt)?;
+    let value = input
+        .bytes
+        .get(input.at..end)
+        .ok_or(UpgradeError::Corrupt)?;
     input.at = end;
     staging_record::decode(value)?;
     Ok(value.to_vec())
