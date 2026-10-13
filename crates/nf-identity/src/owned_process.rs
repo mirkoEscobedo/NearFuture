@@ -11,6 +11,17 @@ impl OwnedChild {
             reaped: false,
         }
     }
+    /// Preserve the original kill-then-wait once while returning its actual outcomes.
+    pub(crate) fn cleanup(&mut self) -> Option<(std::io::Result<()>, std::io::Result<ExitStatus>)> {
+        if self.reaped {
+            return None;
+        }
+        let killed = self.child.kill();
+        let waited = self.child.wait();
+        // This flag suppresses a second cleanup attempt, as in the original Drop.
+        self.reaped = true;
+        Some((killed, waited))
+    }
     pub(crate) fn try_wait(&mut self) -> std::io::Result<Option<ExitStatus>> {
         let status = self.child.try_wait()?;
         if status.is_some() {
@@ -21,11 +32,7 @@ impl OwnedChild {
 }
 impl Drop for OwnedChild {
     fn drop(&mut self) {
-        if !self.reaped {
-            let _ = self.child.kill();
-            let _ = self.child.wait();
-            self.reaped = true;
-        }
+        let _ = self.cleanup();
     }
 }
 #[cfg(test)]
