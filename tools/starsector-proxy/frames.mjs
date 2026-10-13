@@ -6,6 +6,54 @@ function object(value) {
     return /** @type {Record<string, any>} */ (value);
 }
 
+/** Accept only the CLI2 observational envelope demonstrated by retained exports.
+ * Wrapped native capture/input results have no qualified per-call PNG provenance yet.
+ * @param {unknown} message @returns {any[]}
+ */
+function messageParts(message) {
+    const row = object(message);
+    if (Array.isArray(row.parts)) {
+        if (Object.hasOwn(row, 'content')) throw new Error('Ambiguous OpenCode message envelope');
+        return row.parts;
+    }
+    if (row.type !== 'assistant') {
+        if (['agent-switched', 'user', 'system', 'idle'].includes(row.type)) return [];
+        throw new Error('Missing exported message parts');
+    }
+    if (!Array.isArray(row.content)) throw new Error('Missing CLI2 assistant content');
+    const readonlyCalls = new Set([
+        'computer_use.doctor', 'computer_use.policy_status',
+        'computer_use.get_frontmost_app', 'computer_use.list_windows', 'computer_use.wait',
+    ]);
+    for (const part of row.content) {
+        if (part.type === 'image' || part.type === 'file') {
+            throw new Error('Unqualified CLI2 image provenance');
+        }
+        if (part.type !== 'tool') continue;
+        const state = object(part.state);
+        if (Array.isArray(state.content) && state.content.some(item => item.type === 'image' || item.type === 'file')) {
+            throw new Error('Unqualified CLI2 image provenance');
+        }
+        if (part.name !== 'execute') {
+            if (typeof part.name === 'string' && /^computer_use[._]/.test(part.name)) {
+                throw new Error('Unqualified CLI2 native tool provenance');
+            }
+            continue;
+        }
+        const metadata = object(state.metadata);
+        if (metadata.truncated !== false || !Array.isArray(metadata.toolCalls)) {
+            throw new Error('Incomplete CLI2 execute provenance');
+        }
+        for (const call of metadata.toolCalls) {
+            if (typeof call.tool !== 'string') throw new Error('Incomplete CLI2 execute provenance');
+            if (!/^computer_use[._]/.test(call.tool)) continue;
+            if (!readonlyCalls.has(call.tool)) throw new Error('Unqualified CLI2 native tool provenance');
+        }
+    }
+    // Text, wrapper times and model narratives never certify a targeted image.
+    return [];
+}
+
 /** @param {unknown} session @returns {Array<{bytes: Buffer, metadata: Record<string, unknown>}>} */
 export function screenshotFrames(session) {
     const data = object(session);
@@ -17,8 +65,7 @@ export function screenshotFrames(session) {
     /** @type {Array<{bytes: Buffer, metadata: Record<string, unknown>}>} */
     const frames = [];
     for (const message of data.messages) {
-        if (!Array.isArray(message.parts)) throw new Error('Missing exported message parts');
-        for (const part of message.parts) {
+        for (const part of messageParts(message)) {
             if (part.type !== 'tool' || part.state?.status !== 'completed') continue;
             const state = object(part.state);
             if (part.tool === 'computer_use_get_window') {
