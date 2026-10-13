@@ -69,3 +69,85 @@ fn two_provider_identity_is_canonical_and_binds_each_descriptor_field() {
         assert_ne!(different.digest(), expected);
     }
 }
+
+#[test]
+fn composition_bounds_refuse_oversize_reserved_and_ambiguous_descriptors() {
+    use nf_store::migration::CompositionError;
+
+    let provider = ProviderVersion {
+        provider: ProviderId::from_bytes([1; 16]),
+        implementation: [0; 32], // Supplied digest bytes remain opaque.
+        version: 1,
+        state_schema: 1,
+    };
+    assert!(Composition::new(1, [0; 32], [0; 32], [0; 32], vec![provider]).is_ok());
+    let maximum: Vec<_> = (1_u8..=32)
+        .map(|id| ProviderVersion {
+            provider: ProviderId::from_bytes([id; 16]),
+            ..provider
+        })
+        .collect();
+    let composition = Composition::new(1, [0; 32], [0; 32], [0; 32], maximum.clone()).unwrap();
+    assert_eq!(composition.require_supported(&maximum), Ok(()));
+    assert_eq!(
+        composition.require_supported(&maximum[..31]),
+        Err(CompositionError::UnsupportedProvider)
+    );
+
+    let oversized = (1_u8..=33)
+        .map(|id| ProviderVersion {
+            provider: ProviderId::from_bytes([id; 16]),
+            ..provider
+        })
+        .collect();
+    let other = ProviderVersion {
+        provider: ProviderId::from_bytes([2; 16]),
+        ..provider
+    };
+    for (storage_schema, providers, expected) in [
+        (1, vec![], CompositionError::Limit),
+        (1, oversized, CompositionError::Limit),
+        (0, vec![provider], CompositionError::ZeroVersion),
+        (
+            1,
+            vec![
+                provider,
+                ProviderVersion {
+                    version: 0,
+                    ..other
+                },
+            ],
+            CompositionError::ZeroVersion,
+        ),
+        (
+            1,
+            vec![
+                provider,
+                ProviderVersion {
+                    state_schema: 0,
+                    ..other
+                },
+            ],
+            CompositionError::ZeroVersion,
+        ),
+        (
+            1,
+            vec![
+                provider,
+                other,
+                ProviderVersion {
+                    implementation: [9; 32],
+                    version: 2,
+                    state_schema: 3,
+                    ..provider
+                },
+            ],
+            CompositionError::DuplicateProvider,
+        ),
+    ] {
+        assert_eq!(
+            Composition::new(storage_schema, [0; 32], [0; 32], [0; 32], providers).err(),
+            Some(expected)
+        );
+    }
+}
