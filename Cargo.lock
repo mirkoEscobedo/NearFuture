@@ -2183,6 +2183,7 @@ dependencies = [
  "nf-kernel",
  "nf-store",
  "nf-world",
+ "rusqlite",
  "sha2 0.10.9",
  "zeroize",
 ]

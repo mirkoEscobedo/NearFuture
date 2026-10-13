@@ -36,6 +36,10 @@ jobs:
           [void][IO.Directory]::CreateDirectory($restoreEvidence)
           [IO.File]::WriteAllText((Join-Path $restoreEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-restore-refusal-fixtures","secretFiles":false}' + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
           'NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT=' + $restoreEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $cliEvidence = Join-Path $restoreEvidence ('isolated-cli-' + [Guid]::NewGuid().ToString('N'))
+          [void][IO.Directory]::CreateDirectory($cliEvidence)
+          [IO.File]::WriteAllText((Join-Path $cliEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-isolated-restore-cli-fixtures","secretFiles":false}' + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+          'NF_ISOLATED_RESTORE_CLI_EVIDENCE_PARENT=' + $cliEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Check isolated restore public test formatting
         id: restore-format
         run: rustfmt --edition 2024 --check crates/nf-store/tests/miniature_backup_restore.rs crates/nf-store/tests/miniature_backup_restore_refusals.rs crates/nf-store/tests/miniature_restore_io_failure.rs
@@ -45,6 +49,13 @@ jobs:
       - name: Observe isolated restore source and destination refusals
         if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
         run: cargo test -p nf-store --test miniature_backup_restore_refusals --locked --offline -- --nocapture --test-threads=1
+      - name: Check isolated restore CLI public test formatting
+        id: restore-cli-format
+        if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        run: rustfmt --edition 2024 --check crates/nf-world-driver/tests/driver_isolated_restore_cli.rs
+      - name: Observe actual isolated backup restore CLI
+        if: ${{ !cancelled() && (steps.restore-cli-format.outcome == 'success' || steps.restore-cli-format.outcome == 'failure') }}
+        run: cargo test -p nf-world-driver --test driver_isolated_restore_cli --locked --offline actual_isolated_restore_cli_preserves_originals_and_all_independent_minima -- --ignored --exact --nocapture --test-threads=1
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
