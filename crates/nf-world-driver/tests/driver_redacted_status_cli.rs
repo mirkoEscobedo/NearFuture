@@ -459,3 +459,159 @@ fn actual_redacted_cli_routes_closed_json_and_preserves_fresh_profile2_without_v
     drop(success);
     assert!(Instant::now() < deadline, "complete CLI receipt deadline");
 }
+
+struct RestoreDatabasePermissions(PathBuf, fs::Permissions);
+impl Drop for RestoreDatabasePermissions {
+    fn drop(&mut self) {
+        fs::set_permissions(&self.0, self.1.clone()).expect("restore owned database permissions");
+    }
+}
+
+fn directory_names(path: &Path) -> Vec<std::ffi::OsString> {
+    let mut names: Vec<_> = fs::read_dir(path)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect();
+    names.sort();
+    names
+}
+
+fn status_options(
+    fixture: &Fixture,
+    known: nf_store::miniature::MiniatureKnownFrontiers,
+) -> nf_world_driver::OpenOptions {
+    nf_world_driver::OpenOptions {
+        database: fixture.database.clone(),
+        scope: known.storage.scope,
+        minimum_event: known.storage.event_sequence,
+        minimum_store: known.storage.store_revision,
+        minimum_membership: known.storage.membership_revision.unwrap(),
+        minimum_term: known.minimum_authority_term,
+    }
+}
+
+#[test]
+fn redacted_status_reads_read_only_media_and_preserves_all_protected_minima() {
+    let deadline = Instant::now() + CASE_LIMIT;
+    let executable = Path::new(env!("CARGO_BIN_EXE_nf-world-driver"));
+    let expected_binary = binary_digest(executable, deadline);
+    let fixture = fixture(deadline);
+    let before_database = bounded(&fixture.database, DATABASE_LIMIT);
+    let capture_root = fixture.root.join("read-only-captures");
+    fs::create_dir(&capture_root).unwrap();
+    let mut captures = Vec::new();
+    for index in 0..5 {
+        let stdout = capture_root.join(format!("{index}.stdout.raw"));
+        let stderr = capture_root.join(format!("{index}.stderr.raw"));
+        // Reserve all output names before observing the database directory.
+        let out = new_file(&stdout);
+        let err = new_file(&stderr);
+        out.sync_all().unwrap();
+        err.sync_all().unwrap();
+        captures.push((stdout, stderr, out, err));
+    }
+    let before_directory = directory_names(&fixture.root);
+    let permissions = fs::metadata(&fixture.database).unwrap().permissions();
+    let restore = RestoreDatabasePermissions(fixture.database.clone(), permissions.clone());
+    let mut read_only = permissions;
+    read_only.set_readonly(true);
+    fs::set_permissions(&fixture.database, read_only).unwrap();
+
+    let reader = nf_world_driver::Driver::read_only_status(status_options(&fixture, fixture.known))
+        .unwrap();
+    assert!(reader.is_read_only().unwrap(), "actual SQLite READ_ONLY mode");
+    assert_eq!(reader.snapshot(), &fixture.snapshot);
+    let expected_state = reader.snapshot_bytes().unwrap();
+    drop(reader);
+    assert_eq!(bounded(&fixture.database, DATABASE_LIMIT), before_database);
+
+    for (index, (stdout, stderr, out, err)) in captures.into_iter().enumerate() {
+        let mut known = fixture.known;
+        if index != 0 {
+            match index {
+                1 => known.storage.event_sequence = EventSeq(1),
+                2 => known.storage.store_revision = 1,
+                3 => known.storage.membership_revision = Some(3),
+                _ => known.minimum_authority_term = AuthorityTerm(1),
+            }
+            assert_eq!(
+                nf_world_driver::Driver::read_only_status(status_options(&fixture, known)).err(),
+                Some(nf_world_driver::DriverError::Store(
+                    MiniatureStoreError::Storage(nf_store::StoreError::StaleBackup)
+                ))
+            );
+        }
+        let mut command = Command::new(executable);
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::from(out))
+            .stderr(Stdio::from(err))
+            .arg("status-redacted")
+            .arg("--database")
+            .arg(&fixture.database)
+            .args([
+                "--universe",
+                &hex(known.storage.scope.universe.as_bytes()),
+                "--history",
+                &hex(known.storage.scope.history.as_bytes()),
+                "--min-event",
+                &known.storage.event_sequence.0.to_string(),
+                "--min-store",
+                &known.storage.store_revision.to_string(),
+                "--min-membership",
+                &known.storage.membership_revision.unwrap().to_string(),
+                "--min-term",
+                &known.minimum_authority_term.0.to_string(),
+            ]);
+        assert!(Instant::now() < deadline, "before read-only CLI deadline");
+        let mut owned = OwnedChild {
+            child: command.spawn().expect("owned read-only status child"),
+            reaped: false,
+            termination_requested: false,
+            cleanup_deadline: None,
+            cleanup_receipt: capture_root.join(format!("{index}.cleanup.public")),
+        };
+        drop(command);
+        let status = finish_child(&mut owned, &stdout, &stderr, deadline);
+        drop(owned);
+        let output = bounded(&stdout, STDOUT_LIMIT);
+        let errors = bounded(&stderr, STDERR_LIMIT);
+        if index == 0 {
+            assert_eq!(status.code(), Some(0), "read-only CLI status failed");
+            assert!(errors.is_empty(), "read-only CLI stderr retained");
+            assert_eq!(
+                output,
+                concat!(
+                    "{\"format\":\"NF-OPERATOR-MINIATURE-STATUS-1\",\"store_profile\":\"profile2\",",
+                    "\"world_tick\":\"0\",\"event_sequence\":\"0\",\"store_revision\":\"0\",",
+                    "\"membership_revision\":\"2\",\"persisted_authority_term\":null,",
+                    "\"minimum_known_authority_term\":\"0\",\"provider_revision\":\"0\",",
+                    "\"pending_frontier\":false,\"pending_intents_count\":\"0\",",
+                    "\"provider_ownership\":\"unavailable\",\"lag\":\"unavailable\",",
+                    "\"taint\":\"unavailable\",\"pending_native_bridge\":\"unavailable\",",
+                    "\"transfer_receipts\":\"unavailable_profile2\",\"backup_recovery\":\"unavailable\"}"
+                )
+                .as_bytes()
+            );
+        } else {
+            assert_eq!(status.code(), Some(1), "stale minimum must fail");
+            assert!(output.is_empty(), "stale minimum must publish no JSON");
+            assert_eq!(errors, b"driver: Store(Storage(StaleBackup))\n");
+        }
+        assert!(fs::metadata(&fixture.database).unwrap().permissions().readonly());
+        assert_eq!(bounded(&fixture.database, DATABASE_LIMIT), before_database);
+        assert_eq!(directory_names(&fixture.root), before_directory);
+        assert!(Instant::now() < deadline, "complete read-only invocation deadline");
+    }
+    let reader = nf_world_driver::Driver::read_only_status(status_options(&fixture, fixture.known))
+        .unwrap();
+    assert!(reader.is_read_only().unwrap());
+    assert_eq!(reader.snapshot(), &fixture.snapshot);
+    assert_eq!(reader.snapshot_bytes().unwrap(), expected_state);
+    drop(reader);
+    assert_eq!(bounded(&fixture.database, DATABASE_LIMIT), before_database);
+    assert_eq!(directory_names(&fixture.root), before_directory);
+    assert_eq!(binary_digest(executable, deadline), expected_binary);
+    drop(restore);
+    assert!(Instant::now() < deadline, "complete read-only status case deadline");
+}
