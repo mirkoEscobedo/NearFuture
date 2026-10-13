@@ -13,7 +13,8 @@ use std::{
 struct RestorePermissions(PathBuf, fs::Permissions);
 impl Drop for RestorePermissions {
     fn drop(&mut self) {
-        fs::set_permissions(&self.0, self.1.clone()).expect("restore disposable database permissions");
+        fs::set_permissions(&self.0, self.1.clone())
+            .expect("restore disposable database permissions");
     }
 }
 fn entries(root: &Path) -> Vec<std::ffi::OsString> {
