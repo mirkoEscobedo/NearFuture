@@ -18,7 +18,7 @@ fn helper(path: &Path, initialize: bool) -> ExitStatus {
     use std::os::windows::process::CommandExt;
     let script = concat!(env!("CARGO_MANIFEST_DIR"), "/src/private-acl.ps1");
     let command = format!(
-        "$PSModuleAutoLoadingPreference='None'; function Import-Module {{ throw 'MODULE_LOADING_FORBIDDEN' }}; & '{}' -PrivatePath '{}' {}",
+        "$PSModuleAutoLoadingPreference='None'; function Import-Module {{ throw 'MODULE_LOADING_FORBIDDEN' }}; & '{}' -PrivatePath '{}' {}; exit $LASTEXITCODE",
         script.replace('\'', "''"),
         path.to_str().unwrap().replace('\'', "''"),
         if initialize { "-Initialize" } else { "" },
