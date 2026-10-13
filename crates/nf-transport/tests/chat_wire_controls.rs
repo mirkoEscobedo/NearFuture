@@ -62,11 +62,11 @@ fn closed_header_refusal_and_exact_body_eof_reject_malformed_values() {
     trailing.push(0);
     let cases = [
         ("domain", replaced(&body, 0, b"X"), PeerError::Malformed),
-        ("version", replaced(&body, 13, b"2"), PeerError::Malformed),
+        ("version", replaced(&body, 13, b"3"), PeerError::Malformed),
         ("tag_zero", replaced(&body, 15, &[0]), PeerError::Malformed),
         (
             "tag_unknown",
-            replaced(&body, 15, &[6]),
+            replaced(&body, 15, &[7]),
             PeerError::Malformed,
         ),
         (
