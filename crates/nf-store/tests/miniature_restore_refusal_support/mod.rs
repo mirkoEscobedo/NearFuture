@@ -31,7 +31,10 @@ impl RetainedBackup {
             std::env::var_os("NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT")
                 .expect("ROOT_OWNED_RESTORE_REFUSAL_PARENT_REQUIRED"),
         );
-        assert!(parent.is_absolute(), "caller must supply an absolute owned parent");
+        assert!(
+            parent.is_absolute(),
+            "caller must supply an absolute owned parent"
+        );
         let metadata = fs::symlink_metadata(&parent).unwrap();
         assert!(metadata.is_dir() && !metadata.file_type().is_symlink());
         #[cfg(windows)]

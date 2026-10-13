@@ -30,12 +30,7 @@ fn state_digest(connection: &Connection) -> (Vec<u8>, Vec<u8>) {
         .unwrap()
 }
 
-fn assert_refusal(
-    fixture: &RetainedBackup,
-    backup: &Path,
-    target: &Path,
-    expected: StoreError,
-) {
+fn assert_refusal(fixture: &RetainedBackup, backup: &Path, target: &Path, expected: StoreError) {
     let before = tree(&fixture.root);
     let occupied = target.exists();
     assert_eq!(
@@ -113,7 +108,12 @@ fn occupied_outputs_source_aliases_and_companions_are_preserved_without_creation
         let companion = Path::new(&companion);
         fs::write(companion, b"existing caller-owned SQLite companion").unwrap();
         assert!(!target.exists());
-        assert_refusal(&fixture, &fixture.backup, &target, StoreError::AlreadyExists);
+        assert_refusal(
+            &fixture,
+            &fixture.backup,
+            &target,
+            StoreError::AlreadyExists,
+        );
         assert!(!target.exists());
     }
 }
