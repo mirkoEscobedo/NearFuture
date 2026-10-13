@@ -109,6 +109,20 @@ impl World {
             outcomes: Vec::new(),
         })
     }
+    /// Returns a separately validated value with explicit ruleset and ownership bindings.
+    ///
+    /// Preserves all other state and committed outcomes without mutating this value.
+    /// The opaque caller hash grants no provider compatibility, persistence or activation authority.
+    pub fn with_ruleset_hash(&self, ruleset_hash: [u8; 32]) -> Result<Self, Rejection> {
+        let mut spec = self.to_spec();
+        spec.ruleset_hash = ruleset_hash;
+        for owner in &mut spec.ownership {
+            owner.ruleset_hash = ruleset_hash;
+        }
+        let mut world = Self::new(spec)?;
+        world.outcomes = self.outcomes.clone();
+        Ok(world)
+    }
     pub fn view(&self) -> WorldView<'_> {
         WorldView(self)
     }
