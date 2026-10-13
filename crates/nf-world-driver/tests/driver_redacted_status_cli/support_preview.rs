@@ -60,9 +60,14 @@ fn support_preview_is_explicit_closed_redacted_data_from_read_only_profile2() {
             "--min-term",
             "0",
         ]);
-    assert!(Instant::now() < deadline, "before support preview child deadline");
+    assert!(
+        Instant::now() < deadline,
+        "before support preview child deadline"
+    );
     let mut owned = OwnedChild {
-        child: command.spawn().expect("one owned support preview CLI child"),
+        child: command
+            .spawn()
+            .expect("one owned support preview CLI child"),
         reaped: false,
         termination_requested: false,
         cleanup_deadline: None,
@@ -93,9 +98,8 @@ fn support_preview_is_explicit_closed_redacted_data_from_read_only_profile2() {
     .as_bytes();
     let output_matches = output == expected_output;
     let stderr_empty = errors.is_empty();
-    let unsupported_command_observed = status.code() == Some(1)
-        && output.is_empty()
-        && errors == b"driver: InvalidCommand\n";
+    let unsupported_command_observed =
+        status.code() == Some(1) && output.is_empty() && errors == b"driver: InvalidCommand\n";
     assert_eq!(
         status.code(),
         Some(0),
@@ -103,12 +107,19 @@ fn support_preview_is_explicit_closed_redacted_data_from_read_only_profile2() {
     );
     assert!(stderr_empty, "unexpected support preview stderr retained");
     assert_eq!(output, expected_output);
-    assert!(!output.windows(fixture.root.as_os_str().to_string_lossy().len()).any(|bytes| {
-        bytes == fixture.root.as_os_str().to_string_lossy().as_bytes()
-    }));
+    assert!(
+        !output
+            .windows(fixture.root.as_os_str().to_string_lossy().len())
+            .any(|bytes| { bytes == fixture.root.as_os_str().to_string_lossy().as_bytes() })
+    );
     assert_eq!(bounded(&fixture.database, DATABASE_LIMIT), before_database);
     assert_eq!(directory_names(&fixture.root), before_directory);
-    assert!(fs::metadata(&fixture.database).unwrap().permissions().readonly());
+    assert!(
+        fs::metadata(&fixture.database)
+            .unwrap()
+            .permissions()
+            .readonly()
+    );
 
     let reader =
         nf_world_driver::Driver::read_only_status(status_options(&fixture, fixture.known)).unwrap();
@@ -120,5 +131,8 @@ fn support_preview_is_explicit_closed_redacted_data_from_read_only_profile2() {
     assert_eq!(directory_names(&fixture.root), before_directory);
     assert_eq!(binary_digest(executable, deadline), expected_binary);
     drop(restore);
-    assert!(Instant::now() < deadline, "complete support preview case deadline");
+    assert!(
+        Instant::now() < deadline,
+        "complete support preview case deadline"
+    );
 }
