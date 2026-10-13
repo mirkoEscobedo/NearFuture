@@ -16,10 +16,7 @@ pub struct MiniatureReader {
 }
 
 impl MiniatureReader {
-    pub fn open_existing(
-        path: impl AsRef<Path>,
-        known: MiniatureKnownFrontiers,
-    ) -> Result<Self> {
+    pub fn open_existing(path: impl AsRef<Path>, known: MiniatureKnownFrontiers) -> Result<Self> {
         let mut connection = crate::schema::read_only_connection(path.as_ref())?;
         let transaction = connection.transaction_with_behavior(TransactionBehavior::Deferred)?;
         let journal: String =
