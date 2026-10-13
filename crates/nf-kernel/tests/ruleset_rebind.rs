@@ -43,7 +43,10 @@ fn ruleset_value_rebind_preserves_a_real_committed_outcome_and_original_world() 
     .unwrap() else {
         panic!("the real market proposal must commit before testing the value rebind");
     };
-    assert_eq!(world.view().market(support::entity(30)).unwrap().credits, 105);
+    assert_eq!(
+        world.view().market(support::entity(30)).unwrap().credits,
+        105
+    );
     assert_eq!(world.view().event_seq(), EventSeq(1));
     assert_eq!(world.to_spec().tick, WorldTick(1));
     assert_eq!(world.outcomes(), batch.outcomes.as_slice());
