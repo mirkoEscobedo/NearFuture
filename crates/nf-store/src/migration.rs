@@ -98,3 +98,6 @@ impl Composition {
         Ok(())
     }
 }
+
+// Private closed descriptor codec for inactive staging.
+pub(crate) mod staging_record;

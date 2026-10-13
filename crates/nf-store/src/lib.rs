@@ -25,3 +25,6 @@ pub mod registration;
 pub mod trade;
 
 pub mod migration;
+
+/// Inactive config-only artifacts, never ordinary Store or activation admission.
+pub mod staging;
