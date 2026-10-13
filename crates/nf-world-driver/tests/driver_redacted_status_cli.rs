@@ -517,9 +517,12 @@ fn redacted_status_reads_read_only_media_and_preserves_all_protected_minima() {
     read_only.set_readonly(true);
     fs::set_permissions(&fixture.database, read_only).unwrap();
 
-    let reader = nf_world_driver::Driver::read_only_status(status_options(&fixture, fixture.known))
-        .unwrap();
-    assert!(reader.is_read_only().unwrap(), "actual SQLite READ_ONLY mode");
+    let reader =
+        nf_world_driver::Driver::read_only_status(status_options(&fixture, fixture.known)).unwrap();
+    assert!(
+        reader.is_read_only().unwrap(),
+        "actual SQLite READ_ONLY mode"
+    );
     assert_eq!(reader.snapshot(), &fixture.snapshot);
     let expected_state = reader.snapshot_bytes().unwrap();
     drop(reader);
@@ -598,13 +601,21 @@ fn redacted_status_reads_read_only_media_and_preserves_all_protected_minima() {
             assert!(output.is_empty(), "stale minimum must publish no JSON");
             assert_eq!(errors, b"driver: Store(Storage(StaleBackup))\n");
         }
-        assert!(fs::metadata(&fixture.database).unwrap().permissions().readonly());
+        assert!(
+            fs::metadata(&fixture.database)
+                .unwrap()
+                .permissions()
+                .readonly()
+        );
         assert_eq!(bounded(&fixture.database, DATABASE_LIMIT), before_database);
         assert_eq!(directory_names(&fixture.root), before_directory);
-        assert!(Instant::now() < deadline, "complete read-only invocation deadline");
+        assert!(
+            Instant::now() < deadline,
+            "complete read-only invocation deadline"
+        );
     }
-    let reader = nf_world_driver::Driver::read_only_status(status_options(&fixture, fixture.known))
-        .unwrap();
+    let reader =
+        nf_world_driver::Driver::read_only_status(status_options(&fixture, fixture.known)).unwrap();
     assert!(reader.is_read_only().unwrap());
     assert_eq!(reader.snapshot(), &fixture.snapshot);
     assert_eq!(reader.snapshot_bytes().unwrap(), expected_state);
@@ -613,5 +624,8 @@ fn redacted_status_reads_read_only_media_and_preserves_all_protected_minima() {
     assert_eq!(directory_names(&fixture.root), before_directory);
     assert_eq!(binary_digest(executable, deadline), expected_binary);
     drop(restore);
-    assert!(Instant::now() < deadline, "complete read-only status case deadline");
+    assert!(
+        Instant::now() < deadline,
+        "complete read-only status case deadline"
+    );
 }
