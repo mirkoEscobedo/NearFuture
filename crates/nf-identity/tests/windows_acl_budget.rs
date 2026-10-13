@@ -69,8 +69,14 @@ fn module_free_acl_admits_literal_directory_and_file_then_refuses_relaxed_file()
     let file = directory.join("owner ' [literal] file");
     fs::write(&file, b"owned synthetic fixture").unwrap();
     for path in [&directory, &file] {
-        assert!(helper(path, true).success(), "module-free initialization refused");
-        assert!(helper(path, false).success(), "module-free verification refused");
+        assert!(
+            helper(path, true).success(),
+            "module-free initialization refused"
+        );
+        assert!(
+            helper(path, false).success(),
+            "module-free verification refused"
+        );
     }
     let report = Command::new("C:/Windows/System32/icacls.exe")
         .arg(&file)
