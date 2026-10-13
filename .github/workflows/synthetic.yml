@@ -103,8 +103,37 @@ jobs:
           $file = [IO.File]::Open((Join-Path $directory 'caller.json'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
           try { $file.Write($bytes, 0, $bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
           [IO.File]::AppendAllText($env:GITHUB_OUTPUT, ('directory=' + $directory + [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+      - name: Prepare owned rate and enrollment evidence inputs
+        id: chat-rate-inputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP) -or [string]::IsNullOrWhiteSpace($env:GITHUB_OUTPUT)) {
+            throw 'Runner-owned temp and step output paths are required'
+          }
+          $runnerTemp = (Resolve-Path -LiteralPath $env:RUNNER_TEMP).ProviderPath
+          $directory = Join-Path $runnerTemp ('near-future-chat-rate-inputs-' + [Guid]::NewGuid().ToString('N'))
+          if (Test-Path -LiteralPath $directory) { throw 'Fresh Chat evidence directory required' }
+          $null = New-Item -ItemType Directory -Path $directory -ErrorAction Stop
+          $directory = (Resolve-Path -LiteralPath $directory).ProviderPath
+          if (-not [IO.Path]::IsPathRooted($directory)) { throw 'Absolute Chat evidence directory required' }
+          $controls = Join-Path $directory 'controls'
+          $enrollment = Join-Path $directory 'enrollment'
+          $admission = Join-Path $directory 'admission'
+          $null = New-Item -ItemType Directory -Path $controls -ErrorAction Stop
+          $null = New-Item -ItemType Directory -Path $enrollment -ErrorAction Stop
+          if (Test-Path -LiteralPath $admission) { throw 'Admission test must create its own absent leaf' }
+          $receipt = [ordered]@{ state = 'INPUT_DIRECTORIES_PREPARED_NOT_TEST_SUCCESS'; runId = $env:GITHUB_RUN_ID; runAttempt = $env:GITHUB_RUN_ATTEMPT; runnerOS = $env:RUNNER_OS }
+          $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($receipt | ConvertTo-Json) + [Environment]::NewLine)
+          $file = [IO.File]::Open((Join-Path $directory 'caller.json'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+          try { $file.Write($bytes, 0, $bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
+          $outputs = 'directory=' + $directory + [Environment]::NewLine + 'controls=' + $controls + [Environment]::NewLine + 'enrollment=' + $enrollment + [Environment]::NewLine + 'admission=' + $admission + [Environment]::NewLine
+          [IO.File]::AppendAllText($env:GITHUB_OUTPUT, $outputs, [Text.UTF8Encoding]::new($false))
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         env:
+          NF_CHAT_DEVICE_ENROLLMENT_EVIDENCE_DIR: ${{ steps.chat-rate-inputs.outputs.enrollment }}
+          NF_CHAT_RATE_ADMISSION_EVIDENCE_DIR: ${{ steps.chat-rate-inputs.outputs.admission }}
+          NF_CHAT_RATE_GREEN_CONTROLS_EVIDENCE_DIR: ${{ steps.chat-rate-inputs.outputs.controls }}
           NF_CHAT_COMMAND_QUERY_EVIDENCE_DIR: ${{ steps.chat-command-evidence.outputs.directory }}
           NF_CHAT_LOCAL_MUTE_EVIDENCE_DIR: ${{ steps.chat-local-mute-evidence.outputs.directory }}
           NF_CHAT_LOCAL_MUTE_PREFERENCES_EVIDENCE_DIR: ${{ steps.chat-local-mute-preferences-evidence.outputs.directory }}
@@ -132,6 +161,15 @@ jobs:
           '@
           node -e $caller
           exit $LASTEXITCODE
+      - name: Retain rate and enrollment public synthetic evidence after success or failure
+        if: ${{ always() && steps.chat-rate-inputs.outputs.directory != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: chat-rate-inputs-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.os }}
+          path: ${{ steps.chat-rate-inputs.outputs.directory }}/**
+          include-hidden-files: true
+          if-no-files-found: error
+          overwrite: 'false'
       - name: Retain local-mute caller and authenticated originals after success or failure
         if: ${{ always() && steps.chat-local-mute-evidence.outputs.directory != '' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
