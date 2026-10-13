@@ -101,3 +101,4 @@ impl Composition {
 
 // Private closed descriptor codec for inactive staging.
 pub(crate) mod staging_record;
+pub(crate) mod upgrade_record;

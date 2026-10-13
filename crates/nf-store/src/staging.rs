@@ -37,10 +37,10 @@ impl From<rusqlite::Error> for StageError {
 }
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct StageBinding {
-    known: KnownFrontiers,
-    head: [u8; 32],
-    snapshot: [u8; 32],
-    membership: Option<[u8; 32]>,
+    pub(crate) known: KnownFrontiers,
+    pub(crate) head: [u8; 32],
+    pub(crate) snapshot: [u8; 32],
+    pub(crate) membership: Option<[u8; 32]>,
 }
 impl StageBinding {
     pub fn known_frontiers(&self) -> KnownFrontiers {
@@ -48,8 +48,8 @@ impl StageBinding {
     }
 }
 pub struct DrainedSource {
-    source: Store,
-    binding: StageBinding,
+    pub(crate) source: Store,
+    pub(crate) binding: StageBinding,
 }
 pub struct SealRefusal {
     source: Box<Store>,
@@ -102,7 +102,7 @@ impl StageRecord {
         self.membership.as_ref()
     }
 }
-fn drained(state: &State) -> Result<(), StageError> {
+pub(crate) fn drained(state: &State) -> Result<(), StageError> {
     state.validate()?;
     if state.pending.is_some()
         || !state.reservations.is_empty()
@@ -115,7 +115,9 @@ fn drained(state: &State) -> Result<(), StageError> {
     }
     Ok(())
 }
-fn membership_digest(value: Option<&MembershipState>) -> Result<Option<[u8; 32]>, StageError> {
+pub(crate) fn membership_digest(
+    value: Option<&MembershipState>,
+) -> Result<Option<[u8; 32]>, StageError> {
     value
         .map(|state| {
             encode_state(state)

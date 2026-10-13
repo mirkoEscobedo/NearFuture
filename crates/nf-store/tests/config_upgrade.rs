@@ -10,8 +10,8 @@ use nf_store::{
     migration::{Composition, ProviderVersion},
     upgrade::{profile3_schema_digest, verify_config_upgrade},
 };
-mod support;
 mod config_upgrade_support;
+mod support;
 use config_upgrade_support::{
     PROFILE1_SCHEMA, PROFILE3_SCHEMA, base_tables, expected_action, expected_head, expected_state,
 };
@@ -23,10 +23,15 @@ fn evaluated(world: &World, intent: &Intent) -> (World, CommittedBatch) {
     match nf_kernel::settle(
         world,
         &frontier,
-        vec![JobResult { job: intent.job, result: Ok(proposal) }],
+        vec![JobResult {
+            job: intent.job,
+            result: Ok(proposal),
+        }],
         authority,
         MissingPolicy::Pause,
-    ).unwrap() {
+    )
+    .unwrap()
+    {
         Settlement::Committed { world, batch } => (*world, batch),
         Settlement::Paused(_) => panic!("the real proposal must arrive"),
     }
@@ -47,7 +52,9 @@ fn materialized_config_upgrade_replays_preserved_history_and_old_profile_refuses
     assert_eq!(profile3_schema_digest(), PROFILE3_SCHEMA);
     let from = Composition::new(1, PROFILE1_SCHEMA, [2; 32], [3; 32], vec![descriptor]).unwrap();
     let to = Composition::new(3, PROFILE3_SCHEMA, [9; 32], [3; 32], vec![descriptor]).unwrap();
-    let initial = support::strategic_world().with_ruleset_hash(from.digest()).unwrap();
+    let initial = support::strategic_world()
+        .with_ruleset_hash(from.digest())
+        .unwrap();
     let intent = support::intent(&initial, 7, -25);
     let frontier = support::frontier(&initial, &intent);
     let mut store = Store::create(scratch.db(), &initial).unwrap();
@@ -65,18 +72,27 @@ fn materialized_config_upgrade_replays_preserved_history_and_old_profile_refuses
     membership.devices.get_mut(&public.device).unwrap().revoked = true;
     membership.consumed.insert([9; 16]);
     store.commit_membership(Some(0), &membership).unwrap();
-    store.prepare(
-        &frontier,
-        &support::devices(&intent),
-        &[Reservation {
-            operation: intent.operation,
-            market: EntityId::from_bytes([30; 16]),
-            amount: 25,
-        }],
-    ).unwrap();
+    store
+        .prepare(
+            &frontier,
+            &support::devices(&intent),
+            &[Reservation {
+                operation: intent.operation,
+                market: EntityId::from_bytes([30; 16]),
+                amount: 25,
+            }],
+        )
+        .unwrap();
     let (committed, batch) = evaluated(&initial, &intent);
     store.commit(&batch).unwrap();
-    assert_eq!(committed.view().market(EntityId::from_bytes([30; 16])).unwrap().credits, 75);
+    assert_eq!(
+        committed
+            .view()
+            .market(EntityId::from_bytes([30; 16]))
+            .unwrap()
+            .credits,
+        75
+    );
     assert_eq!(committed.outcomes().len(), 1);
     assert_eq!(committed.outcomes()[0].rejection, None);
     assert!(store.pending().is_none());
@@ -96,11 +112,15 @@ fn materialized_config_upgrade_replays_preserved_history_and_old_profile_refuses
     let snapshot = store.snapshot().unwrap();
     assert!(std::fs::metadata(scratch.db()).unwrap().len() <= 1_048_576);
     let old_bytes = std::fs::read(scratch.db()).unwrap();
-    let source = store.seal_drained(known)
+    let source = store
+        .seal_drained(known)
         .unwrap_or_else(|refusal| panic!("drained source refused: {:?}", refusal.error()));
     let binding = source.binding();
-    let transition = source.config_upgrade_transition(&from, &to, &[descriptor]).unwrap();
-    let (source, prepared) = source.materialize_config_upgrade(transition, &target)
+    let transition = source
+        .config_upgrade_transition(&from, &to, &[descriptor])
+        .unwrap();
+    let (source, prepared) = source
+        .materialize_config_upgrade(transition, &target)
         .unwrap_or_else(|failure| panic!("materialization refused: {:?}", failure.error()));
     let expected_world = committed.with_ruleset_hash(to.digest()).unwrap();
     let expected = expected_state(snapshot.bytes(), &expected_world);
@@ -117,12 +137,18 @@ fn materialized_config_upgrade_replays_preserved_history_and_old_profile_refuses
 
     // Both connections observe only caller-owned immutable artifacts after source-owner release.
     let old_connection = rusqlite::Connection::open_with_flags(
-        scratch.db(), rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
-    ).unwrap();
+        scratch.db(),
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+    )
+    .unwrap();
     let original_tables = base_tables(&old_connection);
-    let old_head: Vec<u8> = old_connection.query_row(
-        "SELECT head FROM history_meta WHERE singleton=1", [], |row| row.get(0),
-    ).unwrap();
+    let old_head: Vec<u8> = old_connection
+        .query_row(
+            "SELECT head FROM history_meta WHERE singleton=1",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
     let old_head: [u8; 32] = old_head.try_into().unwrap();
     drop(old_connection);
     let target_bytes = std::fs::read(&target).unwrap();
@@ -136,17 +162,33 @@ fn materialized_config_upgrade_replays_preserved_history_and_old_profile_refuses
     assert_eq!(verified.known_frontiers(), target_known);
     drop(verified);
 
-    let connection = rusqlite::Connection::open_with_flags(
-        &target, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
-    ).unwrap();
-    assert_eq!(connection.pragma_query_value::<i32, _>(None, "application_id", |r| r.get(0)).unwrap(), 0x4e46_5354);
-    assert_eq!(connection.pragma_query_value::<i32, _>(None, "user_version", |r| r.get(0)).unwrap(), 3);
+    let connection =
+        rusqlite::Connection::open_with_flags(&target, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .unwrap();
+    assert_eq!(
+        connection
+            .pragma_query_value::<i32, _>(None, "application_id", |r| r.get(0))
+            .unwrap(),
+        0x4e46_5354
+    );
+    assert_eq!(
+        connection
+            .pragma_query_value::<i32, _>(None, "user_version", |r| r.get(0))
+            .unwrap(),
+        3
+    );
     assert_eq!(base_tables(&connection), original_tables);
     let member_digest: [u8; 32] = config_upgrade_support::hash(&encode_state(&membership).unwrap());
     let action = expected_action(known, old_head, snapshot.digest(), member_digest);
     assert!(action.len() <= 4096);
     let digest = config_upgrade_support::hash(&expected);
-    let head = expected_head(old_head, target_known.store_revision, &action, snapshot.digest(), digest);
+    let head = expected_head(
+        old_head,
+        target_known.store_revision,
+        &action,
+        snapshot.digest(),
+        digest,
+    );
     let row = config_upgrade_support::upgrade_row(&connection);
     assert_eq!(row.revision, target_known.store_revision.to_be_bytes());
     assert_eq!(row.kind, 4);

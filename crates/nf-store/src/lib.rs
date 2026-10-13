@@ -28,3 +28,6 @@ pub mod migration;
 
 /// Inactive config-only artifacts, never ordinary Store or activation admission.
 pub mod staging;
+
+/// Replayable inactive NFST3 upgrades; no owner selection or writer admission.
+pub mod upgrade;
