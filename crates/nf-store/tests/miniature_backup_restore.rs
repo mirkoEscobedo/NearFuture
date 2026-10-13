@@ -29,7 +29,11 @@ fn assert_public_membership(path: &Path, expected: &[u8]) {
         rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
     )
     .unwrap();
-    assert!(connection.is_readonly(rusqlite::DatabaseName::Main).unwrap());
+    assert!(
+        connection
+            .is_readonly(rusqlite::DatabaseName::Main)
+            .unwrap()
+    );
     let count: i64 = connection
         .query_row("SELECT count(*) FROM membership", [], |row| row.get(0))
         .unwrap();

@@ -16,6 +16,39 @@ pub struct MiniatureReader {
 }
 
 impl MiniatureReader {
+    /// Restores only a new isolated inspection copy, never a live writer.
+    ///
+    /// The caller must own and keep the backup and destination ancestors quiescent
+    /// on local storage. Protected frontiers must be held independently of the
+    /// archive. No parent directory is created. Any failure after file reservation
+    /// retains an unqualified partial copy; no cleanup or retry is attempted.
+    pub fn restore_backup_to_new_path(
+        backup: impl AsRef<Path>,
+        destination: impl AsRef<Path>,
+        protected: MiniatureKnownFrontiers,
+        confirmation: super::IsolatedRestoreConfirmation,
+    ) -> Result<Self> {
+        // Full replay and every protected minimum precede any destination effect.
+        let source = Self::open_existing(backup, protected)?;
+        let source_state = source.snapshot_bytes()?;
+        let source_membership = source.membership_bytes()?;
+        super::restore::copy_to_new_path(&source.connection, destination.as_ref(), confirmation)?;
+        let restored = Self::open_existing(destination, protected)?;
+        if restored.snapshot != source.snapshot
+            || restored.snapshot_bytes()? != source_state
+            || restored.membership_bytes()? != source_membership
+        {
+            return Err(StoreError::Corrupt.into());
+        }
+        Ok(restored)
+    }
+
+    fn membership_bytes(&self) -> Result<Option<Vec<u8>>> {
+        crate::identity::load(&self.connection, self.snapshot.known.storage.scope)?
+            .map(|membership| nf_identity::codec::encode_state(&membership).map_err(Into::into))
+            .transpose()
+    }
+
     pub fn open_existing(path: impl AsRef<Path>, known: MiniatureKnownFrontiers) -> Result<Self> {
         let mut connection = super::reader_connection::read_only_connection(path.as_ref())?;
         let transaction = connection.transaction_with_behavior(TransactionBehavior::Deferred)?;
