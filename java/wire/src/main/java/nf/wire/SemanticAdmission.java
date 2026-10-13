@@ -28,11 +28,18 @@ final class SemanticAdmission {
     static void validate(Message message) {
         String name = message.getDescriptorForType().getName();
         if (!name.equals("TransportMetadata") && !message.getUnknownFields().asMap().isEmpty()) throw new WireFailure(WireFailure.Code.UNKNOWN_FIELD);
+        boolean chatEnvelope = name.equals("ControlEnvelope")
+                && (message.hasField(message.getDescriptorForType().findFieldByName("query_chat_outgoing"))
+                    || message.hasField(message.getDescriptorForType().findFieldByName("chat_outgoing_status")));
+        boolean enqueueReplyEnvelope = name.equals("ControlEnvelope")
+                && message.hasField(message.getDescriptorForType().findFieldByName("chat_enqueue_result"));
         for (var entry : message.getAllFields().entrySet()) {
             FieldDescriptor descriptor = entry.getKey();
             if (descriptor.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
                 if (descriptor.isRepeated() && ((List<?>) entry.getValue()).size() > 4096) throw new WireFailure(WireFailure.Code.LIMIT);
                 if (descriptor.isRepeated()) for (Object item : (List<?>) entry.getValue()) validate((Message) item);
+                else if (chatEnvelope && descriptor.getName().equals("required")) ChatStatusAdmission.required((Message) entry.getValue());
+                else if (enqueueReplyEnvelope && descriptor.getName().equals("required")) enqueueReplyRequired((Message) entry.getValue());
                 else validate((Message) entry.getValue());
             } else if (descriptor.getJavaType() == FieldDescriptor.JavaType.BYTE_STRING && ((ByteString) entry.getValue()).size() > 262_144) {
                 throw new WireFailure(WireFailure.Code.LIMIT);
@@ -91,6 +98,9 @@ final class SemanticAdmission {
                 if (uint32(message, "operation_kind") != 1) throw new WireFailure(WireFailure.Code.UNSUPPORTED);
                 canonical(message);
             }
+            case "QueryChatOutgoing" -> ChatStatusAdmission.query((org.nearfuture.protocol.v1.QueryChatOutgoing) message);
+            case "ChatOutgoingStatus" -> ChatStatusAdmission.status((org.nearfuture.protocol.v1.ChatOutgoingStatus) message);
+            case "ChatEnqueueResult" -> require(message, "status");
             case "QueryOperation" -> require(message, "request_id", "principal", "universe_id", "history_id");
             case "CancelOperation" -> throw new WireFailure(WireFailure.Code.UNSUPPORTED);
             case "AggregateVersion" -> require(message, "aggregate_id", "revision");
@@ -132,6 +142,13 @@ final class SemanticAdmission {
                 if (dataBytes == 0 || dataBytes > total || total > count * 262_144L) throw new WireFailure(WireFailure.Code.SEMANTIC);
             }
             default -> { }
+        }
+    }
+    private static void enqueueReplyRequired(Message value) {
+        if (!value.getUnknownFields().asMap().isEmpty()) throw new WireFailure(WireFailure.Code.UNKNOWN_FIELD);
+        if (!field(value, "capability_ids").equals(List.of(4))
+                || !field(value, "schema_ids").equals(List.of(4))) {
+            throw new WireFailure(WireFailure.Code.UNSUPPORTED);
         }
     }
     private static void width(byte[] bytes, int width) { if (bytes.length != width) throw new WireFailure(WireFailure.Code.SEMANTIC); }

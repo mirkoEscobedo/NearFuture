@@ -41,7 +41,20 @@ pub(crate) fn control(value: &g::ControlEnvelope) -> Result<()> {
         return Err(WireError::Unsupported);
     }
     let required = need(&value.required)?;
-    records::required(required)?;
+    // New Chat bodies have their own closed registry. Legacy canonical records stay schema1.
+    if matches!(
+        need(&value.body)?,
+        Body::QueryChatOutgoing(_) | Body::ChatOutgoingStatus(_)
+    ) {
+        crate::chat_status::required(required)?;
+    } else if matches!(
+        need(&value.body)?,
+        Body::EnqueueChat(_) | Body::ChatEnqueueResult(_)
+    ) {
+        crate::chat_enqueue::required(required)?;
+    } else {
+        records::required(required)?;
+    }
     let runtime = need(&value.runtime_session)?.value;
     match need(&value.body)? {
         Body::Handshake(v) => {
@@ -97,6 +110,10 @@ pub(crate) fn control(value: &g::ControlEnvelope) -> Result<()> {
         Body::OperationStatus(v) => records::check(&records::status(v)?)?,
         Body::Error(v) => records::check(&records::error(v)?)?,
         Body::QueryOperation(_) => {}
+        Body::QueryChatOutgoing(v) => crate::chat_status::validate_query_chat_outgoing(v)?,
+        Body::ChatOutgoingStatus(v) => crate::chat_status::validate_chat_outgoing_status(v)?,
+        Body::EnqueueChat(v) => crate::chat_enqueue::validate_enqueue_chat(v)?,
+        Body::ChatEnqueueResult(v) => crate::chat_enqueue::validate_chat_enqueue_result(v)?,
         // No registered cancellation payload or lifecycle yet. Fail closed.
         Body::CancelOperation(_) => return Err(WireError::Unsupported),
     }

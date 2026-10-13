@@ -150,3 +150,20 @@ pub struct DeviceRevocation {
     pub device: DeviceId,
     pub frontier: u64,
 }
+
+/// Signed trusted-local addition to an existing account; no role or key replacement.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DeviceEnrollment {
+    pub scope: Scope,
+    pub account: AccountId,
+    pub frontier: u64,
+    pub new_device: DeviceId,
+    pub new_key: [u8; 32],
+    /// Opaque signed binding intent; transport authenticates its actual peer separately.
+    pub new_peer: Vec<u8>,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DeviceEnrollmentProof {
+    pub account_signature: [u8; 64],
+    pub new_device_signature: [u8; 64],
+}

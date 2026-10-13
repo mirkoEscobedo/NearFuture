@@ -8,9 +8,20 @@ use std::{
     net::SocketAddr,
     time::{Duration, Instant},
 };
-/// Background query seam. Writes and unregistered kernel outcomes must fail closed.
+/// Background owner seam. Only explicitly registered capabilities may perform effects.
 pub trait QueryPort {
     fn query(&mut self, query: g::QueryOperation) -> Result<g::OperationStatus, IpcError>;
+    /// Dedicated read-only Chat profile, never an economic operation or implicit write.
+    fn query_chat_outgoing(
+        &mut self,
+        _: g::QueryChatOutgoing,
+    ) -> Result<g::ChatOutgoingStatus, IpcError> {
+        Err(IpcError::Unsupported)
+    }
+    /// Dedicated local Chat command only. Generic financial Intent never dispatches here.
+    fn enqueue_chat(&mut self, _: g::EnqueueChat) -> Result<g::ChatOutgoingStatus, IpcError> {
+        Err(IpcError::Unsupported)
+    }
     /// Bounded staging only, never game installation. Discard staged bytes on abort.
     fn stage_chunk(&mut self, _: crate::TransferPiece) -> Result<(), IpcError> {
         Err(IpcError::Unsupported)
@@ -108,6 +119,11 @@ impl<P: QueryPort> NodeServer<P> {
         self.port.abort_bulk();
         self.connections.clear();
         self.authenticator = None;
+    }
+    /// Trusted owner handoff after lifecycle invalidation; queued responses cannot survive it.
+    pub fn into_port(mut self) -> P {
+        self.invalidate();
+        self.port
     }
     /// One bounded background turn; each connection receives <=4096 bytes in either direction.
     pub fn poll(&mut self, now: Instant) -> Result<(), IpcError> {
@@ -261,17 +277,46 @@ impl<P: QueryPort> NodeServer<P> {
                     .port
                     .query(q)
                     .map(g::control_envelope::Body::OperationStatus),
+                Ok(AdmittedClient::ChatOutgoing(q)) => self
+                    .port
+                    .query_chat_outgoing(q)
+                    .map(g::control_envelope::Body::ChatOutgoingStatus),
+                Ok(AdmittedClient::ChatEnqueue(command)) => match self.port.enqueue_chat(command) {
+                    Ok(status) => Ok(g::control_envelope::Body::ChatEnqueueResult(
+                        g::ChatEnqueueResult {
+                            status: Some(status),
+                        },
+                    )),
+                    Err(IpcError::Malformed) => Ok(g::control_envelope::Body::Error(
+                        nf_wire::WireError::Semantic.bounded_error(),
+                    )),
+                    Err(error) => Err(error),
+                },
                 Ok(AdmittedClient::Intent(_)) => Err(IpcError::Unsupported),
                 Err(e) => Err(e),
             };
             let body = response
                 .unwrap_or_else(|error| g::control_envelope::Body::Error(bounded_error(error)));
+            let response_required =
+                if matches!(&body, g::control_envelope::Body::ChatOutgoingStatus(_)) {
+                    g::RequiredSemantics {
+                        capability_ids: vec![3],
+                        schema_ids: vec![3],
+                    }
+                } else if matches!(&body, g::control_envelope::Body::ChatEnqueueResult(_)) {
+                    g::RequiredSemantics {
+                        capability_ids: vec![4],
+                        schema_ids: vec![4],
+                    }
+                } else {
+                    required()
+                };
             let envelope = g::ControlEnvelope {
                 protocol_version: 1,
                 runtime_session: Some(g::RuntimeSession {
                     value: self.config.runtime_session,
                 }),
-                required: Some(required()),
+                required: Some(response_required),
                 body: Some(body),
                 transport: None,
             };

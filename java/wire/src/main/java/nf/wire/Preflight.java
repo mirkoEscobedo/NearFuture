@@ -17,9 +17,23 @@ final class Preflight {
         long bytes;
         int entries;
         final boolean auth;
+        final long decodedBytes;
+        final int depth;
+        final int collectionItems;
         Budget() { this(false); }
-        Budget(boolean auth) { this.auth=auth; }
-        void charge(long amount) { bytes += amount; if (bytes > (auth ? 4096 : 1_048_576)) throw new WireFailure(WireFailure.Code.LIMIT); }
+        Budget(boolean auth) {
+            this.auth=auth;
+            decodedBytes=auth ? 4096 : 1_048_576;
+            depth=auth ? 8 : 32;
+            collectionItems=auth ? 64 : 4096;
+        }
+        Budget(long decodedBytes,int depth,int collectionItems) {
+            this.auth=false;
+            this.decodedBytes=decodedBytes;
+            this.depth=depth;
+            this.collectionItems=collectionItems;
+        }
+        void charge(long amount) { bytes += amount; if (bytes > decodedBytes) throw new WireFailure(WireFailure.Code.LIMIT); }
         void entry() { if (++entries > (auth ? 256 : 16_384)) throw new WireFailure(WireFailure.Code.LIMIT); }
     }
     private static final class Cursor {
@@ -55,6 +69,10 @@ final class Preflight {
         if (input.length > 1_048_576) throw new WireFailure(WireFailure.Code.LIMIT);
         scan(new Cursor(input, 0, input.length), descriptor, 1, new Budget());
     }
+    static void inspectNegotiated(byte[] input,Descriptor descriptor,int depth,int collectionItems,long decodedBytes) {
+        if(depth<1 || collectionItems<1 || decodedBytes<1) throw new WireFailure(WireFailure.Code.LIMIT);
+        scan(new Cursor(input,0,input.length),descriptor,1,new Budget(decodedBytes,depth,collectionItems));
+    }
     static void inspectAuth(byte[] input, Descriptor descriptor) {
         if (input.length>4096) throw new WireFailure(WireFailure.Code.LIMIT);
         scan(new Cursor(input,0,input.length),descriptor,1,new Budget(true));
@@ -71,7 +89,7 @@ final class Preflight {
         };
     }
     private static void scan(Cursor cursor, Descriptor descriptor, int depth, Budget budget) {
-        if (depth > (budget.auth ? 8 : 32)) throw new WireFailure(WireFailure.Code.LIMIT);
+        if (depth > budget.depth) throw new WireFailure(WireFailure.Code.LIMIT);
         budget.charge(256);
         Set<Integer> singular = new HashSet<>();
         Set<OneofDescriptor> oneofs = new HashSet<>();
@@ -117,6 +135,8 @@ final class Preflight {
                     int maximum = field.getType() == FieldDescriptor.Type.MESSAGE ? 1_048_576
                             : field.getType() == FieldDescriptor.Type.STRING ? (descriptor.getName().equals("BoundedError") ? 512 : 4096) : 262_144;
                     if (field.getName().equals("signature") || field.getName().equals("multihash")) maximum = 128;
+                    if (descriptor.getName().equals("ChatOutgoingStatus") && field.getName().equals("signed_message")) maximum=2221;
+                    if (descriptor.getName().equals("ChatOutgoingStatus") && field.getName().equals("receiver_receipt")) maximum=323;
                     if (budget.auth) maximum=Math.min(maximum,4096);
                     if (descriptor.getFullName().startsWith("nearfuture.ipc.v1.") && field.getType()==FieldDescriptor.Type.BYTES) maximum=32;
                     int count = cursor.length(maximum);
@@ -134,6 +154,13 @@ final class Preflight {
                 } else scalar(cursor, field, expected, budget);
             }
         }
+        int[] chatRequired = switch (descriptor.getName()) {
+            case "QueryChatOutgoing" -> new int[]{1,2,3,4,5,6};
+            case "ChatOutgoingStatus" -> new int[]{1,2,3,4,5,6,7,8,9,10};
+            case "ChatMessageId" -> new int[]{1};
+            default -> new int[0];
+        };
+        for (int required:chatRequired) if (!singular.contains(required)) throw new WireFailure(WireFailure.Code.SEMANTIC);
         if (budget.auth) for (int required:authRequired(descriptor)) if (!singular.contains(required)) throw new WireFailure(WireFailure.Code.SEMANTIC);
     }
     private static void repeat(FieldDescriptor field, Map<Integer, Integer> counts, Budget budget) {
@@ -141,7 +168,7 @@ final class Preflight {
         int maximum = field.getContainingType().getName().equals("RequiredSemantics")
                 || field.getName().equals("optional_capability_ids")
                 || field.getName().startsWith("unsupported_") ? 64 : 4096;
-        if (budget.auth) maximum=Math.min(maximum,64);
+        maximum=Math.min(maximum,budget.collectionItems);
         if (count > maximum) throw new WireFailure(WireFailure.Code.LIMIT);
     }
     private static int wireType(FieldDescriptor field) {

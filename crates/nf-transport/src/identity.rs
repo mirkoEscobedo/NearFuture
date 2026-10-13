@@ -40,6 +40,12 @@ impl TransportIdentity {
     pub fn peer_id(&self) -> libp2p::PeerId {
         self.key.public().to_peer_id()
     }
+    /// Dedicated bounded Chat lane using the same persisted private Noise identity.
+    pub fn build_chat(
+        &self,
+    ) -> Result<libp2p::Swarm<crate::chat::network::ChatBehaviour>, PeerError> {
+        crate::chat::network::build_chat_swarm(self.key.clone())
+    }
     pub fn build_lane(&self, lane: Lane) -> Result<libp2p::Swarm<PeerBehaviour>, PeerError> {
         build_lane_swarm(self.key.clone(), lane)
     }
