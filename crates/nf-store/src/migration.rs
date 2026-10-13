@@ -9,6 +9,7 @@ pub enum CompositionError {
     Limit,
     ZeroVersion,
     DuplicateProvider,
+    UnsupportedProvider,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -78,5 +79,22 @@ impl Composition {
             hash.update(provider.state_schema.to_le_bytes());
         }
         hash.finalize().into()
+    }
+}
+
+impl Composition {
+    /// Compare required descriptors with an explicit caller-supplied support set.
+    ///
+    /// Implementation bytes remain opaque: matching grants no binary authenticity,
+    /// route, activation, migration or recovery authority. Inputs are not changed.
+    pub fn require_supported(&self, supported: &[ProviderVersion]) -> Result<(), CompositionError> {
+        if self
+            .providers
+            .iter()
+            .any(|required| !supported.contains(required))
+        {
+            return Err(CompositionError::UnsupportedProvider);
+        }
+        Ok(())
     }
 }
