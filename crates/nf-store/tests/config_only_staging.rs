@@ -210,3 +210,83 @@ fn config_stage_requires_drain_preserves_history_and_refuses_self_hashed_wrong_d
     assert_eq!(old.known_frontiers().unwrap(), known);
     assert_eq!(old.load_membership(scope).unwrap(), Some(membership));
 }
+
+#[test]
+fn occupied_stage_target_returns_the_unchanged_sealed_source() {
+    let scratch = support::Scratch::new();
+    let target = scratch.0.join("caller-owned-sentinel");
+    let sentinel = b"caller-owned bytes; staging must not overwrite";
+    std::fs::write(&target, sentinel).unwrap();
+    let descriptor = ProviderVersion {
+        provider: nf_contract::identity::ProviderId::from_bytes([41; 16]),
+        implementation: [41; 32],
+        version: 1,
+        state_schema: 1,
+    };
+    let from = Composition::new(1, PROFILE1_SCHEMA, [2; 32], [3; 32], vec![descriptor]).unwrap();
+    let to = Composition::new(1, PROFILE1_SCHEMA, [9; 32], [3; 32], vec![descriptor]).unwrap();
+    let initial = support::strategic_world()
+        .with_ruleset_hash(from.digest())
+        .unwrap();
+    let intent = support::intent(&initial, 7, -25);
+    let frontier = support::frontier(&initial, &intent);
+    let mut store = Store::create(scratch.db(), &initial).unwrap();
+    store
+        .prepare(&frontier, &support::devices(&intent), &[])
+        .unwrap();
+    let (committed, batch) = evaluated(&initial, &intent);
+    store.commit(&batch).unwrap();
+    assert_eq!(committed.outcomes().len(), 1);
+    let known = store.known_frontiers().unwrap();
+    let snapshot = store.snapshot().unwrap();
+    let status = store.query(&intent, support::device()).unwrap();
+    let outbox = store.outbox().copied().collect::<Vec<_>>();
+    assert_eq!(outbox.len(), 1);
+    assert!(std::fs::metadata(scratch.db()).unwrap().len() <= 1_048_576);
+    let source_bytes = std::fs::read(scratch.db()).unwrap();
+    let source = store
+        .seal_drained(known)
+        .unwrap_or_else(|refusal| panic!("drained source refused: {:?}", refusal.error()));
+    let binding = source.binding();
+    let transition = source
+        .config_only_transition(&from, &to, &[descriptor])
+        .unwrap();
+
+    let failure = match source.stage_config_only(transition, &target) {
+        Err(failure) => failure,
+        Ok(_) => panic!("an existing caller-owned target must be refused"),
+    };
+    assert_eq!(
+        failure.error(),
+        StageError::Storage(StoreError::AlreadyExists),
+    );
+    assert_eq!(std::fs::read(&target).unwrap(), sentinel.as_slice());
+    assert_eq!(std::fs::read(scratch.db()).unwrap(), source_bytes);
+    let source = failure.into_source();
+    assert_eq!(source.binding(), binding);
+    let mut store = source.into_store();
+    assert_eq!(store.known_frontiers().unwrap(), known);
+    assert_eq!(store.world(), &committed);
+    assert_eq!(store.snapshot().unwrap().bytes(), snapshot.bytes());
+    assert_eq!(store.query(&intent, support::device()).unwrap(), status);
+    assert_eq!(store.outbox().copied().collect::<Vec<_>>(), outbox);
+    assert!(store.pending().is_none());
+    assert_eq!(store.reservations().count(), 0);
+
+    // Only this explicit caller action writes after all preservation assertions.
+    let next = support::intent(&committed, 8, -1);
+    let frontier = support::frontier(&committed, &next);
+    store
+        .prepare(&frontier, &support::devices(&next), &[])
+        .unwrap();
+    let (expected, batch) = evaluated(&committed, &next);
+    store.commit(&batch).unwrap();
+    assert_eq!(store.world(), &expected);
+    assert_eq!(expected.outcomes().len(), 2);
+    let after = store.known_frontiers().unwrap();
+    drop(store);
+    let old = Store::open_existing(scratch.db(), after).unwrap();
+    assert_eq!(old.world(), &expected);
+    assert_eq!(old.known_frontiers().unwrap(), after);
+    assert_eq!(std::fs::read(&target).unwrap(), sentinel.as_slice());
+}
