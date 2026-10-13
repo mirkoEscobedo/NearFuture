@@ -34,9 +34,8 @@ fn execute() -> Result<(), DriverError> {
     let redacted = matches!(&command, Command::StatusRedacted(_));
     let snapshot = match command {
         Command::Create(options) => Driver::create(*options)?.status()?,
-        Command::Status(options) | Command::StatusRedacted(options) => {
-            Driver::read_status(options)?
-        }
+        Command::Status(options) => Driver::read_status(options)?,
+        Command::StatusRedacted(options) => Driver::read_only_status(options)?.snapshot().clone(),
         Command::Step(options) => {
             use nf_store::miniature::{MiniatureCancelCause, MiniatureRequestStatus};
             use nf_world_driver::{ActionRequest, PendingPolicy};
