@@ -1,4 +1,4 @@
-use nf_world_driver::{Command, Driver, DriverError, parse_command};
+use nf_world_driver::{Command, Driver, DriverError, parse_command, project_miniature_status};
 use std::{io::Write, process::ExitCode};
 fn main() -> ExitCode {
     match execute() {
@@ -31,9 +31,12 @@ fn execute() -> Result<(), DriverError> {
             .map_err(|_| DriverError::Io);
     }
     let command = parse_command(&args).map_err(|_| DriverError::InvalidCommand)?;
+    let redacted = matches!(&command, Command::StatusRedacted(_));
     let snapshot = match command {
         Command::Create(options) => Driver::create(*options)?.status()?,
-        Command::Status(options) => Driver::read_status(options)?,
+        Command::Status(options) | Command::StatusRedacted(options) => {
+            Driver::read_status(options)?
+        }
         Command::Step(options) => {
             use nf_store::miniature::{MiniatureCancelCause, MiniatureRequestStatus};
             use nf_world_driver::{ActionRequest, PendingPolicy};
@@ -81,6 +84,13 @@ fn execute() -> Result<(), DriverError> {
             driver.status()?
         }
     };
+    if redacted {
+        let output = project_miniature_status(&snapshot).map_err(|_| DriverError::Limit)?;
+        return std::io::stdout()
+            .lock()
+            .write_all(output.as_str().as_bytes())
+            .map_err(|_| DriverError::Io);
+    }
     let g = snapshot.world.component().genesis();
     let m = snapshot.world.metadata();
     let hash = nf_kernel::miniature::miniature_state_hash(&snapshot.world)

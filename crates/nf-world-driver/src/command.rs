@@ -81,6 +81,7 @@ pub struct CreateOptions {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Command {
     Status(OpenOptions),
+    StatusRedacted(OpenOptions),
     Run(RunOptions),
     Step(StepOptions),
     Create(Box<CreateOptions>),
@@ -109,6 +110,7 @@ pub fn parse_command(args: &[String]) -> Result<Command, CommandError> {
     }
     let result = match verb.as_str() {
         "status" => Command::Status(open_options(&mut values)?),
+        "status-redacted" => Command::StatusRedacted(open_options(&mut values)?),
         "run" => Command::Run(run_options(&mut values)?),
         "step" => Command::Step(step_options(&mut values)?),
         "create" => Command::Create(Box::new(create_options(&mut values)?)),
@@ -329,8 +331,8 @@ fn create_options(values: &mut Values<'_>) -> Result<CreateOptions, CommandError
 }
 /// Fixed bounded foreground usage; never includes local keys, paths or generated identifiers.
 pub fn command_help() -> &'static str {
-    "nf-world-driver create|status|step|run\n\
-status: --database PATH --universe HEX16 --history HEX16 --min-event N --min-store N --min-membership N --min-term N\n\
+    "nf-world-driver create|status|status-redacted|step|run\n\
+status/status-redacted: --database PATH --universe HEX16 --history HEX16 --min-event N --min-store N --min-membership N --min-term N\n\
 step/run: status options plus --vault PATH --game-save-root PATH --account HEX16 --device HEX16 --claim-authority yes --active yes|no\n\
 step: --request HEX16 --operation HEX16 --job HEX16 --action colony:SITE:FACTION|build:MARKET:1|build:MARKET:2|relationship:FACTION:OTHER:SCORE|travel:FACTION:SYSTEM\n\
 step: optional --pending-policy pause|resume|cancel (default pause); only an exact retained binding can resume or cancel. Resume requires every original actor's existing key.\n\

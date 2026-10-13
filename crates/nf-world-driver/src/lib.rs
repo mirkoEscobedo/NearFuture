@@ -23,5 +23,9 @@ pub use actors::ActorRequest;
 mod run_budget;
 #[cfg(test)]
 extern crate self as nf_world_driver;
+mod operator_status;
 #[cfg(test)]
 mod run_budget_tests;
+pub use operator_status::{
+    RedactedMiniatureStatusV1, StatusProjectionError, project_miniature_status,
+};
