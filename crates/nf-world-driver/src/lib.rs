@@ -29,3 +29,6 @@ mod run_budget_tests;
 pub use operator_status::{
     RedactedMiniatureStatusV1, StatusProjectionError, project_miniature_status,
 };
+
+mod operator_support;
+pub use operator_support::{RedactedMiniatureSupportPreviewV1, preview_miniature_support};

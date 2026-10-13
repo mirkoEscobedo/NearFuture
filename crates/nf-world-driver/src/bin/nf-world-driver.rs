@@ -36,6 +36,15 @@ fn execute() -> Result<(), DriverError> {
         Command::Create(options) => Driver::create(*options)?.status()?,
         Command::Status(options) => Driver::read_status(options)?,
         Command::StatusRedacted(options) => Driver::read_only_status(options)?.snapshot().clone(),
+        Command::SupportPreview(options) => {
+            let reader = Driver::read_only_status(options)?;
+            let output = nf_world_driver::preview_miniature_support(reader.snapshot())
+                .map_err(|_| DriverError::Limit)?;
+            return std::io::stdout()
+                .lock()
+                .write_all(output.as_str().as_bytes())
+                .map_err(|_| DriverError::Io);
+        }
         Command::Step(options) => {
             use nf_store::miniature::{MiniatureCancelCause, MiniatureRequestStatus};
             use nf_world_driver::{ActionRequest, PendingPolicy};
