@@ -3,7 +3,9 @@ use nf_contract::identity::{AuthorityTerm, EventSeq, HistoryId, UniverseId};
 use nf_identity::model::Scope;
 use nf_store::{
     KnownFrontiers, StoreError,
-    miniature::{IsolatedRestoreConfirmation, MiniatureKnownFrontiers, MiniatureReader, MiniatureStoreError},
+    miniature::{
+        IsolatedRestoreConfirmation, MiniatureKnownFrontiers, MiniatureReader, MiniatureStoreError,
+    },
 };
 use std::{io::Write, path::Path, thread, time::Duration};
 
@@ -12,8 +14,12 @@ pub fn known_bytes(known: MiniatureKnownFrontiers) -> Vec<u8> {
     bytes.extend(known.storage.scope.universe.as_bytes());
     bytes.extend(known.storage.scope.history.as_bytes());
     for value in [
-        known.storage.event_sequence.0, known.storage.store_revision,
-        known.storage.membership_revision.expect("maintained fixture membership"),
+        known.storage.event_sequence.0,
+        known.storage.store_revision,
+        known
+            .storage
+            .membership_revision
+            .expect("maintained fixture membership"),
         known.minimum_authority_term.0,
     ] {
         bytes.extend(value.to_le_bytes());
@@ -54,13 +60,28 @@ pub fn run() {
     let control = Path::new("control").join(mode);
     let known = known(Path::new("control/protected-known.bin"));
     let expected = bounded(Path::new("control/expected-state.bin"), 1_048_576);
-    let deadline: u128 = std::env::var("NF_RESTORE_IO_DEADLINE_MS").unwrap().parse().unwrap();
+    let deadline: u128 = std::env::var("NF_RESTORE_IO_DEADLINE_MS")
+        .unwrap()
+        .parse()
+        .unwrap();
     assert!(epoch_millis() < deadline);
     let actual_thread = std::fs::read_link("/proc/thread-self").unwrap();
-    let tid: u32 = actual_thread.file_name().unwrap().to_str().unwrap().parse().unwrap();
-    create(&control.join("ready.txt"), format!("{} {tid}\n", std::process::id()).as_bytes());
+    let tid: u32 = actual_thread
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    create(
+        &control.join("ready.txt"),
+        format!("{} {tid}\n", std::process::id()).as_bytes(),
+    );
     while !control.join("release.txt").exists() {
-        assert!(epoch_millis() < deadline, "same parent-owned absolute deadline");
+        assert!(
+            epoch_millis() < deadline,
+            "same parent-owned absolute deadline"
+        );
         thread::sleep(Duration::from_millis(10));
     }
     assert!(epoch_millis() < deadline);
@@ -68,7 +89,10 @@ pub fn run() {
     stdout.write_all(b"RESTORE_CALL_READY\n").unwrap();
     stdout.flush().unwrap();
     let result = MiniatureReader::restore_backup_to_new_path(
-        "backup.sqlite", destination, known, IsolatedRestoreConfirmation::NewReadOnlyCopy,
+        "backup.sqlite",
+        destination,
+        known,
+        IsolatedRestoreConfirmation::NewReadOnlyCopy,
     );
     match mode {
         "calibration" => {
@@ -82,7 +106,10 @@ pub fn run() {
             create(&control.join("result.txt"), b"QUALIFIED_READER\n");
         }
         "fault" => {
-            assert_eq!(result.err(), Some(MiniatureStoreError::Storage(StoreError::Io)));
+            assert_eq!(
+                result.err(),
+                Some(MiniatureStoreError::Storage(StoreError::Io))
+            );
             stdout.write_all(b"RESTORE_REFUSED_IO\n").unwrap();
             stdout.flush().unwrap();
             create(&control.join("result.txt"), b"REFUSED_STORAGE_IO\n");

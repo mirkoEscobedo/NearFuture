@@ -18,20 +18,29 @@ pub fn clock(deadline: Instant) {
 }
 
 pub fn epoch_millis() -> u128 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
 }
 
 pub fn bounded(path: &Path, maximum: usize) -> Vec<u8> {
     let file = File::open(path).unwrap();
     assert!(file.metadata().unwrap().len() <= maximum as u64);
     let mut bytes = Vec::new();
-    file.take(maximum as u64 + 1).read_to_end(&mut bytes).unwrap();
+    file.take(maximum as u64 + 1)
+        .read_to_end(&mut bytes)
+        .unwrap();
     assert!(bytes.len() <= maximum);
     bytes
 }
 
 pub fn create(path: &Path, bytes: &[u8]) {
-    let mut file = OpenOptions::new().write(true).create_new(true).open(path).unwrap();
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+        .unwrap();
     file.write_all(bytes).unwrap();
     file.sync_all().unwrap();
 }

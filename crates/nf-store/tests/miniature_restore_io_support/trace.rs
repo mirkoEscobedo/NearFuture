@@ -15,7 +15,10 @@ pub fn events(trace: &str) -> Vec<Event> {
 
 fn records(trace: &str, complete: bool) -> Vec<Event> {
     assert!(trace.len() <= 1_048_576);
-    assert!(!complete || trace.ends_with('\n'), "complete trailing original record required");
+    assert!(
+        !complete || trace.ends_with('\n'),
+        "complete trailing original record required"
+    );
     let mut pending = BTreeMap::new();
     let mut result = Vec::new();
     for line in trace.lines() {
@@ -24,16 +27,31 @@ fn records(trace: &str, complete: bool) -> Vec<Event> {
         };
         if let Some(prefix) = body.strip_suffix("<unfinished ...>") {
             let name = prefix.split_once('(').unwrap().0;
-            assert!(pending.insert((tid, name.to_owned()), prefix.to_owned()).is_none());
+            assert!(
+                pending
+                    .insert((tid, name.to_owned()), prefix.to_owned())
+                    .is_none()
+            );
         } else if let Some(resumed) = body.strip_prefix("<... ") {
             let (name, tail) = resumed.split_once(" resumed>").unwrap();
-            let prefix = pending.remove(&(tid, name.to_owned())).expect("matched syscall entry");
-            result.push(Event { tid, body: prefix + tail });
+            let prefix = pending
+                .remove(&(tid, name.to_owned()))
+                .expect("matched syscall entry");
+            result.push(Event {
+                tid,
+                body: prefix + tail,
+            });
         } else {
-            result.push(Event { tid, body: body.to_owned() });
+            result.push(Event {
+                tid,
+                body: body.to_owned(),
+            });
         }
     }
-    assert!(!complete || pending.is_empty(), "complete original syscall records required");
+    assert!(
+        !complete || pending.is_empty(),
+        "complete original syscall records required"
+    );
     result
 }
 
@@ -42,7 +60,9 @@ fn original_line(line: &str) -> Option<(u32, &str)> {
     if line.is_empty() {
         return None;
     }
-    let (pid, body) = line.split_once(' ').expect("original numeric PID prefix required");
+    let (pid, body) = line
+        .split_once(' ')
+        .expect("original numeric PID prefix required");
     let tid = pid.parse().expect("unambiguous original numeric PID");
     let body = body.trim_start();
     assert!(!body.is_empty(), "original event body required");
@@ -52,13 +72,22 @@ fn original_line(line: &str) -> Option<(u32, &str)> {
 /// Live capture consumes only completed lines; final records require no tail.
 pub fn tids(trace: &str) -> BTreeSet<u32> {
     let complete = trace.rsplit_once('\n').map_or("", |(complete, _)| complete);
-    complete.lines().filter_map(original_line).map(|(tid, _)| tid).collect()
+    complete
+        .lines()
+        .filter_map(original_line)
+        .map(|(tid, _)| tid)
+        .collect()
 }
 
 fn returned(body: &str) -> i32 {
-    body.rsplit_once(" = ").unwrap().1.chars()
+    body.rsplit_once(" = ")
+        .unwrap()
+        .1
+        .chars()
         .take_while(|character| character.is_ascii_digit() || *character == '-')
-        .collect::<String>().parse().unwrap()
+        .collect::<String>()
+        .parse()
+        .unwrap()
 }
 
 fn name(body: &str) -> &str {
@@ -70,7 +99,14 @@ fn open(body: &str) -> bool {
 }
 
 fn fd(body: &str) -> i32 {
-    body.split_once('(').unwrap().1.split_once('<').unwrap().0.parse().unwrap()
+    body.split_once('(')
+        .unwrap()
+        .1
+        .split_once('<')
+        .unwrap()
+        .0
+        .parse()
+        .unwrap()
 }
 
 fn exact_fd(body: &str, destination: &str) -> bool {
@@ -85,14 +121,12 @@ pub struct Cut {
     pub ordinal: u32,
 }
 
-pub fn final_sync(
-    trace: &str,
-    destination: &str,
-    leaf: &str,
-    writer: u32,
-    fault: bool,
-) -> Cut {
-    assert!(!destination.chars().any(|character| matches!(character, '"' | '<' | '>' | '\\' | '\n')));
+pub fn final_sync(trace: &str, destination: &str, leaf: &str, writer: u32, fault: bool) -> Cut {
+    assert!(
+        !destination
+            .chars()
+            .any(|character| matches!(character, '"' | '<' | '>' | '\\' | '\n'))
+    );
     let events = events(trace);
     let markers: Vec<_> = events
         .iter()
@@ -107,55 +141,89 @@ pub fn final_sync(
         .iter()
         .enumerate()
         .filter(|(index, event)| {
-            *index > ready && event.tid == writer && open(&event.body)
+            *index > ready
+                && event.tid == writer
+                && open(&event.body)
                 && (event.body.contains(&format!("\"{leaf}\""))
                     || event.body.contains(&format!("\"{destination}\"")))
-                && event.body.contains("O_CREAT") && event.body.contains("O_EXCL")
-                && returned(&event.body) >= 0 && exact_fd(&event.body, destination)
+                && event.body.contains("O_CREAT")
+                && event.body.contains("O_EXCL")
+                && returned(&event.body) >= 0
+                && exact_fd(&event.body, destination)
         })
         .collect();
-    assert_eq!(reservations.len(), 1, "one successful exact CreateNew reservation");
+    assert_eq!(
+        reservations.len(),
+        1,
+        "one successful exact CreateNew reservation"
+    );
     let reservation = reservations[0].0;
     let writable: Vec<_> = events
         .iter()
         .enumerate()
         .filter(|(index, event)| {
-            *index > reservation && event.tid == writer && open(&event.body)
+            *index > reservation
+                && event.tid == writer
+                && open(&event.body)
                 && (event.body.contains(&format!("\"{leaf}\""))
                     || event.body.contains(&format!("\"{destination}\"")))
-                && event.body.contains("O_RDWR") && !event.body.contains("O_CREAT")
-                && returned(&event.body) >= 0 && exact_fd(&event.body, destination)
+                && event.body.contains("O_RDWR")
+                && !event.body.contains("O_CREAT")
+                && returned(&event.body) >= 0
+                && exact_fd(&event.body, destination)
         })
         .collect();
-    assert_eq!(writable.len(), 2, "SQLite connection then standalone fsync file only");
+    assert_eq!(
+        writable.len(),
+        2,
+        "SQLite connection then standalone fsync file only"
+    );
     let prior = writable[0].0;
     let reserved_fd = returned(&reservations[0].1.body);
-    assert_eq!(events[reservation + 1..prior].iter().filter(|event| {
-        event.tid == writer && name(&event.body) == "close"
-            && fd(&event.body) == reserved_fd && exact_fd(&event.body, destination)
-            && returned(&event.body) == 0
-    }).count(), 1, "successful reservation descriptor close precedes SQLite open");
+    assert_eq!(
+        events[reservation + 1..prior]
+            .iter()
+            .filter(|event| {
+                event.tid == writer
+                    && name(&event.body) == "close"
+                    && fd(&event.body) == reserved_fd
+                    && exact_fd(&event.body, destination)
+                    && returned(&event.body) == 0
+            })
+            .count(),
+        1,
+        "successful reservation descriptor close precedes SQLite open"
+    );
     let standalone = writable[1].0;
     let descriptor = returned(&writable[1].1.body);
     let prior_fd = returned(&writable[0].1.body);
-    assert!(events[prior + 1..standalone].iter().any(|event| {
-        event.tid == writer && name(&event.body) == "close"
-            && fd(&event.body) == prior_fd && exact_fd(&event.body, destination)
-            && returned(&event.body) == 0
-    }), "SQLite destination descriptor closes before standalone open");
+    assert!(
+        events[prior + 1..standalone].iter().any(|event| {
+            event.tid == writer
+                && name(&event.body) == "close"
+                && fd(&event.body) == prior_fd
+                && exact_fd(&event.body, destination)
+                && returned(&event.body) == 0
+        }),
+        "SQLite destination descriptor closes before standalone open"
+    );
     let close = (standalone + 1..events.len())
         .find(|index| {
             let event = &events[*index];
-            event.tid == writer && name(&event.body) == "close"
-                && fd(&event.body) == descriptor && exact_fd(&event.body, destination)
+            event.tid == writer
+                && name(&event.body) == "close"
+                && fd(&event.body) == descriptor
+                && exact_fd(&event.body, destination)
                 && returned(&event.body) == 0
         })
         .expect("standalone file closed");
     let syncs: Vec<_> = (standalone + 1..close)
         .filter(|index| {
             let event = &events[*index];
-            event.tid == writer && matches!(name(&event.body), "fsync" | "fdatasync")
-                && fd(&event.body) == descriptor && exact_fd(&event.body, destination)
+            event.tid == writer
+                && matches!(name(&event.body), "fsync" | "fdatasync")
+                && fd(&event.body) == descriptor
+                && exact_fd(&event.body, destination)
         })
         .collect();
     assert_eq!(syncs.len(), 1, "one unambiguous standalone target sync");
@@ -165,49 +233,87 @@ pub fn final_sync(
         "fdatasync" => "fdatasync",
         _ => unreachable!(),
     };
-    let ordinal = events[..=index].iter()
+    let ordinal = events[..=index]
+        .iter()
         .filter(|event| event.tid == writer && name(&event.body) == syscall)
         .count() as u32;
     assert!((1..=65535).contains(&ordinal));
-    assert!(!events.iter().any(|event| {
-        event.tid != writer && name(&event.body) == syscall
-    }), "no competing harness sync injection sequence");
+    assert!(
+        !events
+            .iter()
+            .any(|event| { event.tid != writer && name(&event.body) == syscall }),
+        "no competing harness sync injection sequence"
+    );
     if fault {
-        assert!(events[index].body.contains(" = -1 EIO") && events[index].body.contains("INJECTED"));
-        assert_eq!(events.iter().filter(|event| event.body.contains("INJECTED")).count(), 1);
-        assert!(!events.iter().any(|event| event.body.contains(ACK)), "no qualified ACK");
+        assert!(
+            events[index].body.contains(" = -1 EIO") && events[index].body.contains("INJECTED")
+        );
+        assert_eq!(
+            events
+                .iter()
+                .filter(|event| event.body.contains("INJECTED"))
+                .count(),
+            1
+        );
+        assert!(
+            !events.iter().any(|event| event.body.contains(ACK)),
+            "no qualified ACK"
+        );
     } else {
         assert_eq!(returned(&events[index].body), 0);
-        assert!(events[close + 1..].iter().any(|event| {
-            event.tid == writer && event.body.starts_with("write(1<")
-                && event.body.contains(ACK) && returned(&event.body) == (ACK.len() - 1) as i32
-        }), "sync precedes actual read-only qualified ACK");
+        assert!(
+            events[close + 1..].iter().any(|event| {
+                event.tid == writer
+                    && event.body.starts_with("write(1<")
+                    && event.body.contains(ACK)
+                    && returned(&event.body) == (ACK.len() - 1) as i32
+            }),
+            "sync precedes actual read-only qualified ACK"
+        );
     }
-    Cut { tid: writer, fd: descriptor, syscall, ordinal }
+    Cut {
+        tid: writer,
+        fd: descriptor,
+        syscall,
+        ordinal,
+    }
 }
 
 pub fn births(trace: &str, owned: &BTreeSet<u32>, main: u32) -> bool {
     let trace = trace.rsplit_once('\n').map_or("", |(complete, _)| complete);
     let events = records(trace, false);
-    let execs: Vec<_> = events.iter().filter(|event| {
-        name(&event.body) == "execve" && returned(&event.body) == 0
-    }).collect();
+    let execs: Vec<_> = events
+        .iter()
+        .filter(|event| name(&event.body) == "execve" && returned(&event.body) == 0)
+        .collect();
     if execs.is_empty() {
         return false;
     }
     assert_eq!(execs.len(), 1);
     assert_eq!(execs[0].tid, main);
-    assert!(!events.iter().any(|event| {
-        matches!(name(&event.body), "setsid" | "setpgid" | "ptrace")
-    }), "no detachment or group/session escape calls");
+    assert!(
+        !events
+            .iter()
+            .any(|event| { matches!(name(&event.body), "setsid" | "setpgid" | "ptrace") }),
+        "no detachment or group/session escape calls"
+    );
     let mut births = BTreeSet::from([main]);
     for event in &events {
         if matches!(name(&event.body), "clone" | "clone3" | "fork" | "vfork")
             && returned(&event.body) > 0
         {
-            assert!(event.body.contains("CLONE_THREAD"), "unexpected process descendant");
-            assert!(!event.body.contains("CLONE_UNTRACED"), "no untraced descendant");
-            assert!(births.insert(returned(&event.body) as u32), "unique thread birth");
+            assert!(
+                event.body.contains("CLONE_THREAD"),
+                "unexpected process descendant"
+            );
+            assert!(
+                !event.body.contains("CLONE_UNTRACED"),
+                "no untraced descendant"
+            );
+            assert!(
+                births.insert(returned(&event.body) as u32),
+                "unique thread birth"
+            );
         }
     }
     &births == owned
@@ -215,11 +321,21 @@ pub fn births(trace: &str, owned: &BTreeSet<u32>, main: u32) -> bool {
 
 pub fn exited(trace: &str, owned: &BTreeSet<u32>, main: u32) {
     let events = events(trace);
-    assert_eq!(&tids(trace), owned, "no unaccounted process/thread birth after release");
-    assert!(births(trace, owned, main), "every tracee has original exec/clone birth");
+    assert_eq!(
+        &tids(trace),
+        owned,
+        "no unaccounted process/thread birth after release"
+    );
+    assert!(
+        births(trace, owned, main),
+        "every tracee has original exec/clone birth"
+    );
     for tid in owned {
-        assert!(events.iter().any(|event| {
-            event.tid == *tid && event.body == "+++ exited with 0 +++"
-        }), "every actual tracee exit retained");
+        assert!(
+            events
+                .iter()
+                .any(|event| { event.tid == *tid && event.body == "+++ exited with 0 +++" }),
+            "every actual tracee exit retained"
+        );
     }
 }
