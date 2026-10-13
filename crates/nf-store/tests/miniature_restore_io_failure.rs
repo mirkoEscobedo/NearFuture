@@ -44,7 +44,7 @@ fn traced(
     let mut command = Command::new("strace");
     command
         .process_group(0)
-        .current_dir(&case.root)
+        .current_dir(case.backup.parent().unwrap())
         .args([
             "--kill-on-exit",
             "-f",
