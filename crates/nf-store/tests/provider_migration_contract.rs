@@ -65,8 +65,7 @@ fn two_provider_identity_is_canonical_and_binds_each_descriptor_field() {
             ..high
         },
     ] {
-        let different =
-            Composition::new(1, [1; 32], [2; 32], [3; 32], vec![changed, low]).unwrap();
+        let different = Composition::new(1, [1; 32], [2; 32], [3; 32], vec![changed, low]).unwrap();
         assert_ne!(different.digest(), expected);
     }
 }
