@@ -28,6 +28,12 @@ jobs:
         run: cargo fetch --locked
       - name: Install vendored developer tools offline
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
+      - name: Check isolated restore public test formatting
+        id: restore-format
+        run: rustfmt --edition 2024 --check crates/nf-store/tests/miniature_backup_restore.rs
+      - name: Observe isolated backup restore public seam
+        if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        run: cargo test -p nf-store --test miniature_backup_restore --locked --offline isolated_backup_restore_preserves_originals_and_refuses_newer_known_same_history -- --exact --nocapture
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
