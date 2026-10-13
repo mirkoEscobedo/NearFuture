@@ -93,7 +93,10 @@ fn existing_parent(destination: &Path) -> Result<()> {
         .parent()
         .filter(|path| !path.as_os_str().is_empty())
         .unwrap_or_else(|| Path::new("."));
-    for ancestor in parent.ancestors().filter(|path| !path.as_os_str().is_empty()) {
+    for ancestor in parent
+        .ancestors()
+        .filter(|path| !path.as_os_str().is_empty())
+    {
         let metadata = fs::symlink_metadata(ancestor).map_err(|_| StoreError::Io)?;
         if !metadata.is_dir() || metadata.file_type().is_symlink() {
             return Err(StoreError::Io);
