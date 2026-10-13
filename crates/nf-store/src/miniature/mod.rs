@@ -28,3 +28,7 @@ mod transitions;
 
 #[cfg(test)]
 mod tests;
+
+mod reader;
+pub use reader::MiniatureReader;
+mod reader_connection;
