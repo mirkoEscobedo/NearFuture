@@ -1,9 +1,7 @@
 use super::{StageBinding, StageError, StageRecord, derive, membership_digest, record};
 use crate::{
-    ImmutableSnapshot, KnownFrontiers, Store, StoreError, codec, identity,
-    model::MAX_STATE_BYTES,
-    persistence::bounded_blob,
-    schema,
+    ImmutableSnapshot, KnownFrontiers, Store, StoreError, codec, identity, model::MAX_STATE_BYTES,
+    persistence::bounded_blob, schema,
 };
 use rusqlite::{Connection, DatabaseName, OpenFlags, TransactionBehavior, limits::Limit, params};
 use std::{collections::BTreeMap, fs::OpenOptions, path::Path};
