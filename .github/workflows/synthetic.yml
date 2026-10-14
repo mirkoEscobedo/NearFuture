@@ -49,6 +49,33 @@ jobs:
       - name: Observe isolated restore source and destination refusals
         if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
         run: cargo test -p nf-store --test miniature_backup_restore_refusals --locked --offline -- --nocapture --test-threads=1
+      - name: Check strategic read-only support test formatting
+        id: strategic-reader-format
+        if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        run: rustfmt --edition 2024 --check crates/nf-store/tests/strategic_read_only_support.rs crates/nf-store/tests/strategic_read_only_support/mod.rs crates/nf-store/tests/strategic_read_only_support/custody.rs crates/nf-store/tests/strategic_read_only_support/permissions.rs crates/nf-store/tests/strategic_read_only_support/projection.rs crates/nf-store/tests/strategic_read_only_support/sql.rs
+      - name: Prepare caller-owned strategic reader evidence
+        id: strategic-reader-custody
+        if: ${{ !cancelled() && (steps.strategic-reader-format.outcome == 'success' || steps.strategic-reader-format.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $readerEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-strategic-reader-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $readerEvidence) { throw 'fresh strategic reader evidence parent required' }
+          [void][IO.Directory]::CreateDirectory($readerEvidence)
+          [IO.File]::WriteAllText((Join-Path $readerEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-strategic-read-only-reader-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64,"fullACLQualification":false}' + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+          'NF_STRATEGIC_READER_EVIDENCE_ROOT=' + $readerEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe genuine strategic read-only support public seam
+        id: strategic-reader-public
+        if: ${{ !cancelled() && steps.strategic-reader-custody.outcome == 'success' && (steps.strategic-reader-format.outcome == 'success' || steps.strategic-reader-format.outcome == 'failure') }}
+        run: cargo test -p nf-store --test strategic_read_only_support --locked --offline strategic_read_only_support_observation_replays_nonempty_history_and_protects_all_persisted_minima -- --ignored --exact --nocapture --test-threads=1
+      - name: Retain caller-owned strategic reader public originals
+        if: ${{ always() && env.NF_STRATEGIC_READER_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: strategic-reader-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_STRATEGIC_READER_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
       - name: Check isolated restore CLI public test formatting
         id: restore-cli-format
         if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
