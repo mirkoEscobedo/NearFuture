@@ -83,6 +83,23 @@ jobs:
       - name: Observe actual isolated backup restore CLI
         if: ${{ !cancelled() && (steps.restore-cli-format.outcome == 'success' || steps.restore-cli-format.outcome == 'failure') }}
         run: cargo test -p nf-world-driver --test driver_isolated_restore_cli --locked --offline actual_isolated_restore_cli_preserves_originals_and_all_independent_minima -- --ignored --exact --nocapture --test-threads=1
+      - name: Prepare caller-owned bounded runtime observer evidence
+        id: runtime-observer-custody
+        if: ${{ !cancelled() && (steps.restore-cli-format.outcome == 'success' || steps.restore-cli-format.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $runtimeEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-runtime-observer-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $runtimeEvidence) { throw 'fresh runtime observer evidence parent required' }
+          [void][IO.Directory]::CreateDirectory($runtimeEvidence)
+          [IO.File]::WriteAllText((Join-Path $runtimeEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-runtime-observer-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64}' + [char]10, [Text.UTF8Encoding]::new($false))
+          'NF_RUNTIME_OBSERVER_EVIDENCE_ROOT=' + $runtimeEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe bounded registered public runtime package bytes
+        id: runtime-observer-public
+        if: ${{ !cancelled() && steps.runtime-observer-custody.outcome == 'success' }}
+        env:
+          NF_RUNTIME_OBSERVER_REQUIRE_CASE: '1'
+        run: node --test tests/runtime-manifest/bounded-runtime-package.test.mjs
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
@@ -134,6 +151,14 @@ jobs:
           path: ${{ env.NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT }}
           if-no-files-found: error
           retention-days: 90
+      - name: Retain only caller-owned runtime observer public originals
+        if: ${{ always() && env.NF_RUNTIME_OBSERVER_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: runtime-observer-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_RUNTIME_OBSERVER_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
   # A fresh, required Windows job preserves the hosted 20-minute bound for each gate.
   windows-interop:
     runs-on: windows-latest
