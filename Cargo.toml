@@ -18,11 +18,11 @@ rust-version.workspace = true
 
 [dependencies]
 nf-contract = { path = "crates/nf-contract" }
+nf-identity = { path = "crates/nf-identity" }
+nf-nex-shadow = { path = "crates/nf-nex-shadow" }
 
 [dev-dependencies]
-nf-identity = { path = "crates/nf-identity" }
 nf-nex-boundary = { path = "crates/nf-nex-boundary" }
-nf-nex-shadow = { path = "crates/nf-nex-shadow" }
 
 [lints]
 workspace = true
