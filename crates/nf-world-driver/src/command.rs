@@ -172,7 +172,9 @@ fn open_options(values: &mut Values<'_>) -> Result<OpenOptions, CommandError> {
         minimum_term: AuthorityTerm(number(take(values, "--min-term")?)?),
     })
 }
-fn isolated_restore_options(values: &mut Values<'_>) -> Result<IsolatedRestoreOptions, CommandError> {
+fn isolated_restore_options(
+    values: &mut Values<'_>,
+) -> Result<IsolatedRestoreOptions, CommandError> {
     use nf_store::miniature::{IsolatedRestoreConfirmation, MiniatureKnownFrontiers};
     let confirmation = match take(values, "--confirm")? {
         "NewReadOnlyCopy" => IsolatedRestoreConfirmation::NewReadOnlyCopy,

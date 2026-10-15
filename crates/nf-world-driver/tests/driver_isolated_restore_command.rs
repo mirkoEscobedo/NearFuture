@@ -80,7 +80,12 @@ fn isolated_restore_refuses_implicit_confirmation_owner_flags_and_noncanonical_m
         values.extend([key.to_owned(), value.to_owned()]);
         assert_eq!(parse_command(&values), Err(CommandError::Invalid));
     }
-    for key in ["--min-event", "--min-store", "--min-membership", "--min-term"] {
+    for key in [
+        "--min-event",
+        "--min-store",
+        "--min-membership",
+        "--min-term",
+    ] {
         for invalid in ["01", "+1", "-1", "18446744073709551616"] {
             let mut values = args();
             let index = values.iter().position(|value| value == key).unwrap() + 1;

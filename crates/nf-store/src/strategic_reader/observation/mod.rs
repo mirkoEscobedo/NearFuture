@@ -1,9 +1,13 @@
 //! Closed redacted observation values. Only the admitted reader constructs them.
 mod counts;
 mod providers;
+use crate::{
+    KnownFrontiers,
+    error::{Result, StoreError},
+    model::State,
+};
 pub use counts::StrategicSupportCountsV1;
 pub use providers::{StrategicSupportAssignmentV1, StrategicSupportManifestV1};
-use crate::{KnownFrontiers, error::{Result, StoreError}, model::State};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SupportProtection {

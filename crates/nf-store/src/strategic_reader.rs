@@ -1,14 +1,10 @@
 //! Read-only inspection of one admitted, quiescent Profile1 history.
 mod observation;
+use crate::{ImmutableSnapshot, KnownFrontiers, error::Result, model::State};
 pub use observation::{
     StrategicSupportAssignmentV1, StrategicSupportCountsV1, StrategicSupportImplementation,
     StrategicSupportManifestV1, StrategicSupportObservationV1, StrategicSupportProtectionV1,
     StrategicSupportRulesetBinding, StrategicSupportUnavailable, SupportProtection,
-};
-use crate::{
-    ImmutableSnapshot, KnownFrontiers,
-    error::Result,
-    model::State,
 };
 use rusqlite::{Connection, DatabaseName, TransactionBehavior};
 use std::{fmt, path::Path};
@@ -49,9 +45,8 @@ impl StrategicReader {
             .as_ref()
             .map(|state| observation::count(state.accounts.len()))
             .transpose()?;
-        let observation = StrategicSupportObservationV1::from_recovered(
-            &state, actual, known, accounts,
-        )?;
+        let observation =
+            StrategicSupportObservationV1::from_recovered(&state, actual, known, accounts)?;
         transaction.commit()?;
         Ok(Self {
             connection,

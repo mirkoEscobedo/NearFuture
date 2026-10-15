@@ -1,5 +1,8 @@
 use super::count;
-use crate::{error::Result, model::{RequestStatus, State}};
+use crate::{
+    error::Result,
+    model::{RequestStatus, State},
+};
 use nf_kernel::WorldSpec;
 
 #[derive(Clone, Debug)]
@@ -24,12 +27,16 @@ impl StrategicSupportCountsV1 {
         spec: &WorldSpec,
         members: Option<u64>,
     ) -> Result<Self> {
-        let pending_requests = state.requests.values().filter(|record| {
-            matches!(record.status, RequestStatus::Pending { .. })
-        }).count();
-        let committed_requests = state.requests.values().filter(|record| {
-            matches!(record.status, RequestStatus::Committed { .. })
-        }).count();
+        let pending_requests = state
+            .requests
+            .values()
+            .filter(|record| matches!(record.status, RequestStatus::Pending { .. }))
+            .count();
+        let committed_requests = state
+            .requests
+            .values()
+            .filter(|record| matches!(record.status, RequestStatus::Committed { .. }))
+            .count();
         Ok(Self {
             factions: count(spec.factions.len())?,
             relations: count(spec.relations.len())?,

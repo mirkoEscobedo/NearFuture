@@ -1,6 +1,4 @@
-use super::{
-    StrategicSupportImplementation, StrategicSupportRulesetBinding, count,
-};
+use super::{StrategicSupportImplementation, StrategicSupportRulesetBinding, count};
 use crate::error::{Result, StoreError};
 use nf_kernel::{Capability, Domain, ProviderKind, WorldSpec};
 use std::collections::BTreeMap;
@@ -79,9 +77,14 @@ impl StrategicSupportAssignmentV1 {
 
 pub(super) fn from_recovered(
     mut spec: WorldSpec,
-) -> Result<(Vec<StrategicSupportManifestV1>, Vec<StrategicSupportAssignmentV1>)> {
-    spec.registry.sort_by_key(|manifest| *manifest.id.as_bytes());
-    spec.ownership.sort_by_key(|record| *record.aggregate.as_bytes());
+) -> Result<(
+    Vec<StrategicSupportManifestV1>,
+    Vec<StrategicSupportAssignmentV1>,
+)> {
+    spec.registry
+        .sort_by_key(|manifest| *manifest.id.as_bytes());
+    spec.ownership
+        .sort_by_key(|record| *record.aggregate.as_bytes());
     let mut ordinals = BTreeMap::new();
     let mut manifests = Vec::with_capacity(spec.registry.len());
     for (index, manifest) in spec.registry.into_iter().enumerate() {
