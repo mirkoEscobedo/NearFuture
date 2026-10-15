@@ -100,6 +100,21 @@ jobs:
         env:
           NF_RUNTIME_OBSERVER_REQUIRE_CASE: '1'
         run: node --test tests/runtime-manifest/bounded-runtime-package.test.mjs
+      - name: Prepare caller-owned public diagnostic observation evidence
+        id: diagnostic-observation-custody
+        if: ${{ !cancelled() && (steps.runtime-observer-public.outcome == 'success' || steps.runtime-observer-public.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $diagnosticEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-diagnostic-observation-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $diagnosticEvidence) { throw 'fresh diagnostic observation evidence parent required' }
+          [void][IO.Directory]::CreateDirectory($diagnosticEvidence)
+          [IO.File]::WriteAllText((Join-Path $diagnosticEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-diagnostic-observation-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64}' + [char]10, [Text.UTF8Encoding]::new($false))
+          'NF_DIAGNOSTIC_OBSERVATION_EVIDENCE_ROOT=' + $diagnosticEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe non-draining redacted diagnostic stream public seam
+        id: diagnostic-observation-public
+        if: ${{ !cancelled() && steps.diagnostic-observation-custody.outcome == 'success' }}
+        run: cargo test -p nf-nex-shadow --test diagnostic_stream_observation --locked --offline non_draining_redacted_diagnostic_observation_preserves_fifo_and_unverified_scope -- --ignored --exact --nocapture --test-threads=1
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
@@ -157,6 +172,14 @@ jobs:
         with:
           name: runtime-observer-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.NF_RUNTIME_OBSERVER_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
+      - name: Retain only caller-owned public diagnostic observation originals
+        if: ${{ always() && env.NF_DIAGNOSTIC_OBSERVATION_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: diagnostic-observation-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_DIAGNOSTIC_OBSERVATION_EVIDENCE_ROOT }}
           if-no-files-found: error
           retention-days: 7
   # A fresh, required Windows job preserves the hosted 20-minute bound for each gate.
