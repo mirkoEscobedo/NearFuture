@@ -1,12 +1,17 @@
 //! Retained synthetic public data only. RAM signers are never archived.
 use super::miniature_support::{Fixture as MemoryFixture, claim};
 use nf_identity::model::MembershipRepository;
-use sha2::{Digest, Sha256};
 use nf_store::miniature::{
-    BootstrapSigner, ChallengeRequest, MiniatureKnownFrontiers, MiniatureReader,
-    MiniatureSnapshot, MiniatureStore, ProofAttempt,
+    BootstrapSigner, ChallengeRequest, MiniatureKnownFrontiers, MiniatureReader, MiniatureSnapshot,
+    MiniatureStore, ProofAttempt,
 };
-use std::{collections::BTreeMap, fs, path::{Path, PathBuf}, time::Instant};
+use sha2::{Digest, Sha256};
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
+    time::Instant,
+};
 #[path = "capture.rs"]
 mod capture;
 #[path = "process.rs"]
@@ -38,7 +43,11 @@ pub fn plain(path: &Path) -> fs::Metadata {
     #[cfg(windows)]
     {
         use std::os::windows::fs::MetadataExt;
-        assert_eq!(metadata.file_attributes() & 0x400, 0, "reparse point refused");
+        assert_eq!(
+            metadata.file_attributes() & 0x400,
+            0,
+            "reparse point refused"
+        );
     }
     metadata
 }
@@ -46,7 +55,10 @@ pub fn plain(path: &Path) -> fs::Metadata {
 impl Fixture {
     pub fn new(deadline: Instant) -> Self {
         check(deadline);
-        let parent = PathBuf::from(std::env::var_os("NF_ISOLATED_RESTORE_CLI_EVIDENCE_PARENT").expect("caller-owned CLI evidence parent required"));
+        let parent = PathBuf::from(
+            std::env::var_os("NF_ISOLATED_RESTORE_CLI_EVIDENCE_PARENT")
+                .expect("caller-owned CLI evidence parent required"),
+        );
         assert!(parent.is_absolute());
         for ancestor in parent.ancestors() {
             assert!(plain(ancestor).is_dir());
@@ -54,18 +66,24 @@ impl Fixture {
         let parent = parent.canonicalize().unwrap();
         let nonce = capture::hex(&nf_identity::keys::random_id().unwrap());
         let root = parent.join(format!("isolated-cli-{}-{nonce}", std::process::id()));
-        fs::create_dir(&root).expect("exclusive fresh evidence directory; never reuse old artifacts");
+        fs::create_dir(&root)
+            .expect("exclusive fresh evidence directory; never reuse old artifacts");
         let data = root.join("data");
         let control = root.join("control");
         fs::create_dir(&data).unwrap();
         fs::create_dir(&control).unwrap();
-        capture::receipt(&control.join("custody.public"), "fresh caller-owned synthetic public database/capture tree; no keys, private vault, save, or deleting Drop");
+        capture::receipt(
+            &control.join("custody.public"),
+            "fresh caller-owned synthetic public database/capture tree; no keys, private vault, save, or deleting Drop",
+        );
         let source = data.join("original.sqlite");
         let backup = data.join("backup.sqlite");
         let mut f = MemoryFixture::new();
         let expected_membership = f.bytes();
         check(deadline);
-        let mut writer = MiniatureStore::create(&source, f.spec, &f.bytes(), f.policy.clone(), &mut f.signer).unwrap();
+        let mut writer =
+            MiniatureStore::create(&source, f.spec, &f.bytes(), f.policy.clone(), &mut f.signer)
+                .unwrap();
         claim(&mut writer, &mut f);
         let known = writer.known_frontiers().unwrap();
         assert_eq!(known.storage.event_sequence.0, 0);
@@ -80,21 +98,42 @@ impl Fixture {
         // output or the archive; each must independently reject that archive.
         claim(&mut writer, &mut f);
         writer.prepare(vec![], vec![]).unwrap();
-        let issued = writer.issue_challenge(ChallengeRequest::Activity {
-            actor: f.policy.owner.account, device: f.policy.owner.device,
-        }).unwrap();
+        let issued = writer
+            .issue_challenge(ChallengeRequest::Activity {
+                actor: f.policy.owner.account,
+                device: f.policy.owner.device,
+            })
+            .unwrap();
         let proof = f.signer.sign(&issued.template).unwrap();
-        writer.accept_activity(ProofAttempt { ticket: issued.ticket, proof }).unwrap();
+        writer
+            .accept_activity(ProofAttempt {
+                ticket: issued.ticket,
+                proof,
+            })
+            .unwrap();
         let batch = nf_kernel::miniature::settle_miniature(
-            writer.world(), writer.pending().unwrap(), writer.authority().unwrap().context(),
-        ).unwrap();
+            writer.world(),
+            writer.pending().unwrap(),
+            writer.authority().unwrap().context(),
+        )
+        .unwrap();
         let issued = writer.issue_challenge(ChallengeRequest::Commit).unwrap();
         let proof = f.signer.sign(&issued.template).unwrap();
-        writer.commit(&batch, ProofAttempt { ticket: issued.ticket, proof }).unwrap();
+        writer
+            .commit(
+                &batch,
+                ProofAttempt {
+                    ticket: issued.ticket,
+                    proof,
+                },
+            )
+            .unwrap();
         let mut membership = f.membership.clone();
         membership.revision += 1;
         membership.consumed.insert([99; 16]);
-        writer.commit_membership(Some(f.membership.revision), &membership).unwrap();
+        writer
+            .commit_membership(Some(f.membership.revision), &membership)
+            .unwrap();
         claim(&mut writer, &mut f);
         let newer = writer.known_frontiers().unwrap();
         assert!(newer.storage.event_sequence > known.storage.event_sequence);
@@ -106,14 +145,46 @@ impl Fixture {
         drop(writer);
         drop(f); // Private RAM seeds never enter retained files or the command.
         check(deadline);
-        capture::retained_bytes(&control.join("baseline-original.sqlite"), &capture::bounded(&source, 1_048_576));
-        capture::retained_bytes(&control.join("baseline-backup.sqlite"), &capture::bounded(&backup, 1_048_576));
+        capture::retained_bytes(
+            &control.join("baseline-original.sqlite"),
+            &capture::bounded(&source, 1_048_576),
+        );
+        capture::retained_bytes(
+            &control.join("baseline-backup.sqlite"),
+            &capture::bounded(&backup, 1_048_576),
+        );
         capture::retained_bytes(&control.join("expected-backup-state.public"), &state);
-        capture::retained_bytes(&control.join("expected-original-state.public"), &newest_state);
-        capture::retained_bytes(&control.join("expected-backup-membership.public"), &expected_membership);
-        capture::receipt(&control.join("expected-backup-membership.public.sha256"), &capture::hex(&Sha256::digest(&expected_membership)));
-        capture::receipt(&control.join("independent-minima.public"), &format!("writer-held-before-archive={known:?};independently-advanced-original={newer:?};neither-derived-from-CLI-output"));
-        Self { data, control, source, backup, known, newer, snapshot, state, membership: expected_membership, newest, newest_state }
+        capture::retained_bytes(
+            &control.join("expected-original-state.public"),
+            &newest_state,
+        );
+        capture::retained_bytes(
+            &control.join("expected-backup-membership.public"),
+            &expected_membership,
+        );
+        capture::receipt(
+            &control.join("expected-backup-membership.public.sha256"),
+            &capture::hex(&Sha256::digest(&expected_membership)),
+        );
+        capture::receipt(
+            &control.join("independent-minima.public"),
+            &format!(
+                "writer-held-before-archive={known:?};independently-advanced-original={newer:?};neither-derived-from-CLI-output"
+            ),
+        );
+        Self {
+            data,
+            control,
+            source,
+            backup,
+            known,
+            newer,
+            snapshot,
+            state,
+            membership: expected_membership,
+            newest,
+            newest_state,
+        }
     }
 
     pub fn assert_original(&self, deadline: Instant) {
@@ -136,13 +207,22 @@ impl Fixture {
         let connection = rusqlite::Connection::open_with_flags(
             path,
             rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
-        ).unwrap();
-        assert!(connection.is_readonly(rusqlite::DatabaseName::Main).unwrap());
-        let count: i64 = connection.query_row("SELECT count(*) FROM membership", [], |row| row.get(0)).unwrap();
+        )
+        .unwrap();
+        assert!(
+            connection
+                .is_readonly(rusqlite::DatabaseName::Main)
+                .unwrap()
+        );
+        let count: i64 = connection
+            .query_row("SELECT count(*) FROM membership", [], |row| row.get(0))
+            .unwrap();
         assert_eq!(count, 1);
-        let (body, digest): (Vec<u8>, Vec<u8>) = connection.query_row(
-            "SELECT public_state,digest FROM membership", [], |row| Ok((row.get(0)?, row.get(1)?)),
-        ).unwrap();
+        let (body, digest): (Vec<u8>, Vec<u8>) = connection
+            .query_row("SELECT public_state,digest FROM membership", [], |row| {
+                Ok((row.get(0)?, row.get(1)?))
+            })
+            .unwrap();
         assert_eq!(body, self.membership);
         assert_eq!(digest, Sha256::digest(&self.membership).to_vec());
         connection.close().unwrap();
@@ -151,7 +231,10 @@ impl Fixture {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Entry { Directory, File(Vec<u8>) }
+pub enum Entry {
+    Directory,
+    File(Vec<u8>),
+}
 
 pub fn tree(root: &Path, deadline: Instant) -> BTreeMap<PathBuf, Entry> {
     let mut result = BTreeMap::new();

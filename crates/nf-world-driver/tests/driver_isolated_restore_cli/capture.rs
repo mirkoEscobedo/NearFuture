@@ -1,9 +1,18 @@
 use super::{check, plain};
 use sha2::{Digest, Sha256};
-use std::{fs::{File, OpenOptions}, io::{Read, Write}, path::Path, time::Instant};
+use std::{
+    fs::{File, OpenOptions},
+    io::{Read, Write},
+    path::Path,
+    time::Instant,
+};
 
 pub fn new_file(path: &Path) -> File {
-    OpenOptions::new().write(true).create_new(true).open(path).unwrap()
+    OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+        .unwrap()
 }
 
 pub fn receipt(path: &Path, text: &str) {
@@ -24,7 +33,11 @@ pub fn bounded(path: &Path, maximum: u64) -> Vec<u8> {
     let metadata = plain(path);
     assert!(metadata.is_file() && metadata.len() <= maximum);
     let mut bytes = Vec::new();
-    File::open(path).unwrap().take(maximum + 1).read_to_end(&mut bytes).unwrap();
+    File::open(path)
+        .unwrap()
+        .take(maximum + 1)
+        .read_to_end(&mut bytes)
+        .unwrap();
     assert!(bytes.len() as u64 <= maximum);
     bytes
 }
@@ -40,14 +53,31 @@ fn same(before: &std::fs::Metadata, after: &std::fs::Metadata) {
     #[cfg(unix)]
     {
         use std::os::unix::fs::MetadataExt;
-        assert_eq!((before.dev(), before.ino(), before.ctime(), before.ctime_nsec()),
-            (after.dev(), after.ino(), after.ctime(), after.ctime_nsec()));
+        assert_eq!(
+            (
+                before.dev(),
+                before.ino(),
+                before.ctime(),
+                before.ctime_nsec()
+            ),
+            (after.dev(), after.ino(), after.ctime(), after.ctime_nsec())
+        );
     }
     #[cfg(windows)]
     {
         use std::os::windows::fs::MetadataExt;
-        assert_eq!((before.file_attributes(), before.creation_time(), before.last_write_time()),
-            (after.file_attributes(), after.creation_time(), after.last_write_time()));
+        assert_eq!(
+            (
+                before.file_attributes(),
+                before.creation_time(),
+                before.last_write_time()
+            ),
+            (
+                after.file_attributes(),
+                after.creation_time(),
+                after.last_write_time()
+            )
+        );
     }
 }
 

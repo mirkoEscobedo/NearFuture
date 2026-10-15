@@ -45,6 +45,28 @@ fn execute() -> Result<(), DriverError> {
                 .write_all(output.as_str().as_bytes())
                 .map_err(|_| DriverError::Io);
         }
+        Command::RestoreIsolated(options) => {
+            let reader = nf_store::miniature::MiniatureReader::restore_backup_to_new_path(
+                options.backup,
+                options.destination,
+                options.protected,
+                options.confirmation,
+            )?;
+            // Qualification is the maintained API guarantee. Reader Drop has
+            // no fallible close receipt and grants no writer or active authority.
+            drop(reader);
+            return std::io::stdout()
+                .lock()
+                .write_all(
+                    concat!(
+                        "{\"format\":\"NF-OPERATOR-ISOLATED-RESTORE-1\",",
+                        "\"result\":\"new_read_only_copy\",\"store_profile\":\"profile2\",",
+                        "\"activation\":\"unavailable\"}"
+                    )
+                    .as_bytes(),
+                )
+                .map_err(|_| DriverError::Io);
+        }
         Command::Step(options) => {
             use nf_store::miniature::{MiniatureCancelCause, MiniatureRequestStatus};
             use nf_world_driver::{ActionRequest, PendingPolicy};

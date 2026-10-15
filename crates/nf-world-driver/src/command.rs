@@ -17,6 +17,14 @@ pub struct OpenOptions {
     pub minimum_membership: u64,
     pub minimum_term: AuthorityTerm,
 }
+/// Only an absent isolated inspection copy; no writer or activation authority.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct IsolatedRestoreOptions {
+    pub backup: PathBuf,
+    pub destination: PathBuf,
+    pub protected: nf_store::miniature::MiniatureKnownFrontiers,
+    pub confirmation: nf_store::miniature::IsolatedRestoreConfirmation,
+}
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SignerOptions {
     pub vault: PathBuf,
@@ -83,6 +91,7 @@ pub enum Command {
     Status(OpenOptions),
     StatusRedacted(OpenOptions),
     SupportPreview(OpenOptions),
+    RestoreIsolated(IsolatedRestoreOptions),
     Run(RunOptions),
     Step(StepOptions),
     Create(Box<CreateOptions>),
@@ -113,6 +122,7 @@ pub fn parse_command(args: &[String]) -> Result<Command, CommandError> {
         "status" => Command::Status(open_options(&mut values)?),
         "status-redacted" => Command::StatusRedacted(open_options(&mut values)?),
         "support-preview" => Command::SupportPreview(open_options(&mut values)?),
+        "restore-isolated" => Command::RestoreIsolated(isolated_restore_options(&mut values)?),
         "run" => Command::Run(run_options(&mut values)?),
         "step" => Command::Step(step_options(&mut values)?),
         "create" => Command::Create(Box::new(create_options(&mut values)?)),
@@ -160,6 +170,30 @@ fn open_options(values: &mut Values<'_>) -> Result<OpenOptions, CommandError> {
         minimum_store: number(take(values, "--min-store")?)?,
         minimum_membership: number(take(values, "--min-membership")?)?,
         minimum_term: AuthorityTerm(number(take(values, "--min-term")?)?),
+    })
+}
+fn isolated_restore_options(values: &mut Values<'_>) -> Result<IsolatedRestoreOptions, CommandError> {
+    use nf_store::miniature::{IsolatedRestoreConfirmation, MiniatureKnownFrontiers};
+    let confirmation = match take(values, "--confirm")? {
+        "NewReadOnlyCopy" => IsolatedRestoreConfirmation::NewReadOnlyCopy,
+        _ => return Err(CommandError::Invalid),
+    };
+    Ok(IsolatedRestoreOptions {
+        backup: PathBuf::from(take(values, "--backup")?),
+        destination: PathBuf::from(take(values, "--destination")?),
+        protected: MiniatureKnownFrontiers {
+            storage: nf_store::KnownFrontiers {
+                scope: Scope {
+                    universe: UniverseId::from_bytes(fixed(take(values, "--universe")?)?),
+                    history: HistoryId::from_bytes(fixed(take(values, "--history")?)?),
+                },
+                event_sequence: EventSeq(number(take(values, "--min-event")?)?),
+                store_revision: number(take(values, "--min-store")?)?,
+                membership_revision: Some(number(take(values, "--min-membership")?)?),
+            },
+            minimum_authority_term: AuthorityTerm(number(take(values, "--min-term")?)?),
+        },
+        confirmation,
     })
 }
 fn boolean(value: &str) -> Result<bool, CommandError> {
@@ -333,8 +367,10 @@ fn create_options(values: &mut Values<'_>) -> Result<CreateOptions, CommandError
 }
 /// Fixed bounded foreground usage; never includes local keys, paths or generated identifiers.
 pub fn command_help() -> &'static str {
-    "nf-world-driver create|status|status-redacted|support-preview|step|run\n\
+    "nf-world-driver create|status|status-redacted|support-preview|restore-isolated|step|run\n\
 status/status-redacted/support-preview: --database PATH --universe HEX16 --history HEX16 --min-event N --min-store N --min-membership N --min-term N\n\
+restore-isolated: --backup PATH --destination PATH --universe HEX16 --history HEX16 --min-event N --min-store N --min-membership N --min-term N --confirm NewReadOnlyCopy\n\
+restore-isolated: caller owns a quiescent local backup and existing destination ancestors. Creates only an absent isolated inspection copy, with no activation or authority. Failure may retain an unqualified partial copy; no cleanup or retry.\n\
 step/run: status options plus --vault PATH --game-save-root PATH --account HEX16 --device HEX16 --claim-authority yes --active yes|no\n\
 step: --request HEX16 --operation HEX16 --job HEX16 --action colony:SITE:FACTION|build:MARKET:1|build:MARKET:2|relationship:FACTION:OTHER:SCORE|travel:FACTION:SYSTEM\n\
 step: optional --pending-policy pause|resume|cancel (default pause); only an exact retained binding can resume or cancel. Resume requires every original actor's existing key.\n\

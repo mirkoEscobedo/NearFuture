@@ -3,8 +3,8 @@ mod pacing;
 pub use pacing::{DueHint, Pacer, PacingError};
 mod command;
 pub use command::{
-    ActionSelection, Command, CommandError, CreateOptions, OpenOptions, PendingPolicy, RunOptions,
-    SignerOptions, StepOptions, command_help, parse_command,
+    ActionSelection, Command, CommandError, CreateOptions, IsolatedRestoreOptions, OpenOptions,
+    PendingPolicy, RunOptions, SignerOptions, StepOptions, command_help, parse_command,
 };
 mod signer;
 pub use signer::{SignerError, VaultSigner};
