@@ -1,7 +1,7 @@
 use super::{
     PortableCompletionV1, ProducerNativeOriginV1, ProducerObservationOriginV1, ProducerScopeV1,
     RegisteredProducerCodeV1, RegisteredProducerKindV1, RegisteredProducerSeverityV1,
-    counters::Counts,
+    counters::Counts, metrics::ProducerMetricsObservationV1,
 };
 use nf_nex_shadow::{
     DiagnosticDroppedCountV1, DiagnosticStreamObservationV1, Difference, ShadowAuthority,
@@ -102,9 +102,14 @@ pub struct ProducerObservationV1 {
     evaluations: ProducerEvaluationCountsV1,
     records: Vec<RegisteredProducerRecordV1>,
     l1: Option<DiagnosticStreamObservationV1>,
+    metrics: Option<ProducerMetricsObservationV1>,
 }
 impl ProducerObservationV1 {
-    pub(super) fn new(counts: &Counts, l1: Option<DiagnosticStreamObservationV1>) -> Self {
+    pub(super) fn new(
+        counts: &Counts,
+        l1: Option<DiagnosticStreamObservationV1>,
+        metrics: Option<ProducerMetricsObservationV1>,
+    ) -> Self {
         let differences = [
             Difference::Kind,
             Difference::Lifecycle,
@@ -152,6 +157,7 @@ impl ProducerObservationV1 {
             evaluations: ProducerEvaluationCountsV1::new(counts),
             records,
             l1,
+            metrics,
         }
     }
     pub fn origin(&self) -> ProducerObservationOriginV1 {
@@ -174,6 +180,9 @@ impl ProducerObservationV1 {
     }
     pub fn l1(&self) -> Option<&DiagnosticStreamObservationV1> {
         self.l1.as_ref()
+    }
+    pub fn metrics(&self) -> Option<&ProducerMetricsObservationV1> {
+        self.metrics.as_ref()
     }
     pub fn dropped(&self) -> Option<DiagnosticDroppedCountV1> {
         self.l1.as_ref().map(DiagnosticStreamObservationV1::dropped)

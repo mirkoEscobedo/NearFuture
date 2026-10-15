@@ -26,7 +26,21 @@ pub(super) fn index(value: Difference) -> usize {
     }
 }
 impl Counts {
+    pub fn validate(&self) -> Result<(), HostError> {
+        let completed = self.matched.checked_add(self.mismatched).ok_or(HostError::Bounds)?;
+        let started = self.completed.checked_add(self.unavailable).ok_or(HostError::Bounds)?;
+        if completed != self.completed
+            || started != self.started
+            || self.failures != self.unavailable
+            || self.revocations < self.unavailable
+            || self.facets.iter().any(|count| *count > self.mismatched)
+        {
+            return Err(HostError::Bounds);
+        }
+        Ok(())
+    }
     pub fn reserve_attempt(&self) -> Result<(), HostError> {
+        self.validate()?;
         // Reserve room for either complete or unavailable before any evaluation.
         for value in [
             self.started,
@@ -45,6 +59,7 @@ impl Counts {
         Ok(())
     }
     pub fn completed(self, differences: &[Difference]) -> Result<Self, HostError> {
+        self.validate()?;
         let mut next = self;
         next.started = increment(next.started)?;
         next.completed = increment(next.completed)?;
@@ -60,6 +75,7 @@ impl Counts {
         Ok(next)
     }
     pub fn unavailable(self) -> Result<Self, HostError> {
+        self.validate()?;
         let mut next = self;
         next.started = increment(next.started)?;
         next.unavailable = increment(next.unavailable)?;
@@ -68,6 +84,7 @@ impl Counts {
         Ok(next)
     }
     pub fn revoked(self) -> Result<Self, HostError> {
+        self.validate()?;
         Ok(Self {
             revocations: increment(self.revocations)?,
             ..self

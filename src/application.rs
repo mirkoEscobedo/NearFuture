@@ -14,9 +14,14 @@ macro_rules! safe_debug {
 mod admission;
 mod counters;
 mod enums;
+mod metrics;
 mod observation;
 mod producer;
 pub use enums::*;
+pub use metrics::{
+    ProducerMetricClockV1, ProducerMetricObservationV1, ProducerMetricScopeV1, ProducerMetricUnitV1,
+    ProducerMetricsObservationV1, RegisteredProducerMetricV1,
+};
 use nf_nex_shadow::{MakePeaceEligibility, ShadowInput, ShadowMetadata, ShadowOutput};
 pub use observation::{
     PortableEvaluationReceipt, ProducerEvaluationCountsV1, ProducerObservationV1,
@@ -225,16 +230,19 @@ impl ForegroundApplication {
         if selection.required_scope == ProducerScopeV1::NativeAdmittedProducerSinceOwnerStart {
             return Err(HostError::NativeAdmissionUnavailable);
         }
-        if selection.include_metrics {
-            return Err(HostError::UnsupportedSource);
-        }
         let observation = self
             .producer
             .as_ref()
             .ok_or(HostError::UnsupportedSource)?
-            .observe(selection.include_l1);
+            .observe(selection.include_l1, selection.include_metrics);
         self.gate()?;
-        Ok(observation)
+        match observation {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                let _ = self.shutdown();
+                Err(error)
+            }
+        }
     }
     pub fn stop(mut self) -> Result<HostExit, HostError> {
         match self.gate() {
