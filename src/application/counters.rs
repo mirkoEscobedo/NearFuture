@@ -28,12 +28,20 @@ pub(super) fn index(value: Difference) -> usize {
 impl Counts {
     pub fn reserve_attempt(&self) -> Result<(), HostError> {
         // Reserve room for either complete or unavailable before any evaluation.
-        for value in [self.started, self.completed, self.unavailable, self.matched,
-            self.mismatched, self.failures, self.revocations]
-        {
+        for value in [
+            self.started,
+            self.completed,
+            self.unavailable,
+            self.matched,
+            self.mismatched,
+            self.failures,
+            self.revocations,
+        ] {
             increment(value)?;
         }
-        for value in self.facets { increment(value)?; }
+        for value in self.facets {
+            increment(value)?;
+        }
         Ok(())
     }
     pub fn completed(self, differences: &[Difference]) -> Result<Self, HostError> {
@@ -60,6 +68,9 @@ impl Counts {
         Ok(next)
     }
     pub fn revoked(self) -> Result<Self, HostError> {
-        Ok(Self { revocations: increment(self.revocations)?, ..self })
+        Ok(Self {
+            revocations: increment(self.revocations)?,
+            ..self
+        })
     }
 }

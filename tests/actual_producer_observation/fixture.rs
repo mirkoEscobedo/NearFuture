@@ -1,4 +1,6 @@
-use nf_contract::identity::{BranchId, CampaignId, EventSeq, HistoryId, ProviderId, RuntimeSession, UniverseId};
+use nf_contract::identity::{
+    BranchId, CampaignId, EventSeq, HistoryId, ProviderId, RuntimeSession, UniverseId,
+};
 use nf_nex_boundary::{Observation, Provenance, SOURCE_COMMIT};
 use nf_nex_shadow::{MakePeaceEligibility, ShadowMetadata, ShadowOutput};
 
@@ -37,21 +39,51 @@ pub fn fixture() -> (ShadowMetadata, MakePeaceEligibility, ShadowOutput) {
     (metadata, input, ShadowOutput::MakePeaceEligibility(false))
 }
 
-pub fn public_original(metadata: &ShadowMetadata, input: &MakePeaceEligibility, reference: &ShadowOutput) -> Vec<u8> {
+pub fn public_original(
+    metadata: &ShadowMetadata,
+    input: &MakePeaceEligibility,
+    reference: &ShadowOutput,
+) -> Vec<u8> {
     let text = format!("PUBLIC-SYNTHETIC-RAM-FIXTURE-1\n{metadata:?}\n{input:?}\n{reference:?}\n");
     assert!(text.len() <= 16_384, "bounded public fixture capture");
     text.into_bytes()
 }
 
 pub fn assert_private_bindings_absent(text: &str, metadata: &ShadowMetadata) {
-    for field in ["source_digest", "runtime_digest", "ruleset_digest", "merged_config_digest", "reference_digest", "corpus_digest", "implementation_digest", "capture_policy_digest", "runtime_session", "subject_faction"] {
+    for field in [
+        "source_digest",
+        "runtime_digest",
+        "ruleset_digest",
+        "merged_config_digest",
+        "reference_digest",
+        "corpus_digest",
+        "implementation_digest",
+        "capture_policy_digest",
+        "runtime_session",
+        "subject_faction",
+    ] {
         assert!(!text.contains(field), "private binding field in projection");
     }
     assert!(!text.contains(SOURCE_COMMIT));
     assert!(!text.contains(&metadata.subject_faction));
-    for digest in [metadata.provenance.source_digest, metadata.provenance.runtime_digest, metadata.provenance.ruleset_digest, metadata.provenance.merged_config_digest, metadata.reference_digest, metadata.corpus_digest, metadata.implementation_digest, metadata.capture_policy_digest] {
-        let hex = digest.iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+    for digest in [
+        metadata.provenance.source_digest,
+        metadata.provenance.runtime_digest,
+        metadata.provenance.ruleset_digest,
+        metadata.provenance.merged_config_digest,
+        metadata.reference_digest,
+        metadata.corpus_digest,
+        metadata.implementation_digest,
+        metadata.capture_policy_digest,
+    ] {
+        let hex = digest
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
         assert!(!text.contains(&hex), "private binding hex in projection");
-        assert!(!text.contains(&format!("{digest:?}")), "private binding bytes in projection");
+        assert!(
+            !text.contains(&format!("{digest:?}")),
+            "private binding bytes in projection"
+        );
     }
 }

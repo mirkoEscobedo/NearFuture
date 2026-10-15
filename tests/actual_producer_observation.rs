@@ -4,8 +4,15 @@ use near_future::application::{
     ForegroundRequest, HostExit, PackageObservationScopeV1, PortableAdmissionInputV1,
     ProducerObservationSelection, ProducerScopeV1, start_foreground,
 };
-use std::{panic::{AssertUnwindSafe, catch_unwind, resume_unwind}, time::Instant};
-use support::{custody::{Evidence, Stage}, fixture, projection, OUTER, QUEUE};
+use std::{
+    panic::{AssertUnwindSafe, catch_unwind, resume_unwind},
+    time::Instant,
+};
+use support::{
+    OUTER, QUEUE,
+    custody::{Evidence, Stage},
+    fixture, projection,
+};
 
 fn exercise(evidence: &mut Evidence) {
     let (metadata, input, reference) = evidence.run(Stage::RamFixture, fixture::fixture);
@@ -21,44 +28,66 @@ fn exercise(evidence: &mut Evidence) {
         lifetime_millis: 60_000,
         package_scope: PackageObservationScopeV1::WorkspacePublicSubset,
     };
-    let mut host = evidence.run(Stage::StartHost, || start_foreground(request))
+    let mut host = evidence
+        .run(Stage::StartHost, || start_foreground(request))
         .unwrap_or_else(|_| panic!("actual foreground startup refused"));
-    evidence.run(Stage::RegisterSession, || {
-        host.register_portable_session(&metadata, PortableAdmissionInputV1::Action(&input))
-    }).unwrap_or_else(|_| panic!("actual canonical registration refused"));
-    let receipt = evidence.run(Stage::EvaluateAction, || {
-        host.evaluate_action_copied(&input, &reference)
-    }).unwrap_or_else(|_| panic!("actual evaluation refused"));
-    evidence.run(Stage::ReceiptAssertions, || projection::assert_receipt(&receipt));
-    let first = evidence.run(Stage::FirstObservation, || {
-        host.observe_producer(ProducerObservationSelection {
-            required_scope: ProducerScopeV1::PortableCopiedFactsSinceOwnerStart,
-            include_l1: true,
-            include_metrics: false,
+    evidence
+        .run(Stage::RegisterSession, || {
+            host.register_portable_session(&metadata, PortableAdmissionInputV1::Action(&input))
         })
-    }).unwrap_or_else(|_| panic!("first actual owner observation refused"));
-    let second = evidence.run(Stage::SecondObservation, || {
-        host.observe_producer(ProducerObservationSelection {
-            required_scope: ProducerScopeV1::PortableCopiedFactsSinceOwnerStart,
-            include_l1: true,
-            include_metrics: false,
+        .unwrap_or_else(|_| panic!("actual canonical registration refused"));
+    let receipt = evidence
+        .run(Stage::EvaluateAction, || {
+            host.evaluate_action_copied(&input, &reference)
         })
-    }).unwrap_or_else(|_| panic!("second actual owner observation refused"));
+        .unwrap_or_else(|_| panic!("actual evaluation refused"));
+    evidence.run(Stage::ReceiptAssertions, || {
+        projection::assert_receipt(&receipt)
+    });
+    let first = evidence
+        .run(Stage::FirstObservation, || {
+            host.observe_producer(ProducerObservationSelection {
+                required_scope: ProducerScopeV1::PortableCopiedFactsSinceOwnerStart,
+                include_l1: true,
+                include_metrics: false,
+            })
+        })
+        .unwrap_or_else(|_| panic!("first actual owner observation refused"));
+    let second = evidence
+        .run(Stage::SecondObservation, || {
+            host.observe_producer(ProducerObservationSelection {
+                required_scope: ProducerScopeV1::PortableCopiedFactsSinceOwnerStart,
+                include_l1: true,
+                include_metrics: false,
+            })
+        })
+        .unwrap_or_else(|_| panic!("second actual owner observation refused"));
     let first_bytes = evidence.run(Stage::FirstProjection, || projection::project(&first));
     let second_bytes = evidence.run(Stage::SecondProjection, || projection::project(&second));
-    let exit = evidence.run(Stage::StopHost, || host.stop())
+    let exit = evidence
+        .run(Stage::StopHost, || host.stop())
         .unwrap_or_else(|_| panic!("actual foreground stop refused"));
     assert!(matches!(exit, HostExit::Stopped));
 
     evidence.enter(Stage::TreePreservation);
-    assert_eq!(evidence.snapshot(), baseline, "product changed owned public originals");
-    assert_eq!(fixture::public_original(&metadata, &input, &reference), original);
+    assert_eq!(
+        evidence.snapshot(),
+        baseline,
+        "product changed owned public originals"
+    );
+    assert_eq!(
+        fixture::public_original(&metadata, &input, &reference),
+        original
+    );
     evidence.enter(Stage::OutputCapture);
     evidence.write("actual.first.outer.json", first_bytes.0.as_bytes());
     evidence.write("actual.first.queue.json", first_bytes.1.as_bytes());
     evidence.write("actual.second.outer.json", second_bytes.0.as_bytes());
     evidence.write("actual.second.queue.json", second_bytes.1.as_bytes());
-    evidence.write("actual.typed-receipt.txt", b"shadow_only portable_copied_facts_since_owner_start mismatched nex_decision_mismatch\n");
+    evidence.write(
+        "actual.typed-receipt.txt",
+        b"shadow_only portable_copied_facts_since_owner_start mismatched nex_decision_mismatch\n",
+    );
     evidence.enter(Stage::LiteralAssertions);
     assert_eq!(OUTER.len(), 487);
     assert_eq!(QUEUE.len(), 163);
@@ -68,7 +97,10 @@ fn exercise(evidence: &mut Evidence) {
         fixture::assert_private_bindings_absent(outer, &metadata);
         fixture::assert_private_bindings_absent(queue, &metadata);
     }
-    assert_eq!(first_bytes, second_bytes, "same actual queue observation drained or drifted");
+    assert_eq!(
+        first_bytes, second_bytes,
+        "same actual queue observation drained or drifted"
+    );
     evidence.enter(Stage::CompletionCheck);
 }
 

@@ -210,7 +210,9 @@ fn read_bounded(path: &Path, allowance: usize, started: Instant, cleanup: bool) 
 impl Evidence {
     pub fn create(started: Instant, owned: &mut Option<Self>) {
         let start_utc_millis = external(started, false, || SystemTime::now())
-            .duration_since(UNIX_EPOCH).unwrap().as_millis();
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
         let start_utc_millis = u64::try_from(start_utc_millis).unwrap();
         let cutoff_utc_millis = start_utc_millis.checked_add(20_000).unwrap();
         let raw = external(started, false, || {
@@ -369,7 +371,9 @@ impl Evidence {
         // Retain closed last-attempted stage before inventory work can fail.
         self.write("outcome.receipt.json", format!("{{\"outcome\":\"{outcome}\",\"stage\":\"{stage}\",\"finalInventory\":\"pending\",\"descendantZeroQualified\":false,\"checkedFileClose\":false,\"directorySyncQualified\":false}}\n").as_bytes());
         let observed = external(self.started, true, || SystemTime::now())
-            .duration_since(UNIX_EPOCH).unwrap().as_millis();
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
         let observed = u64::try_from(observed).unwrap();
         assert!(observed >= self.start_utc_millis && observed <= self.cutoff_utc_millis);
         self.write("clock.receipt.json", format!("{{\"startUtcMillis\":{},\"cutoffUtcMillis\":{},\"observedUtcMillis\":{},\"caseLimitMillis\":20000}}\n", self.start_utc_millis, self.cutoff_utc_millis, observed).as_bytes());

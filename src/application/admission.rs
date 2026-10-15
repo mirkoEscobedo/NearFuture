@@ -30,7 +30,11 @@ pub(super) fn copied(value: &ShadowInput) -> Result<(), HostError> {
                 && facts.draws.iter().all(|d| d.purpose.len() <= 256)
         }
     };
-    if valid { Ok(()) } else { Err(HostError::InvalidRequest) }
+    if valid {
+        Ok(())
+    } else {
+        Err(HostError::InvalidRequest)
+    }
 }
 pub(super) fn canonical(
     value: &ShadowMetadata,
@@ -42,9 +46,7 @@ pub(super) fn canonical(
             copied(input)?;
             nf_nex_shadow::encode_input(value, input)
         }
-        PortableAdmissionInputV1::Action(input) => {
-            nf_nex_shadow::encode_action_input(value, input)
-        }
+        PortableAdmissionInputV1::Action(input) => nf_nex_shadow::encode_action_input(value, input),
     }
     .map_err(|_| HostError::InvalidRequest)?;
     if bytes.len() > 65_536 {

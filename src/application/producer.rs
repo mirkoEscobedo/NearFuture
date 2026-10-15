@@ -1,7 +1,10 @@
-use super::{counters::Counts, observation::PortableEvaluationReceipt,
-    HostError, ProducerObservationV1};
-use nf_nex_shadow::{Diagnostic, DiagnosticStream, MakePeaceEligibility, ShadowEvaluation,
-    ShadowInput, ShadowMetadata, ShadowOutput, ShadowSession, compare_outputs};
+use super::{
+    HostError, ProducerObservationV1, counters::Counts, observation::PortableEvaluationReceipt,
+};
+use nf_nex_shadow::{
+    Diagnostic, DiagnosticStream, MakePeaceEligibility, ShadowEvaluation, ShadowInput,
+    ShadowMetadata, ShadowOutput, ShadowSession, compare_outputs,
+};
 
 #[derive(Clone, Copy)]
 pub(super) enum Work<'a> {
@@ -20,13 +23,24 @@ pub(super) struct Producer {
 impl Producer {
     pub fn new(metadata: &ShadowMetadata) -> Result<Self, HostError> {
         let stream = DiagnosticStream::new(64, 10_304).map_err(|_| HostError::Bounds)?;
-        Ok(Self { metadata: metadata.clone(), session: ShadowSession::new(metadata.clone()),
-            stream, counts: Counts::default(), active: true })
+        Ok(Self {
+            metadata: metadata.clone(),
+            session: ShadowSession::new(metadata.clone()),
+            stream,
+            counts: Counts::default(),
+            active: true,
+        })
     }
     pub fn require_active(&self) -> Result<(), HostError> {
-        if self.active { Ok(()) } else { Err(HostError::EvaluationUnavailable) }
+        if self.active {
+            Ok(())
+        } else {
+            Err(HostError::EvaluationUnavailable)
+        }
     }
-    pub fn reserve_attempt(&self) -> Result<(), HostError> { self.counts.reserve_attempt() }
+    pub fn reserve_attempt(&self) -> Result<(), HostError> {
+        self.counts.reserve_attempt()
+    }
     pub fn evaluate(&mut self, work: Work<'_>) -> Result<ShadowEvaluation, HostError> {
         let result = match work {
             Work::Copied(input) => self.session.evaluate(input),
@@ -34,18 +48,22 @@ impl Producer {
         };
         result.map_err(|_| HostError::EvaluationUnavailable)
     }
-    pub fn accept<'a>(&self, work: Work<'_>, result: &'a ShadowEvaluation)
-        -> Result<&'a ShadowOutput, HostError>
-    {
+    pub fn accept<'a>(
+        &self,
+        work: Work<'_>,
+        result: &'a ShadowEvaluation,
+    ) -> Result<&'a ShadowOutput, HostError> {
         let accepted = match work {
             Work::Copied(input) => self.session.accept(result, &self.metadata, input),
             Work::Action(input) => self.session.accept_action(result, &self.metadata, input),
         };
         accepted.map_err(|_| HostError::EvaluationUnavailable)
     }
-    pub fn complete(&mut self, evaluation: &ShadowEvaluation, reference: &ShadowOutput)
-        -> Result<PortableEvaluationReceipt, HostError>
-    {
+    pub fn complete(
+        &mut self,
+        evaluation: &ShadowEvaluation,
+        reference: &ShadowOutput,
+    ) -> Result<PortableEvaluationReceipt, HostError> {
         // The caller supplies unverified reference data; comparison is actual Rust work.
         // Equality against the bounded actual output cannot walk a larger reference
         // vector/string: mismatched lengths refuse equality before element bytes.
@@ -53,7 +71,8 @@ impl Producer {
         let next = self.counts.completed(&differences)?;
         let receipt = PortableEvaluationReceipt::new(&differences);
         for difference in differences {
-            self.stream.push(Diagnostic::from_evaluation(evaluation, difference));
+            self.stream
+                .push(Diagnostic::from_evaluation(evaluation, difference));
         }
         self.counts = next;
         Ok(receipt)
