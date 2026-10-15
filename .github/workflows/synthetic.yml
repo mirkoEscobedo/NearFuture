@@ -52,6 +52,270 @@ jobs:
           New-Item -ItemType Directory -Path $binaryParent | Out-Null
           "NF_MANAGED_UPGRADE_EVIDENCE_ROOT=$evidenceParent" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "NF_MANAGED_UPGRADE_BINARY_ROOT=$binaryParent" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe exact managed test artifact build footprint without running it
+        id: managed-upgrade-artifact-footprint
+        if: ${{ !cancelled() && steps.managed-upgrade-custody.outcome == 'success' && (steps.managed-upgrade-format.outcome == 'success' || steps.managed-upgrade-format.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $nativeExit = $null
+          $failed = $false
+          $stage = 'setup'
+          $admitted = $null
+          $kept = [Collections.Generic.List[object]]::new()
+          $keptBytes = [long]0
+          $inputBytes = [long]0
+          $limit = [long]8388608
+          $utf8 = [Text.UTF8Encoding]::new($false, $true)
+          $comparison = [StringComparison]::Ordinal
+          if ([OperatingSystem]::IsWindows()) { $comparison = [StringComparison]::OrdinalIgnoreCase }
+          function Require([bool]$ok) { if (!$ok) { throw 'Closed metadata admission refused' } }
+          function Ordinary-Path([string]$path, [bool]$directory) {
+              Require ($path.Length -gt 0 -and $path.Length -le 4096 -and !$path.Contains([char]0))
+              Require ([IO.Path]::IsPathFullyQualified($path))
+              $full = [IO.Path]::GetFullPath($path)
+              $leaf = if ($directory) { [IO.DirectoryInfo]::new($full) } else { [IO.FileInfo]::new($full) }
+              $leaf.Refresh()
+              Require $leaf.Exists
+              Require (($leaf.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0)
+              Require ($null -eq $leaf.LinkTarget)
+              Require ((($leaf.Attributes -band [IO.FileAttributes]::Directory) -ne 0) -eq $directory)
+              $parent = if ($directory) { $leaf.Parent } else { $leaf.Directory }
+              $depth = 0
+              while ($null -ne $parent) {
+                  $depth++
+                  Require ($depth -le 64)
+                  $parent.Refresh()
+                  Require ($parent.Exists -and ($parent.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0)
+                  Require ($null -eq $parent.LinkTarget)
+                  $parent = $parent.Parent
+              }
+              return $full
+          }
+          function Inside([string]$base, [string]$path) {
+              $relative = [IO.Path]::GetRelativePath($base, $path)
+              Require (![IO.Path]::IsPathFullyQualified($relative))
+              Require ($relative -ne '..' -and !$relative.StartsWith('../') -and !$relative.StartsWith('..\'))
+              Require ($relative -ne '.')
+              return $relative
+          }
+          function Hash-Bytes([byte[]]$bytes) {
+              return [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()
+          }
+          function Write-Admitted([string]$name, [byte[]]$bytes) {
+              Require ($name -match '^[a-z0-9][a-z0-9.-]{0,79}$')
+              Require ($kept.Count -lt 8 -and $keptBytes + $bytes.LongLength -le $limit)
+              $file = [IO.FileStream]::new((Join-Path $admitted $name), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+              try {
+                  $offset = 0
+                  while ($offset -lt $bytes.Length) {
+                      $width = [Math]::Min(32768, $bytes.Length - $offset)
+                      $file.Write($bytes, $offset, $width)
+                      $offset += $width
+                  }
+                  $file.Flush($true)
+              } finally { $file.Dispose() }
+              $script:keptBytes += $bytes.LongLength
+              [void]$kept.Add([ordered]@{ name = $name; bytes = $bytes.LongLength; sha256 = (Hash-Bytes $bytes) })
+          }
+          function Write-Receipt([string]$name, $value) {
+              $bytes = $utf8.GetBytes(($value | ConvertTo-Json -Depth 16 -Compress) + [char]10)
+              Require ($bytes.Length -le 16384)
+              Write-Admitted $name $bytes
+          }
+          function Read-Capture([string]$path) {
+              $path = Ordinary-Path $path $false
+              $info = [IO.FileInfo]::new($path)
+              $info.Refresh()
+              $allowance = $limit - $inputBytes
+              Require ($info.Length -lt $allowance)
+              $file = [IO.FileStream]::new($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read, 1, $false)
+              try {
+                  $length = $file.Length
+                  Require ($length -eq $info.Length -and $length -lt $allowance)
+                  $modified = [IO.File]::GetLastWriteTimeUtc($file.SafeFileHandle)
+                  $data = [byte[]]::new([int]$length)
+                  $offset = 0
+                  while ($offset -lt $data.Length) {
+                      $count = $file.Read($data, $offset, [Math]::Min(32768, $data.Length - $offset))
+                      Require ($count -gt 0)
+                      $offset += $count
+                  }
+                  Require ($file.ReadByte() -eq -1)
+                  Require ($file.Length -eq $length -and [IO.File]::GetLastWriteTimeUtc($file.SafeFileHandle) -eq $modified)
+                  $info.Refresh()
+                  Require ($info.Length -eq $length -and $info.LastWriteTimeUtc -eq $modified)
+                  Require ([string]::Equals((Ordinary-Path $path $false), $path, $comparison))
+              } finally { $file.Dispose() }
+              $script:inputBytes += $length + 1
+              return ,$data
+          }
+          function Unique-JSON($element, [int]$depth) {
+              Require ($depth -le 32)
+              if ($element.ValueKind -eq [Text.Json.JsonValueKind]::Object) {
+                  $names = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+                  foreach ($property in $element.EnumerateObject()) {
+                      Require ($names.Add($property.Name))
+                      Unique-JSON $property.Value ($depth + 1)
+                  }
+              } elseif ($element.ValueKind -eq [Text.Json.JsonValueKind]::Array) {
+                  foreach ($item in $element.EnumerateArray()) { Unique-JSON $item ($depth + 1) }
+              }
+          }
+          try {
+              Require ($PSVersionTable.PSVersion -ge [version]'7.4')
+              $checkout = Ordinary-Path $env:GITHUB_WORKSPACE $true
+              $temporary = Ordinary-Path $env:RUNNER_TEMP $true
+              $root = Join-Path $temporary ('nf-managed-artifact-diagnostic-' + [Guid]::NewGuid().ToString('N'))
+              Require (![IO.File]::Exists($root) -and ![IO.Directory]::Exists($root))
+              $admitted = Join-Path $root 'admitted'
+              ('NF_MANAGED_ARTIFACT_DIAGNOSTIC_ROOT=' + $admitted) | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              [void][IO.Directory]::CreateDirectory($root)
+              [void][IO.Directory]::CreateDirectory($admitted)
+              [void](Ordinary-Path $root $true)
+              [void](Ordinary-Path $admitted $true)
+              $stdout = Join-Path $root 'cargo.stdout.raw'
+              $stderr = Join-Path $root 'cargo.stderr.shell.txt'
+              Require (![IO.File]::Exists($stdout) -and ![IO.File]::Exists($stderr))
+              $stage = 'native_build'
+              cargo test -p nf-store --test managed_config_upgrade --locked --offline --no-run --message-format=json -vv 1> $stdout 2> $stderr
+              $nativeExit = $LASTEXITCODE
+              Require ($nativeExit -is [int])
+              $stage = 'capture_admission'
+              $outputBytes = Read-Capture $stdout
+              $errorBytes = Read-Capture $stderr
+              $output = $utf8.GetString($outputBytes)
+              $errors = $utf8.GetString($errorBytes)
+              [Console]::Out.Write($output)
+              [Console]::Error.Write($errors)
+              Require ($outputBytes.LongLength + $errorBytes.LongLength -le $limit - 49152)
+              Write-Admitted 'cargo.stdout.raw' $outputBytes
+              Write-Admitted 'cargo.stderr.shell.txt' $errorBytes
+              Require ($nativeExit -eq 0)
+              $stage = 'select_artifact'
+              Require ($output.Length -gt 0 -and $output.EndsWith([string][char]10))
+              $lines = $output.Split([char]10)
+              Require ($lines.Length -le 513)
+              $manifest = Ordinary-Path (Join-Path $checkout 'crates/nf-store/Cargo.toml') $false
+              $source = Ordinary-Path (Join-Path $checkout 'crates/nf-store/tests/managed_config_upgrade.rs') $false
+              $selected = $null
+              $artifactDigest = $null
+              $finished = $false
+              $options = [Text.Json.JsonDocumentOptions]::new()
+              $options.MaxDepth = 32
+              for ($i = 0; $i -lt $lines.Length - 1; $i++) {
+                  $line = $lines[$i].TrimEnd([char]13)
+                  Require ($utf8.GetByteCount($lines[$i]) -le 1048576)
+                  if (!$line.StartsWith('{')) { continue }
+                  Require (!$finished)
+                  $document = [Text.Json.JsonDocument]::Parse([string]$line, $options)
+                  try {
+                      Require ($document.RootElement.ValueKind -eq [Text.Json.JsonValueKind]::Object)
+                      Unique-JSON $document.RootElement 0
+                      $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 32
+                  } finally { $document.Dispose() }
+                  Require ($record -is [Collections.IDictionary] -and $record.reason -is [string])
+                  if ($record.reason -ceq 'build-finished') {
+                      Require ($record.success -is [bool] -and $record.success)
+                      $finished = $true
+                      continue
+                  }
+                  if ($record.reason -cne 'compiler-artifact') { continue }
+                  Require ($record.target -is [Collections.IDictionary])
+                  Require ($record.target.name -is [string])
+                  if ($record.target.name -cne 'managed_config_upgrade') { continue }
+                  Require ($null -eq $selected)
+                  Require ($record.manifest_path -is [string] -and $record.target.src_path -is [string])
+                  Require ([string]::Equals((Ordinary-Path $record.manifest_path $false), $manifest, $comparison))
+                  Require ([string]::Equals((Ordinary-Path $record.target.src_path $false), $source, $comparison))
+                  Require ($record.target.kind -is [array] -and $record.target.kind.Count -eq 1 -and $record.target.kind[0] -is [string] -and $record.target.kind[0] -ceq 'test')
+                  Require ($record.target.crate_types -is [array] -and $record.target.crate_types.Count -eq 1 -and $record.target.crate_types[0] -is [string] -and $record.target.crate_types[0] -ceq 'bin')
+                  Require ($record.profile -is [Collections.IDictionary] -and $record.profile.test -is [bool] -and $record.profile.test)
+                  Require ($record.fresh -is [bool] -and $record.package_id -is [string] -and $record.package_id.Length -gt 0 -and $record.package_id.Length -le 4096)
+                  Require ($record.features -is [array] -and $record.features.Count -le 16)
+                  Require ($record.filenames -is [array] -and $record.filenames.Count -gt 0 -and $record.filenames.Count -le 16)
+                  Require ($record.executable -is [string] -and $record.executable.Length -le 4096)
+                  foreach ($name in $record.filenames) { Require ($name -is [string] -and $name.Length -le 4096) }
+                  foreach ($feature in $record.features) { Require ($feature -is [string] -and $feature.Length -le 4096) }
+                  Require ($record.filenames -ccontains $record.executable)
+                  Require ($record.profile.opt_level -is [string] -and $record.profile.opt_level.Length -le 16)
+                  Require ($record.profile.debug_assertions -is [bool] -and $record.profile.overflow_checks -is [bool])
+                  Require ($record.profile.psbase.Keys -ccontains 'debuginfo')
+                  Require ($null -eq $record.profile.debuginfo -or (($record.profile.debuginfo -is [long] -or $record.profile.debuginfo -is [int]) -and $record.profile.debuginfo -in @(0, 1, 2)) -or ($record.profile.debuginfo -is [string] -and $record.profile.debuginfo -cin @('line-directives-only', 'line-tables-only')))
+                  $selected = $record
+                  $artifactDigest = Hash-Bytes ($utf8.GetBytes($line))
+              }
+              Require ($finished -and $null -ne $selected)
+              $stage = 'artifact_open_header_close'
+              $buildRoot = Ordinary-Path (Join-Path $checkout 'target/debug/deps') $true
+              $artifact = Ordinary-Path $selected.executable $false
+              [void](Inside $buildRoot $artifact)
+              $relativeArtifact = Inside $checkout $artifact
+              $info = [IO.FileInfo]::new($artifact)
+              $info.Refresh()
+              $stream = [IO.FileStream]::new($artifact, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read, 1, $false)
+              $closed = $false
+              try {
+                  $size = $stream.Length
+                  Require ($size -ge 16 -and $size -eq $info.Length)
+                  $modified = [IO.File]::GetLastWriteTimeUtc($stream.SafeFileHandle)
+                  Require (([IO.File]::GetAttributes($stream.SafeFileHandle) -band ([IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint)) -eq 0)
+                  $header = [byte[]]::new(16)
+                  $offset = 0
+                  while ($offset -lt 16) {
+                      $count = $stream.Read($header, $offset, 16 - $offset)
+                      Require ($count -gt 0)
+                      $offset += $count
+                  }
+                  Require ($stream.Length -eq $size -and [IO.File]::GetLastWriteTimeUtc($stream.SafeFileHandle) -eq $modified)
+                  $info.Refresh()
+                  Require ($info.Length -eq $size -and $info.LastWriteTimeUtc -eq $modified)
+                  Require ([string]::Equals((Ordinary-Path $artifact $false), $artifact, $comparison))
+              } finally { $stream.Dispose(); $closed = $true }
+              Require $closed
+              $magic = if ($header[0] -eq 0x7f -and $header[1] -eq 0x45 -and $header[2] -eq 0x4c -and $header[3] -eq 0x46) { 'ELF' } elseif ($header[0] -eq 0x4d -and $header[1] -eq 0x5a) { 'MZ' } else { 'unknown' }
+              Require ($magic -ne 'unknown')
+              $stage = 'metadata_receipt'
+              Write-Receipt 'artifact.metadata.json' ([ordered]@{
+                  schema = 'NF-MANAGED-TEST-ARTIFACT-METADATA-1'; commit = $env:GITHUB_SHA
+                  run = $env:GITHUB_RUN_ID; attempt = $env:GITHUB_RUN_ATTEMPT; os = $env:RUNNER_OS
+                  package_id = $selected.package_id; target = 'managed_config_upgrade'; artifact = $relativeArtifact
+                  profile = [ordered]@{ opt_level = $selected.profile.opt_level; debuginfo = $selected.profile.debuginfo
+                      debug_assertions = $selected.profile.debug_assertions; overflow_checks = $selected.profile.overflow_checks
+                      test = $selected.profile.test }
+                  fresh = $selected.fresh; native_build_exit = $nativeExit
+                  bytes = $size; header_bytes = 16; header_hex = [Convert]::ToHexString($header).ToLowerInvariant()
+                  header_sha256 = (Hash-Bytes $header); full_executable_hash = $null; marker = $magic
+                  artifact_message_sha256 = $artifactDigest; opened_handle_closed = $closed
+                  requested_strip = 'debuginfo'; effective_strip = 'UNVERIFIED'
+                  strip_evidence = 'Cargo JSON has no strip field; inspect retained actual verbose invocation when emitted'
+                  qualification = 'TEST_EXECUTABLE_ONLY_NOT_OPERATIONAL'; capture_write_quota = 'SOFT_POSTRUN_ADMISSION'
+                  descendant_zero_qualified = $false; hostile_filesystem_race_qualified = $false
+                  stdout_scope = 'PowerShell7.4_native_stdout_bytes'; stderr_scope = 'PowerShell_redirected_stderr_text'
+              })
+              $stage = 'complete'
+          } catch {
+              $failed = $true
+              [Console]::Error.WriteLine('Managed artifact metadata failed at closed stage: ' + $stage)
+          } finally {
+              if ($null -ne $admitted -and [IO.Directory]::Exists($admitted)) {
+                  try {
+                      Write-Receipt 'outcome.receipt.json' ([ordered]@{
+                          stage = $stage; collector_failed = $failed; native_build_exit = $nativeExit
+                          inventory = 'pending'; byte_limit = $limit; input_charged_bytes = $inputBytes
+                          soft_capture_only = $true; no_test_executed_by_prebuild = $true
+                      })
+                      Write-Receipt 'admitted-files.manifest.json' ([ordered]@{
+                          schema = 'NF-OWNED-MANAGED-BUILD-DIAGNOSTIC-FILES-1'
+                          files = $kept.ToArray(); includes_this_manifest = $false; hard_write_quota = $false
+                      })
+                  } catch { $failed = $true; [Console]::Error.WriteLine('Managed diagnostic receipt custody failed') }
+              } else { $failed = $true }
+          }
+          if ($null -ne $nativeExit -and $nativeExit -ne 0) { exit $nativeExit }
+          if ($failed) { exit 1 }
+          exit 0
       - name: Observe managed upgrade first public owner seam
         id: managed-upgrade-public
         if: ${{ !cancelled() && steps.managed-upgrade-custody.outcome == 'success' && (steps.managed-upgrade-format.outcome == 'success' || steps.managed-upgrade-format.outcome == 'failure') }}
@@ -114,6 +378,24 @@ jobs:
         env:
           NF_MINIATURE_REQUIRE_SYNC_FAULT: '1'
         run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture
+      - name: Observe whole workspace formatting independently of managed behavior
+        id: managed-upgrade-workspace-format-diagnostic
+        if: ${{ !cancelled() && (steps.managed-upgrade-public.outcome == 'success' || steps.managed-upgrade-public.outcome == 'failure') }}
+        run: cargo fmt --all -- --check
+      - name: Observe strict whole workspace Clippy independently of formatting and managed behavior
+        id: managed-upgrade-workspace-clippy-diagnostic
+        if: ${{ !cancelled() && (steps.managed-upgrade-public.outcome == 'success' || steps.managed-upgrade-public.outcome == 'failure') }}
+        run: cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+      - name: Retain only admitted owned managed build diagnostic files
+        if: ${{ always() && env.NF_MANAGED_ARTIFACT_DIAGNOSTIC_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: managed-test-artifact-metadata-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_MANAGED_ARTIFACT_DIAGNOSTIC_ROOT }}
+          retention-days: 7
+          if-no-files-found: error
+          include-hidden-files: false
+          overwrite: false
   # A fresh, required Windows job preserves the hosted 20-minute bound for each gate.
   windows-interop:
     runs-on: windows-latest

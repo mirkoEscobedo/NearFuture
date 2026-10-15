@@ -21,3 +21,6 @@ nf-contract = { path = "crates/nf-contract" }
 
 [lints]
 workspace = true
+
+[profile.test.package.nf-store]
+strip = "debuginfo"
