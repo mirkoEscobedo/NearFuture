@@ -45,7 +45,7 @@ impl Case {
         with_clock(&started, || permissions::directory(&parent));
         let parent = with_clock(&started, || parent.canonicalize()).unwrap();
         with_clock(&started, || permissions::directory(&parent));
-        let random = with_clock(&started, || nf_identity::keys::random_id()).unwrap();
+        let random = with_clock(&started, nf_identity::keys::random_id).unwrap();
         let nonce: String = random.iter().map(|v| format!("{v:02x}")).collect();
         let root = parent.join(format!("strategic-reader-{nonce}"));
         with_clock(&started, || fs::create_dir(&root)).unwrap();

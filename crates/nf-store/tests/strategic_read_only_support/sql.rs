@@ -169,8 +169,11 @@ impl SqlImage {
             assert!(result.insert(name, rows).is_none());
             case.check();
         }
-        case.guard(|| connection.close())
-            .map_err(|(_, error)| error)
+        case.guard(|| connection.close().map_err(Box::new))
+            .map_err(|failure| {
+                let (_, error) = *failure;
+                error
+            })
             .unwrap();
         case.check();
         Self { rows: result }
