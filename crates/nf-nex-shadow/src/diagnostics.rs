@@ -115,5 +115,6 @@ pub fn synthetic_reproduction(
 mod observation;
 pub use observation::{
     DiagnosticDifferenceCountV1, DiagnosticDroppedCountV1, DiagnosticObservationOriginV1,
-    DiagnosticObservationScopeV1, DiagnosticObservationUnavailableV1, DiagnosticStreamObservationV1,
+    DiagnosticObservationScopeV1, DiagnosticObservationUnavailableV1,
+    DiagnosticStreamObservationV1,
 };

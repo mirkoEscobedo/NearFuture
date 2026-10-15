@@ -17,12 +17,27 @@ static NEXT: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Clone, Copy)]
 pub enum Stage {
-    OwnedSetup, RamFixture, FixtureCapture, BaselineSnapshot,
-    OriginalObservation, RepeatedObservation, PrivacyObservation,
-    OriginalProjection, RepeatedProjection, PrivacyProjection,
-    OriginalDebug, RepeatedDebug, PrivacyDebug, OriginalFifo, PrivacyFifo,
-    TreePreservation, OutputCapture, LiteralAssertions, PrivacyAssertions,
-    FifoAssertions, CompletionCheck,
+    OwnedSetup,
+    RamFixture,
+    FixtureCapture,
+    BaselineSnapshot,
+    OriginalObservation,
+    RepeatedObservation,
+    PrivacyObservation,
+    OriginalProjection,
+    RepeatedProjection,
+    PrivacyProjection,
+    OriginalDebug,
+    RepeatedDebug,
+    PrivacyDebug,
+    OriginalFifo,
+    PrivacyFifo,
+    TreePreservation,
+    OutputCapture,
+    LiteralAssertions,
+    PrivacyAssertions,
+    FifoAssertions,
+    CompletionCheck,
 }
 
 impl Stage {
@@ -70,7 +85,10 @@ pub struct Evidence {
 
 fn clock(started: Instant, cleanup: bool) {
     let limit = if cleanup { 20 } else { 18 };
-    assert!(started.elapsed() < Duration::from_secs(limit), "original case deadline exhausted");
+    assert!(
+        started.elapsed() < Duration::from_secs(limit),
+        "original case deadline exhausted"
+    );
 }
 
 // Hold returned resources locally before the postcheck, so unwind releases them.
@@ -82,11 +100,18 @@ fn external<T>(started: Instant, cleanup: bool, operation: impl FnOnce() -> T) -
 }
 
 fn ordinary(metadata: &fs::Metadata) {
-    assert!(!metadata.file_type().is_symlink(), "symlink evidence refused");
+    assert!(
+        !metadata.file_type().is_symlink(),
+        "symlink evidence refused"
+    );
     #[cfg(windows)]
     {
         use std::os::windows::fs::MetadataExt;
-        assert_eq!(metadata.file_attributes() & 0x400, 0, "reparse evidence refused");
+        assert_eq!(
+            metadata.file_attributes() & 0x400,
+            0,
+            "reparse evidence refused"
+        );
     }
 }
 
@@ -94,28 +119,53 @@ fn metadata_signature(metadata: &fs::Metadata) -> String {
     #[cfg(unix)]
     {
         use std::os::unix::fs::MetadataExt;
-        format!("{}:{}:{}:{}:{}:{}:{}:{}:{}", metadata.dev(), metadata.ino(), metadata.mode(),
-            metadata.nlink(), metadata.len(), metadata.mtime(), metadata.mtime_nsec(),
-            metadata.ctime(), metadata.ctime_nsec())
+        format!(
+            "{}:{}:{}:{}:{}:{}:{}:{}:{}",
+            metadata.dev(),
+            metadata.ino(),
+            metadata.mode(),
+            metadata.nlink(),
+            metadata.len(),
+            metadata.mtime(),
+            metadata.mtime_nsec(),
+            metadata.ctime(),
+            metadata.ctime_nsec()
+        )
     }
     #[cfg(windows)]
     {
         use std::os::windows::fs::MetadataExt;
-        format!("{}:{}:{}:{}", metadata.file_attributes(), metadata.creation_time(),
-            metadata.last_write_time(), metadata.file_size())
+        format!(
+            "{}:{}:{}:{}",
+            metadata.file_attributes(),
+            metadata.creation_time(),
+            metadata.last_write_time(),
+            metadata.file_size()
+        )
     }
     #[cfg(not(any(unix, windows)))]
     {
-        format!("{}:{:?}:{:?}", metadata.len(), metadata.permissions(), metadata.modified().unwrap())
+        format!(
+            "{}:{:?}:{:?}",
+            metadata.len(),
+            metadata.permissions(),
+            metadata.modified().unwrap()
+        )
     }
 }
 
 fn admit(metadata: &fs::Metadata, allowance: usize) -> usize {
     ordinary(metadata);
-    assert!(metadata.is_file() && metadata.len() <= CAPTURE_BYTES as u64, "bounded regular file required");
+    assert!(
+        metadata.is_file() && metadata.len() <= CAPTURE_BYTES as u64,
+        "bounded regular file required"
+    );
     let length = usize::try_from(metadata.len()).unwrap();
     // Reserve one attempted EOF/overlength probe inside the remaining aggregate cap.
-    assert!(length < allowance, "remaining read allowance must include one probe byte");
+    assert!(
+        length < allowance,
+        "remaining read allowance must include one probe byte"
+    );
     length
 }
 
@@ -126,7 +176,11 @@ fn read_bounded(path: &Path, allowance: usize, started: Instant, cleanup: bool) 
     let mut file = external(started, cleanup, || File::open(path)).unwrap();
     let opened = external(started, cleanup, || file.metadata()).unwrap();
     assert_eq!(expected, admit(&opened, allowance));
-    assert_eq!(signature, metadata_signature(&opened), "opened file changed");
+    assert_eq!(
+        signature,
+        metadata_signature(&opened),
+        "opened file changed"
+    );
     let mut bytes = Vec::new();
     let mut block = [0; 32768];
     while bytes.len() < expected {
@@ -147,17 +201,32 @@ fn read_bounded(path: &Path, allowance: usize, started: Instant, cleanup: bool) 
     // Release is unconditional, including unwind; this is not checked close evidence.
     drop(file);
     clock(started, cleanup);
-    (Entry { bytes, metadata: signature }, expected + 1)
+    (
+        Entry {
+            bytes,
+            metadata: signature,
+        },
+        expected + 1,
+    )
 }
 
 impl Evidence {
     pub fn create(started: Instant, owned: &mut Option<Self>) {
-        let raw = external(started, false, || env::var_os("NF_DIAGNOSTIC_OBSERVATION_EVIDENCE_ROOT"))
-            .map(PathBuf::from).expect("caller evidence root required");
+        let raw = external(started, false, || {
+            env::var_os("NF_DIAGNOSTIC_OBSERVATION_EVIDENCE_ROOT")
+        })
+        .map(PathBuf::from)
+        .expect("caller evidence root required");
         assert!(raw.is_absolute(), "absolute existing caller root required");
         #[cfg(windows)]
-        assert!(!raw.to_string_lossy().starts_with(r"\\"), "network or verbatim caller root refused");
-        assert!(!raw.components().any(|part| matches!(part, Component::ParentDir | Component::CurDir)));
+        assert!(
+            !raw.to_string_lossy().starts_with(r"\\"),
+            "network or verbatim caller root refused"
+        );
+        assert!(
+            !raw.components()
+                .any(|part| matches!(part, Component::ParentDir | Component::CurDir))
+        );
         let ancestors = raw.ancestors().collect::<Vec<_>>();
         assert!(ancestors.len() <= 32, "caller path depth limit");
         for ancestor in ancestors {
@@ -166,17 +235,33 @@ impl Evidence {
             assert!(metadata.is_dir(), "existing ordinary directory required");
         }
         let parent = external(started, false, || fs::canonicalize(&raw)).unwrap();
-        let (receipt, _) = read_bounded(&parent.join("caller-receipt.json"), CALLER.len() + 1, started, false);
+        let (receipt, _) = read_bounded(
+            &parent.join("caller-receipt.json"),
+            CALLER.len() + 1,
+            started,
+            false,
+        );
         assert_eq!(receipt.bytes, CALLER);
-        let nonce = external(started, false, nf_identity::keys::random_id).expect("OS random nonce required");
-        let nonce = nonce.iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+        let nonce = external(started, false, nf_identity::keys::random_id)
+            .expect("OS random nonce required");
+        let nonce = nonce
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
         let sequence = NEXT.fetch_add(1, Ordering::Relaxed);
         let pid = external(started, false, std::process::id);
         let root = parent.join(format!("diagnostic-{pid}-{sequence}-{nonce}"));
         clock(started, false);
         let created = fs::create_dir(&root);
         if created.is_ok() {
-            *owned = Some(Self { root, started, entries: 0, bytes: 0, cleanup: false, stage: Stage::OwnedSetup });
+            *owned = Some(Self {
+                root,
+                started,
+                entries: 0,
+                bytes: 0,
+                cleanup: false,
+                stage: Stage::OwnedSetup,
+            });
         }
         // Persist ownership before this postcheck so caught expiry can retain its stage.
         clock(started, false);
@@ -199,19 +284,32 @@ impl Evidence {
     pub fn write(&mut self, name: &str, bytes: &[u8]) {
         clock(self.started, self.cleanup);
         assert!(!name.is_empty() && name.len() <= 80);
-        assert!(name.bytes().all(|byte| byte.is_ascii_alphanumeric() || b"-._".contains(&byte)));
+        assert!(
+            name.bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || b"-._".contains(&byte))
+        );
         assert!(name != "." && name != "..");
         assert!(bytes.len() <= CAPTURE_BYTES, "capture byte limit");
-        assert!(self.entries < CASE_ENTRIES && self.bytes + bytes.len() <= CASE_BYTES, "case retention limit");
+        assert!(
+            self.entries < CASE_ENTRIES && self.bytes + bytes.len() <= CASE_BYTES,
+            "case retention limit"
+        );
         let mut file = external(self.started, self.cleanup, || {
-            OpenOptions::new().write(true).create_new(true).open(self.root.join(name))
-        }).unwrap();
+            OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(self.root.join(name))
+        })
+        .unwrap();
         self.entries += 1;
         self.bytes += bytes.len();
         let mut remaining = bytes;
         while !remaining.is_empty() {
             let width = remaining.len().min(32768);
-            let count = external(self.started, self.cleanup, || file.write(&remaining[..width])).unwrap();
+            let count = external(self.started, self.cleanup, || {
+                file.write(&remaining[..width])
+            })
+            .unwrap();
             assert!(count > 0, "positive write required");
             remaining = &remaining[count..];
         }
@@ -222,14 +320,23 @@ impl Evidence {
 
     pub fn snapshot(&self) -> BTreeMap<String, Entry> {
         let mut paths = Vec::new();
-        let mut directory = external(self.started, self.cleanup, || fs::read_dir(&self.root)).unwrap();
+        let mut directory =
+            external(self.started, self.cleanup, || fs::read_dir(&self.root)).unwrap();
         loop {
             let next = external(self.started, self.cleanup, || directory.next());
-            let Some(entry) = next else { break; };
+            let Some(entry) = next else {
+                break;
+            };
             assert!(paths.len() < CASE_ENTRIES, "case entry limit");
             let entry = entry.unwrap();
-            let name = entry.file_name().into_string().expect("ASCII case leaf required");
-            assert!(name.bytes().all(|byte| byte.is_ascii_alphanumeric() || b"-._".contains(&byte)));
+            let name = entry
+                .file_name()
+                .into_string()
+                .expect("ASCII case leaf required");
+            assert!(
+                name.bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || b"-._".contains(&byte))
+            );
             paths.push((name, entry.path()));
         }
         drop(directory);
@@ -250,14 +357,22 @@ impl Evidence {
     pub fn finish(&mut self, passed: bool) {
         self.cleanup = true;
         clock(self.started, true);
-        let outcome = if passed { "assertions_returned" } else { "assertion_unwind" };
+        let outcome = if passed {
+            "assertions_returned"
+        } else {
+            "assertion_unwind"
+        };
         let stage = self.stage.label();
         // Retain closed last-attempted stage before inventory work can fail.
         self.write("outcome.receipt.json", format!("{{\"outcome\":\"{outcome}\",\"stage\":\"{stage}\",\"finalInventory\":\"pending\",\"descendantZeroQualified\":false,\"checkedFileClose\":false,\"directorySyncQualified\":false}}\n").as_bytes());
         let before_inventory = self.snapshot();
         let mut inventory = String::from("PUBLIC-SYNTHETIC-CASE-INVENTORY-1\n");
         for (name, entry) in before_inventory {
-            inventory.push_str(&format!("{name} {} {}\n", entry.bytes.len(), sha256(&entry.bytes)));
+            inventory.push_str(&format!(
+                "{name} {} {}\n",
+                entry.bytes.len(),
+                sha256(&entry.bytes)
+            ));
         }
         self.write("retained-originals.sha256.txt", inventory.as_bytes());
         clock(self.started, true);

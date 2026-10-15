@@ -5,7 +5,10 @@ use std::{
     panic::{AssertUnwindSafe, catch_unwind, resume_unwind},
     time::Instant,
 };
-use support::{GOLDEN, custody::{Evidence, Stage}};
+use support::{
+    GOLDEN,
+    custody::{Evidence, Stage},
+};
 
 #[test]
 #[ignore = "requires caller-owned public diagnostic observation evidence"]
@@ -19,19 +22,28 @@ fn non_draining_redacted_diagnostic_observation_preserves_fifo_and_unverified_sc
         let transformed = evidence.run(Stage::RamFixture, || support::records(0x80));
         evidence.enter(Stage::FixtureCapture);
         evidence.write("expected.literal.json", GOLDEN.as_bytes());
-        evidence.write("original-public-fixture.bin", &support::fixture_bytes(&originals));
-        evidence.write("xor-public-fixture.bin", &support::fixture_bytes(&transformed));
+        evidence.write(
+            "original-public-fixture.bin",
+            &support::fixture_bytes(&originals),
+        );
+        evidence.write(
+            "xor-public-fixture.bin",
+            &support::fixture_bytes(&transformed),
+        );
         evidence.enter(Stage::BaselineSnapshot);
         let before = evidence.snapshot();
         let mut stream = evidence.run(Stage::RamFixture, || support::stream(&originals));
         let mut control = evidence.run(Stage::RamFixture, || support::stream(&transformed));
         let first = evidence.run(Stage::OriginalObservation, || stream.redacted_observation());
         let second = evidence.run(Stage::RepeatedObservation, || stream.redacted_observation());
-        let private_control = evidence.run(Stage::PrivacyObservation, || control.redacted_observation());
+        let private_control =
+            evidence.run(Stage::PrivacyObservation, || control.redacted_observation());
         let projections = [
             evidence.run(Stage::OriginalProjection, || support::project(&first)),
             evidence.run(Stage::RepeatedProjection, || support::project(&second)),
-            evidence.run(Stage::PrivacyProjection, || support::project(&private_control)),
+            evidence.run(Stage::PrivacyProjection, || {
+                support::project(&private_control)
+            }),
         ];
         let debug = [
             evidence.run(Stage::OriginalDebug, || format!("{first:?}")),
@@ -55,24 +67,40 @@ fn non_draining_redacted_diagnostic_observation_preserves_fifo_and_unverified_sc
             evidence.run(Stage::PrivacyFifo, || control.dropped()),
         ];
         evidence.enter(Stage::TreePreservation);
-        assert_eq!(evidence.snapshot(), before, "observation altered retained originals");
+        assert_eq!(
+            evidence.snapshot(),
+            before,
+            "observation altered retained originals"
+        );
         evidence.enter(Stage::OutputCapture);
         for (index, projection) in projections.iter().enumerate() {
             evidence.write(&format!("observation-{index}.json"), projection.as_bytes());
-            evidence.write(&format!("observation-{index}.debug.txt"), debug[index].as_bytes());
+            evidence.write(
+                &format!("observation-{index}.debug.txt"),
+                debug[index].as_bytes(),
+            );
         }
         evidence.write("original-popped.bin", &support::popped_bytes(&popped));
         evidence.write("xor-popped.bin", &support::popped_bytes(&control_popped));
-        evidence.write("drop-counts.txt", format!("{} {}\n", drops[0], drops[1]).as_bytes());
+        evidence.write(
+            "drop-counts.txt",
+            format!("{} {}\n", drops[0], drops[1]).as_bytes(),
+        );
         evidence.enter(Stage::LiteralAssertions);
         assert_eq!(GOLDEN.len(), 472);
-        assert_eq!(support::sha256(GOLDEN.as_bytes()), "1a2e07ada58753bde0fa84e722c3b083235ce15ac59ca75dcf28d54ae9e01752");
+        assert_eq!(
+            support::sha256(GOLDEN.as_bytes()),
+            "1a2e07ada58753bde0fa84e722c3b083235ce15ac59ca75dcf28d54ae9e01752"
+        );
         for projection in &projections {
             assert_eq!(projection, GOLDEN, "independent closed literal mismatch");
         }
         evidence.enter(Stage::PrivacyAssertions);
         for (projection, formatted) in projections.iter().zip(&debug) {
-            assert_eq!(formatted, &debug[0], "private substitution changed safe Debug");
+            assert_eq!(
+                formatted, &debug[0],
+                "private substitution changed safe Debug"
+            );
             support::assert_private_values_absent(projection, &originals, &transformed);
             support::assert_private_values_absent(formatted, &originals, &transformed);
         }

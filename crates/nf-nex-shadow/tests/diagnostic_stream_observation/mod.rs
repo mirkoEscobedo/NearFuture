@@ -2,8 +2,8 @@ pub mod custody;
 
 use nf_nex_shadow::{
     Diagnostic, DiagnosticDroppedCountV1, DiagnosticObservationOriginV1,
-    DiagnosticObservationScopeV1, DiagnosticObservationUnavailableV1,
-    DiagnosticStream, DiagnosticStreamObservationV1, Difference,
+    DiagnosticObservationScopeV1, DiagnosticObservationUnavailableV1, DiagnosticStream,
+    DiagnosticStreamObservationV1, Difference,
 };
 use sha2::{Digest, Sha256};
 
@@ -22,15 +22,21 @@ pub const GOLDEN: &str = concat!(
 
 pub fn records(mask: u8) -> [Diagnostic; 4] {
     let a = Diagnostic {
-        source_digest: [1; 32], config_digest: [2; 32], input_digest: [3; 32],
-        corpus_digest: [4; 32], implementation_digest: [5; 32],
+        source_digest: [1; 32],
+        config_digest: [2; 32],
+        input_digest: [3; 32],
+        corpus_digest: [4; 32],
+        implementation_digest: [5; 32],
         difference: Difference::Lifecycle,
     };
     let mut b = a.clone();
     b.input_digest = [6; 32];
     let c = Diagnostic {
-        source_digest: [7; 32], config_digest: [8; 32], input_digest: [9; 32],
-        corpus_digest: [10; 32], implementation_digest: [11; 32],
+        source_digest: [7; 32],
+        config_digest: [8; 32],
+        input_digest: [9; 32],
+        corpus_digest: [10; 32],
+        implementation_digest: [11; 32],
         difference: Difference::Priority,
     };
     let mut d = c.clone();
@@ -39,11 +45,15 @@ pub fn records(mask: u8) -> [Diagnostic; 4] {
     let mut result = [a, b, c, d];
     for record in &mut result {
         for digest in [
-            &mut record.source_digest, &mut record.config_digest,
-            &mut record.input_digest, &mut record.corpus_digest,
+            &mut record.source_digest,
+            &mut record.config_digest,
+            &mut record.input_digest,
+            &mut record.corpus_digest,
             &mut record.implementation_digest,
         ] {
-            for byte in digest { *byte ^= mask; }
+            for byte in digest {
+                *byte ^= mask;
+            }
         }
     }
     result
@@ -51,15 +61,20 @@ pub fn records(mask: u8) -> [Diagnostic; 4] {
 
 pub fn stream(records: &[Diagnostic; 4]) -> DiagnosticStream {
     let mut result = DiagnosticStream::new(3, 483).unwrap();
-    for index in [0, 1, 0, 2, 3] { result.push(records[index].clone()); }
+    for index in [0, 1, 0, 2, 3] {
+        result.push(records[index].clone());
+    }
     result
 }
 
 fn difference(value: Difference) -> &'static str {
     match value {
-        Difference::Kind => "kind", Difference::Lifecycle => "lifecycle",
-        Difference::Priority => "priority", Difference::Decision => "decision",
-        Difference::Draws => "draws", Difference::Effects => "effects",
+        Difference::Kind => "kind",
+        Difference::Lifecycle => "lifecycle",
+        Difference::Priority => "priority",
+        Difference::Decision => "decision",
+        Difference::Draws => "draws",
+        Difference::Effects => "effects",
     }
 }
 
@@ -80,7 +95,9 @@ fn optional(value: Option<u64>) -> String {
 // Test-only closed getter projection. GOLDEN is independently literal, never derived here.
 pub fn project(value: &DiagnosticStreamObservationV1) -> String {
     let origin = match value.origin() {
-        DiagnosticObservationOriginV1::ExternallySuppliedUnverified => "externally_supplied_unverified",
+        DiagnosticObservationOriginV1::ExternallySuppliedUnverified => {
+            "externally_supplied_unverified"
+        }
     };
     let scope = match value.scope() {
         DiagnosticObservationScopeV1::QueuedStreamContentsOnly => "queued_stream_contents_only",
@@ -88,30 +105,55 @@ pub fn project(value: &DiagnosticStreamObservationV1) -> String {
     let rows = value.difference_counts();
     let unavailable_values = value.unavailable();
     assert!(rows.len() <= 6, "closed difference cardinality");
-    assert!(unavailable_values.len() <= 5, "closed unavailable cardinality");
-    let counts = rows.iter().map(|row| {
-        format!("{{\"difference\":\"{}\",\"count\":{}}}", difference(row.difference()), row.count())
-    }).collect::<Vec<_>>().join(",");
+    assert!(
+        unavailable_values.len() <= 5,
+        "closed unavailable cardinality"
+    );
+    let counts = rows
+        .iter()
+        .map(|row| {
+            format!(
+                "{{\"difference\":\"{}\",\"count\":{}}}",
+                difference(row.difference()),
+                row.count()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
     let (classification, dropped) = match value.dropped() {
         DiagnosticDroppedCountV1::Exact(count) => ("exact", count),
         DiagnosticDroppedCountV1::AtLeast(count) => ("at_least", count),
     };
-    let missing = unavailable_values.iter().map(|item| {
-        format!("\"{}\"", unavailable(item))
-    }).collect::<Vec<_>>().join(",");
+    let missing = unavailable_values
+        .iter()
+        .map(|item| format!("\"{}\"", unavailable(item)))
+        .collect::<Vec<_>>()
+        .join(",");
     let result = format!(
-        concat!("{{\"format\":\"NF-DIAGNOSTIC-STREAM-OBSERVATION-1\",",
+        concat!(
+            "{{\"format\":\"NF-DIAGNOSTIC-STREAM-OBSERVATION-1\",",
             "\"origin\":\"{}\",\"scope\":\"{}\",",
             "\"complete_within_scope\":{},\"queued_records\":{},",
             "\"difference_counts\":[{}],",
             "\"dropped\":{{\"classification\":\"{}\",\"count\":{}}},",
             "\"coalesced_records\":{},\"historical_records\":{},",
-            "\"unavailable\":[{}]}}"),
-        origin, scope, value.complete_within_scope(), value.queued_records(), counts,
-        classification, dropped, optional(value.coalesced_records()),
-        optional(value.historical_records()), missing,
+            "\"unavailable\":[{}]}}"
+        ),
+        origin,
+        scope,
+        value.complete_within_scope(),
+        value.queued_records(),
+        counts,
+        classification,
+        dropped,
+        optional(value.coalesced_records()),
+        optional(value.historical_records()),
+        missing,
     );
-    assert!(result.is_ascii() && result.len() <= 2048, "bounded ASCII projection required");
+    assert!(
+        result.is_ascii() && result.len() <= 2048,
+        "bounded ASCII projection required"
+    );
     result
 }
 
@@ -119,32 +161,66 @@ pub fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
-pub fn assert_private_values_absent(text: &str, originals: &[Diagnostic; 4], control: &[Diagnostic; 4]) {
-    for label in ["source_digest", "config_digest", "input_digest", "corpus_digest", "implementation_digest"] {
+pub fn assert_private_values_absent(
+    text: &str,
+    originals: &[Diagnostic; 4],
+    control: &[Diagnostic; 4],
+) {
+    for label in [
+        "source_digest",
+        "config_digest",
+        "input_digest",
+        "corpus_digest",
+        "implementation_digest",
+    ] {
         assert!(!text.contains(label), "private digest field exposed");
     }
     for record in originals.iter().chain(control) {
-        for digest in [record.source_digest, record.config_digest, record.input_digest,
-            record.corpus_digest, record.implementation_digest] {
-            let hex = digest.iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+        for digest in [
+            record.source_digest,
+            record.config_digest,
+            record.input_digest,
+            record.corpus_digest,
+            record.implementation_digest,
+        ] {
+            let hex = digest
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>();
             assert!(!text.contains(&hex), "private digest hex exposed");
-            assert!(!text.contains(&format!("{digest:?}")), "private digest bytes exposed");
+            assert!(
+                !text.contains(&format!("{digest:?}")),
+                "private digest bytes exposed"
+            );
         }
     }
 }
 
 fn record_bytes(record: &Diagnostic, bytes: &mut Vec<u8>) {
-    for digest in [record.source_digest, record.config_digest, record.input_digest,
-        record.corpus_digest, record.implementation_digest] { bytes.extend_from_slice(&digest); }
+    for digest in [
+        record.source_digest,
+        record.config_digest,
+        record.input_digest,
+        record.corpus_digest,
+        record.implementation_digest,
+    ] {
+        bytes.extend_from_slice(&digest);
+    }
     bytes.push(match record.difference {
-        Difference::Kind => 0, Difference::Lifecycle => 1, Difference::Priority => 2,
-        Difference::Decision => 3, Difference::Draws => 4, Difference::Effects => 5,
+        Difference::Kind => 0,
+        Difference::Lifecycle => 1,
+        Difference::Priority => 2,
+        Difference::Decision => 3,
+        Difference::Draws => 4,
+        Difference::Effects => 5,
     });
 }
 
 pub fn fixture_bytes(records: &[Diagnostic; 4]) -> Vec<u8> {
     let mut bytes = b"PUBLIC-SYNTHETIC-DIAGNOSTICS-1\n".to_vec();
-    for record in records { record_bytes(record, &mut bytes); }
+    for record in records {
+        record_bytes(record, &mut bytes);
+    }
     bytes
 }
 
@@ -152,7 +228,9 @@ pub fn popped_bytes(records: &[Option<Diagnostic>; 4]) -> Vec<u8> {
     let mut bytes = b"PUBLIC-SYNTHETIC-POPPED-1\n".to_vec();
     for record in records {
         bytes.push(u8::from(record.is_some()));
-        if let Some(record) = record { record_bytes(record, &mut bytes); }
+        if let Some(record) = record {
+            record_bytes(record, &mut bytes);
+        }
     }
     bytes
 }
