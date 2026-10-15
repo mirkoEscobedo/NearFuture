@@ -31,6 +31,6 @@ mod tests;
 
 mod reader;
 pub use reader::MiniatureReader;
-mod reader_connection;
+pub(crate) mod reader_connection;
 mod restore;
 pub use restore::IsolatedRestoreConfirmation;

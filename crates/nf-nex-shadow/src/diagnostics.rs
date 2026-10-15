@@ -111,3 +111,9 @@ pub fn synthetic_reproduction(
     }
     crate::encode_input(m, input)
 }
+
+mod observation;
+pub use observation::{
+    DiagnosticDifferenceCountV1, DiagnosticDroppedCountV1, DiagnosticObservationOriginV1,
+    DiagnosticObservationScopeV1, DiagnosticObservationUnavailableV1, DiagnosticStreamObservationV1,
+};

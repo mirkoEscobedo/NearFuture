@@ -26,8 +26,7 @@ pub mod trade;
 
 // The exact maintained connection shell is shared without changing miniature APIs.
 mod strategic_reader;
-#[path = "miniature/reader_connection.rs"]
-mod strategic_reader_connection;
+use miniature::reader_connection as strategic_reader_connection;
 pub use strategic_reader::{
     StrategicReader, StrategicSupportAssignmentV1, StrategicSupportCountsV1,
     StrategicSupportImplementation, StrategicSupportManifestV1, StrategicSupportObservationV1,
