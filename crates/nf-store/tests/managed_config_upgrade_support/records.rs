@@ -2,7 +2,10 @@
 use nf_contract::identity::DeviceId;
 use nf_identity::model::MembershipState;
 use nf_kernel::{CommittedBatch, Intent, World};
-use nf_store::{KnownFrontiers, migration::{Composition, ProviderVersion}};
+use nf_store::{
+    KnownFrontiers,
+    migration::{Composition, ProviderVersion},
+};
 use sha2::{Digest, Sha256};
 pub const PROFILE1_SCHEMA: [u8; 32] = [
     0x7e, 0x06, 0x49, 0x12, 0x04, 0xd7, 0xaf, 0xa6, 0x93, 0x5f, 0x76, 0xf7, 0x69, 0xcb, 0x3f, 0xbf,
@@ -13,9 +16,17 @@ pub const PROFILE4_SCHEMA: [u8; 32] = [
     0x56, 0x65, 0x73, 0x1b, 0xaa, 0x4d, 0xcb, 0x29, 0x92, 0xab, 0x8e, 0xc9, 0x91, 0x41, 0x93, 0xd3,
 ];
 
-pub const FROM_COMPOSITION:[u8;32]=[0x7b,0xc6,0x6e,0x90,0xe7,0x9e,0x9b,0x12,0xe0,0x9e,0xa0,0xb9,0x46,0xd5,0x7c,0x2c,0x6b,0xb4,0x46,0x14,0x21,0x73,0xc7,0xc7,0x86,0x3f,0x91,0x1f,0x99,0xab,0x27,0x0e];
-pub const TO_COMPOSITION:[u8;32]=[0x45,0x1c,0xf1,0x5e,0xae,0x2f,0xec,0x90,0xed,0x3b,0x35,0x20,0xf1,0x72,0x7d,0xc3,0x82,0x75,0x9e,0x7c,0xd2,0xed,0x1d,0x0c,0x49,0x2c,0x66,0xe0,0xfa,0x95,0xd8,0xfe];
-pub fn hash(bytes: &[u8]) -> [u8; 32] { Sha256::digest(bytes).into() }
+pub const FROM_COMPOSITION: [u8; 32] = [
+    0x7b, 0xc6, 0x6e, 0x90, 0xe7, 0x9e, 0x9b, 0x12, 0xe0, 0x9e, 0xa0, 0xb9, 0x46, 0xd5, 0x7c, 0x2c,
+    0x6b, 0xb4, 0x46, 0x14, 0x21, 0x73, 0xc7, 0xc7, 0x86, 0x3f, 0x91, 0x1f, 0x99, 0xab, 0x27, 0x0e,
+];
+pub const TO_COMPOSITION: [u8; 32] = [
+    0x45, 0x1c, 0xf1, 0x5e, 0xae, 0x2f, 0xec, 0x90, 0xed, 0x3b, 0x35, 0x20, 0xf1, 0x72, 0x7d, 0xc3,
+    0x82, 0x75, 0x9e, 0x7c, 0xd2, 0xed, 0x1d, 0x0c, 0x49, 0x2c, 0x66, 0xe0, 0xfa, 0x95, 0xd8, 0xfe,
+];
+pub fn hash(bytes: &[u8]) -> [u8; 32] {
+    Sha256::digest(bytes).into()
+}
 pub fn descriptor() -> ProviderVersion {
     ProviderVersion {
         provider: nf_contract::identity::ProviderId::from_bytes([41; 16]),
@@ -25,9 +36,20 @@ pub fn descriptor() -> ProviderVersion {
     }
 }
 pub fn composition(storage: u32, schema: [u8; 32], config: u8) -> Composition {
-    let value = Composition::new(storage, schema, [config; 32], [3; 32], vec![descriptor()]).unwrap();
-    assert_eq!(value.digest(), hash(&composition_bytes(storage, schema, config)));
-    assert_eq!(value.digest(),match (storage,config){(1,2)=>FROM_COMPOSITION,(4,9)=>TO_COMPOSITION,_=>panic!("outside fixed firstcase")});
+    let value =
+        Composition::new(storage, schema, [config; 32], [3; 32], vec![descriptor()]).unwrap();
+    assert_eq!(
+        value.digest(),
+        hash(&composition_bytes(storage, schema, config))
+    );
+    assert_eq!(
+        value.digest(),
+        match (storage, config) {
+            (1, 2) => FROM_COMPOSITION,
+            (4, 9) => TO_COMPOSITION,
+            _ => panic!("outside fixed firstcase"),
+        }
+    );
     value
 }
 pub fn composition_bytes(storage: u32, schema: [u8; 32], config: u8) -> Vec<u8> {
@@ -48,10 +70,7 @@ pub(super) fn blob(bytes: &mut Vec<u8>, value: &[u8]) {
     bytes.extend_from_slice(&u32::try_from(value.len()).unwrap().to_le_bytes());
     bytes.extend_from_slice(value);
 }
-pub fn completed_core(
-    world: &World,
-    records: &[(&Intent, DeviceId, &CommittedBatch)],
-) -> Vec<u8> {
+pub fn completed_core(world: &World, records: &[(&Intent, DeviceId, &CommittedBatch)]) -> Vec<u8> {
     let mut bytes = b"NF-STORE-1\0\x01\0".to_vec();
     blob(&mut bytes, &nf_kernel::encode_snapshot(world).unwrap());
     bytes.push(0);
@@ -59,7 +78,12 @@ pub fn completed_core(
     records.sort_by_key(|(intent, _, _)| intent.request);
     bytes.extend_from_slice(&u32::try_from(records.len()).unwrap().to_le_bytes());
     for (intent, device, batch) in &records {
-        assert!(batch.outcomes.iter().any(|o| o.operation == intent.operation && o.rejection.is_none()));
+        assert!(
+            batch
+                .outcomes
+                .iter()
+                .any(|o| o.operation == intent.operation && o.rejection.is_none())
+        );
         blob(&mut bytes, &nf_kernel::encode_intent(intent).unwrap());
         bytes.extend_from_slice(device.as_bytes());
         bytes.push(2);
@@ -83,7 +107,10 @@ pub fn envelope(core: &[u8], member: &MembershipState, pending: Option<(u64, u64
     bytes.extend_from_slice(&1u16.to_le_bytes());
     blob(&mut bytes, core);
     bytes.push(1);
-    blob(&mut bytes, &nf_identity::codec::encode_state(member).unwrap());
+    blob(
+        &mut bytes,
+        &nf_identity::codec::encode_state(member).unwrap(),
+    );
     bytes.extend_from_slice(&65_536u32.to_le_bytes());
     match pending {
         None => bytes.push(0),
@@ -98,7 +125,11 @@ pub fn envelope(core: &[u8], member: &MembershipState, pending: Option<(u64, u64
     bytes
 }
 pub fn source_binding(
-    known: KnownFrontiers, head: [u8; 32], core: [u8; 32], member: [u8; 32], rows: [u8; 32],
+    known: KnownFrontiers,
+    head: [u8; 32],
+    core: [u8; 32],
+    member: [u8; 32],
+    rows: [u8; 32],
 ) -> Vec<u8> {
     let mut bytes = b"NF-ACTIVE-SOURCE-1\0".to_vec();
     bytes.extend_from_slice(&1u16.to_le_bytes());
@@ -119,7 +150,11 @@ pub fn source_binding(
     bytes
 }
 pub fn upgrade_action(
-    known: KnownFrontiers, head: [u8; 32], core: [u8; 32], member: [u8; 32], rows: [u8; 32],
+    known: KnownFrontiers,
+    head: [u8; 32],
+    core: [u8; 32],
+    member: [u8; 32],
+    rows: [u8; 32],
 ) -> Vec<u8> {
     let mut bytes = b"NF-ACTIVE-UPGRADE-1\0".to_vec();
     bytes.extend_from_slice(&1u16.to_le_bytes());
@@ -143,8 +178,13 @@ pub fn lineage(action: &[u8], revision: u64, before: [u8; 32], after: [u8; 32]) 
     bytes
 }
 pub fn journal_head(
-    previous: [u8; 32], revision: u64, kind: u32, action: &[u8],
-    before: [u8; 32], after: [u8; 32], lineage: [u8; 32],
+    previous: [u8; 32],
+    revision: u64,
+    kind: u32,
+    action: &[u8],
+    before: [u8; 32],
+    after: [u8; 32],
+    lineage: [u8; 32],
 ) -> [u8; 32] {
     let mut bytes = b"NF-ACTIVE-JOURNAL-1\0".to_vec();
     bytes.extend_from_slice(&1u16.to_le_bytes());
@@ -171,21 +211,30 @@ pub fn proof_bytes(proof: &nf_identity::model::DeviceProof) -> Vec<u8> {
     out
 }
 pub fn prepared_core(
-    world: &World, first: &Intent, device: DeviceId, batch: &CommittedBatch,
-    next: &Intent, frontier: &nf_kernel::Frontier, reservation: &nf_store::Reservation,
+    world: &World,
+    first: &Intent,
+    device: DeviceId,
+    batch: &CommittedBatch,
+    next: &Intent,
+    frontier: &nf_kernel::Frontier,
+    reservation: &nf_store::Reservation,
 ) -> Vec<u8> {
     assert!(first.request < next.request);
     let mut out = b"NF-STORE-1\0\x01\0".to_vec();
     blob(&mut out, &nf_kernel::encode_snapshot(world).unwrap());
-    out.push(1); blob(&mut out, &nf_kernel::encode_frontier(frontier).unwrap());
+    out.push(1);
+    blob(&mut out, &nf_kernel::encode_frontier(frontier).unwrap());
     out.extend_from_slice(&2u32.to_le_bytes());
     for (intent, committed) in [(first, true), (next, false)] {
         blob(&mut out, &nf_kernel::encode_intent(intent).unwrap());
         out.extend_from_slice(device.as_bytes());
         if committed {
-            out.push(2); out.extend_from_slice(&batch.sequence.0.to_le_bytes());
+            out.push(2);
+            out.extend_from_slice(&batch.sequence.0.to_le_bytes());
             out.extend_from_slice(&0u32.to_le_bytes());
-        } else { out.push(1); }
+        } else {
+            out.push(1);
+        }
     }
     out.extend_from_slice(&1u32.to_le_bytes());
     out.extend_from_slice(reservation.operation.as_bytes());
@@ -198,17 +247,26 @@ pub fn prepared_core(
     out.extend_from_slice(&0u32.to_le_bytes());
     out
 }
-pub fn settlement_payload(results: &[nf_kernel::JobResult], policy: nf_kernel::MissingPolicy) -> Vec<u8> {
+pub fn settlement_payload(
+    results: &[nf_kernel::JobResult],
+    policy: nf_kernel::MissingPolicy,
+) -> Vec<u8> {
     let mut inputs = b"NF-ACTIVE-SETTLEMENT-1\0".to_vec();
     inputs.extend_from_slice(&1u16.to_le_bytes());
-    inputs.push(match policy { nf_kernel::MissingPolicy::Pause => 1, nf_kernel::MissingPolicy::Recompute => 2 });
+    inputs.push(match policy {
+        nf_kernel::MissingPolicy::Pause => 1,
+        nf_kernel::MissingPolicy::Recompute => 2,
+    });
     let mut results = results.to_vec();
     results.sort_by_key(|result| result.job);
     inputs.extend_from_slice(&u32::try_from(results.len()).unwrap().to_le_bytes());
     for result in results {
         inputs.extend_from_slice(result.job.as_bytes());
         match result.result {
-            Err(reason) => { inputs.push(1); inputs.extend_from_slice(&(reason as u32 + 1).to_le_bytes()); }
+            Err(reason) => {
+                inputs.push(1);
+                inputs.extend_from_slice(&(reason as u32 + 1).to_le_bytes());
+            }
             Ok(proposal) => {
                 inputs.push(2);
                 inputs.extend_from_slice(proposal.job.as_bytes());
@@ -224,19 +282,28 @@ pub fn settlement_payload(results: &[nf_kernel::JobResult], policy: nf_kernel::M
                         inputs.extend_from_slice(&revision.0.to_be_bytes());
                     }
                 }
-                inputs.extend_from_slice(&u32::try_from(proposal.events.len()).unwrap().to_le_bytes());
+                inputs.extend_from_slice(
+                    &u32::try_from(proposal.events.len()).unwrap().to_le_bytes(),
+                );
                 for event in proposal.events {
                     match event {
                         nf_kernel::Event::RelationChanged { relation, delta } => {
-                            inputs.push(1); inputs.extend_from_slice(relation.as_bytes());
+                            inputs.push(1);
+                            inputs.extend_from_slice(relation.as_bytes());
                             inputs.extend_from_slice(&delta.to_le_bytes());
                         }
                         nf_kernel::Event::MarketAdjusted { market, delta } => {
-                            inputs.push(2); inputs.extend_from_slice(market.as_bytes());
+                            inputs.push(2);
+                            inputs.extend_from_slice(market.as_bytes());
                             inputs.extend_from_slice(&delta.to_le_bytes());
                         }
-                        nf_kernel::Event::ProviderAdvanced { provider, draws, cooldown_until } => {
-                            inputs.push(3); inputs.extend_from_slice(provider.as_bytes());
+                        nf_kernel::Event::ProviderAdvanced {
+                            provider,
+                            draws,
+                            cooldown_until,
+                        } => {
+                            inputs.push(3);
+                            inputs.extend_from_slice(provider.as_bytes());
                             inputs.extend_from_slice(&draws.to_be_bytes());
                             inputs.extend_from_slice(&cooldown_until.0.to_be_bytes());
                         }
@@ -250,33 +317,59 @@ pub fn settlement_payload(results: &[nf_kernel::JobResult], policy: nf_kernel::M
     blob(&mut payload, &inputs);
     payload
 }
-pub struct PrepareTimes{pub nonce:[u8;32],pub issued:u64,pub expires:u64,pub admitted:u64,pub cutoff:u64}
-pub fn prepare_payload(frontier:&nf_kernel::Frontier,device:DeviceId,reservation:&nf_store::Reservation,
-    principal:&nf_identity::model::DeviceProof,times:PrepareTimes)->Vec<u8>{
-    let PrepareTimes{nonce,issued,expires,admitted,cutoff}=times;
+pub struct PrepareTimes {
+    pub nonce: [u8; 32],
+    pub issued: u64,
+    pub expires: u64,
+    pub admitted: u64,
+    pub cutoff: u64,
+}
+pub fn prepare_payload(
+    frontier: &nf_kernel::Frontier,
+    device: DeviceId,
+    reservation: &nf_store::Reservation,
+    principal: &nf_identity::model::DeviceProof,
+    times: PrepareTimes,
+) -> Vec<u8> {
+    let PrepareTimes {
+        nonce,
+        issued,
+        expires,
+        admitted,
+        cutoff,
+    } = times;
     assert_eq!(frontier.jobs().len(), 1);
     let request = frontier.jobs()[0].intent().request;
     let mut out = Vec::new();
     blob(&mut out, &nf_kernel::encode_frontier(frontier).unwrap());
     out.extend_from_slice(&1u32.to_le_bytes());
-    out.extend_from_slice(request.as_bytes()); out.extend_from_slice(device.as_bytes());
+    out.extend_from_slice(request.as_bytes());
+    out.extend_from_slice(device.as_bytes());
     out.extend_from_slice(&1u32.to_le_bytes());
     out.extend_from_slice(reservation.operation.as_bytes());
     out.extend_from_slice(reservation.market.as_bytes());
     out.extend_from_slice(&reservation.amount.to_be_bytes());
     out.extend_from_slice(&1u32.to_le_bytes());
-    out.extend_from_slice(request.as_bytes()); out.extend_from_slice(&nonce);
-    out.extend_from_slice(&issued.to_be_bytes()); out.extend_from_slice(&expires.to_be_bytes());
+    out.extend_from_slice(request.as_bytes());
+    out.extend_from_slice(&nonce);
+    out.extend_from_slice(&issued.to_be_bytes());
+    out.extend_from_slice(&expires.to_be_bytes());
     blob(&mut out, &proof_bytes(principal));
-    out.push(1); out.extend_from_slice(&admitted.to_be_bytes());
+    out.push(1);
+    out.extend_from_slice(&admitted.to_be_bytes());
     out.extend_from_slice(&cutoff.to_be_bytes());
     out
 }
 
-pub fn request_binding(intent:&Intent,device:DeviceId)->[u8;32]{
-    nf_contract::canonical::binding::RequestBinding{
-        request_id:intent.request,account_id:intent.actor,device_id:device,
-        universe_id:intent.universe,history_id:intent.history,operation_kind:3,
-        payload_digest:nf_kernel::intent_digest(intent).unwrap(),
-    }.digest()
+pub fn request_binding(intent: &Intent, device: DeviceId) -> [u8; 32] {
+    nf_contract::canonical::binding::RequestBinding {
+        request_id: intent.request,
+        account_id: intent.actor,
+        device_id: device,
+        universe_id: intent.universe,
+        history_id: intent.history,
+        operation_kind: 3,
+        payload_digest: nf_kernel::intent_digest(intent).unwrap(),
+    }
+    .digest()
 }
