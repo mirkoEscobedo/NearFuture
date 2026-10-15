@@ -35,6 +35,47 @@ jobs:
         id: config-upgrade-public
         if: ${{ !cancelled() && (steps.config-upgrade-format.outcome == 'success' || steps.config-upgrade-format.outcome == 'failure') }}
         run: cargo test -p nf-store --test config_upgrade --locked --offline materialized_config_upgrade_replays_preserved_history_and_old_profile_refuses_it -- --exact
+      - name: Check managed upgrade first public test formatting
+        id: managed-upgrade-format
+        if: ${{ !cancelled() && (steps.config-upgrade-public.outcome == 'success' || steps.config-upgrade-public.outcome == 'failure') }}
+        run: rustfmt --edition 2024 --check crates/nf-store/tests/managed_config_upgrade.rs crates/nf-store/tests/managed_config_upgrade_support/mod.rs crates/nf-store/tests/managed_config_upgrade_support/cursor.rs crates/nf-store/tests/managed_config_upgrade_support/fixture.rs crates/nf-store/tests/managed_config_upgrade_support/records.rs crates/nf-store/tests/managed_config_upgrade_support/observations.rs crates/nf-store/tests/managed_config_upgrade_support/schemas.rs crates/nf-store/tests/managed_config_upgrade_support/world.rs crates/nf-store/tests/managed_config_upgrade_support/transcripts.rs crates/nf-store/tests/managed_config_upgrade_support/catalog.rs crates/nf-store/tests/managed_config_upgrade_support/catalog_replay.rs crates/nf-store/tests/managed_config_upgrade_support/operations.rs crates/nf-store/tests/managed_config_upgrade_support/retirement.rs
+      - name: Create caller-owned separate managed upgrade custody parents
+        id: managed-upgrade-custody
+        if: ${{ !cancelled() && (steps.managed-upgrade-format.outcome == 'success' || steps.managed-upgrade-format.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidenceParent = Join-Path $env:RUNNER_TEMP 'nf-managed-upgrade-first-evidence'
+          $binaryParent = Join-Path $env:RUNNER_TEMP 'nf-managed-upgrade-first-binaries'
+          if ((Test-Path -LiteralPath $evidenceParent) -or (Test-Path -LiteralPath $binaryParent)) { throw 'Fresh caller custody names are required' }
+          New-Item -ItemType Directory -Path $evidenceParent | Out-Null
+          New-Item -ItemType Directory -Path $binaryParent | Out-Null
+          "NF_MANAGED_UPGRADE_EVIDENCE_ROOT=$evidenceParent" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "NF_MANAGED_UPGRADE_BINARY_ROOT=$binaryParent" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe managed upgrade first public owner seam
+        id: managed-upgrade-public
+        if: ${{ !cancelled() && steps.managed-upgrade-custody.outcome == 'success' && (steps.managed-upgrade-format.outcome == 'success' || steps.managed-upgrade-format.outcome == 'failure') }}
+        run: cargo test -p nf-store --test managed_config_upgrade --locked --offline managed_upgrade_restarts_fences_old_work_and_commits_new_history -- --ignored --exact
+      - name: Retain bounded caller-owned managed database evidence separately
+        if: ${{ always() && (steps.managed-upgrade-public.outcome == 'success' || steps.managed-upgrade-public.outcome == 'failure') }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: managed-upgrade-first-evidence-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/nf-managed-upgrade-first-evidence
+          retention-days: 7
+          if-no-files-found: ignore
+          include-hidden-files: true
+          overwrite: false
+      - name: Retain actual test executable bytes in separate binary custody
+        if: ${{ always() && (steps.managed-upgrade-public.outcome == 'success' || steps.managed-upgrade-public.outcome == 'failure') }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: managed-upgrade-first-test-binaries-NOT-OPERATIONAL-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/nf-managed-upgrade-first-binaries
+          retention-days: 7
+          if-no-files-found: ignore
+          include-hidden-files: true
+          overwrite: false
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
