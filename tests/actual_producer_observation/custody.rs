@@ -209,7 +209,7 @@ fn read_bounded(path: &Path, allowance: usize, started: Instant, cleanup: bool) 
 
 impl Evidence {
     pub fn create(started: Instant, owned: &mut Option<Self>) {
-        let start_utc_millis = external(started, false, || SystemTime::now())
+        let start_utc_millis = external(started, false, SystemTime::now)
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis();
@@ -370,7 +370,7 @@ impl Evidence {
         let stage = self.stage.label();
         // Retain closed last-attempted stage before inventory work can fail.
         self.write("outcome.receipt.json", format!("{{\"outcome\":\"{outcome}\",\"stage\":\"{stage}\",\"finalInventory\":\"pending\",\"descendantZeroQualified\":false,\"checkedFileClose\":false,\"directorySyncQualified\":false}}\n").as_bytes());
-        let observed = external(self.started, true, || SystemTime::now())
+        let observed = external(self.started, true, SystemTime::now)
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis();
