@@ -2009,6 +2009,9 @@ name = "near-future"
 version = "0.1.0"
 dependencies = [
  "nf-contract",
+ "nf-identity",
+ "nf-nex-boundary",
+ "nf-nex-shadow",
 ]
 
 [[package]]

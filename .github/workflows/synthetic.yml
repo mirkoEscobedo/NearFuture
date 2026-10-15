@@ -115,6 +115,29 @@ jobs:
         id: diagnostic-observation-public
         if: ${{ !cancelled() && steps.diagnostic-observation-custody.outcome == 'success' }}
         run: cargo test -p nf-nex-shadow --test diagnostic_stream_observation --locked --offline non_draining_redacted_diagnostic_observation_preserves_fifo_and_unverified_scope -- --ignored --exact --nocapture --test-threads=1
+      - name: Prepare caller-owned actual producer observation evidence
+        id: actual-producer-custody
+        if: ${{ !cancelled() && (steps.diagnostic-observation-public.outcome == 'success' || steps.diagnostic-observation-public.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $producerEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-actual-producer-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $producerEvidence) { throw 'fresh actual producer evidence parent required' }
+          [void][IO.Directory]::CreateDirectory($producerEvidence)
+          [IO.File]::WriteAllText((Join-Path $producerEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-actual-producer-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64}' + [char]10, [Text.UTF8Encoding]::new($false))
+          'NF_ACTUAL_PRODUCER_EVIDENCE_ROOT=' + $producerEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe actual portable producer and same owned queue
+        id: actual-producer-public
+        if: ${{ !cancelled() && steps.actual-producer-custody.outcome == 'success' }}
+        run: cargo test -p near-future --test actual_producer_observation --locked --offline actual_portable_producer_observation_tracks_real_comparison_and_preserves_owned_queue -- --ignored --exact --nocapture --test-threads=1
+      - name: Retain only caller-owned actual producer public originals
+        if: ${{ always() && env.NF_ACTUAL_PRODUCER_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: actual-producer-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_ACTUAL_PRODUCER_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
