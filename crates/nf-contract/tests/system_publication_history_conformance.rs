@@ -1,3 +1,4 @@
+use Outcome::{PublicationAppended, TombstoneAppended, Unchanged};
 use nf_contract::{
     identity::{AccountId, EntityId, HistoryId, UniverseId},
     system_publication::{
@@ -7,7 +8,6 @@ use nf_contract::{
     },
     system_topology::{self, Entity, Kind as EntityKind, Limits, Topology},
 };
-use Outcome::{PublicationAppended, TombstoneAppended, Unchanged};
 
 type Key = (HistoryId, AccountId, EntityId);
 type Result = core::result::Result<Outcome, Error>;
@@ -171,9 +171,7 @@ fn bytes(hex: &str) -> Vec<u8> {
         .as_chunks::<2>()
         .0
         .iter()
-        .map(|pair| {
-            u8::from_str_radix(core::str::from_utf8(pair).unwrap(), 16).unwrap()
-        })
+        .map(|pair| u8::from_str_radix(core::str::from_utf8(pair).unwrap(), 16).unwrap())
         .collect()
 }
 
@@ -214,7 +212,10 @@ fn assert_input(value: &Topology, index: usize) {
         (value.universe, value.history, value.owner, value.system),
         (namespace(), history, owner, system)
     );
-    assert_eq!((value.revision, value.campaign_day_millis), (f.revision, f.day));
+    assert_eq!(
+        (value.revision, value.campaign_day_millis),
+        (f.revision, f.day)
+    );
     let literal = bytes(f.hex);
     assert_eq!(literal.len(), 199);
     assert_eq!(system_topology::validate(value, Limits::default()), Ok(()));
@@ -348,7 +349,13 @@ impl Case {
     }
 
     fn publication(&mut self, index: usize, expected: Result, state: View<'_>) {
-        self.publication_value(input(index), Limits::default(), Some(index), expected, state);
+        self.publication_value(
+            input(index),
+            Limits::default(),
+            Some(index),
+            expected,
+            state,
+        );
     }
 
     fn publication_value(
@@ -425,11 +432,7 @@ fn seed(limits: ArchiveLimits, seed: Seed) -> Case {
     let mut c = Case::new(limits);
     match seed {
         Seed::A1 | Seed::A1A2 | Seed::A1A2T3 => {
-            c.publication(
-                A1,
-                Ok(PublicationAppended),
-                v(&[p(A1)], 1, 199, &[p(A1)]),
-            );
+            c.publication(A1, Ok(PublicationAppended), v(&[p(A1)], 1, 199, &[p(A1)]));
             if matches!(seed, Seed::A1A2 | Seed::A1A2T3) {
                 c.publication(
                     A2,
@@ -447,11 +450,7 @@ fn seed(limits: ArchiveLimits, seed: Seed) -> Case {
             }
         }
         Seed::A2 | Seed::A2T3 => {
-            c.publication(
-                A2,
-                Ok(PublicationAppended),
-                v(&[p(A2)], 1, 199, &[p(A2)]),
-            );
+            c.publication(A2, Ok(PublicationAppended), v(&[p(A2)], 1, 199, &[p(A2)]));
             if matches!(seed, Seed::A2T3) {
                 c.tombstone(
                     key(A1),
@@ -501,12 +500,7 @@ fn constructor_and_admission_refusals_preserve_history_and_inputs() {
         ((a.0, a.1, EntityId::from_bytes([0; 16])), 1),
         (a, 0),
     ] {
-        empty.tombstone(
-            key,
-            revision,
-            Err(Error::InvalidInput),
-            v(&[], 0, 0, &[]),
-        );
+        empty.tombstone(key, revision, Err(Error::InvalidInput), v(&[], 0, 0, &[]));
     }
     let mut c = seed(limits(1, 1, 199), Seed::A1);
     let mut invalid = input(A1);
@@ -570,17 +564,9 @@ fn quota_refusals_preserve_full_history_and_new_key_accounting() {
     );
     c.query(key(B1), None, v(&[p(A1), p(A2)], 1, 398, &[p(A2)]));
     let mut c = seed(limits(2, 1, 199), Seed::A1);
-    c.publication(
-        A2,
-        Err(Error::RecordLimit),
-        v(&[p(A1)], 1, 199, &[p(A1)]),
-    );
+    c.publication(A2, Err(Error::RecordLimit), v(&[p(A1)], 1, 199, &[p(A1)]));
     let mut c = seed(limits(1, 3, 199), Seed::A1);
-    c.publication(
-        A2,
-        Err(Error::ByteLimit),
-        v(&[p(A1)], 1, 199, &[p(A1)]),
-    );
+    c.publication(A2, Err(Error::ByteLimit), v(&[p(A1)], 1, 199, &[p(A1)]));
     let mut c = seed(limits(1, 3, 199), Seed::A1);
     c.tombstone(
         key(A1),
@@ -607,18 +593,10 @@ fn quota_refusals_preserve_full_history_and_new_key_accounting() {
         v(&[p(A2), t(A2, 3, A2)], 1, 199, &[t(A2, 3, A2)]),
     );
     let mut c = seed(limits(2, 1, 199), Seed::A1);
-    c.publication(
-        B1,
-        Err(Error::RecordLimit),
-        v(&[p(A1)], 1, 199, &[p(A1)]),
-    );
+    c.publication(B1, Err(Error::RecordLimit), v(&[p(A1)], 1, 199, &[p(A1)]));
     c.query(key(B1), None, v(&[p(A1)], 1, 199, &[p(A1)]));
     let mut c = seed(limits(2, 3, 199), Seed::A1);
-    c.publication(
-        B1,
-        Err(Error::ByteLimit),
-        v(&[p(A1)], 1, 199, &[p(A1)]),
-    );
+    c.publication(B1, Err(Error::ByteLimit), v(&[p(A1)], 1, 199, &[p(A1)]));
     c.query(key(B1), None, v(&[p(A1)], 1, 199, &[p(A1)]));
     let mut c = seed(limits(1, 1, 199), Seed::A1);
     c.tombstone(
@@ -655,7 +633,11 @@ fn unsigned_revisions_conflicts_and_max_preserve_event_identity() {
     let sm = [p(A1), p(A2), t(A2, 3, A2), p(A4), p(HIGH), p(MAX)];
     c.publication(A1, Ok(PublicationAppended), v(&s1, 1, 199, &[p(A1)]));
     c.publication(A2, Ok(PublicationAppended), v(&s2, 1, 398, &[p(A2)]));
-    c.publication(CONFLICT, Err(Error::RevisionConflict), v(&s2, 1, 398, &[p(A2)]));
+    c.publication(
+        CONFLICT,
+        Err(Error::RevisionConflict),
+        v(&s2, 1, 398, &[p(A2)]),
+    );
     c.tombstone(
         key(A1),
         3,
@@ -665,19 +647,9 @@ fn unsigned_revisions_conflicts_and_max_preserve_event_identity() {
     let old_t3 = c.history.records()[2].clone();
     c.publication(A1, Ok(Unchanged), v(&s3, 1, 398, &[t(A2, 3, A2)]));
     c.publication(A2, Ok(Unchanged), v(&s3, 1, 398, &[t(A2, 3, A2)]));
-    c.tombstone(
-        key(A1),
-        3,
-        Ok(Unchanged),
-        v(&s3, 1, 398, &[t(A2, 3, A2)]),
-    );
+    c.tombstone(key(A1), 3, Ok(Unchanged), v(&s3, 1, 398, &[t(A2, 3, A2)]));
     c.publication(A4, Ok(PublicationAppended), v(&s4, 1, 597, &[p(A4)]));
-    c.tombstone(
-        key(A1),
-        3,
-        Ok(Unchanged),
-        v(&s4, 1, 597, &[p(A4)]),
-    );
+    c.tombstone(key(A1), 3, Ok(Unchanged), v(&s4, 1, 597, &[p(A4)]));
     c.publication(HIGH, Ok(PublicationAppended), v(&sh, 1, 796, &[p(HIGH)]));
     c.publication(A5, Err(Error::StaleRevision), v(&sh, 1, 796, &[p(HIGH)]));
     c.publication(MAX, Ok(PublicationAppended), v(&sm, 1, 995, &[p(MAX)]));
@@ -726,11 +698,7 @@ fn unsigned_revisions_conflicts_and_max_preserve_event_identity() {
         Err(Error::StaleRevision),
         v(&state, 1, 199, &[t(A2, u64::MAX, A2)]),
     );
-    c.publication(
-        A2,
-        Ok(Unchanged),
-        v(&state, 1, 199, &[t(A2, u64::MAX, A2)]),
-    );
+    c.publication(A2, Ok(Unchanged), v(&state, 1, 199, &[t(A2, u64::MAX, A2)]));
 }
 
 #[test]
