@@ -141,7 +141,7 @@ pub fn project(value: &ProducerObservationV1) -> (String, String) {
 // This test-private projection checks the selected public data API, not an exporter.
 use near_future::application::{
     ForegroundApplication, ProducerMetricClockV1, ProducerMetricObservationV1,
-    ProducerMetricsObservationV1, ProducerMetricScopeV1, ProducerMetricUnitV1,
+    ProducerMetricScopeV1, ProducerMetricUnitV1, ProducerMetricsObservationV1,
     ProducerObservationSelection, RegisteredProducerMetricV1,
 };
 
@@ -167,7 +167,9 @@ pub fn observe(
 }
 
 fn port(value: &ProducerObservationV1) -> &ProducerMetricsObservationV1 {
-    let port = value.metrics().expect("registered metric port must be observed");
+    let port = value
+        .metrics()
+        .expect("registered metric port must be observed");
     assert!(matches!(
         port.origin(),
         ProducerObservationOriginV1::ExistingOwnerGuardObservation
@@ -221,11 +223,17 @@ pub fn empty(value: &ProducerObservationV1) -> String {
     let queue = value.l1().expect("actual empty registered queue required");
     assert_eq!(queue.queued_records(), 0);
     assert!(queue.difference_counts().is_empty());
-    assert!(matches!(value.dropped(), Some(DiagnosticDroppedCountV1::Exact(0))));
+    assert!(matches!(
+        value.dropped(),
+        Some(DiagnosticDroppedCountV1::Exact(0))
+    ));
     format!(
         "observed_registered_empty capacity={} completed={} retained={} evicted={} all_percentiles_none={}\n",
-        port.window_capacity(), row.completed_samples(), row.sample_count(),
-        row.evicted_samples(), quantiles.iter().all(Option::is_none),
+        port.window_capacity(),
+        row.completed_samples(),
+        row.sample_count(),
+        row.evicted_samples(),
+        quantiles.iter().all(Option::is_none),
     )
 }
 
@@ -252,25 +260,42 @@ pub fn one(value: &ProducerObservationV1, enclosing_ns: u128) -> MetricProjectio
             "\"one_sample_percentiles_equal\":{},\"completed_evaluations\":{},",
             "\"mismatched_evaluations\":{},\"l1_queued_records\":{}}}"
         ),
-        port.window_capacity(), row.completed_samples(), row.sample_count(),
-        row.evicted_samples(), all_present, equal, value.evaluations().completed(),
-        value.evaluations().mismatched(), queue.queued_records(),
+        port.window_capacity(),
+        row.completed_samples(),
+        row.sample_count(),
+        row.evicted_samples(),
+        all_present,
+        equal,
+        value.evaluations().completed(),
+        value.evaluations().mismatched(),
+        queue.queued_records(),
     );
     let actual = format!(
         concat!(
             "scope=accepted_evaluate_accept_compare\nunit=ns\n",
             "p50={}\np95={}\np99={}\np999={}\nenclosing_public_call_ns={}\n"
         ),
-        display_ns(values[0]), display_ns(values[1]),
-        display_ns(values[2]), display_ns(values[3]), enclosing_ns,
+        display_ns(values[0]),
+        display_ns(values[1]),
+        display_ns(values[2]),
+        display_ns(values[3]),
+        enclosing_ns,
     );
     assert!(stable.is_ascii() && stable.len() <= 2048);
     assert!(actual.is_ascii() && actual.len() <= 2048);
-    MetricProjection { stable, actual, values, enclosing_ns }
+    MetricProjection {
+        stable,
+        actual,
+        values,
+        enclosing_ns,
+    }
 }
 
 pub fn not_selected(value: &ProducerObservationV1) {
-    assert!(value.metrics().is_none(), "not selected is not an empty metric window");
+    assert!(
+        value.metrics().is_none(),
+        "not selected is not an empty metric window"
+    );
     assert!(value.l1().is_none());
     assert!(value.dropped().is_none());
     assert_eq!(value.evaluations().started(), 1);
@@ -292,14 +317,27 @@ pub fn captures(
     empty: &str,
 ) -> Vec<(String, String)> {
     let mut files = vec![("actual.empty.metrics.txt".to_owned(), empty.to_owned())];
-    for ((label, metric), public) in ["first", "second", "final"].into_iter().zip(metrics).zip(public) {
-        files.push((format!("actual.{label}.metrics.json"), metric.stable.clone()));
-        files.push((format!("actual.{label}.metric-values.txt"), metric.actual.clone()));
+    for ((label, metric), public) in ["first", "second", "final"]
+        .into_iter()
+        .zip(metrics)
+        .zip(public)
+    {
+        files.push((
+            format!("actual.{label}.metrics.json"),
+            metric.stable.clone(),
+        ));
+        files.push((
+            format!("actual.{label}.metric-values.txt"),
+            metric.actual.clone(),
+        ));
         files.push((format!("actual.{label}.outer.json"), public.0.clone()));
         files.push((format!("actual.{label}.queue.json"), public.1.clone()));
     }
-    files.push(("actual.typed-receipt.txt".to_owned(),
-        "shadow_only portable_copied_facts_since_owner_start mismatched nex_decision_mismatch\n".to_owned()));
+    files.push((
+        "actual.typed-receipt.txt".to_owned(),
+        "shadow_only portable_copied_facts_since_owner_start mismatched nex_decision_mismatch\n"
+            .to_owned(),
+    ));
     assert_eq!(files.len(), 14);
     files
 }
@@ -316,17 +354,43 @@ pub fn assert_retained(
         assert_eq!(metric.stable.as_bytes(), METRIC.as_bytes());
         assert_eq!(public.0.as_bytes(), OUTER.as_bytes());
         assert_eq!(public.1.as_bytes(), QUEUE.as_bytes());
-        let values = metric.values.map(|value| value.expect("one sample percentile required"));
+        let values = metric
+            .values
+            .map(|value| value.expect("one sample percentile required"));
         assert!(values.iter().all(|value| *value == values[0]));
-        assert!(u128::from(values[0]) <= metric.enclosing_ns, "real caller bracket exceeded");
-        for text in [metric.stable.as_str(), metric.actual.as_str(), &public.0, &public.1, empty] {
+        assert!(
+            u128::from(values[0]) <= metric.enclosing_ns,
+            "real caller bracket exceeded"
+        );
+        for text in [
+            metric.stable.as_str(),
+            metric.actual.as_str(),
+            &public.0,
+            &public.1,
+            empty,
+        ] {
             fixture::assert_private_bindings_absent(text, metadata);
         }
     }
-    assert_eq!(metrics[0].values, metrics[1].values, "observation changed numeric samples");
-    assert_eq!(metrics[1].values, metrics[2].values, "selection changed numeric samples");
-    assert_eq!(metrics[0], metrics[1], "observation changed real metric window");
-    assert_eq!(metrics[1], metrics[2], "selection reset or appended metric samples");
+    assert_eq!(
+        metrics[0].values, metrics[1].values,
+        "observation changed numeric samples"
+    );
+    assert_eq!(
+        metrics[1].values, metrics[2].values,
+        "selection changed numeric samples"
+    );
+    assert_eq!(
+        metrics[0], metrics[1],
+        "observation changed real metric window"
+    );
+    assert_eq!(
+        metrics[1], metrics[2],
+        "selection reset or appended metric samples"
+    );
     assert_eq!(public[0], public[1], "same owned queue observation drained");
-    assert_eq!(public[1], public[2], "unselected queue changed later observation");
+    assert_eq!(
+        public[1], public[2],
+        "unselected queue changed later observation"
+    );
 }

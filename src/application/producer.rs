@@ -1,5 +1,7 @@
 use super::{
-    HostError, ProducerObservationV1, counters::Counts, metrics::{self, Window},
+    HostError, ProducerObservationV1,
+    counters::Counts,
+    metrics::{self, Window},
     observation::PortableEvaluationReceipt,
 };
 use nf_nex_shadow::{
@@ -76,7 +78,9 @@ impl Producer {
     ) -> Result<&'a ShadowOutput, HostError> {
         let accepted = match work {
             Work::Copied(input) => self.session.accept(&result.value, &self.metadata, input),
-            Work::Action(input) => self.session.accept_action(&result.value, &self.metadata, input),
+            Work::Action(input) => self
+                .session
+                .accept_action(&result.value, &self.metadata, input),
         };
         accepted.map_err(|_| HostError::EvaluationUnavailable)
     }
@@ -96,7 +100,8 @@ impl Producer {
         // The endpoint above excludes counter updates, queue pushes, append and receipt creation.
         let next = self.counts.completed(&differences)?;
         next.validate()?;
-        self.metrics.append(nanos, self.counts.completed, next.completed)?;
+        self.metrics
+            .append(nanos, self.counts.completed, next.completed)?;
         for difference in &differences {
             self.stream
                 .push(Diagnostic::from_evaluation(&evaluation.value, *difference));

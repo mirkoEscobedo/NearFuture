@@ -59,7 +59,11 @@ impl Window {
             return Err(HostError::Bounds);
         }
         let next = self.next.checked_add(1).ok_or(HostError::Bounds)? % CAPACITY;
-        let length = self.length.checked_add(1).ok_or(HostError::Bounds)?.min(CAPACITY);
+        let length = self
+            .length
+            .checked_add(1)
+            .ok_or(HostError::Bounds)?
+            .min(CAPACITY);
         let slot = self.samples.get_mut(self.next).ok_or(HostError::Bounds)?;
         // Every fallible check precedes mutation; this replaces exactly the oldest slot.
         *slot = nanos;
@@ -72,7 +76,10 @@ impl Window {
     pub(crate) fn summary(&self, expected_completed: u64) -> Result<Summary, HostError> {
         self.validate(expected_completed)?;
         let retained = u64::try_from(self.length).map_err(|_| HostError::Bounds)?;
-        let evicted = self.completed.checked_sub(retained).ok_or(HostError::Bounds)?;
+        let evicted = self
+            .completed
+            .checked_sub(retained)
+            .ok_or(HostError::Bounds)?;
         let mut quantiles = [None; 4];
         if self.length != 0 {
             let mut sorted = [0; CAPACITY];

@@ -172,7 +172,12 @@ fn admit(metadata: &fs::Metadata, allowance: usize) -> usize {
     length
 }
 
-fn read_bounded(path: &Path, allowance: usize, started: Instant, cleanup: Option<Duration>) -> (Entry, usize) {
+fn read_bounded(
+    path: &Path,
+    allowance: usize,
+    started: Instant,
+    cleanup: Option<Duration>,
+) -> (Entry, usize) {
     let before = external(started, cleanup, || fs::symlink_metadata(path)).unwrap();
     let expected = admit(&before, allowance);
     let signature = metadata_signature(&before);

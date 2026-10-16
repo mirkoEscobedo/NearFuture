@@ -19,8 +19,8 @@ mod observation;
 mod producer;
 pub use enums::*;
 pub use metrics::{
-    ProducerMetricClockV1, ProducerMetricObservationV1, ProducerMetricScopeV1, ProducerMetricUnitV1,
-    ProducerMetricsObservationV1, RegisteredProducerMetricV1,
+    ProducerMetricClockV1, ProducerMetricObservationV1, ProducerMetricScopeV1,
+    ProducerMetricUnitV1, ProducerMetricsObservationV1, RegisteredProducerMetricV1,
 };
 use nf_nex_shadow::{MakePeaceEligibility, ShadowInput, ShadowMetadata, ShadowOutput};
 pub use observation::{

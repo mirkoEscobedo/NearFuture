@@ -1,7 +1,8 @@
 #[path = "actual_producer_metric_observation/mod.rs"]
 mod support;
 use near_future::application::{
-    ForegroundRequest, HostExit, PackageObservationScopeV1, PortableAdmissionInputV1, start_foreground,
+    ForegroundRequest, HostExit, PackageObservationScopeV1, PortableAdmissionInputV1,
+    start_foreground,
 };
 use std::{
     panic::{AssertUnwindSafe, catch_unwind, resume_unwind},
@@ -50,7 +51,9 @@ fn exercise(evidence: &mut Evidence) {
     });
     let receipt = receipt.unwrap_or_else(|_| panic!("actual accepted evaluation required"));
     let enclosing_ns = enclosing.expect("real caller monotonic bracket").as_nanos();
-    evidence.run(Stage::ReceiptAssertions, || projection::assert_receipt(&receipt));
+    evidence.run(Stage::ReceiptAssertions, || {
+        projection::assert_receipt(&receipt)
+    });
     let first = evidence.run(Stage::FirstObservation, || {
         projection::observe(&mut host, true, true)
     });
@@ -80,9 +83,16 @@ fn exercise(evidence: &mut Evidence) {
         .unwrap_or_else(|_| panic!("actual foreground stop refused"));
     assert!(matches!(exit, HostExit::Stopped));
     evidence.enter(Stage::TreePreservation);
-    assert_eq!(evidence.snapshot(), baseline, "product changed owned originals");
+    assert_eq!(
+        evidence.snapshot(),
+        baseline,
+        "product changed owned originals"
+    );
     evidence.run(Stage::TreePreservation, || {
-        assert_eq!(fixture::public_original(&metadata, &input, &reference), original);
+        assert_eq!(
+            fixture::public_original(&metadata, &input, &reference),
+            original
+        );
     });
     let metrics = [&first_metric, &second_metric, &last_metric];
     let public = [&first_public, &second_public, &last_public];

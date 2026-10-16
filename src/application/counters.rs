@@ -27,8 +27,14 @@ pub(super) fn index(value: Difference) -> usize {
 }
 impl Counts {
     pub fn validate(&self) -> Result<(), HostError> {
-        let completed = self.matched.checked_add(self.mismatched).ok_or(HostError::Bounds)?;
-        let started = self.completed.checked_add(self.unavailable).ok_or(HostError::Bounds)?;
+        let completed = self
+            .matched
+            .checked_add(self.mismatched)
+            .ok_or(HostError::Bounds)?;
+        let started = self
+            .completed
+            .checked_add(self.unavailable)
+            .ok_or(HostError::Bounds)?;
         if completed != self.completed
             || started != self.started
             || self.failures != self.unavailable
