@@ -169,7 +169,10 @@ fn assert_projected(output: &ProjectedPlacement, domain: PresentationDomain, x: 
     assert_eq!(output.system(), system);
     assert_eq!(output.slot().value(), 7);
     assert_eq!(output.revision(), 1);
-    assert_eq!(output.topology_sha256().as_slice(), bytes(A1_SHA).as_slice());
+    assert_eq!(
+        output.topology_sha256().as_slice(),
+        bytes(A1_SHA).as_slice()
+    );
     assert_domain(output.domain(), domain);
     assert_eq!(output.x(), x);
     assert_eq!(output.y(), y);

@@ -89,9 +89,7 @@ impl ClientPresentation {
         owner: AccountId,
         system: EntityId,
     ) -> Result<ProjectedPlacement, PresentationError> {
-        if !nonzero(history.as_bytes())
-            || !nonzero(owner.as_bytes())
-            || !nonzero(system.as_bytes())
+        if !nonzero(history.as_bytes()) || !nonzero(owner.as_bytes()) || !nonzero(system.as_bytes())
         {
             return Err(PresentationError::InvalidInput);
         }
