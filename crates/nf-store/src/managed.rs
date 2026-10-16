@@ -17,8 +17,8 @@ mod cancellation;
 mod catalog;
 mod catalog_action;
 mod catalog_command;
-mod catalog_payload;
 mod catalog_observation;
+mod catalog_payload;
 mod catalog_read;
 mod catalog_reduce;
 mod catalog_rules;
@@ -48,8 +48,8 @@ mod prepare;
 mod prepared;
 mod proof;
 mod prospective;
-mod receipt;
 mod readonly;
+mod receipt;
 mod reconcile;
 mod registry;
 mod retire;
@@ -71,11 +71,13 @@ mod world_plan;
 
 pub use adoption::AdoptionDraft;
 pub use cancellation::{AdministrativeCancellation, AdministrativeCancellationKind};
-pub use challenge::{Challenge, PrincipalProof};
 pub use catalog_observation::{ManagedCatalogObservation, RegistryObservation};
+pub use challenge::{Challenge, PrincipalProof};
 pub use coordinator::{LocalCoordinator, UnclaimedCoordinator};
 pub use error::ManagedError;
-pub use failure::{AdoptionFailure, AdoptionOutcome, PrecommitFailure, SettlementFailure, UpgradeOutcome};
+pub use failure::{
+    AdoptionFailure, AdoptionOutcome, PrecommitFailure, SettlementFailure, UpgradeOutcome,
+};
 pub use foot::StorageFoot;
 pub use input::{AdoptionInput, BinaryEvidence, FilePin, PrepareInput, SettlementInput};
 pub use observations::{ManagedOutboxRecord, ManagedRequestStatus, ManagedSnapshot};

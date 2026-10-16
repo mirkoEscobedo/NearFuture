@@ -1,6 +1,9 @@
-use super::{error::{ManagedError, Result}, state::PendingPolicy};
-use crate::{KnownFrontiers, PrincipalDevice, Reservation};
+use super::{
+    error::{ManagedError, Result},
+    state::PendingPolicy,
+};
 use crate::migration::{Composition, ProviderVersion};
+use crate::{KnownFrontiers, PrincipalDevice, Reservation};
 use nf_kernel::{Frontier, JobResult, MissingPolicy};
 use std::path::PathBuf;
 
@@ -15,15 +18,32 @@ pub struct FilePin {
 impl FilePin {
     pub fn new(path: PathBuf, bytes: u64, digest: [u8; 32], provenance: &str) -> Result<Self> {
         let text = path.to_str().ok_or(ManagedError::Scope)?;
-        if !path.is_absolute() || text.len() > 4096 || text.as_bytes().contains(&0)
-            || bytes == 0 || bytes > 268_435_456 || provenance.len() > 2048
+        if !path.is_absolute()
+            || text.len() > 4096
+            || text.as_bytes().contains(&0)
+            || bytes == 0
+            || bytes > 268_435_456
+            || provenance.len() > 2048
             || provenance.as_bytes().contains(&0)
-        { return Err(ManagedError::Limit); }
-        Ok(Self { path, bytes, digest, provenance: provenance.to_string() })
+        {
+            return Err(ManagedError::Limit);
+        }
+        Ok(Self {
+            path,
+            bytes,
+            digest,
+            provenance: provenance.to_string(),
+        })
     }
-    pub fn path(&self) -> &std::path::Path { &self.path }
-    pub fn bytes(&self) -> u64 { self.bytes }
-    pub fn digest(&self) -> [u8; 32] { self.digest }
+    pub fn path(&self) -> &std::path::Path {
+        &self.path
+    }
+    pub fn bytes(&self) -> u64 {
+        self.bytes
+    }
+    pub fn digest(&self) -> [u8; 32] {
+        self.digest
+    }
 }
 /// Pins support and custody data; this never certifies a running executable.
 pub struct BinaryEvidence<'a> {
@@ -34,9 +54,20 @@ pub struct BinaryEvidence<'a> {
     pub(super) qualification: &'a str,
 }
 impl<'a> BinaryEvidence<'a> {
-    pub fn library_fixture(old: FilePin, new: FilePin, from: &'a Composition,
-        to: &'a Composition, qualification: &'a str) -> Self {
-        Self { old, new, from, to, qualification }
+    pub fn library_fixture(
+        old: FilePin,
+        new: FilePin,
+        from: &'a Composition,
+        to: &'a Composition,
+        qualification: &'a str,
+    ) -> Self {
+        Self {
+            old,
+            new,
+            from,
+            to,
+            qualification,
+        }
     }
 }
 pub struct AdoptionInput<'a> {

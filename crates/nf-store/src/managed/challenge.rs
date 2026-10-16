@@ -11,13 +11,27 @@ pub struct Challenge {
     pub(super) book: [u8; 32],
 }
 impl Challenge {
-    pub fn transcript(&self) -> &[u8] { &self.transcript }
-    pub fn digest(&self) -> [u8; 32] { hash(&self.transcript) }
-    pub fn admission_input_bytes(&self) -> &[u8] { &self.admission }
-    pub fn unsigned_payload(&self) -> &[u8] { &self.unsigned }
-    pub fn registration_delta_bytes(&self) -> &[u8] { &self.delta }
+    pub fn transcript(&self) -> &[u8] {
+        &self.transcript
+    }
+    pub fn digest(&self) -> [u8; 32] {
+        hash(&self.transcript)
+    }
+    pub fn admission_input_bytes(&self) -> &[u8] {
+        &self.admission
+    }
+    pub fn unsigned_payload(&self) -> &[u8] {
+        &self.unsigned
+    }
+    pub fn registration_delta_bytes(&self) -> &[u8] {
+        &self.delta
+    }
     pub fn bind_proof(self, proof: DeviceProof) -> PrincipalProof {
-        PrincipalProof { book: self.book, transcript: self.transcript, proof }
+        PrincipalProof {
+            book: self.book,
+            transcript: self.transcript,
+            proof,
+        }
     }
 }
 /// A supplied signature still requires consumption and verification by its issuer.
@@ -41,7 +55,11 @@ pub(super) struct Window {
 }
 impl Times {
     pub fn window(&self) -> Window {
-        Window { nonce: self.nonce, issued: self.issued, expires: self.expires }
+        Window {
+            nonce: self.nonce,
+            issued: self.issued,
+            expires: self.expires,
+        }
     }
 }
 #[derive(Clone)]
@@ -74,6 +92,10 @@ pub(super) struct Principal {
 #[derive(Clone)]
 pub(super) enum Binding {
     Owned(Owned),
-    Prospective { purpose: u32, candidate: OwnerStamp, input: [u8; 32] },
+    Prospective {
+        purpose: u32,
+        candidate: OwnerStamp,
+        input: [u8; 32],
+    },
     Principal(Principal),
 }
