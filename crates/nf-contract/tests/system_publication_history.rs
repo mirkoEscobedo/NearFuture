@@ -59,7 +59,10 @@ fn assert_record(
     assert_eq!(record.profile(), PublicationProfile::SelectedTopologyV1);
     assert_eq!(record.kind(), kind);
     assert_eq!(record.revision(), revision);
-    assert_eq!(record.referenced_publication_revision(), referenced_revision);
+    assert_eq!(
+        record.referenced_publication_revision(),
+        referenced_revision
+    );
     assert_eq!(
         record.referenced_topology_sha256().as_slice(),
         literal_bytes(sha256).as_slice()
