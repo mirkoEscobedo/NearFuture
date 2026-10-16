@@ -28,3 +28,9 @@ mod transitions;
 
 #[cfg(test)]
 mod tests;
+
+mod reader;
+pub use reader::MiniatureReader;
+pub(crate) mod reader_connection;
+mod restore;
+pub use restore::IsolatedRestoreConfirmation;
