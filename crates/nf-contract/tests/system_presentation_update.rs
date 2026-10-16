@@ -176,10 +176,7 @@ fn assert_projected(
     assert_eq!(output.system(), system);
     assert_eq!(output.slot().value(), 7);
     assert_eq!(output.revision(), revision);
-    assert_eq!(
-        output.topology_sha256().as_slice(),
-        bytes(sha).as_slice()
-    );
+    assert_eq!(output.topology_sha256().as_slice(), bytes(sha).as_slice());
     assert_domain(output.domain(), domain);
     assert_eq!(output.x(), x);
     assert_eq!(output.y(), y);
@@ -264,7 +261,14 @@ fn real_update_preserves_each_client_position_and_earlier_source_binding() {
     assert_eq!(query, query_before);
     assert_eq!(limit_values(topology_limits), original_limits);
     assert_registry(&registry, 1, A1_SHA);
-    assert_sources(&a1, &a2, &originals, literals, &held_history, &history_before);
+    assert_sources(
+        &a1,
+        &a2,
+        &originals,
+        literals,
+        &held_history,
+        &history_before,
+    );
 
     let first_b = client_b
         .project(&registry, query.0, query.1, query.2)
@@ -279,7 +283,14 @@ fn real_update_preserves_each_client_position_and_earlier_source_binding() {
     assert_eq!(query, query_before);
     assert_eq!(limit_values(topology_limits), original_limits);
     assert_registry(&registry, 1, A1_SHA);
-    assert_sources(&a1, &a2, &originals, literals, &held_history, &history_before);
+    assert_sources(
+        &a1,
+        &a2,
+        &originals,
+        literals,
+        &held_history,
+        &history_before,
+    );
 
     assert_eq!(
         registry.reserve(&a2, ConceptualSlot::new(7), topology_limits),
@@ -297,7 +308,14 @@ fn real_update_preserves_each_client_position_and_earlier_source_binding() {
     assert_eq!(client_b, layout_b_before);
     assert_eq!(query, query_before);
     assert_eq!(limit_values(topology_limits), original_limits);
-    assert_sources(&a1, &a2, &originals, literals, &held_history, &history_before);
+    assert_sources(
+        &a1,
+        &a2,
+        &originals,
+        literals,
+        &held_history,
+        &history_before,
+    );
 
     let updated_a = client_a
         .project(&registry, query.0, query.1, query.2)
@@ -314,7 +332,14 @@ fn real_update_preserves_each_client_position_and_earlier_source_binding() {
     assert_eq!(query, query_before);
     assert_eq!(limit_values(topology_limits), original_limits);
     assert_registry(&registry, 2, A2_SHA);
-    assert_sources(&a1, &a2, &originals, literals, &held_history, &history_before);
+    assert_sources(
+        &a1,
+        &a2,
+        &originals,
+        literals,
+        &held_history,
+        &history_before,
+    );
 
     let updated_b = client_b
         .project(&registry, query.0, query.1, query.2)
@@ -335,5 +360,12 @@ fn real_update_preserves_each_client_position_and_earlier_source_binding() {
     assert_layout(&client_b, CLIENT_B);
     assert_eq!(query, query_before);
     assert_eq!(limit_values(topology_limits), original_limits);
-    assert_sources(&a1, &a2, &originals, literals, &held_history, &history_before);
+    assert_sources(
+        &a1,
+        &a2,
+        &originals,
+        literals,
+        &held_history,
+        &history_before,
+    );
 }
