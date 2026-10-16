@@ -90,3 +90,11 @@ tasks.register('SystemPlacementRegistryTest', JavaExec) {
     if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
 }
 tasks.named('check') { dependsOn 'SystemPlacementRegistryTest' }
+
+tasks.register('SystemPlacementRegistryUnsignedTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.system.SystemPlacementRegistryUnsignedTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'SystemPlacementRegistryUnsignedTest' }
