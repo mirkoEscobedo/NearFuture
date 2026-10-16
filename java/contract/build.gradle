@@ -130,3 +130,11 @@ tasks.register('SystemPublicationHistoryConformanceTest', JavaExec) {
     if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
 }
 tasks.named('check') { dependsOn 'SystemPublicationHistoryConformanceTest' }
+
+tasks.register('SystemPresentationTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.system.SystemPresentationTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'SystemPresentationTest' }
