@@ -176,16 +176,32 @@ fn conflict_and_validation_refusals_preserve_registry_and_all_inputs() {
     assert_eq!(inputs[2].campaign_day_millis, 3);
     assert_eq!(inputs[2].revision, 2);
     refuse(
-        &mut registry, &inputs, 2, 7, limits, PlacementError::RevisionConflict,
+        &mut registry,
+        &inputs,
+        2,
+        7,
+        limits,
+        PlacementError::RevisionConflict,
     );
     assert_eq!(inputs[0].revision, 1);
-    refuse(&mut registry, &inputs, 0, 7, limits, PlacementError::StaleRevision);
+    refuse(
+        &mut registry,
+        &inputs,
+        0,
+        7,
+        limits,
+        PlacementError::StaleRevision,
+    );
 
     // Actual reserve validates revision0 before a real foreign-universe refusal.
     assert_ne!(inputs[7].universe, registry.universe());
     assert_eq!(inputs[7].revision, 0);
     refuse(
-        &mut registry, &inputs, 7, 7, limits,
+        &mut registry,
+        &inputs,
+        7,
+        7,
+        limits,
         PlacementError::Topology(TopologyError::Invalid),
     );
     // Actual above-default limits precede the same valid foreign-universe refusal.
@@ -196,7 +212,11 @@ fn conflict_and_validation_refusals_preserve_registry_and_all_inputs() {
     assert_eq!(validate(&inputs[3], limits), Ok(()));
     assert_ne!(inputs[3].universe, registry.universe());
     refuse(
-        &mut registry, &inputs, 3, 7, above_default,
+        &mut registry,
+        &inputs,
+        3,
+        7,
+        above_default,
         PlacementError::Topology(TopologyError::Limit),
     );
     // Matching key with revision0 requests slot8, different from the stored slot7.
@@ -205,10 +225,21 @@ fn conflict_and_validation_refusals_preserve_registry_and_all_inputs() {
     assert_eq!(inputs[8].system, inputs[1].system);
     assert_eq!(registry.entries()[0].slot().value(), 7);
     refuse(
-        &mut registry, &inputs, 8, 8, limits,
+        &mut registry,
+        &inputs,
+        8,
+        8,
+        limits,
         PlacementError::Topology(TopologyError::Invalid),
     );
-    refuse(&mut registry, &inputs, 3, 7, limits, PlacementError::UniverseMismatch);
+    refuse(
+        &mut registry,
+        &inputs,
+        3,
+        7,
+        limits,
+        PlacementError::UniverseMismatch,
+    );
 }
 
 fn assert_key_rows(registry: &PlacementRegistry, revisions: [u64; 4]) {
