@@ -53,7 +53,10 @@ fn assert_assignment(registry: &PlacementRegistry, revision: u64, expected_sha: 
     assert_eq!(entry.system(), EntityId::from_bytes([0x44; 16]));
     assert_eq!(entry.slot().value(), 7);
     assert_eq!(entry.revision(), revision);
-    assert_eq!(entry.topology_sha256().as_slice(), literal(expected_sha).as_slice());
+    assert_eq!(
+        entry.topology_sha256().as_slice(),
+        literal(expected_sha).as_slice()
+    );
 }
 
 fn assert_input(topology: &Topology, original: &[u8], expected_sha: &str) {
@@ -61,7 +64,10 @@ fn assert_input(topology: &Topology, original: &[u8], expected_sha: &str) {
     assert_eq!(original.len(), 199);
     assert_eq!(validate(topology, limits), Ok(()));
     assert_eq!(encode(topology, limits).unwrap().as_slice(), original);
-    assert_eq!(digest(topology, limits).unwrap().as_slice(), literal(expected_sha).as_slice());
+    assert_eq!(
+        digest(topology, limits).unwrap().as_slice(),
+        literal(expected_sha).as_slice()
+    );
 }
 
 #[test]

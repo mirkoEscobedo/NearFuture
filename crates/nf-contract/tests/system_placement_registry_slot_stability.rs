@@ -98,7 +98,12 @@ fn existing_key_refuses_slot_change_before_revision_classification() {
     assert_assignment(&registry);
     let before_refusals = registry.clone();
     // Slot8 is free: only the existing key's immutable slot binding can refuse it.
-    assert!(registry.entries().iter().all(|entry| entry.slot().value() != 8));
+    assert!(
+        registry
+            .entries()
+            .iter()
+            .all(|entry| entry.slot().value() != 8)
+    );
 
     assert_eq!(
         registry.reserve(&a1, ConceptualSlot::new(8), limits),
