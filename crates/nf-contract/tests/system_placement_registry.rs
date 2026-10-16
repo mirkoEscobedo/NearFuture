@@ -4,8 +4,7 @@ use nf_contract::{
     system_topology::{Limits, decode, digest, encode, validate},
 };
 
-const ORIGINAL_SHA256: &str =
-    "f9865f8074a8e754ee54cb9691b0d377e3c47956b0141f36740a9cee97ef4183";
+const ORIGINAL_SHA256: &str = "f9865f8074a8e754ee54cb9691b0d377e3c47956b0141f36740a9cee97ef4183";
 const REVISION_TWO_SHA256: &str =
     "81e2a157a78c5e53f9334e9f3adb690767d0fb8e5aa651c11da30bbf7399878d";
 
