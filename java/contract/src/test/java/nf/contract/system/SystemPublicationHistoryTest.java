@@ -20,6 +20,10 @@ public final class SystemPublicationHistoryTest {
     private static final String A2_SHA = "81e2a157a78c5e53f9334e9f3adb690767d0fb8e5aa651c11da30bbf7399878d";
     private static final Limits HISTORY_LIMITS = new Limits(1, 3, 398);
 
+    private static final String A4_HEX = "4e462d5350542d31000100111111111111111111111111111111112222222222222222222222222222222233333333333333333333333333333333444444444444444444444444444444440400000000000000020000000000000001010077777777777777777777777777777777777777777777777777777777777777770102000101010101010101010101010101010101000001030053756e02020202020202020202020202020202020101010101010101010101010101010101010000010500576f726c64";
+    private static final String A4_SHA = "1fa957a0c4e5780f76d86618a6617482c9ce7fff1bad4d534c85085423dc11e1";
+    private static final Limits REPLAY_LIMITS = new Limits(1, 4, 597);
+
     private static void check(boolean condition, String reason) {
         if (!condition) throw new AssertionError(reason);
     }
@@ -154,9 +158,166 @@ public final class SystemPublicationHistoryTest {
         check(Arrays.equals(a2Bytes, bytes(A2_HEX)), "original A2 bytes preserved");
     }
 
+    private static Object[] replayRecordImage(PublicationRecord record) {
+        byte[] body = record.canonicalTopologyBytes();
+        return new Object[] {
+            record.universe().value().clone(), record.history().value().clone(),
+            record.owner().value().clone(), record.system().value().clone(),
+            record.profile(), record.kind(), record.revision(), record.referencedPublicationRevision(),
+            record.referencedTopologySha256().clone(), body == null ? null : body.clone()
+        };
+    }
+
+    private static Object[][] replayRecordImages(List<PublicationRecord> records) {
+        Object[][] images = new Object[records.size()][];
+        for (int i = 0; i < records.size(); i++) images[i] = replayRecordImage(records.get(i));
+        return images;
+    }
+
+    private static Object[] replayHistoryImage(SystemPublicationHistory history) {
+        List<PublicationRecord> records = history.records();
+        return new Object[] {
+            history.universe().value().clone(), history.limits(), history.keysLen(),
+            history.canonicalBytesLen(), records.size(), replayRecordImages(records),
+            replayRecordImage(history.latest(id(0x22), id(0x33), id(0x44)))
+        };
+    }
+
+    private static Object[][] replayInputImages(Topology[] inputs, Topology[] originals, byte[][] fixed) {
+        String[] hexes = {A1_HEX, A2_HEX, A4_HEX};
+        String[] hashes = {A1_SHA, A2_SHA, A4_SHA};
+        long[] revisions = {1, 2, 4};
+        Object[][] images = new Object[3][];
+        for (int i = 0; i < 3; i++) {
+            check(Arrays.equals(fixed[i], bytes(hexes[i])), "replay fixture bytes remain fixed");
+            check(originals[i].equals(SystemPackageTopology.decode(bytes(hexes[i]), SystemPackageTopology.DEFAULT)), "replay independent original");
+            inputUnchanged(inputs[i], originals[i], bytes(hexes[i]), hashes[i]);
+            check(inputs[i].revision() == revisions[i] && inputs[i].campaignDayMillis() == 2, "replay input metadata");
+            byte[] encoded = SystemPackageTopology.encode(inputs[i], SystemPackageTopology.DEFAULT);
+            byte[] hash = SystemPackageTopology.digest(inputs[i], SystemPackageTopology.DEFAULT);
+            images[i] = new Object[] {
+                SystemPackageTopology.decode(encoded, SystemPackageTopology.DEFAULT), encoded.clone(), hash.clone()
+            };
+        }
+        return images;
+    }
+
+    private static void replayState(SystemPublicationHistory history, int records, int canonicalBytes, int latestIndex) {
+        check(history.universe().equals(id(0x11)), "replay namespace");
+        check(history.limits().equals(REPLAY_LIMITS), "replay isolated limits");
+        check(history.keysLen() == 1, "replay one key");
+        check(history.records().size() == records, "replay record count");
+        check(history.canonicalBytesLen() == canonicalBytes, "replay canonical byte count");
+        assertRecord(history.records().get(0), Kind.PUBLISHED_VERSION, 1, 1, A1_SHA, bytes(A1_HEX));
+        if (records >= 2) assertRecord(history.records().get(1), Kind.PUBLISHED_VERSION, 2, 2, A2_SHA, bytes(A2_HEX));
+        if (records >= 3) assertRecord(history.records().get(2), Kind.TOMBSTONE, 3, 2, A2_SHA, null);
+        if (records == 4) assertRecord(history.records().get(3), Kind.PUBLISHED_VERSION, 4, 4, A4_SHA, bytes(A4_HEX));
+        latest(history, latestIndex);
+    }
+
+    private static void retainedReplayRows(SystemPublicationHistory history, List<PublicationRecord> rows,
+            Object[][] images, PublicationRecord tombstone, Object[] tombstoneImage) {
+        check(rows.size() == 3, "pre-P4 list is not a live view");
+        check(Arrays.deepEquals(images, replayRecordImages(rows)), "old three-row snapshot remains exact");
+        check(Arrays.deepEquals(images, replayRecordImages(history.records().subList(0, 3))), "current prefix preserves old rows");
+        assertRecord(tombstone, Kind.TOMBSTONE, 3, 2, A2_SHA, null);
+        check(Arrays.deepEquals(tombstoneImage, replayRecordImage(tombstone)), "owned T3 image unchanged");
+        check(Arrays.deepEquals(tombstoneImage, replayRecordImage(history.records().get(2))), "current T3 retains original reference");
+    }
+
+    private static void historicalReplayPreservesLatestAndTombstoneReferenceAcrossRepublish() {
+        byte[][] fixed = {bytes(A1_HEX), bytes(A2_HEX), bytes(A4_HEX)};
+        Topology[] inputs = {
+            SystemPackageTopology.decode(fixed[0], SystemPackageTopology.DEFAULT),
+            SystemPackageTopology.decode(fixed[1], SystemPackageTopology.DEFAULT),
+            SystemPackageTopology.decode(fixed[2], SystemPackageTopology.DEFAULT)
+        };
+        Topology[] originals = {
+            SystemPackageTopology.decode(bytes(A1_HEX), SystemPackageTopology.DEFAULT),
+            SystemPackageTopology.decode(bytes(A2_HEX), SystemPackageTopology.DEFAULT),
+            SystemPackageTopology.decode(bytes(A4_HEX), SystemPackageTopology.DEFAULT)
+        };
+        replayInputImages(inputs, originals, fixed);
+        SystemPublicationHistory history = new SystemPublicationHistory(id(0x11), REPLAY_LIMITS);
+        check(history.appendPublication(inputs[0], SystemPackageTopology.DEFAULT) == Outcome.PUBLICATION_APPENDED, "replay append P1");
+        replayState(history, 1, 199, 0);
+        replayInputImages(inputs, originals, fixed);
+        check(history.appendPublication(inputs[1], SystemPackageTopology.DEFAULT) == Outcome.PUBLICATION_APPENDED, "replay append P2");
+        replayState(history, 2, 398, 1);
+        replayInputImages(inputs, originals, fixed);
+        check(history.appendTombstone(id(0x22), id(0x33), id(0x44), 3) == Outcome.TOMBSTONE_APPENDED, "replay append T3");
+        replayState(history, 3, 398, 2);
+        replayInputImages(inputs, originals, fixed);
+        {
+            Object[] before = replayHistoryImage(history);
+            List<PublicationRecord> beforeRows = history.records();
+            Object[][] beforeInputs = replayInputImages(inputs, originals, fixed);
+            check(history.appendPublication(inputs[0], SystemPackageTopology.DEFAULT) == Outcome.UNCHANGED, "historical P1 before republish");
+            check(Arrays.deepEquals(before, replayHistoryImage(history)), "whole API-visible replay history unchanged");
+            check(history.records().equals(beforeRows), "immutable replay list value unchanged");
+            check(Arrays.deepEquals(beforeInputs, replayInputImages(inputs, originals, fixed)), "all replay input images unchanged");
+            replayState(history, 3, 398, 2);
+        }
+        {
+            Object[] before = replayHistoryImage(history);
+            List<PublicationRecord> beforeRows = history.records();
+            Object[][] beforeInputs = replayInputImages(inputs, originals, fixed);
+            check(history.appendPublication(inputs[1], SystemPackageTopology.DEFAULT) == Outcome.UNCHANGED, "historical P2 before republish");
+            check(Arrays.deepEquals(before, replayHistoryImage(history)), "whole API-visible replay history unchanged");
+            check(history.records().equals(beforeRows), "immutable replay list value unchanged");
+            check(Arrays.deepEquals(beforeInputs, replayInputImages(inputs, originals, fixed)), "all replay input images unchanged");
+            replayState(history, 3, 398, 2);
+        }
+        {
+            Object[] before = replayHistoryImage(history);
+            List<PublicationRecord> beforeRows = history.records();
+            Object[][] beforeInputs = replayInputImages(inputs, originals, fixed);
+            check(history.appendTombstone(id(0x22), id(0x33), id(0x44), 3) == Outcome.UNCHANGED, "historical T3 before republish");
+            check(Arrays.deepEquals(before, replayHistoryImage(history)), "whole API-visible replay history unchanged");
+            check(history.records().equals(beforeRows), "immutable replay list value unchanged");
+            check(Arrays.deepEquals(beforeInputs, replayInputImages(inputs, originals, fixed)), "all replay input images unchanged");
+            replayState(history, 3, 398, 2);
+        }
+        List<PublicationRecord> oldRows = history.records();
+        Object[][] oldImages = replayRecordImages(oldRows);
+        PublicationRecord oldTombstone = oldRows.get(2);
+        Object[] oldTombstoneImage = replayRecordImage(oldTombstone);
+        unmodifiable(oldRows);
+        check(history.appendPublication(inputs[2], SystemPackageTopology.DEFAULT) == Outcome.PUBLICATION_APPENDED, "replay append P4");
+        replayState(history, 4, 597, 3);
+        replayInputImages(inputs, originals, fixed);
+        retainedReplayRows(history, oldRows, oldImages, oldTombstone, oldTombstoneImage);
+        check(history.records().size() == history.limits().records(), "replay full record quota");
+        check(history.canonicalBytesLen() == history.limits().canonicalBytes(), "replay full canonical byte quota");
+        {
+            Object[] before = replayHistoryImage(history);
+            List<PublicationRecord> beforeRows = history.records();
+            Object[][] beforeInputs = replayInputImages(inputs, originals, fixed);
+            check(history.appendTombstone(id(0x22), id(0x33), id(0x44), 3) == Outcome.UNCHANGED, "historical T3 after republish at full quota");
+            check(Arrays.deepEquals(before, replayHistoryImage(history)), "whole API-visible replay history unchanged");
+            check(history.records().equals(beforeRows), "immutable replay list value unchanged");
+            check(Arrays.deepEquals(beforeInputs, replayInputImages(inputs, originals, fixed)), "all replay input images unchanged");
+            replayState(history, 4, 597, 3);
+            retainedReplayRows(history, oldRows, oldImages, oldTombstone, oldTombstoneImage);
+        }
+        {
+            Object[] before = replayHistoryImage(history);
+            List<PublicationRecord> beforeRows = history.records();
+            Object[][] beforeInputs = replayInputImages(inputs, originals, fixed);
+            check(history.appendPublication(inputs[0], SystemPackageTopology.DEFAULT) == Outcome.UNCHANGED, "historical P1 after republish at full quota");
+            check(Arrays.deepEquals(before, replayHistoryImage(history)), "whole API-visible replay history unchanged");
+            check(history.records().equals(beforeRows), "immutable replay list value unchanged");
+            check(Arrays.deepEquals(beforeInputs, replayInputImages(inputs, originals, fixed)), "all replay input images unchanged");
+            replayState(history, 4, 597, 3);
+            retainedReplayRows(history, oldRows, oldImages, oldTombstone, oldTombstoneImage);
+        }
+    }
+
     public static void main(String[] args) {
         check(args.length == 0, "no arguments");
         immutableVersionsAndTombstonePreserveCanonicalHistory();
+        historicalReplayPreservesLatestAndTombstoneReferenceAcrossRepublish();
         System.out.println("NF-SPT-1 Java immutable versions/tombstone/ownership PASS; data only");
+        System.out.println("NF-SPT-1 Java historical replay/republish/frozen tombstone reference PASS; data only");
     }
 }
