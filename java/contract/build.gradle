@@ -82,3 +82,11 @@ tasks.register('SystemPackageUnsignedMetadataTest', JavaExec) {
     if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
 }
 tasks.named('check') { dependsOn 'SystemPackageUnsignedMetadataTest' }
+
+tasks.register('SystemPlacementRegistryTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.system.SystemPlacementRegistryTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'SystemPlacementRegistryTest' }
