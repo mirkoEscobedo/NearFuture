@@ -109,3 +109,6 @@ impl Window {
         })
     }
 }
+
+#[cfg(test)]
+mod tests;
