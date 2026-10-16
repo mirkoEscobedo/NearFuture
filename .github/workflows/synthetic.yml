@@ -34,6 +34,16 @@ jobs:
       - name: Project one real reservation for two client layouts
         timeout-minutes: 5
         run: cargo test -p nf-contract --test system_presentation --locked --offline -- --nocapture
+      - name: Preserve both client positions and earlier results across a real update
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_update --locked --offline -- --nocapture
+      - name: Preserve Java client positions and earlier results across a real update
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationUpdateTest --no-daemon
       - name: Project one Java real reservation for two client layouts
         timeout-minutes: 5
         shell: pwsh
