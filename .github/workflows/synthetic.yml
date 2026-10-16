@@ -28,6 +28,8 @@ jobs:
         run: cargo fetch --locked
       - name: Install vendored developer tools offline
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
+      - name: Refuse conceptual slot collision without changing existing assignment
+        run: cargo test -p nf-contract --test system_placement_registry --locked --offline slot_collision_refuses_without_changing_existing_assignment -- --exact --nocapture
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
