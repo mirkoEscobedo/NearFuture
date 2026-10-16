@@ -21,7 +21,11 @@ fn exercise(evidence: &mut Evidence) {
     });
     evidence.enter(Stage::FixtureCapture);
     write(evidence, "public-ram-fixture.original.txt", &original);
-    write(evidence, "expected.capacity-selection.json", EXPECTED.as_bytes());
+    write(
+        evidence,
+        "expected.capacity-selection.json",
+        EXPECTED.as_bytes(),
+    );
     evidence.enter(Stage::BaselineSnapshot);
     let baseline = evidence.snapshot();
     assert_eq!(baseline.len(), 3, "closed original fixture tree");
@@ -41,7 +45,9 @@ fn exercise(evidence: &mut Evidence) {
     let empty = evidence.run(Stage::EmptyObservation, || {
         projection::observe(&mut host, true, true)
     });
-    let empty = evidence.run(Stage::EmptyProjection, || projection::snapshot(&empty, 0, 0));
+    let empty = evidence.run(Stage::EmptyProjection, || {
+        projection::snapshot(&empty, 0, 0)
+    });
     let mut brackets = Brackets::new();
     for _ in 0..64 {
         evaluate(evidence, &mut host, &input, &reference, &mut brackets);
