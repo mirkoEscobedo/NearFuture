@@ -112,7 +112,11 @@ fn assert_state(
 #[test]
 fn historical_replay_preserves_latest_and_tombstone_reference_across_republish() {
     let topology_limits = Limits::default();
-    let fixed = [literal_bytes(A1_HEX), literal_bytes(A2_HEX), literal_bytes(A4_HEX)];
+    let fixed = [
+        literal_bytes(A1_HEX),
+        literal_bytes(A2_HEX),
+        literal_bytes(A4_HEX),
+    ];
     let inputs = [
         decode(&fixed[0], topology_limits).unwrap(),
         decode(&fixed[1], topology_limits).unwrap(),
@@ -226,7 +230,10 @@ fn historical_replay_preserves_latest_and_tombstone_reference_across_republish()
     assert_inputs(&inputs, &originals, &fixed);
     assert_eq!(history.records()[2], tombstone_snapshot);
     assert_eq!(history.records().len(), history.limits().records);
-    assert_eq!(history.canonical_bytes_len(), history.limits().canonical_bytes);
+    assert_eq!(
+        history.canonical_bytes_len(),
+        history.limits().canonical_bytes
+    );
     {
         let before = history.clone();
         let input_images = inputs.clone();
