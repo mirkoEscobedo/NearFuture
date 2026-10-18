@@ -80,8 +80,18 @@ const REGISTRY_ROWS: [&[(u8, u16, u64, &str)]; 4] = [
     &[(0x44, 7, 2, A2_SHA), (0x55, 8, 1, B1_SHA)],
 ];
 const FOOTPRINTS: [([i64; 4], [i64; 4], i64, i64); 2] = [
-    ([-791, -777, -2023, -2009], [-759, -745, -2023, -2009], 18, 32),
-    ([4569, 4583, -4087, -4073], [4633, 4647, -4087, -4073], 50, 64),
+    (
+        [-791, -777, -2023, -2009],
+        [-759, -745, -2023, -2009],
+        18,
+        32,
+    ),
+    (
+        [4569, 4583, -4087, -4073],
+        [4633, 4647, -4087, -4073],
+        50,
+        64,
+    ),
 ];
 type Key = (HistoryId, AccountId, EntityId);
 type OutputImage = (
@@ -405,7 +415,10 @@ impl Case {
         assert_eq!(self.registry.entries().len(), expected.len());
         for (entry, row) in self.registry.entries().iter().zip(expected) {
             let (system, slot, revision, sha) = *row;
-            assert_eq!((entry.history(), entry.owner(), entry.system()), key(system));
+            assert_eq!(
+                (entry.history(), entry.owner(), entry.system()),
+                key(system)
+            );
             assert_eq!(entry.slot().value(), slot);
             assert_eq!(entry.revision(), revision);
             assert_eq!(entry.topology_sha256().as_slice(), bytes(sha).as_slice());
@@ -500,7 +513,10 @@ fn real_second_reservation_preserves_client_outputs_and_reprojection() {
     assert_eq!(case.outputs.len(), 7);
     assert_eq!(case.outputs[..6], before_repeat.stable.outputs);
     assert_eq!(
-        case.outputs[..6].iter().map(output_image).collect::<Vec<_>>(),
+        case.outputs[..6]
+            .iter()
+            .map(output_image)
+            .collect::<Vec<_>>(),
         before_repeat.stable.getters
     );
     assert_nonoverlap(&case.outputs);
