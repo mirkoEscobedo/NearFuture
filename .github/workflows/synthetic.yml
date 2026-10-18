@@ -48,6 +48,13 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
           java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationNullNamespaceTest --no-daemon
+      - name: Refuse Java null presentation domain after a valid namespace
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationNullDomainTest --no-daemon
       - name: Project one real reservation for two client layouts
         timeout-minutes: 5
         run: cargo test -p nf-contract --test system_presentation --locked --offline -- --nocapture
