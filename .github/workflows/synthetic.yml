@@ -28,6 +28,189 @@ jobs:
         run: cargo fetch --locked
       - name: Install vendored developer tools offline
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
+      - name: Retain immutable publication versions and an explicit tombstone
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_publication_history --locked --offline immutable_versions_and_tombstone_preserve_canonical_history -- --exact --nocapture
+      - name: Refuse zero presentation namespace before invalid numeric domain
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_namespace --locked --offline -- --nocapture
+      - name: Refuse Java zero presentation namespace before invalid numeric domain
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationNamespaceTest --no-daemon
+      - name: Refuse Java null presentation namespace before null domain
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationNullNamespaceTest --no-daemon
+      - name: Refuse Java null presentation domain after a valid namespace
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationNullDomainTest --no-daemon
+      - name: Refuse invalid numeric presentation domains before geometric fit
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_bounds --locked --offline -- --nocapture
+      - name: Refuse Java invalid numeric presentation domains before geometric fit
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationBoundsTest --no-daemon
+      - name: Refuse presentation domains with insufficient grid pitch
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_fit --locked --offline -- --nocapture
+      - name: Refuse Java presentation domains with insufficient grid pitch
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationFitTest --no-daemon
+      - name: Refuse a real collision without creating a projectable placement
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_collision --locked --offline -- --nocapture
+      - name: Refuse a Java real collision without creating a projectable placement
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationCollisionTest --no-daemon
+      - name: Preserve client outputs through a real second reservation
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_second_reservation --locked --offline -- --nocapture
+      - name: Preserve Java client outputs through a real second reservation
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationSecondReservationTest --no-daemon
+      - name: Project origin and extent boundaries without mutating sources
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_extents --locked --offline -- --nocapture
+      - name: Project Java origin and extent boundaries without mutating sources
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationExtentsTest --no-daemon
+      - name: Project remainder and minimum-cell quantization without mutating sources
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_quantization --locked --offline -- --nocapture
+      - name: Project Java remainder and minimum-cell quantization without mutating sources
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationQuantizationTest --no-daemon
+      - name: Project unsigned boundary slots for both client layouts
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_unsigned_slots --locked --offline -- --nocapture
+      - name: Project Java unsigned boundary slots for both client layouts
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationUnsignedSlotsTest --no-daemon
+      - name: Project one real reservation for two client layouts
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation --locked --offline -- --nocapture
+      - name: Preserve both client positions and earlier results across a real update
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_update --locked --offline -- --nocapture
+      - name: Refuse projection from an empty real placement registry
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_missing --locked --offline -- --nocapture
+      - name: Refuse foreign namespace before looking up a missing placement
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_foreign_namespace --locked --offline -- --nocapture
+      - name: Refuse invalid keys before checking a foreign namespace
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_presentation_invalid_key --locked --offline -- --nocapture
+      - name: Refuse Java null projection arguments
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationNullTest --no-daemon
+      - name: Refuse Java invalid keys before checking a foreign namespace
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationInvalidKeyTest --no-daemon
+      - name: Refuse Java foreign namespace before looking up a missing placement
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationForeignNamespaceTest --no-daemon
+      - name: Refuse Java projection from an empty real placement registry
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationMissingTest --no-daemon
+      - name: Preserve Java client positions and earlier results across a real update
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationUpdateTest --no-daemon
+      - name: Project one Java real reservation for two client layouts
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPresentationTest --no-daemon
+      - name: Retain Java immutable publication versions and an explicit tombstone
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPublicationHistoryTest --no-daemon
+      - name: Preserve historical replay and tombstone reference across republish
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_publication_history_replay --locked --offline historical_replay_preserves_latest_and_tombstone_reference_across_republish -- --exact --nocapture
+      - name: Check history admission, quota, unsigned and full key conformance
+        timeout-minutes: 5
+        run: cargo test -p nf-contract --test system_publication_history_conformance --locked --offline -- --nocapture
+      - name: Check Java history admission, quota, unsigned and full key conformance
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPublicationHistoryConformanceTest --no-daemon
+      - name: Refuse conceptual slot collision without changing existing assignment
+        run: cargo test -p nf-contract --test system_placement_registry --locked --offline slot_collision_refuses_without_changing_existing_assignment -- --exact --nocapture
+      - name: Refuse Java conceptual slot collision without changing existing assignment
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java :contract:SystemPlacementRegistryTest --no-daemon
       - name: Format, lint, boundaries, Rust and tooling tests, synthetic Java contracts
         run: npm run check
       - name: Observe Java and Rust mutual authentication on both local endpoints
