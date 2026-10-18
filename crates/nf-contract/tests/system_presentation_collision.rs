@@ -117,7 +117,10 @@ fn assert_input(value: &Topology, literal: &[u8], index: usize, limits: Limits) 
     let (hex, sha, system, revision) = FIXTURES[index];
     let (history, owner, system) = key(system);
     assert_eq!(value.universe, universe());
-    assert_eq!((value.history, value.owner, value.system), (history, owner, system));
+    assert_eq!(
+        (value.history, value.owner, value.system),
+        (history, owner, system)
+    );
     assert_eq!((value.revision, value.campaign_day_millis), (revision, 2));
     assert_eq!(value.dependencies.len(), 1);
     assert_eq!(value.dependencies[0].semantic_key, [0x77; 32]);
@@ -126,11 +129,29 @@ fn assert_input(value: &Topology, literal: &[u8], index: usize, limits: Limits) 
     let star = &value.entities[0];
     let planet = &value.entities[1];
     assert_eq!(
-        (star.id, star.kind, star.parent, star.dependency, star.label.as_deref()),
-        (EntityId::from_bytes([1; 16]), Kind::Star, None, None, Some("Sun"))
+        (
+            star.id,
+            star.kind,
+            star.parent,
+            star.dependency,
+            star.label.as_deref()
+        ),
+        (
+            EntityId::from_bytes([1; 16]),
+            Kind::Star,
+            None,
+            None,
+            Some("Sun")
+        )
     );
     assert_eq!(
-        (planet.id, planet.kind, planet.parent, planet.dependency, planet.label.as_deref()),
+        (
+            planet.id,
+            planet.kind,
+            planet.parent,
+            planet.dependency,
+            planet.label.as_deref()
+        ),
         (
             EntityId::from_bytes([2; 16]),
             Kind::Planet,
@@ -156,7 +177,10 @@ fn assert_record(record: &PublicationRecord, index: usize) {
     let (hex, sha, _, revision) = FIXTURES[index];
     let (h, o, s) = key(0x44);
     assert_eq!(record.universe(), universe());
-    assert_eq!((record.history(), record.owner(), record.system()), (h, o, s));
+    assert_eq!(
+        (record.history(), record.owner(), record.system()),
+        (h, o, s)
+    );
     assert_eq!(record.profile(), PublicationProfile::SelectedTopologyV1);
     assert_eq!(record.kind(), PublicationKind::PublishedVersion);
     assert_eq!(record.revision(), revision);
@@ -165,7 +189,10 @@ fn assert_record(record: &PublicationRecord, index: usize) {
         record.referenced_topology_sha256().as_slice(),
         bytes(sha).as_slice()
     );
-    assert_eq!(record.canonical_topology_bytes(), Some(bytes(hex).as_slice()));
+    assert_eq!(
+        record.canonical_topology_bytes(),
+        Some(bytes(hex).as_slice())
+    );
 }
 
 fn assert_history(history: &PublicationHistory, count: usize) {
@@ -199,13 +226,13 @@ fn assert_output(output: &ProjectedPlacement, index: usize) {
     let (domain, revision, sha, x, y) = OUTPUTS[index];
     assert_eq!(output.profile(), PresentationProfile::Grid256V1);
     assert_eq!(output.universe(), universe());
-    assert_eq!((output.history(), output.owner(), output.system()), key(0x44));
+    assert_eq!(
+        (output.history(), output.owner(), output.system()),
+        key(0x44)
+    );
     assert_eq!(output.slot().value(), 7);
     assert_eq!(output.revision(), revision);
-    assert_eq!(
-        output.topology_sha256().as_slice(),
-        bytes(sha).as_slice()
-    );
+    assert_eq!(output.topology_sha256().as_slice(), bytes(sha).as_slice());
     assert_eq!(output.domain(), domain);
     assert_eq!((output.x(), output.y()), (x, y));
     assert_eq!(
@@ -316,7 +343,12 @@ impl Case {
         assert_eq!(self.queries, [key(0x44), key(0x55)]);
         assert_eq!(self.slot.value(), 7);
         for index in 0..3 {
-            assert_input(&self.topologies[index], &self.literals[index], index, self.limits);
+            assert_input(
+                &self.topologies[index],
+                &self.literals[index],
+                index,
+                self.limits,
+            );
         }
         assert_history(&self.history, 2);
         for (index, epoch) in self.epochs.iter().enumerate() {
@@ -343,10 +375,7 @@ impl Case {
             assert_eq!((entry.history(), entry.owner(), entry.system()), key(0x44));
             assert_eq!(entry.slot().value(), 7);
             assert_eq!(entry.revision(), revision);
-            assert_eq!(
-                entry.topology_sha256().as_slice(),
-                bytes(sha).as_slice()
-            );
+            assert_eq!(entry.topology_sha256().as_slice(), bytes(sha).as_slice());
         }
         assert!(self.outputs.len() <= 4);
         for (index, output) in self.outputs.iter().enumerate() {
@@ -357,7 +386,9 @@ impl Case {
     fn project_a(&mut self, client: usize, revision: u64) {
         let before = self.snapshot();
         let (h, o, s) = self.queries[0];
-        let output = self.epochs[client].project(&self.registry, h, o, s).unwrap();
+        let output = self.epochs[client]
+            .project(&self.registry, h, o, s)
+            .unwrap();
         self.assert_fixed(revision);
         assert_eq!(self.snapshot(), before);
         assert_output(&output, self.outputs.len());
