@@ -226,3 +226,11 @@ tasks.register('SystemPresentationCollisionTest', JavaExec) {
     if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
 }
 tasks.named('check') { dependsOn 'SystemPresentationCollisionTest' }
+
+tasks.register('SystemPresentationSecondReservationTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.system.SystemPresentationSecondReservationTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'SystemPresentationSecondReservationTest' }
