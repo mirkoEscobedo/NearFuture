@@ -178,3 +178,11 @@ tasks.register('SystemPresentationNullTest', JavaExec) {
     if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
 }
 tasks.named('check') { dependsOn 'SystemPresentationNullTest' }
+
+tasks.register('SystemPresentationNamespaceTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.system.SystemPresentationNamespaceTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'SystemPresentationNamespaceTest' }
