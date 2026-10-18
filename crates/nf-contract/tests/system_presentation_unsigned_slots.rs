@@ -235,7 +235,10 @@ fn assert_output(output: &ProjectedPlacement, index: usize) {
     assert_eq!((output.history(), output.owner(), output.system()), key());
     assert_eq!(output.slot().value(), slot);
     assert_eq!(output.revision(), 1);
-    assert_eq!(output.topology_sha256().as_slice(), bytes(A1_SHA).as_slice());
+    assert_eq!(
+        output.topology_sha256().as_slice(),
+        bytes(A1_SHA).as_slice()
+    );
     assert_eq!(output.domain(), CLIENTS[client]);
     assert_eq!((output.x(), output.y()), (x, y));
     assert_eq!(
