@@ -170,3 +170,11 @@ tasks.register('SystemPresentationInvalidKeyTest', JavaExec) {
     if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
 }
 tasks.named('check') { dependsOn 'SystemPresentationInvalidKeyTest' }
+
+tasks.register('SystemPresentationNullTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.contract.system.SystemPresentationNullTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'SystemPresentationNullTest' }
