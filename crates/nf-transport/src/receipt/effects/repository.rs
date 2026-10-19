@@ -45,26 +45,25 @@ impl ReceiptRepo {
             return Err(PeerError::Limit);
         }
         let transport = TransportIdentity::load(&vault)?;
-        let identity = vault
-            .load_identity(transport.peer_id().to_bytes())
-            .map_err(|_| PeerError::Storage)?;
-        if identity.public.account != config.local_account
-            || identity.public.device != config.local_device
-        {
-            return Err(PeerError::Unauthorized);
-        }
         let state = store
             .load_membership(config.scope)
             .map_err(|_| PeerError::Storage)?
             .ok_or(PeerError::Policy)?;
         let source = source(&store, &state, config.ruleset)?;
-        validate(&config, &identity.public, &state, source)?;
+        let expected = crate::node::current_public(&state, transport.peer_id(), false)?;
+        if expected.account != config.local_account || expected.device != config.local_device {
+            return Err(PeerError::Unauthorized);
+        }
+        validate(&config, &expected, &state, source)?;
         for anchor in anchors {
-            validate_original(&config, &identity.public, &anchor.original)?;
+            validate_original(&config, &expected, &anchor.original)?;
             if anchor.ruleset != config.ruleset || anchor.content != config.content {
                 return Err(PeerError::Scope);
             }
         }
+        let identity = vault
+            .load_membership_keys(&expected)
+            .map_err(|_| PeerError::Storage)?;
         let catalog = recover_book(&vault, anchors)?;
         Ok(Self {
             store,
