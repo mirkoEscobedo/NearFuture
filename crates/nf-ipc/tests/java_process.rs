@@ -45,7 +45,8 @@ fn java_control_and_bulk_mutual_authenticate_with_owned_foreground_rust_node() {
     let saves = root.join("saves");
     fs::create_dir(&saves).unwrap();
     let vault_path = root.join("vault");
-    let vault = PrivateVault::create(&vault_path, &saves).unwrap();
+    let vault = PrivateVault::create_diagnosed(&vault_path, &saves)
+        .unwrap_or_else(|failure| panic!("private vault create failed: {failure:?}"));
     let mut node = Command::new(env!("CARGO_BIN_EXE_nf-ipc-node"));
     hidden(&mut node);
     node.arg("serve")

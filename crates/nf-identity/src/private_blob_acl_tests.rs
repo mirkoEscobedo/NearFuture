@@ -28,6 +28,9 @@ impl Drop for Scratch {
 }
 #[test]
 fn early_helper_exit_unblocks_owned_full_pipe_writer() {
+    let _fixture_guard = crate::owned_process::ACL_HELPER_TEST_LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let root = Scratch::new();
     assert_eq!(run_with_reason(&root.script("exit 0"), vec![]), Ok(()));
     let start = Instant::now();
@@ -39,6 +42,9 @@ fn early_helper_exit_unblocks_owned_full_pipe_writer() {
 }
 #[test]
 fn unexpected_helper_output_is_a_refusal() {
+    let _fixture_guard = crate::owned_process::ACL_HELPER_TEST_LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let root = Scratch::new();
     assert_eq!(
         run(
@@ -50,6 +56,9 @@ fn unexpected_helper_output_is_a_refusal() {
 }
 #[test]
 fn actual_five_second_timeout_kills_helper_before_scoped_pipe_join() {
+    let _fixture_guard = crate::owned_process::ACL_HELPER_TEST_LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let root = Scratch::new();
     let start = Instant::now();
     assert_eq!(
@@ -64,6 +73,9 @@ fn actual_five_second_timeout_kills_helper_before_scoped_pipe_join() {
 }
 #[test]
 fn actual_sidecar_rejects_malformed_count_trailing_and_oversized_lines() {
+    let _fixture_guard = crate::owned_process::ACL_HELPER_TEST_LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let script = Path::new(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/src/private-acl-batch.ps1"

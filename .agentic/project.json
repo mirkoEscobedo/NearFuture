@@ -65,6 +65,7 @@
         ],
         "rust:crates/nf-identity": [
           {
+            "cwd": ".",
             "program": "cargo",
             "args": [
               "test",
@@ -72,8 +73,20 @@
               "nf-identity",
               "--locked",
               "--offline"
-            ],
-            "cwd": "."
+            ]
+          }
+        ],
+        "rust:crates/nf-world-driver": [
+          {
+            "cwd": ".",
+            "program": "cargo",
+            "args": [
+              "test",
+              "-p",
+              "nf-world-driver",
+              "--locked",
+              "--offline"
+            ]
           }
         ],
         "rust:crates/nf-transport": [
