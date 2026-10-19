@@ -88,6 +88,19 @@
               "--offline"
             ]
           }
+        ],
+        "rust:crates/nf-transport": [
+          {
+            "program": "cargo",
+            "args": [
+              "test",
+              "-p",
+              "nf-transport",
+              "--locked",
+              "--offline"
+            ],
+            "cwd": "."
+          }
         ]
       }
     }
