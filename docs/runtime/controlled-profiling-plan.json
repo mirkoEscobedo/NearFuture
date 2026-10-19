@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "status": "PLANNED_UNEXECUTED",
+  "issue": 12,
+  "permissionNote": "docs/runtime/local-session-permissions.json",
+  "measurementQualification": "Controlled workload results are synthetic. Representative late-game results require a separate representative checkpoint; do not relabel controlled fleet spawns as late-game evidence.",
+  "baseline": "Private local inventory .tmp/issue-completion-gates/profiling/local-game-baseline.json records 114 enabled mods and 31 existing save directories. No original saves or mod settings have been changed.",
+  "preservation": [
+    "Before changing mods, back up enabled_mods.json and record its hash, each active mod version and the game/JRE version. Restore the original configuration after experiments.",
+    "Preserve original save directories. Create new disposable campaigns and use an unmistakable NF-PROFILE checkpoint prefix.",
+    "Record the exact active mod set for each checkpoint. Never load an incompatible checkpoint for comparison."
+  ],
+  "campaign": {
+    "checkpoint": "NF-PROFILE-CAMPAIGN-IDLE",
+    "setup": "New disposable campaign; normal game speed 1x, paused for all Console Commands setup. Select a fixed system and camera position. Start with idle workload; create a separate stress checkpoint if fleets are spawned.",
+    "stressCommandReference": "Installed Console Commands 4.0.9 commands.csv: spawnfleet <faction> <combatFP> [optionalName]. Verify faction and record successful fleet counts before saving; spawned compositions do not represent vanilla doctrines.",
+    "route": "Reload the prepared checkpoint before every run. Close console and overlays, restore the documented camera, unpause at 1x. Keep player fleet stationary and perform no console setup during capture.",
+    "duration": "30 seconds warm-up followed by 120 seconds capture, five independent reloads for each instrumentation setting."
+  },
+  "combat": {
+    "checkpoint": "NF-PROFILE-COMBAT",
+    "setup": "Prepare a separate compatible disposable checkpoint and a documented fixed fleet/encounter setup. Record deployment, simulation seed where available, speed, pause state and autopilot settings.",
+    "route": "Reload before each run; repeat the same encounter and deployment route. Complete console setup before unpausing and measuring.",
+    "duration": "30 seconds warm-up plus 120 seconds capture, five independent reloads per setting."
+  },
+  "comparison": "Pair instrumentation-disabled and instrumentation-enabled runs against the same compatible scenario. Record scheduling order, game/JRE/build/mod hashes and capture settings. Keep callback spans separate from whole-frame evidence.",
+  "currentLimitations": [
+    "Computer-control initialization fails in Codex sandbox setup with Windows OS32 on node_repl.exe; no game interaction has occurred.",
+    "Licensed API fixtures verify observer registration, pre-save removal and resumed collection after save. Actual game lifecycle/scheduling, save serialization, whole-frame boundaries, instrumentation overhead and representative late-game measurements remain unverified."
+  ],
+  "debuggingReference": "docs/starsector-debugging.md"
+}

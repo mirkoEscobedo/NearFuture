@@ -22,7 +22,7 @@ impl Fixture {
             universe: UniverseId::from_bytes([1; 16]),
             history: HistoryId::from_bytes([2; 16]),
         };
-        let vault = PrivateVault::create(&scratch.0.join("private0"), &saves).unwrap();
+        let vault = PrivateVault::create_diagnosed(&scratch.0.join("private0"), &saves).unwrap();
         let owner = vault.create_identity(vec![1]).unwrap();
         let mut membership = MembershipState::bootstrap(scope, &owner.public).unwrap();
         let mut controllers = vec![owner.public.account];

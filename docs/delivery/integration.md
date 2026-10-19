@@ -2,8 +2,10 @@
 
 Refs #92, #93, #6, #45, #47. This is a Ticketed integration track. The live
 issue contracts and their commit/check evidence control selection and completion.
-The current item is #93: protected serial dev integration and a named headless
-profile. Next outcomes follow #92's ascending execution ranks, explicit technical
+Bootstrap #93 establishes protected serial dev integration and the named headless
+profile. The live #92 status identifies the current writer and actual landing
+blockers; prepared, pushed and landed are distinct states. Outcomes follow #92's
+ascending execution ranks, explicit technical
 dependencies, landing dependencies and conflict keys. One writer and integrator
 own the current leaf. An issue being closed is not dependency evidence by itself.
 
@@ -106,3 +108,34 @@ npm.cmd exec -- workspace-template verify . --scope module --module foundation -
 The Windows override uses the fixed `cmd.exe /d /c npm.cmd` entry point because
 the native process runner cannot launch npm's command shim as a native executable.
 Linux/hosted checks continue to run the repository's portable commands directly.
+
+## Diagnostic/tooling preparation (#94)
+
+The source deltas are preserved as separate commits, with only the tooling-test
+registration conflict resolved by retaining both profile and parser globs.
+The original source PRs remain open until a qualified successor actually lands.
+
+| Source | Pinned source head | Current disposition |
+| --- | --- | --- |
+| #86 | `20a757b2a64dd418b20882e81da1539ebcd9849b` | Prepared: test-only ACL fixture serialization; production deadline unchanged |
+| #89 | `b5195a09d477525193c35b10365cfdb1f2405ea0` | Prepared: closed typed diagnostics, including single-call Java and world-driver fixtures |
+| #88 | `8854e5140aca5f0b67f91944ac32675757836e1a` | Prepared: CLI2 observation parser and defensive refusal; no desktop runner or native qualification |
+| #73 | `e5c9829005a0592454e0dba72152351d2e0b7b3d` | Prepared: historical scope/profiling notes only; no new session authority |
+
+Diagnostics expose closed stages/reasons and numeric I/O/helper/cleanup outcomes,
+with no paths, private identities, payloads, helper text or command arguments.
+Legacy errors and one execution of the original create operation are retained.
+The profile registers diagnostic and parser regression paths; its runtime-enabled
+scope remains build identity only. Passing checks do not explain historical
+PrivateStorage failures or certify native image capture. Refs #94, #46.
+
+Independent review found that #88 admitted a PNG truncated immediately after its
+dimensions. The first #94 semantic repair adds complete chunk framing, CRC and
+bounded zlib/scanline admission, including Adam7 and indexed-image layouts.
+Limits are 64 MiB each for the original PNG and inflated scanlines, and 16,384
+chunks; larger attachments are refused. Valid accepted attachments retain their
+exact original bytes and provenance. This checks image-stream integrity, with
+the [PNG specification](https://www.w3.org/TR/png-3/) as its format reference;
+it does not certify rendering, ancillary metadata semantics, native provenance
+or freshness. The previous synthetic pixel had an invalid IDAT CRC and is
+replaced by a valid encoded pixel without relaxing byte/provenance assertions.

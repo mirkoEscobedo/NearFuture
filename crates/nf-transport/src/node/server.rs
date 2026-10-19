@@ -1,4 +1,4 @@
-use super::{connection::Connection, local_current, membership};
+use super::{connection::Connection, current_local, membership};
 use crate::{
     PeerError,
     identity::TransportIdentity,
@@ -55,11 +55,8 @@ impl PeerServer {
         policy.limits.validate()?;
         let identity = TransportIdentity::load(vault)?;
         let peer = identity.peer_id();
-        let local = vault
-            .load_identity(peer.to_bytes())
-            .map_err(|_| PeerError::Storage)?;
         let state = membership(&mut store, policy)?;
-        local_current(&state, &local, true)?;
+        let local = current_local(&state, vault, peer, true)?;
         let mut control = identity.build_lane(Lane::Control)?;
         let mut bulk = identity.build_lane(Lane::Bulk)?;
         control
