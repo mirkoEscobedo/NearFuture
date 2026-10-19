@@ -62,6 +62,32 @@
             ],
             "cwd": "."
           }
+        ],
+        "rust:crates/nf-identity": [
+          {
+            "program": "cargo",
+            "args": [
+              "test",
+              "-p",
+              "nf-identity",
+              "--locked",
+              "--offline"
+            ],
+            "cwd": "."
+          }
+        ],
+        "rust:crates/nf-transport": [
+          {
+            "program": "cargo",
+            "args": [
+              "test",
+              "-p",
+              "nf-transport",
+              "--locked",
+              "--offline"
+            ],
+            "cwd": "."
+          }
         ]
       }
     }
