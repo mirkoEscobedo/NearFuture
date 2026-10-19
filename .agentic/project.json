@@ -62,6 +62,32 @@
             ],
             "cwd": "."
           }
+        ],
+        "rust:crates/nf-identity": [
+          {
+            "cwd": ".",
+            "program": "cargo",
+            "args": [
+              "test",
+              "-p",
+              "nf-identity",
+              "--locked",
+              "--offline"
+            ]
+          }
+        ],
+        "rust:crates/nf-world-driver": [
+          {
+            "cwd": ".",
+            "program": "cargo",
+            "args": [
+              "test",
+              "-p",
+              "nf-world-driver",
+              "--locked",
+              "--offline"
+            ]
+          }
         ]
       }
     }
