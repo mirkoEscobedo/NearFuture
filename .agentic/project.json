@@ -15,7 +15,57 @@
     "migrationIndex": null,
     "resumption": null
   },
-  "overrides": {},
+  "overrides": {
+    "workspace": {
+      "excludeRoots": [
+        "."
+      ],
+      "modules": [
+        {
+          "root": ".",
+          "kind": "node",
+          "id": "foundation"
+        }
+      ],
+      "commands": {
+        "foundation": [
+          {
+            "program": "cmd.exe",
+            "args": [
+              "/d",
+              "/c",
+              "npm.cmd",
+              "run",
+              "check"
+            ],
+            "cwd": "."
+          },
+          {
+            "program": "cmd.exe",
+            "args": [
+              "/d",
+              "/c",
+              "npm.cmd",
+              "run",
+              "check:profile"
+            ],
+            "cwd": "."
+          },
+          {
+            "program": "cargo",
+            "args": [
+              "build",
+              "--workspace",
+              "--locked",
+              "--offline",
+              "--release"
+            ],
+            "cwd": "."
+          }
+        ]
+      }
+    }
+  },
   "version": 2,
   "workspaceTemplate": {
     "artifacts": {

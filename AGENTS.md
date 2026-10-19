@@ -14,3 +14,11 @@ Load package-owned methodology without copying it:
 
 Discover the complete inventory with `npm exec -- workspace-template skills list`. Do not copy generic skills into this repository. The host or repository owner selects available models, agents, permissions, skills, and capabilities.
 <!-- workspace-template:adaptive-delivery:end -->
+
+## Integration
+
+Follow [the branch/profile policy](docs/delivery/integration.md) for #92.
+Ordinary issue branches target current dev; main promotion is separate. Require
+independent exact-diff review, current required checks and serial PR landing.
+Keep incomplete capabilities disabled and never close a broader parent from a
+partial component merge. Use `npm run check:profile` for the accepted headless path.
