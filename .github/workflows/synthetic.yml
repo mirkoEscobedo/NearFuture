@@ -119,3 +119,33 @@ jobs:
         run: cargo fetch --locked
       - name: Build headless node
         run: cargo build --workspace --locked --offline --release
+  profile-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.98.1 --profile minimal
+      - run: cargo fetch --locked
+      - name: Check profile refusal and job accounting
+        run: node --test tests/delivery/*.test.mjs
+      - name: Exercise the accepted headless executable path
+        run: cargo test -p near-future --test node_cli --locked --offline
+  headless-qualification:
+    # This check runs even after failure/cancellation/skip; only success is accepted.
+    if: always()
+    needs: [public-build, windows-interop, release-build, profile-smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Account for every required job
+        env:
+          NF_REQUIRED_JOBS: ${{ toJSON(needs) }}
+        run: node tools/delivery/qualification.mjs
