@@ -32,12 +32,15 @@ export function compareRuns(input) {
     if (group.some(previous => previous.run.repeat === report.run.repeat)) throw new Error('DUPLICATE_REPEAT: repeat IDs must be unique within each scenario.');
     if (group.length && group[0].run.manifestSha256 !== report.run.manifestSha256) throw new Error('COMPARISON_MISMATCH: manifest changed within a scenario.');
     if (group.length && group[0].run.instrumentation !== report.run.instrumentation) throw new Error('COMPARISON_MISMATCH: instrumentation changed within a scenario.');
+    if (group.length && group[0].run.liveJvmFlagsSha256 !== report.run.liveJvmFlagsSha256) throw new Error('COMPARISON_MISMATCH: live JVM flags changed within a scenario.');
+    if (group.length && report.run.scenario === 'control' && group[0].run.controlEvidenceSha256 !== report.run.controlEvidenceSha256) throw new Error('COMPARISON_MISMATCH: control method certificate changed within a scenario.');
     group.push(report); groups.set(report.run.scenario, group);
   }
   const scenarios = [...groups].sort(([a],[b]) => a.localeCompare(b)).map(([scenario, group]) => {
     const values = group.map(x => x.p99Us), mean = values.reduce((a,b) => a + b, 0) / values.length;
     const variance = values.length > 1 ? values.reduce((sum,value) => sum + (value - mean) ** 2, 0) / (values.length - 1) : null;
-    return { scenario, manifestSha256: group[0].run.manifestSha256, controlEvidenceSha256: group[0].run.controlEvidenceSha256 ?? null, repeats: values.length, repeatIds: group.map(x => x.run.repeat).sort((a,b) => a-b),
+    return { scenario, manifestSha256: group[0].run.manifestSha256, liveJvmFlagsSha256: group[0].run.liveJvmFlagsSha256 ?? null,
+      controlEvidenceSha256: group[0].run.controlEvidenceSha256 ?? null, repeats: values.length, repeatIds: group.map(x => x.run.repeat).sort((a,b) => a-b),
       meanP99Us: mean, sampleStddevP99Us: variance === null ? null : Math.sqrt(variance),
       minP99Us: Math.min(...values), maxP99Us: Math.max(...values) };
   });

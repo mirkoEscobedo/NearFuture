@@ -20,7 +20,38 @@ Events are NDJSON objects with required `traceId`, `source` (`adapter`, `node`, 
 
 Run metadata requires `schemaVersion: 1`, trace ID, exact `manifestSha256`, `budgetsSha256`, matching starting `checkpointSha256`, scenario, repeat, `warmupUs`, `durationUs`, speed, paused state, instrumentation (`none`, `frame`, `frame+jfr`), actual `campaignThreadId`, `startEpochUs`, `alignmentUncertaintyUs`, `droppedEvents`, `invalidEvents`, and baseline class (`synthetic` or `game`). `control` additionally requires `controlEvidenceSha256`; a different control manifest must declare `referenceManifestSha256`. Actual game runs additionally require `hardwareSha256` and `liveJvmFlagsSha256`, identifying locally retained hardware details and flags from the owned live process. Configured `vmparams` alone is insufficient. Those values identify evidence; they are not verified automatically against an uncontrolled process. A numeric ID is required rather than publishing a private thread name. The collector's final loss counters must populate metadata after recording stops.
 
-The measurement window is `[startEpochUs + warmupUs, startEpochUs + warmupUs + durationUs)`. Whole-frame/phase percentiles include spans beginning in that window and finishing before its end; boundary-truncated frame/phase records are excluded. Wait/I/O duration summaries clip their ending boundary. Record starts after warm-up and leaves a guard interval at the end so long operations crossing boundaries cannot disappear from the benchmark unintentionally.
+`controlEvidenceSha256` identifies a stable control-method certificate, not a
+per-recording artifact. Retain that certificate locally: it describes the
+supported disabling seam, method/configuration and intended reference/control
+manifest and live JVM flag identities. Every control repeat in a comparison
+must supply the same certificate hash; inconsistent certificates refuse rather
+than retaining only the first repeat's provenance. The comparison's certificate
+applies to every listed `repeatId`. Per-run traces and artifacts keep their own
+identities outside this field. Hash syntax and consistency do not attest the
+certificate's contents or certify a live game experiment.
+Existing reports that used per-recording hashes in this field must instead
+supply the actual retained method certificate; the comparator does not invent
+or normalize one from differing recording hashes.
+
+Every scenario must retain one live JVM flag identity across its repetitions.
+A named `control` or `instrumentation-off` scenario may deliberately differ from
+the baseline; that allowance never permits B/C flags within the same scenario.
+Synthetic input without live flags remains synthetic and cannot become recorded
+game evidence through comparison.
+
+The measurement window is `[startEpochUs + warmupUs, startEpochUs + warmupUs + durationUs)`.
+One whole-phase rule governs both phase percentiles and capture/apply bridge
+pairs: a span starts inside the window and ends at or before its end. A span
+crossing either boundary is excluded, without clipping or adding its duration
+to a complete bridge sample. Any overlapping capture/apply span crossing a
+boundary makes that frame's bridge group incomplete, including when another
+span of the same kind is wholly included. Entirely outside spans do not create
+groups. `bridge.excludedSpans` counts overlapping capture/apply exclusions;
+`quality.excludedPhaseEvents` counts overlapping excluded frame/latency phases.
+Included counts remain visible in each percentile result. Wait/I/O duration
+summaries retain their separate ending-boundary clipping semantics. Record
+starts after warm-up and leaves a guard interval at the end so long operations
+crossing boundaries cannot disappear from the benchmark unintentionally.
 
 `clock.mjs` aligns monotonic nanoseconds to an explicit epoch anchor, with declared uncertainty. Its shell samples `Date.now` between monotonic samples outside frame work and records at least the clock's millisecond resolution. Compare start/end anchors: wall-clock jumps beyond uncertainty invalidate alignment. JFR provides its own event start instant/duration; align all same-host records to this microsecond timeline and preserve uncertainty. Do not assume peer machines' wall clocks are synchronized or use their absolute timestamps as one-way network latency. Correlate peer operations by request ID and measure local durations independently.
 
