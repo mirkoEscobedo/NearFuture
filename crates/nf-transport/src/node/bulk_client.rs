@@ -1,4 +1,4 @@
-use super::{local_current, membership};
+use super::{current_local, membership};
 use crate::{
     PeerError,
     auth::ServerPin,
@@ -52,11 +52,8 @@ async fn inner(
         return Err(PeerError::Unauthorized);
     }
     let identity = TransportIdentity::load(vault)?;
-    let local = vault
-        .load_identity(identity.peer_id().to_bytes())
-        .map_err(|_| PeerError::Storage)?;
     let state = membership(&mut store, policy)?;
-    local_current(&state, &local, false)?;
+    let local = current_local(&state, vault, identity.peer_id(), false)?;
     let (auth, hello) = ClientSession::begin(
         local.public.clone(),
         identity.peer_id(),

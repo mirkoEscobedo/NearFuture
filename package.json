@@ -6,7 +6,7 @@
   "scripts": {
     "start": "cargo run --locked --offline",
     "test:rust": "cargo test --workspace --locked --offline",
-    "test:tools": "node --test tests/architecture/*.test.mjs tests/build/*.test.mjs tests/runtime-manifest/*.test.mjs tests/performance/*.test.mjs tools/miniature-store-vectors/profile.test.cjs tools/receipt-vectors/*.test.cjs tools/notification-vectors/*.test.cjs tests/reference/sync/*.test.cjs tests/delivery/*.test.mjs tools/nex-first-proposal-repro.test.cjs",
+    "test:tools": "node --test tests/architecture/*.test.mjs tests/build/*.test.mjs tests/runtime-manifest/*.test.mjs tests/performance/*.test.mjs tools/miniature-store-vectors/profile.test.cjs tools/receipt-vectors/*.test.cjs tools/notification-vectors/*.test.cjs tests/reference/sync/*.test.cjs tests/delivery/*.test.mjs tools/starsector-proxy/frame*.test.mjs tools/nex-first-proposal-repro.test.cjs",
     "test": "npm run test:rust && npm run test:tools",
     "lint:rust": "cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
     "check:types": "tsc -p tsconfig.json",

@@ -1,4 +1,4 @@
-use super::{local_current, membership};
+use super::{current_local, membership};
 use crate::{
     PeerError,
     auth::ServerPin,
@@ -109,11 +109,8 @@ async fn run(
         return Err(PeerError::Unauthorized);
     }
     let identity = TransportIdentity::load(vault)?;
-    let local = vault
-        .load_identity(identity.peer_id().to_bytes())
-        .map_err(|_| PeerError::Storage)?;
     let state = membership(&mut store, policy)?;
-    local_current(&state, &local, false)?;
+    let local = current_local(&state, vault, identity.peer_id(), false)?;
     let control = lane_owner(&identity, &local, policy, pin, Lane::Control, control)?;
     let bulk_lane = lane_owner(&identity, &local, policy, pin, Lane::Bulk, bulk)?;
     let mut owner = PairOwner {
