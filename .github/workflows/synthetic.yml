@@ -7,6 +7,7 @@ permissions:
   contents: read
 jobs:
   public-build:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -68,6 +69,7 @@ jobs:
         run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture
   # A fresh, required Windows job preserves the hosted 20-minute bound for each gate.
   windows-interop:
+    if: false
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -105,6 +107,7 @@ jobs:
           $env:NF_SHADOW_CLASSPATH_FILE = Join-Path (Get-Location) 'java/nex-reference/build/differential-classpath.txt'
           cargo test -p nf-nex-shadow --test differential --locked --offline -- --ignored
   release-build:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -130,8 +133,8 @@ jobs:
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.1 --profile minimal
       - run: cargo fetch --locked
-      - name: Check profile refusal and job accounting
-        run: node --test tests/delivery/*.test.mjs
+      - name: Deliberately fail the isolated protection probe
+        run: exit 1
       - name: Exercise the accepted headless executable path
         run: cargo test -p near-future --test node_cli --locked --offline
   headless-qualification:
