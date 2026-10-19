@@ -88,6 +88,9 @@ impl Composition {
     /// Implementation bytes remain opaque: matching grants no binary authenticity,
     /// route, activation, migration or recovery authority. Inputs are not changed.
     pub fn require_supported(&self, supported: &[ProviderVersion]) -> Result<(), CompositionError> {
+        if supported.len() > MAX_PROVIDERS {
+            return Err(CompositionError::Limit);
+        }
         if self
             .providers
             .iter()

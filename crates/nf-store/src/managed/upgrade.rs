@@ -67,11 +67,19 @@ impl Descriptor {
         world: &nf_kernel::World,
         supported: &[ProviderVersion],
     ) -> Result<()> {
+        if supported.len() > 32 {
+            return Err(ManagedError::Limit);
+        }
+        if supported.len() != self.providers.len() {
+            return Err(ManagedError::DerivationMismatch);
+        }
         let actual = world.to_spec();
+        if actual.registry.len() != self.providers.len() {
+            return Err(ManagedError::DerivationMismatch);
+        }
         let mut support = supported.to_vec();
         support.sort_unstable_by_key(|p| p.provider);
         if support != self.providers
-            || actual.registry.len() != self.providers.len()
             || self.providers.iter().zip(&actual.registry).any(|(p, r)| {
                 p.provider != r.id
                     || p.implementation != r.implementation_hash

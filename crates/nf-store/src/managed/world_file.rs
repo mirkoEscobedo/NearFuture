@@ -335,15 +335,38 @@ pub(super) fn bind_path(c: &Connection, path: &Path) -> Result<()> {
     schema::local_absolute(path)?;
     let mut statement = c.prepare("PRAGMA database_list")?;
     let mut rows = statement.query([])?;
-    let row = rows.next()?.ok_or(ManagedError::SourceMismatch)?;
-    let name: String = row.get(1)?;
-    let file: String = row.get(2)?;
-    if name != "main"
-        || file.len() > 4096
-        || Path::new(&file).canonicalize()? != path
-        || rows.next()?.is_some()
-    {
+    let mut main = false;
+    let mut temp = false;
+    while let Some(row) = rows.next()? {
+        let name: String = row.get(1)?;
+        let file: String = row.get(2)?;
+        match name.as_str() {
+            "main" if !main && !file.is_empty() && file.len() <= 4096 => {
+                if Path::new(&file).canonicalize()? != path {
+                    return Err(ManagedError::SourceMismatch);
+                }
+                main = true;
+            }
+            "temp" if !temp && file.is_empty() => {
+                let objects: bool = c.query_row(
+                    "SELECT EXISTS(SELECT 1 FROM temp.sqlite_schema LIMIT 1)",
+                    [],
+                    |row| row.get(0),
+                )?;
+                if objects {
+                    return Err(ManagedError::SourceMismatch);
+                }
+                temp = true;
+            }
+            _ => return Err(ManagedError::SourceMismatch),
+        }
+    }
+    if !main {
         return Err(ManagedError::SourceMismatch);
     }
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "world_file_policy_tests.rs"]
+mod policy_tests;
