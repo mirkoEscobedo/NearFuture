@@ -4,7 +4,7 @@ import test from 'node:test';
 import { screenshotFrames } from './frames.mjs';
 
 // CLI2 envelope shape is from retained observation exports; values are public synthetic data.
-const pixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
+const pixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 const window = { windowId: 42, pid: 123, bundleId: 'java.exe', title: 'Starsector 0.98a-RC8', bounds: { x: 480, y: 270, width: 1, height: 1 }, isFocused: true };
 const input = { target_window_id: 42, quality: 0, width: 1 };
 const time = { start: 1000, end: 1100 };

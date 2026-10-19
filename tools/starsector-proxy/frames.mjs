@@ -1,4 +1,5 @@
 // @ts-check
+import { PNG_MAX_BYTES, pngDimensions } from './png.mjs';
 
 /** @param {unknown} value @returns {Record<string, any>} */
 function object(value) {
@@ -87,11 +88,10 @@ export function screenshotFrames(session) {
             const image = object(images[0]);
             const match = typeof image.url === 'string' && /^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/.exec(image.url);
             if (image.mime !== 'image/png' || !match) throw new Error('Expected an inline PNG attachment');
+            if (match[1].length > 4 * Math.ceil(PNG_MAX_BYTES / 3)) throw new Error('Invalid original PNG');
             const bytes = Buffer.from(match[1], 'base64');
-            if (bytes.toString('base64') !== match[1] || bytes.length < 24
-                || bytes.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a'
-                || bytes.toString('ascii', 12, 16) !== 'IHDR') throw new Error('Invalid original PNG');
-            const dimensions = { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+            if (bytes.toString('base64') !== match[1]) throw new Error('Invalid original PNG');
+            const dimensions = pngDimensions(bytes);
             if (dimensions.width !== window.bounds.width || dimensions.height !== window.bounds.height) {
                 throw new Error('Screenshot dimensions do not match the verified window');
             }
