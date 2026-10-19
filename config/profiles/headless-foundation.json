@@ -5,7 +5,7 @@
   "platforms": ["ubuntu-latest", "windows-latest"],
   "required_jobs": ["public-build", "windows-interop", "release-build", "profile-smoke"],
   "required_check": "headless-qualification",
-  "accepted_paths": ["build-identity", "synthetic-contracts", "java-rust-interop", "linux-sync-fault-recovery"],
+  "accepted_paths": ["build-identity", "synthetic-contracts", "java-rust-interop", "linux-sync-fault-recovery", "portable-nex-characterization-replay"],
   "enabled_capabilities": ["build-identity"],
   "disabled_capabilities": ["game-lifecycle", "local-shadow", "native-writer", "peer-runtime", "chat-runtime", "managed-upgrade"],
   "persistence": {
