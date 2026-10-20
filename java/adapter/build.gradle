@@ -1,3 +1,5 @@
+repositories { mavenCentral() }
+
 def gameDir = providers.gradleProperty('gameDir').orElse(providers.environmentVariable('STARSECTOR_HOME'))
 def requiredLibraries = ['starfarer.api.jar']
 def localLibraries = provider {

@@ -65,7 +65,12 @@ fn run_client(mode: &str) {
         .stderr(Stdio::piped());
     owned.child = Some(command.spawn().unwrap());
     // Startup15s plus cleanup10s are independently bounded by the Java owner.
-    let deadline = Instant::now() + Duration::from_secs(if mode.starts_with("lifecycle") { 50 } else { 30 });
+    let deadline = Instant::now()
+        + Duration::from_secs(if mode.starts_with("lifecycle") {
+            50
+        } else {
+            30
+        });
     while owned.child.as_mut().unwrap().try_wait().unwrap().is_none() {
         assert!(
             Instant::now() < deadline,

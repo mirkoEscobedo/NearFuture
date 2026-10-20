@@ -1,11 +1,20 @@
 # Private parent-pipe checkpoint (#99)
 
-This is an unqualified, default-off read-only lifecycle composition. The game
-plugin wiring is prepared and JVM-host callback controls pass, but the actual
-adapter staging build fails: its new protobuf dependency has no repository
-declared in the adapter project. The candidate is preserved for replanning;
-it has not landed in dev. Native lifecycle evidence, offload and a standalone
-production launcher remain unqualified. The accepted runtime profile is unchanged.
+This is an unqualified, default-off read-only lifecycle composition. The original
+adapter staging and Rust formatting failures remain recorded in #99 and PR119.
+Under the separately authorized 20 October recovery, the adapter repository and
+generated lock preserve protobuf4.31.1/bcprov1.81 pins; licensed staging now passes
+offline with and without lock regeneration. Licensed APIs remain local compileOnly
+inputs and are absent from the six staged runtime jars. Eight JVM-host controls
+and the four L0 checks pass; these are not native game acceptance.
+
+All seven ignored owned-parent process cases are explicitly registered in the
+required Linux and Windows Java/classpath lanes with the maintained focused
+invocation. Historical semantic2/2 is retained separately from the recovery's
+two additional rounds, now2/2 used for repository/formatting and coverage/status
+corrections. Full candidate checks, native lifecycle evidence and protected dev
+landing remain outstanding. Offload, a standalone production launcher and runtime
+activation remain unqualified. The accepted runtime profile is unchanged.
 
 `nf-ipc-node serve-parent` accepts the same trusted vault, saves, publication name,
 scope, policy, principal and finite duration arguments as `serve`. It uses the
