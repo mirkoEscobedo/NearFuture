@@ -1,4 +1,5 @@
 // @ts-check
+import {ipcClasspath} from './support/ipc-classpath.mjs';
 import test, {before, after} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, rm} from 'node:fs/promises';
@@ -17,7 +18,7 @@ before(async () => {
   directory = await mkdtemp(join(tmpdir(), 'nf-observer-controls-'));
   const libraries = ['starfarer.api.jar', 'xstream-1.4.10.jar', 'log4j-1.2.9.jar',
     'lwjgl.jar', 'lwjgl_util.jar', 'json.jar', 'fs.common_obf.jar', 'fs.sound_obf.jar'];
-  api = libraries.map(name => join(game, 'starsector-core', name)).join(delimiter);
+  api = libraries.map(name => join(game, 'starsector-core', name)).join(delimiter) + delimiter + ipcClasspath();
   const compiled = spawnSync('javac', ['--release', '17', '-Xlint:all', '-Werror',
     '-cp', api, '-sourcepath', 'java/adapter/src/main/java', '-d', directory,
     'java/contract/src/main/java/nf/contract/BuildIdentity.java',

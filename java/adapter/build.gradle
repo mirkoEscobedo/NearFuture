@@ -5,6 +5,7 @@ def localLibraries = provider {
 }
 dependencies {
     implementation project(':contract')
+    implementation project(':ipc')
     compileOnly files(localLibraries)
 }
 tasks.register('validateLocalLibraries') {
@@ -20,3 +21,11 @@ tasks.register('validateLocalLibraries') {
     }
 }
 tasks.named('compileJava') { dependsOn validateLocalLibraries }
+
+// Explicit local staging only: never copies into an installation or bundles licensed game APIs.
+tasks.register('stageDiagnosticJars', Sync) {
+    dependsOn tasks.named('jar')
+    into rootProject.layout.buildDirectory.dir('diagnostic-mod/jars')
+    from tasks.named('jar')
+    from configurations.runtimeClasspath
+}

@@ -1,4 +1,5 @@
 // @ts-check
+import {ipcClasspath} from './support/ipc-classpath.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, rm} from 'node:fs/promises';
@@ -14,7 +15,7 @@ test('enabled observer reattaches after a failed save and preserves unrelated tr
   t.after(() => rm(directory, {recursive: true, force: true}));
   const libraries = ['starfarer.api.jar', 'xstream-1.4.10.jar', 'log4j-1.2.9.jar',
     'lwjgl.jar', 'lwjgl_util.jar', 'json.jar', 'fs.common_obf.jar', 'fs.sound_obf.jar'];
-  const api = libraries.map(name => join(game, 'starsector-core', name)).join(delimiter);
+  const api = libraries.map(name => join(game, 'starsector-core', name)).join(delimiter) + delimiter + ipcClasspath();
   const options = {cwd: fileURLToPath(new URL('../../', import.meta.url)),
     encoding: /** @type {const} */ ('utf8'), timeout: 30000, maxBuffer: 100000};
   const compiled = spawnSync('javac', ['--release', '17', '-Xlint:all', '-Werror',
