@@ -20,6 +20,9 @@ public final class ParentNodeProcessClient {
             : ByteString.copyFrom(HexFormat.of().parseHex(args[3]));
         NodeLaunch launch = new NodeLaunch(Path.of(args[0]), pin,
             Path.of(args[1]), Path.of(args[2]), "java-parent-owner", ParentHandoffFixture.scope(), 60000);
+        if (args[4].equals("stalled-child")) { StalledChildProcessScenario.run(launch); return; }
+        if (args[4].equals("abrupt-jvm")) { AbruptJvmProcessScenario.run(launch); return; }
+        if (args[4].equals("abrupt-jvm-owner")) { AbruptJvmProcessScenario.runOwner(launch); return; }
         if (args[4].equals("lifecycle")) { LifecycleOwnerProcessScenario.run(launch); return; }
         if (args[4].equals("lifecycle-failure")) { LifecycleFailureProcessScenario.run(launch); return; }
         if (args[4].equals("wrong-pin") || args[4].equals("cancelled-before")) {

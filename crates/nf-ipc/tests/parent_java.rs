@@ -40,6 +40,41 @@ fn run_client(mode: &str) {
     let vault = PrivateVault::create_diagnosed(&vault_path, &saves)
         .unwrap_or_else(|failure| panic!("private vault create failed: {failure:?}"));
     let executable = PathBuf::from(env!("CARGO_BIN_EXE_nf-ipc-node"));
+    let executable = if mode == "stalled-child" {
+        let target = root.join(format!("stalled-parent{}", std::env::consts::EXE_SUFFIX));
+        let mut compile = Command::new(std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()));
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            compile.creation_flags(0x0800_0000);
+        }
+        compile
+            .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/support/stalled_parent.rs"))
+            .arg("--edition=2024")
+            .arg("-o")
+            .arg(&target)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped());
+        owned.child = Some(compile.spawn().unwrap());
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while owned.child.as_mut().unwrap().try_wait().unwrap().is_none() {
+            assert!(
+                Instant::now() < deadline,
+                "benign fixture compilation deadline"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let output = owned.child.take().unwrap().wait_with_output().unwrap();
+        assert!(
+            output.status.success(),
+            "benign fixture compilation failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        target
+    } else {
+        executable
+    };
     assert!(executable.is_absolute());
     let digest = Sha256::digest(fs::read(&executable).unwrap());
     let hex: String = digest.iter().map(|byte| format!("{byte:02x}")).collect();
@@ -138,4 +173,16 @@ fn java_background_lifecycle_renews_and_fences_campaign_changes_without_callback
 #[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
 fn java_background_lifecycle_revokes_authentication_when_each_owned_child_dies() {
     run_client("lifecycle-failure");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_background_owner_times_out_a_stalled_child_and_forcibly_reaps_it() {
+    run_client("stalled-child");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn abrupt_java_parent_death_closes_private_pipe_and_reaps_authenticated_rust_child() {
+    run_client("abrupt-jvm");
 }
