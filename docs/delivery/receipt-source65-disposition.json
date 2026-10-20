@@ -3603,7 +3603,7 @@
       "path": "package.json",
       "source_blob": "b62c5c2fd8b5d982d192651a8c71c3588e8eceb0",
       "vehicle_blob": "37e722de9b6866fb83361d047cb7768a8efd5963",
-      "composed_blob": "870c58a8352bd2a10ce24fb91b8979114e9c320d",
+      "composed_blob": "303f0771473fe1fbe793020e2a17a2a9f4a6ef3e",
       "source_reference": "https://github.com/mirkoEscobedo/NearFuture/blob/ee1db00aaef3a7698c109eea17af44b7f62b696a/package.json",
       "declared_source_tests": [],
       "disposition": "composed",

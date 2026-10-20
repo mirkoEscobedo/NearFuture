@@ -36,7 +36,7 @@ exactly, two composed, four split, 115 deferred and 23 historical evidence files
 | Pure canonical-peer, replica budget and replay foundation; broader sync/follower variants | #103 can extract its minimal independent foundation; #39 retains broader sync acceptance. Neither depends on completing the Portal lifecycle. |
 | Extra identity/blob/scan and receipt Book storage-cause diagnostics with associated tests | Existing operator/support parent #46, with receipt acceptance under #23. This preserves source custody and does not expand #104's read-only slice or allocate another implementation/repair budget. |
 | Older Portal/notification/transport API and test variants | #23 retains these explicitly unlanded variants. Current #102 invariants require their own current-candidate evidence; filename similarity is not assertion equivalence. |
-| CI and package scheduling | Compose the protected dev aggregate with complete vehicle partitions; retain #65's serial transport scheduling in the complete local Rust command. |
+| CI and package scheduling | Compose the protected dev aggregate with complete vehicle partitions; run both complete I/O packages serially in the local aggregate, retaining #65's transport scheduling and aligning identity with required CI. |
 | Dependency/export metadata and binary-fixture rules | Retain current vehicle dependencies/exports and original-ACL byte policy. Defer canonical-peer/replica dependencies and sync-checkpoint byte rules with #103. |
 | Historical documentation | Preserve exact pinned bodies as historical evidence, without current qualification credit. |
 
