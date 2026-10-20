@@ -84,6 +84,25 @@ impl Driver {
     pub fn read_status(options: crate::OpenOptions) -> Result<MiniatureSnapshot, DriverError> {
         Ok(open_store(&options)?.snapshot()?)
     }
+    /// Inspect persisted status through an actual read-only SQLite connection.
+    /// No signer, runtime authority, write access or live freshness is granted.
+    pub fn read_only_status(
+        options: crate::OpenOptions,
+    ) -> Result<nf_store::miniature::MiniatureReader, DriverError> {
+        let known = nf_store::miniature::MiniatureKnownFrontiers {
+            storage: nf_store::KnownFrontiers {
+                scope: options.scope,
+                event_sequence: options.minimum_event,
+                store_revision: options.minimum_store,
+                membership_revision: Some(options.minimum_membership),
+            },
+            minimum_authority_term: options.minimum_term,
+        };
+        Ok(nf_store::miniature::MiniatureReader::open_existing(
+            &options.database,
+            known,
+        )?)
+    }
     pub fn create(options: CreateOptions) -> Result<Self, DriverError> {
         let membership = read_membership(&options.membership_file)?;
         let mut signer = VaultSigner::open(
