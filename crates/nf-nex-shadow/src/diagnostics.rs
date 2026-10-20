@@ -197,3 +197,10 @@ pub fn synthetic_first_proposal_reproduction(
     }
     crate::encode_first_proposal_input(metadata, input)
 }
+
+mod observation;
+pub use observation::{
+    DiagnosticDifferenceCountV1, DiagnosticDroppedCountV1, DiagnosticObservationOriginV1,
+    DiagnosticObservationScopeV1, DiagnosticObservationUnavailableV1,
+    DiagnosticStreamObservationV1,
+};

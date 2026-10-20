@@ -13,3 +13,16 @@ The shared Java evaluator uses #82's exact superset of #81: the existing untarge
 The `portable-nex-characterization-replay` accepted path names this synthetic regression scope. Enabled runtime capability remains build identity only; local shadow, native writer and other incomplete services remain disabled, with persistent writes off. Portable copied facts and reported returns establish no native captures, game effects, scheduler/RNG ownership, writer handover or certified offload speedup. The WarWeariness-only native shadow route has no dependency on these new peace/action APIs and remains independently scoped by its own leaf.
 
 The integration must pass the full current package/profile/release checks and both platforms' real Java/Rust differential jobs before qualified serial dev landing. Original source histories and failure evidence remain retained. No source draft or broader capability is superseded merely by preparing this branch.
+
+The separately authorized 20 October recovery preserves the earlier Windows
+20-minute cancellations, semantic1/2 and unchanged retry1/1 counts. Complete
+elapsed/coverage accounting supports the exhaustive three-suite, two-platform
+Rust partition in [the CI workload contract](../delivery/ci-workload.md), with
+unchanged job/production deadlines and all default Cargo doc-test coverage.
+Current dev's operator inputs, assertions and dependency test profile remain.
+The ten first-proposal diagnostic facets retain distinct redacted observation
+counts and their existing producer code identities after reconciliation with
+the six earlier facets. Original six-facet golden outputs remain unchanged;
+no first-proposal producer route or native capability is activated by mapping
+these values. Whole-candidate checks, independent exact-diff review and a real
+protected dev landing remain required; recovery preparation alone is incomplete.
