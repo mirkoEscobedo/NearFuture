@@ -31,6 +31,9 @@ impl ImmutableSnapshot {
             bytes,
         })
     }
+    pub(crate) fn from_state(revision: u64, state: &State) -> Result<Self> {
+        Self::from_recovered(state, revision)
+    }
     pub fn revision(&self) -> u64 {
         self.revision
     }
@@ -42,6 +45,22 @@ impl ImmutableSnapshot {
     }
 }
 impl Store {
+    /// Seals locally verified drained data; host admission quiescence is not inferred.
+    pub fn seal_drained(
+        self,
+        minimum: KnownFrontiers,
+    ) -> std::result::Result<crate::staging::DrainedSource, crate::staging::SealRefusal> {
+        crate::staging::seal(self, minimum)
+    }
+    pub(crate) fn verified_source_head(&self, minimum: KnownFrontiers) -> Result<[u8; 32]> {
+        self.ensure_writable()?;
+        schema::verify_existing(&self.connection)?;
+        let (state, revision, head) = crate::recovery::recover(&self.connection, minimum)?;
+        if state != self.state || revision != self.revision || head != self.head {
+            return Err(StoreError::Corrupt);
+        }
+        Ok(head)
+    }
     pub fn create(path: impl AsRef<Path>, world: &World) -> Result<Self> {
         if world.view().event_seq() != EventSeq(0) || !world.outcomes().is_empty() {
             return Err(StoreError::InvalidTransition);

@@ -16,7 +16,7 @@ function qualify(jobs) {
 
 function originalJobs() {
     return Object.fromEntries([
-        'public-build', 'public-rust', 'windows-interop', 'release-build', 'profile-smoke',
+        'public-build', 'public-rust', 'windows-interop', 'release-build', 'profile-smoke', 'managed-public',
     ].map(name => [name, { result: 'success' }]));
 }
 

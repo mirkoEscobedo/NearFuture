@@ -33,3 +33,14 @@ pub use strategic_reader::{
     StrategicSupportProtectionV1, StrategicSupportRulesetBinding, StrategicSupportUnavailable,
     SupportProtection,
 };
+
+pub mod migration;
+
+/// Inactive config-only artifacts, never ordinary Store or activation admission.
+pub mod staging;
+
+/// Replayable inactive NFST3 upgrades; no owner selection or writer admission.
+pub mod upgrade;
+
+/// Authenticated local catalog ownership and full active-format continuation.
+pub mod managed;
