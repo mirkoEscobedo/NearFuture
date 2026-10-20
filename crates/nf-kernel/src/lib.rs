@@ -22,3 +22,5 @@ pub mod miniature;
 pub mod supplies;
 
 pub mod trade;
+
+pub mod replica;
