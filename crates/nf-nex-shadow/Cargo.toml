@@ -10,5 +10,8 @@ nf-nex-boundary = { path = "../nf-nex-boundary" }
 nf-contract = { path = "../nf-contract" }
 sha2 = { version = "=0.10.9", default-features = false }
 
+[dev-dependencies]
+nf-identity = { path = "../nf-identity" }
+
 [lints]
 workspace = true

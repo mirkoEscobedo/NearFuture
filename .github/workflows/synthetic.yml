@@ -66,6 +66,225 @@ jobs:
         env:
           NF_MINIATURE_REQUIRE_SYNC_FAULT: '1'
         run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture
+  operator-public:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '21.0.8'
+      - name: Install pinned Rust components
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Fetch only locked open-source Rust dependencies
+        run: cargo fetch --locked
+      - name: Install vendored developer tools offline
+        run: npm ci --offline --ignore-scripts --no-audit --no-fund
+      - name: Prepare caller-owned public restore refusal evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $restoreEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-restore-refusals-' + [Guid]::NewGuid().ToString('N'))))
+          [void][IO.Directory]::CreateDirectory($restoreEvidence)
+          [IO.File]::WriteAllText((Join-Path $restoreEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-restore-refusal-fixtures","secretFiles":false}' + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+          'NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT=' + $restoreEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $cliEvidence = Join-Path $restoreEvidence ('isolated-cli-' + [Guid]::NewGuid().ToString('N'))
+          [void][IO.Directory]::CreateDirectory($cliEvidence)
+          [IO.File]::WriteAllText((Join-Path $cliEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-isolated-restore-cli-fixtures","secretFiles":false}' + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+          'NF_ISOLATED_RESTORE_CLI_EVIDENCE_PARENT=' + $cliEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Check isolated restore public test formatting
+        id: restore-format
+        run: rustfmt --edition 2024 --check crates/nf-store/tests/miniature_backup_restore.rs crates/nf-store/tests/miniature_backup_restore_refusals.rs crates/nf-store/tests/miniature_restore_io_failure.rs
+      - name: Observe isolated backup restore public seam
+        if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        run: cargo test -p nf-store --test miniature_backup_restore --locked --offline isolated_backup_restore_preserves_originals_and_refuses_newer_known_same_history -- --exact --nocapture
+      - name: Observe isolated restore source and destination refusals
+        if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        run: cargo test -p nf-store --test miniature_backup_restore_refusals --locked --offline -- --nocapture --test-threads=1
+      - name: Check strategic read-only support test formatting
+        id: strategic-reader-format
+        if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        run: rustfmt --edition 2024 --check crates/nf-store/tests/strategic_read_only_support.rs crates/nf-store/tests/strategic_read_only_support/mod.rs crates/nf-store/tests/strategic_read_only_support/custody.rs crates/nf-store/tests/strategic_read_only_support/permissions.rs crates/nf-store/tests/strategic_read_only_support/projection.rs crates/nf-store/tests/strategic_read_only_support/sql.rs
+      - name: Prepare caller-owned strategic reader evidence
+        id: strategic-reader-custody
+        if: ${{ !cancelled() && (steps.strategic-reader-format.outcome == 'success' || steps.strategic-reader-format.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $readerEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-strategic-reader-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $readerEvidence) { throw 'fresh strategic reader evidence parent required' }
+          [void][IO.Directory]::CreateDirectory($readerEvidence)
+          [IO.File]::WriteAllText((Join-Path $readerEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-strategic-read-only-reader-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64,"fullACLQualification":false}' + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+          'NF_STRATEGIC_READER_EVIDENCE_ROOT=' + $readerEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe genuine strategic read-only support public seam
+        id: strategic-reader-public
+        if: ${{ !cancelled() && steps.strategic-reader-custody.outcome == 'success' && (steps.strategic-reader-format.outcome == 'success' || steps.strategic-reader-format.outcome == 'failure') }}
+        run: cargo test -p nf-store --test strategic_read_only_support --locked --offline strategic_read_only_support_observation_replays_nonempty_history_and_protects_all_persisted_minima -- --ignored --exact --nocapture --test-threads=1
+      - name: Retain caller-owned strategic reader public originals
+        if: ${{ always() && env.NF_STRATEGIC_READER_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: strategic-reader-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_STRATEGIC_READER_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
+      - name: Check isolated restore CLI public test formatting
+        id: restore-cli-format
+        if: ${{ !cancelled() && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        run: rustfmt --edition 2024 --check crates/nf-world-driver/tests/driver_isolated_restore_cli.rs
+      - name: Observe actual isolated backup restore CLI
+        if: ${{ !cancelled() && (steps.restore-cli-format.outcome == 'success' || steps.restore-cli-format.outcome == 'failure') }}
+        run: cargo test -p nf-world-driver --test driver_isolated_restore_cli --locked --offline actual_isolated_restore_cli_preserves_originals_and_all_independent_minima -- --ignored --exact --nocapture --test-threads=1
+      - name: Prepare caller-owned bounded runtime observer evidence
+        id: runtime-observer-custody
+        if: ${{ !cancelled() && (steps.restore-cli-format.outcome == 'success' || steps.restore-cli-format.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $runtimeEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-runtime-observer-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $runtimeEvidence) { throw 'fresh runtime observer evidence parent required' }
+          [void][IO.Directory]::CreateDirectory($runtimeEvidence)
+          [IO.File]::WriteAllText((Join-Path $runtimeEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-runtime-observer-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64}' + [char]10, [Text.UTF8Encoding]::new($false))
+          'NF_RUNTIME_OBSERVER_EVIDENCE_ROOT=' + $runtimeEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe bounded registered public runtime package bytes
+        id: runtime-observer-public
+        if: ${{ !cancelled() && steps.runtime-observer-custody.outcome == 'success' }}
+        env:
+          NF_RUNTIME_OBSERVER_REQUIRE_CASE: '1'
+        run: node --test tests/runtime-manifest/bounded-runtime-package.test.mjs
+      - name: Prepare caller-owned public diagnostic observation evidence
+        id: diagnostic-observation-custody
+        if: ${{ !cancelled() && (steps.runtime-observer-public.outcome == 'success' || steps.runtime-observer-public.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $diagnosticEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-diagnostic-observation-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $diagnosticEvidence) { throw 'fresh diagnostic observation evidence parent required' }
+          [void][IO.Directory]::CreateDirectory($diagnosticEvidence)
+          [IO.File]::WriteAllText((Join-Path $diagnosticEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-diagnostic-observation-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64}' + [char]10, [Text.UTF8Encoding]::new($false))
+          'NF_DIAGNOSTIC_OBSERVATION_EVIDENCE_ROOT=' + $diagnosticEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe non-draining redacted diagnostic stream public seam
+        id: diagnostic-observation-public
+        if: ${{ !cancelled() && steps.diagnostic-observation-custody.outcome == 'success' }}
+        run: cargo test -p nf-nex-shadow --test diagnostic_stream_observation --locked --offline non_draining_redacted_diagnostic_observation_preserves_fifo_and_unverified_scope -- --ignored --exact --nocapture --test-threads=1
+      - name: Prepare caller-owned actual producer observation evidence
+        id: actual-producer-custody
+        if: ${{ !cancelled() && (steps.diagnostic-observation-public.outcome == 'success' || steps.diagnostic-observation-public.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $producerEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-actual-producer-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $producerEvidence) { throw 'fresh actual producer evidence parent required' }
+          [void][IO.Directory]::CreateDirectory($producerEvidence)
+          [IO.File]::WriteAllText((Join-Path $producerEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-actual-producer-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64}' + [char]10, [Text.UTF8Encoding]::new($false))
+          'NF_ACTUAL_PRODUCER_EVIDENCE_ROOT=' + $producerEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Observe actual portable producer and same owned queue
+        id: actual-producer-public
+        if: ${{ !cancelled() && steps.actual-producer-custody.outcome == 'success' }}
+        run: cargo test -p near-future --test actual_producer_observation --locked --offline actual_portable_producer_observation_tracks_real_comparison_and_preserves_owned_queue -- --ignored --exact --nocapture --test-threads=1
+      - name: Retain only caller-owned actual producer public originals
+        if: ${{ always() && env.NF_ACTUAL_PRODUCER_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: actual-producer-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_ACTUAL_PRODUCER_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
+      - name: Prepare caller-owned actual producer metric evidence
+        id: actual-producer-metric-custody
+        if: ${{ !cancelled() && (steps.actual-producer-public.outcome == 'success' || steps.actual-producer-public.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $metricEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-actual-producer-metric-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $metricEvidence) { throw 'fresh actual producer metric evidence parent required' }
+          'NF_ACTUAL_PRODUCER_METRIC_EVIDENCE_ROOT=' + $metricEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          [void][IO.Directory]::CreateDirectory($metricEvidence)
+          [IO.File]::WriteAllText((Join-Path $metricEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-actual-producer-metric-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64}' + [char]10, [Text.UTF8Encoding]::new($false))
+      - name: Observe actual accepted evaluation metric without observation samples
+        id: actual-producer-metric-public
+        if: ${{ !cancelled() && steps.actual-producer-metric-custody.outcome == 'success' }}
+        run: cargo test -p near-future --test actual_producer_metric_observation --locked --offline actual_metric_window_observes_one_evaluation_without_observation_samples -- --ignored --exact --nocapture --test-threads=1
+      - name: Retain only caller-owned actual producer metric public originals
+        if: ${{ always() && env.NF_ACTUAL_PRODUCER_METRIC_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: actual-producer-metric-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_ACTUAL_PRODUCER_METRIC_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
+      - name: Prepare caller-owned actual producer metric capacity evidence
+        id: actual-producer-metric-capacity-custody
+        if: ${{ !cancelled() && (steps.actual-producer-metric-public.outcome == 'success' || steps.actual-producer-metric-public.outcome == 'failure') }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $capacityEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-actual-producer-metric-capacity-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $capacityEvidence) { throw 'fresh actual producer metric capacity evidence parent required' }
+          'NF_ACTUAL_PRODUCER_METRIC_CAPACITY_EVIDENCE_ROOT=' + $capacityEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          [void][IO.Directory]::CreateDirectory($capacityEvidence)
+          [IO.File]::WriteAllText((Join-Path $capacityEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-actual-producer-metric-fixtures","secretFiles":false,"children":false,"caseSeconds":20,"caseBytes":8388608,"caseEntries":64}' + [char]10, [Text.UTF8Encoding]::new($false))
+      - name: Check actual producer metric capacity public test formatting
+        id: actual-producer-metric-capacity-format
+        if: ${{ !cancelled() && steps.actual-producer-metric-capacity-custody.outcome == 'success' }}
+        run: rustfmt --edition 2024 --check tests/actual_producer_metric_capacity.rs tests/actual_producer_metric_capacity/mod.rs tests/actual_producer_metric_capacity/projection.rs
+      - name: Observe 64 retained samples after 65 actual producer evaluations
+        id: actual-producer-metric-capacity-public
+        if: ${{ !cancelled() && steps.actual-producer-metric-capacity-custody.outcome == 'success' && (steps.actual-producer-metric-capacity-format.outcome == 'success' || steps.actual-producer-metric-capacity-format.outcome == 'failure') }}
+        env:
+          NF_ACTUAL_PRODUCER_METRIC_EVIDENCE_ROOT: ${{ env.NF_ACTUAL_PRODUCER_METRIC_CAPACITY_EVIDENCE_ROOT }}
+        run: cargo test -p near-future --test actual_producer_metric_capacity --locked --offline actual_metric_capacity_retains_64_of_65_real_evaluations_without_observation_samples -- --ignored --exact --nocapture --test-threads=1
+      - name: Retain only caller-owned actual producer metric capacity public originals
+        if: ${{ always() && env.NF_ACTUAL_PRODUCER_METRIC_CAPACITY_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: actual-producer-metric-capacity-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_ACTUAL_PRODUCER_METRIC_CAPACITY_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
+      - name: Install maintained Linux sync fault injector
+        if: ${{ !cancelled() && runner.os == 'Linux' && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends strace
+          strace --version
+      - name: Observe final standalone restore fsync refusal and retained output
+        if: ${{ !cancelled() && runner.os == 'Linux' && (steps.restore-format.outcome == 'success' || steps.restore-format.outcome == 'failure') }}
+        env:
+          NF_RESTORE_REQUIRE_FINAL_SYNC_FAULT: '1'
+        run: cargo test -p nf-store --test miniature_restore_io_failure --locked --offline isolated_restore_final_standalone_fsync_eio_retains_unqualified_output -- --ignored --exact --nocapture --test-threads=1
+      - name: Retain only caller-owned public restore refusal fixtures
+        if: ${{ always() && env.NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: restore-refusal-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT }}
+          if-no-files-found: error
+          retention-days: 90
+      - name: Retain only caller-owned runtime observer public originals
+        if: ${{ always() && env.NF_RUNTIME_OBSERVER_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: runtime-observer-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_RUNTIME_OBSERVER_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
+      - name: Retain only caller-owned public diagnostic observation originals
+        if: ${{ always() && env.NF_DIAGNOSTIC_OBSERVATION_EVIDENCE_ROOT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: diagnostic-observation-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_DIAGNOSTIC_OBSERVATION_EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 7
   public-rust:
     strategy:
       fail-fast: false
@@ -161,7 +380,7 @@ jobs:
   headless-qualification:
     # This check runs even after failure/cancellation/skip; only success is accepted.
     if: always()
-    needs: [public-build, public-rust, windows-interop, release-build, profile-smoke]
+    needs: [public-build, public-rust, windows-interop, release-build, profile-smoke, operator-public]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
