@@ -39,7 +39,7 @@ test('bounded_runtime_package_observer_reads_registered_public_bytes_and_keeps_d
     await evidence.put('control/declaration.exact.json', Buffer.from(DECLARATION));
     assert.equal(Buffer.byteLength(GOLDEN), 1603);
     assert.equal(sha256(Buffer.from(GOLDEN)),
-      '69a7c5e437b42c1bdcc13a5a877bc54505bc9fed43913b3930af978787d92fa2');
+      'a486cbc37f272dfcc5063ba27a8003a0c92461d42049531d7c4a84a33a5180fd');
     assert.equal(Buffer.byteLength(DECLARATION), 217);
     assert.equal(sha256(Buffer.from(DECLARATION)),
       'b9e9bb7927a78386de57ed358b9481ccae555be4dc61caba8281aa1fd7d03eec');
