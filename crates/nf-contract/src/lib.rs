@@ -12,3 +12,8 @@ pub const BUILD_IDENTITY: &str = "Near Future 0.1.0 (synthetic; game integration
 
 pub mod identity;
 pub mod signatures;
+
+pub mod system_placement;
+pub mod system_presentation;
+pub mod system_publication;
+pub mod system_topology;
