@@ -14,6 +14,10 @@ pub mod nearfuture {
 pub use nearfuture::ipc::v1 as local_auth;
 pub use nearfuture::protocol::v1 as generated;
 mod admission;
+mod chat_enqueue;
+mod chat_status;
+pub use chat_enqueue::{validate_chat_enqueue_result, validate_enqueue_chat};
+pub use chat_status::{validate_chat_outgoing_status, validate_query_chat_outgoing};
 mod local_auth_admission;
 pub use local_auth_admission::{decode_local_auth, decode_local_auth_with_limits};
 mod preflight;
