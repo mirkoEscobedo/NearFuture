@@ -307,8 +307,25 @@ jobs:
         run: cargo fetch --locked
       - name: Install vendored developer tools offline
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
+      - name: Prepare caller-owned restore refusal evidence for the full Rust suite
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $restoreEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-rust-restore-refusals-' + [Guid]::NewGuid().ToString('N'))))
+          if (Test-Path -LiteralPath $restoreEvidence) { throw 'fresh restore refusal evidence parent required' }
+          [void][IO.Directory]::CreateDirectory($restoreEvidence)
+          [IO.File]::WriteAllText((Join-Path $restoreEvidence 'caller-receipt.json'), '{"version":1,"kind":"owned-public-restore-refusal-fixtures","secretFiles":false}' + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+          'NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT=' + $restoreEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Run the complete workspace Rust suite
         run: npm run test:rust
+      - name: Retain caller-owned full-suite restore refusal originals
+        if: ${{ always() && env.NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rust-restore-refusal-public-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT }}
+          if-no-files-found: error
+          retention-days: 7
   # A fresh, required Windows job preserves the hosted 20-minute bound for each gate.
   windows-interop:
     runs-on: windows-latest

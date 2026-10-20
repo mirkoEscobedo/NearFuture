@@ -30,7 +30,10 @@ support export. Existing source review histories, independent literals,
 clocks, custody limits and failure receipts are preserved.
 
 The current complete Rust, public-build, Windows interop, release and profile
-jobs remain required. A separate required `operator-public` matrix executes the
+jobs remain required. The full Rust job supplies and retains its own public
+restore-refusal fixture parent; focused-job environment does not cross job
+boundaries. Its original test command, limits and pins remain unchanged.
+A separate required `operator-public` matrix executes the
 source vehicle's caller-owned restore/reader/CLI/runtime/diagnostic/producer
 cases on Windows and Linux, including cases deliberately ignored during
 ordinary discovery. Linux additionally requires the final standalone restore
