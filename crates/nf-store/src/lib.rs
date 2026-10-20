@@ -33,3 +33,5 @@ pub use strategic_reader::{
     StrategicSupportProtectionV1, StrategicSupportRulesetBinding, StrategicSupportUnavailable,
     SupportProtection,
 };
+
+pub mod chat;

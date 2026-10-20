@@ -1,7 +1,7 @@
 use nf_contract::identity::{AccountId, DeviceId, EventSeq, HistoryId, RequestId, UniverseId};
 use nf_identity::private_storage::PrivateVault;
 use nf_ipc::{
-    DiscoveryRecord, FramePump, IpcError, LocalPrincipal, NoOperations, NodeServer,
+    ChatQueryPort, DiscoveryRecord, FramePump, IpcError, LocalPrincipal, NoOperations, NodeServer,
     PublishedRendezvous, QueryPort, SessionConfig, StoreQueryPort, default_limits,
 };
 use nf_wire::generated as g;
@@ -161,6 +161,80 @@ fn run(args: &[String]) -> Result<(), IpcError> {
                 principal,
                 port,
                 duration(&args[14])?,
+            )
+        }
+        Some("serve-chat" | "serve-chat-command") if args.len() == 18 => {
+            let vault = vault(args)?;
+            let config = session_config(&args[7..11])?;
+            let membership = args[13].parse().map_err(|_| IpcError::Malformed)?;
+            let scope = nf_identity::model::Scope {
+                universe: UniverseId::from_bytes(config.universe),
+                history: HistoryId::from_bytes(config.history),
+            };
+            let policy = nf_store::chat::ChatPolicy { scope };
+            if nf_store::chat::codec::policy_digest(&policy) != config.content_policy {
+                return Err(IpcError::PolicyMismatch);
+            }
+            let store = nf_store::chat::ChatStore::open_existing(
+                &args[5],
+                &policy,
+                nf_store::chat::KnownChatFrontiers {
+                    scope,
+                    revision: args[12].parse().map_err(|_| IpcError::Malformed)?,
+                    membership_revision: membership,
+                },
+            )
+            .map_err(|_| IpcError::ReadOnly)?;
+            let local_peer = peer(&args[11])?;
+            let identity = vault
+                .load_identity(local_peer.clone())
+                .map_err(|_| IpcError::PrivateStorage)?
+                .public;
+            let current = store.current_membership().map_err(|_| IpcError::ReadOnly)?;
+            // Trusted local selection; open_existing must match immutable stored lifetime pins.
+            // Rotation/revocation does not re-enroll a key or recover an older profile.
+            let profile = nf_store::chat::outbox::OutboxProfile::from_current(
+                &policy,
+                &current,
+                nf_store::chat::Author {
+                    account: identity.account,
+                    device: identity.device,
+                },
+                nf_store::chat::Author {
+                    account: AccountId::from_bytes(hex(&args[15])?),
+                    device: DeviceId::from_bytes(hex(&args[16])?),
+                },
+            )
+            .map_err(|_| IpcError::Unauthorized)?;
+            let outbox = nf_store::chat::outbox::ClientOutbox::open_existing(
+                &args[6],
+                &profile,
+                args[14].parse().map_err(|_| IpcError::Malformed)?,
+            )
+            .map_err(|_| IpcError::ReadOnly)?;
+            if args[1] == "serve-chat-command" {
+                let port = nf_ipc::ChatCommandPort::from_vault(
+                    store, outbox, &vault, local_peer, membership,
+                )?;
+                let principal = port.principal();
+                return foreground(
+                    &vault,
+                    &args[4],
+                    config,
+                    principal,
+                    port,
+                    duration(&args[17])?,
+                );
+            }
+            let port = ChatQueryPort::from_vault(store, outbox, &vault, local_peer, membership)?;
+            let principal = port.principal();
+            foreground(
+                &vault,
+                &args[4],
+                config,
+                principal,
+                port,
+                duration(&args[17])?,
             )
         }
         Some("attach" | "query") if args.len() == 5 || args.len() == 6 => {
