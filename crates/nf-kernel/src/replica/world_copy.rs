@@ -18,3 +18,15 @@ pub fn clone_world_with_scope(
         Err(ScopedError::Semantic(never)) => match never {},
     }
 }
+
+// Reserve one actual caller-owned clone, without making another copy here.
+pub(super) fn reserve_world_clone_with_scope(
+    world: &World,
+    scope: &ReplicaDecodeScope<'_>,
+) -> BudgetResult<()> {
+    match scope.nested::<_, Infallible, _>(|record| reservation::world(world, record)) {
+        Ok(()) => Ok(()),
+        Err(ScopedError::Budget(error)) => Err(error),
+        Err(ScopedError::Semantic(never)) => match never {},
+    }
+}
