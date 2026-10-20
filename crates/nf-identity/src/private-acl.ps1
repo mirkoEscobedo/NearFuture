@@ -1,11 +1,15 @@
 param([Parameter(Mandatory=$true)][string]$PrivatePath,[switch]$Initialize)
 $ErrorActionPreference = 'Stop'
+$phase = 10
 try {
     Import-Module -Name (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Security/Microsoft.PowerShell.Security.psd1') -ErrorAction Stop
+    $phase = 11
     $item = Get-Item -LiteralPath $PrivatePath -Force
-    if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { exit 2 }
+    if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { exit 3 }
+    $phase = 12
     $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
     if ($Initialize) {
+        $phase = 13
         if ($item.PSIsContainer) {
             $acl = New-Object System.Security.AccessControl.DirectorySecurity
             $inheritance = [System.Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit'
@@ -19,9 +23,12 @@ try {
         $acl.AddAccessRule($rule)
         Set-Acl -LiteralPath $PrivatePath -AclObject $acl
     }
+    $phase = 14
     $checked = Get-Acl -LiteralPath $PrivatePath
-    if (!$checked.AreAccessRulesProtected -or $checked.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $sid.Value) { exit 2 }
+    $phase = 15
+    if (!$checked.AreAccessRulesProtected -or $checked.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $sid.Value) { exit 4 }
+    $phase = 16
     $rules = @($checked.GetAccessRules($true,$true,[System.Security.Principal.SecurityIdentifier]))
-    if ($rules.Count -ne 1 -or $rules[0].IdentityReference.Value -ne $sid.Value -or $rules[0].AccessControlType -ne [System.Security.AccessControl.AccessControlType]::Allow -or $rules[0].FileSystemRights -ne [System.Security.AccessControl.FileSystemRights]::FullControl) { exit 2 }
+    if ($rules.Count -ne 1 -or $rules[0].IdentityReference.Value -ne $sid.Value -or $rules[0].AccessControlType -ne [System.Security.AccessControl.AccessControlType]::Allow -or $rules[0].FileSystemRights -ne [System.Security.AccessControl.FileSystemRights]::FullControl) { exit 5 }
     exit 0
-} catch { exit 2 }
+} catch { exit $phase }

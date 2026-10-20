@@ -30,3 +30,23 @@ For owned process tests on Windows use the package-native Job Object supervisor 
 Reproduce the independent public synthetic protocol vectors with `node crates/nf-transport/tools/generate-peer-vectors.cjs --check`. The producer uses Node Buffer/crypto without importing production codecs. The fixture's fixed synthetic signing seeds are public test constants; installed user identities never enter these vectors.
 
 Hard parser limits and negotiated application admission are separate. PeerCodec checks its fixed hard lane frame limit before allocating a body; the foreground owner reapplies negotiated lower frame/chunk limits before record use/enqueue. Queue accounting counts exact encoded body bytes plus a separately documented four-byte framing prefix per item; typed objects and backend buffers are finite residuals, not a strict process heap budget. Maintained Yamux credit tests show backend control bytes progressing while bulk credit stalls, then bulk resuming after reads. The TCP/Noise same-client test proves concurrent protected query and bounded bulk progress; it does not claim that a normal one-request bulk application exhausted its receive window. Total RSS and the game's p99<=2ms bridge budget remain unmeasured.
+
+## Foreground retained receipt watch
+
+Build the additional foreground binary with `cargo build -p nf-transport --bin nf-portal --locked --offline`. Its operator forms are:
+
+`nf-portal init-book <existing-vault> <saves-root> <existing-database> <config>`
+
+`nf-portal serve <existing-vault> <saves-root> <existing-database> <config> <duration-ms>`
+
+`nf-portal watch <existing-vault> <saves-root> <existing-database> <config> <slot> <duration-ms>`
+
+Duration is500..60000 milliseconds and slot is0..7. Book initialization is an explicit trusted owner action that writes the configured immutable originals and prints their book anchors; it is not a strategic submission command. Watch loads that same configured original and exact anchor, performs authenticated retained lookup, and never resubmits the original operation. A sole repository owner drives separate receipt, bulk and notification physical Swarms. Current durable membership, trusted endpoint pins and externally retained minima remain authorization inputs.
+
+Portal config is a separate closed, ordered ASCII `NF-PORTAL-CONFIG-1` format with a trailing newline, at most16384 bytes. It binds mode, scope, policy hashes, current local and server identities/minima, lane addresses and bounded original/anchor rows; it is not the peer config above. The exact admitted format is defined by [the Portal parser](../../crates/nf-transport/src/portal/config/parser.rs) and [row schema](../../crates/nf-transport/src/portal/config/rows.rs). Existing identity/database provisioning remains required; missing private identity is never regenerated.
+
+The server prints `NF_PORTAL_READY` only after all three listeners exist. Watch prints one correlated `NF_PORTAL_STATUS` for an admitted status, including original request, operation, binding and current frontiers, or a closed `NF_PORTAL_UNSUPPORTED` reason. Both finite owners print `NF_PORTAL_ENDED` on normal completion. Notification dirtiness triggers another authenticated retained lookup rather than an execution or outbox acknowledgement.
+
+`serve-staged` and `watch-staged` append one explicit start-file argument to their corresponding forms. They publish `NF_PORTAL_PREPARED` before a bounded30-second inert operator wait; the start file supplies exactly three addresses under a closed `NF-PORTAL-START-1`/`END` frame. No live owner exists during that preparation, and the wait does not renew a started owner deadline. Paths and regular-file/reparse checks follow the cooperative operator filesystem lifecycle, not an atomic defense against same-owner replacement.
+
+This is headless retained observation. It installs no game hook, semantic snapshot, remote command executor or Pub/Sub route, and grants no native-game capability.
