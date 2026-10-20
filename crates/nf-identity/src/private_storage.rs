@@ -1,3 +1,7 @@
+pub use crate::private_diagnostics::{
+    HelperCause, HelperDiagnostic, HelperExitStage, HelperKind, HelperStep, PrivateCause,
+    PrivateDiagnostic, PrivateFailure, PrivateOperation, PrivateResult, PrivateStage,
+};
 use crate::{keys::SecretSeed, model::*};
 use nf_contract::identity::{AccountId, DeviceId};
 use sha2::{Digest, Sha256};
@@ -325,3 +329,5 @@ fn private_access_diagnosed(_path: &Path, initialize: bool) -> Result<(), Privat
         PrivateStorageReason::UnsupportedPlatform,
     ))
 }
+
+pub use crate::protected_blob_scope::ProtectedBlobScope;

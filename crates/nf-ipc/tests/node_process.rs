@@ -42,7 +42,7 @@ fn foreground_node_discovers_attaches_queries_readonly_and_restarts_with_fresh_s
     let saves = root.join("saves");
     fs::create_dir(&saves).unwrap();
     let vault_path = root.join("vault");
-    let vault = PrivateVault::create(&vault_path, &saves).unwrap();
+    let vault = PrivateVault::create_detailed(&vault_path, &saves).unwrap();
     let mut old_session = None;
     for iteration in 0..2 {
         let name = format!("ipc-run-{iteration}");

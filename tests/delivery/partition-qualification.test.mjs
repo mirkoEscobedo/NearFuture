@@ -5,7 +5,8 @@ import test from 'node:test';
 
 function successfulJobs() {
     return Object.fromEntries([
-        'public-build', 'public-rust', 'windows-interop', 'release-build', 'profile-smoke',
+        'public-build', 'public-rust', 'critical-io-contracts', 'critical-transport-contracts',
+        'windows-interop', 'release-build', 'profile-smoke',
     ].map(name => [name, { result: 'success' }]));
 }
 
@@ -26,6 +27,17 @@ test('the named profile requires the separately executed Rust matrix', () => {
     assert.equal(qualifyProfile(missing).status, 1, 'Missing Rust execution cannot qualify');
     for (const result of ['failure', 'cancelled', 'skipped', 'queued', undefined]) {
         assert.equal(qualifyProfile({ ...successfulJobs(), 'public-rust': { result } }).status, 1);
+    }
+});
+
+test('identity and every transport partition must complete before the profile qualifies', () => {
+    for (const name of ['critical-io-contracts', 'critical-transport-contracts']) {
+        const missing = successfulJobs();
+        delete missing[name];
+        assert.equal(qualifyProfile(missing).status, 1);
+        for (const result of ['failure', 'cancelled', 'skipped', 'queued', undefined]) {
+            assert.equal(qualifyProfile({ ...successfulJobs(), [name]: { result } }).status, 1);
+        }
     }
 });
 
