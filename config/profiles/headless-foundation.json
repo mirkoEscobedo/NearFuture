@@ -5,7 +5,7 @@
   "platforms": ["ubuntu-latest", "windows-latest"],
   "required_jobs": ["public-build", "public-rust", "windows-interop", "release-build", "profile-smoke"],
   "required_check": "headless-qualification",
-  "accepted_paths": ["build-identity", "synthetic-contracts", "java-rust-interop", "linux-sync-fault-recovery", "private-storage-diagnostics", "proxy-observation-parser", "membership-signing-key-rotation", "performance-report-consistency"],
+  "accepted_paths": ["build-identity", "synthetic-contracts", "java-rust-interop", "linux-sync-fault-recovery", "private-storage-diagnostics", "proxy-observation-parser", "membership-signing-key-rotation", "performance-report-consistency", "replica-budget-contracts"],
   "enabled_capabilities": ["build-identity"],
   "disabled_capabilities": ["game-lifecycle", "local-shadow", "native-writer", "peer-runtime", "chat-runtime", "managed-upgrade"],
   "persistence": {
