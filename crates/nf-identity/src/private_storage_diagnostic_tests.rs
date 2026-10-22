@@ -24,6 +24,11 @@ fn child_phase_failure_retains_only_closed_progress_and_legacy_error() {
             admission: PhaseAdmission::Prepared,
             read: PhaseRead::Observed,
         },
+        writer_health: super::super::writer_health::HelperHealthObservation {
+            observation: super::super::writer_health::FirstWriterHealth::FirstFailed,
+            admission: super::super::writer_health::HealthAdmission::Prepared,
+            read: PhaseRead::Observed,
+        },
     });
     assert_eq!(
         failure.helper.unwrap().child_phase,
@@ -33,6 +38,7 @@ fn child_phase_failure_retains_only_closed_progress_and_legacy_error() {
         }
     );
     let rendered = format!("{failure:?}");
+    assert!(rendered.contains("FirstFailed"));
     for private in [
         "PRIVATE_PATH_SENTINEL",
         "SID_SENTINEL",

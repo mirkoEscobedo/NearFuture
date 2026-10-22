@@ -15,6 +15,8 @@ mod diagnostics;
 #[cfg(all(test, windows))]
 #[path = "private_storage_helper_phase_tests.rs"]
 mod helper_phase_tests;
+#[path = "private_storage_writer_health.rs"]
+mod writer_health;
 pub use child_phase::{
     ChildPhaseObservation, HelperPhase, PhaseAdmission, PhaseAdmissionFailure,
     PhaseCaptureObservation, PhaseRead, PhaseReadFailure,
@@ -23,6 +25,7 @@ pub use diagnostics::{
     HelperCleanup, HelperObservation, PrivateStorageFailure, PrivateStorageReason,
     PrivateStorageStage, StorageIoFailure,
 };
+pub use writer_health::{FirstWriterHealth, HealthAdmission, HelperHealthObservation};
 
 pub struct PrivateVault {
     pub(crate) root: PathBuf,
@@ -211,6 +214,7 @@ fn private_access_diagnosed(
     // Observation preparation is best effort and outside both protected roots.
     let (mut phases, phase_admission) =
         child_phase::PhaseSidecar::prepare_captured(path, save_root);
+    let (mut health, health_admission) = writer_health::prepare(path, save_root, phases.is_some());
     let mut command = Command::new("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe");
     command
         .args([
@@ -229,6 +233,9 @@ fn private_access_diagnosed(
     }
     if let Some(phases) = phases.as_ref() {
         command.arg("-PhasePath").arg(phases.path());
+    }
+    if let Some(health) = health.as_ref() {
+        command.arg("-HealthPath").arg(health.path());
     }
     let started = Instant::now();
     let spawned = command
@@ -253,6 +260,7 @@ fn private_access_diagnosed(
                     admission: phase_admission,
                     read: PhaseRead::NotAttempted,
                 },
+                writer_health: HelperHealthObservation::not_attempted(health_admission),
             });
             return Err(failure);
         }
@@ -283,6 +291,7 @@ fn private_access_diagnosed(
                         admission: phase_admission,
                         read,
                     },
+                    writer_health: writer_health::observe(health.as_mut(), health_admission, true),
                 });
                 return Err(failure);
             }
@@ -321,6 +330,11 @@ fn private_access_diagnosed(
             admission: phase_admission,
             read,
         },
+        writer_health: writer_health::observe(
+            health.as_mut(),
+            health_admission,
+            terminal_confirmed,
+        ),
     });
     Err(refusal)
 }

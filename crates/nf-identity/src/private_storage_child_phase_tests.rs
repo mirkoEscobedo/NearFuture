@@ -3,6 +3,9 @@ use super::*;
 #[path = "private_storage_capture_tests.rs"]
 mod capture;
 
+#[path = "private_storage_writer_health_tests.rs"]
+mod writer_health;
+
 #[test]
 fn child_phase_observation_unavailable_never_creates_inside_protected_roots() {
     let fixture = PhaseFixture::new();
