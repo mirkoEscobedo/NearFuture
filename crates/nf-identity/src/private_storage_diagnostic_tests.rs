@@ -2,7 +2,9 @@ use super::*;
 
 #[test]
 fn child_phase_failure_retains_only_closed_progress_and_legacy_error() {
-    use super::super::child_phase::{ChildPhaseObservation, HelperPhase};
+    use super::super::child_phase::{
+        ChildPhaseObservation, HelperPhase, PhaseAdmission, PhaseCaptureObservation, PhaseRead,
+    };
     let source = io::Error::other("PRIVATE_PATH_SENTINEL SID_SENTINEL EXCEPTION_SENTINEL");
     let mut failure = PrivateStorageFailure::with_io(
         PrivateStorageStage::InitializeAcl,
@@ -17,6 +19,10 @@ fn child_phase_failure_retains_only_closed_progress_and_legacy_error() {
         child_phase: ChildPhaseObservation::Observed {
             last: HelperPhase::BeforeGetAcl,
             records: 5,
+        },
+        phase_capture: PhaseCaptureObservation {
+            admission: PhaseAdmission::Prepared,
+            read: PhaseRead::Observed,
         },
     });
     assert_eq!(

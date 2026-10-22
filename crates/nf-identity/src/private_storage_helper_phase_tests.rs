@@ -1,5 +1,8 @@
 //! Real PS5.1 qualification. Selected separately from the pure child_phase filter.
-use super::{ChildPhaseObservation, HelperPhase, PrivateStorageReason, private_access_diagnosed};
+use super::{
+    ChildPhaseObservation, HelperPhase, PhaseAdmission, PhaseCaptureObservation, PhaseRead,
+    PrivateStorageReason, private_access_diagnosed,
+};
 use crate::{model::IdentityError, owned_process::OwnedChild};
 use std::{
     fs,
@@ -78,11 +81,20 @@ fn real_helper_phase_contract_refuses_then_initializes_with_closed_progress() {
         }
     );
     assert_eq!(refused.legacy(), IdentityError::PrivateStorage);
+    assert_eq!(
+        helper.phase_capture,
+        PhaseCaptureObservation {
+            admission: PhaseAdmission::Prepared,
+            read: PhaseRead::Observed,
+        }
+    );
 
     // Same pinned helper/arguments and existing OwnedChild, now initialize and inspect its
     // parent-created sidecar after actual natural terminal. No replacement helper/framework.
-    let mut phases = super::child_phase::PhaseSidecar::prepare(&vault, Some(&saves))
-        .expect("ordinary outside-roots phase file");
+    let (phases, admission) =
+        super::child_phase::PhaseSidecar::prepare_captured(&vault, Some(&saves));
+    assert_eq!(admission, PhaseAdmission::Prepared);
+    let mut phases = phases.expect("ordinary outside-roots phase file");
     let mut command = Command::new("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe");
     command
         .args([
@@ -115,13 +127,18 @@ fn real_helper_phase_contract_refuses_then_initializes_with_closed_progress() {
         if Instant::now() >= deadline {
             let cleanup = child.cleanup();
             let confirmed = cleanup.as_ref().is_some_and(|(_, waited)| waited.is_ok());
-            let progress = phases.observe_after_terminal(confirmed);
+            let progress = phases.observe_captured_after_terminal(confirmed);
             panic!("helper exceeded unchanged post-spawn bound; closed_progress={progress:?}");
         }
         std::thread::sleep(Duration::from_millis(10));
     };
-    let progress = phases.observe_after_terminal(true);
-    assert_eq!(status.code(), Some(0), "closed_progress={progress:?}");
+    let (progress, read) = phases.observe_captured_after_terminal(true);
+    assert_eq!(
+        status.code(),
+        Some(0),
+        "closed_progress={progress:?}; read={read:?}"
+    );
+    assert_eq!(read, PhaseRead::Observed);
     assert_eq!(
         progress,
         ChildPhaseObservation::Observed {

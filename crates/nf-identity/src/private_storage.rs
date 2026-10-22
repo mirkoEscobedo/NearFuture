@@ -15,7 +15,10 @@ mod diagnostics;
 #[cfg(all(test, windows))]
 #[path = "private_storage_helper_phase_tests.rs"]
 mod helper_phase_tests;
-pub use child_phase::{ChildPhaseObservation, HelperPhase};
+pub use child_phase::{
+    ChildPhaseObservation, HelperPhase, PhaseAdmission, PhaseAdmissionFailure,
+    PhaseCaptureObservation, PhaseRead, PhaseReadFailure,
+};
 pub use diagnostics::{
     HelperCleanup, HelperObservation, PrivateStorageFailure, PrivateStorageReason,
     PrivateStorageStage, StorageIoFailure,
@@ -206,7 +209,8 @@ fn private_access_diagnosed(
         ));
     }
     // Observation preparation is best effort and outside both protected roots.
-    let mut phases = child_phase::PhaseSidecar::prepare(path, save_root);
+    let (mut phases, phase_admission) =
+        child_phase::PhaseSidecar::prepare_captured(path, save_root);
     let mut command = Command::new("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe");
     command
         .args([
@@ -245,6 +249,10 @@ fn private_access_diagnosed(
                 exit_code: None,
                 cleanup: None,
                 child_phase: ChildPhaseObservation::Unknown,
+                phase_capture: PhaseCaptureObservation {
+                    admission: phase_admission,
+                    read: PhaseRead::NotAttempted,
+                },
             });
             return Err(failure);
         }
@@ -260,15 +268,21 @@ fn private_access_diagnosed(
                     return Ok(());
                 }
                 let mut failure = PrivateStorageFailure::new(stage, PrivateStorageReason::Exit);
+                let poll_micros = poll_started.elapsed().as_micros();
+                let (child_phase, read) = phases
+                    .as_mut()
+                    .map(|phases| phases.observe_captured_after_terminal(true))
+                    .unwrap_or((ChildPhaseObservation::Unknown, PhaseRead::NotAttempted));
                 failure.helper = Some(HelperObservation {
                     spawn_micros,
-                    poll_micros: Some(poll_started.elapsed().as_micros()),
+                    poll_micros: Some(poll_micros),
                     exit_code: status.code(),
                     cleanup: None,
-                    child_phase: phases
-                        .as_mut()
-                        .map(|phases| phases.observe_after_terminal(true))
-                        .unwrap_or(ChildPhaseObservation::Unknown),
+                    child_phase,
+                    phase_capture: PhaseCaptureObservation {
+                        admission: phase_admission,
+                        read,
+                    },
                 });
                 return Err(failure);
             }
@@ -293,15 +307,20 @@ fn private_access_diagnosed(
     let terminal_confirmed = cleanup
         .as_ref()
         .is_some_and(|cleanup| cleanup.wait_result.is_ok());
+    let (child_phase, read) = phases
+        .as_mut()
+        .map(|phases| phases.observe_captured_after_terminal(terminal_confirmed))
+        .unwrap_or((ChildPhaseObservation::Unknown, PhaseRead::NotAttempted));
     refusal.helper = Some(HelperObservation {
         spawn_micros,
         poll_micros: Some(poll_micros),
         exit_code: None,
         cleanup,
-        child_phase: phases
-            .as_mut()
-            .map(|phases| phases.observe_after_terminal(terminal_confirmed))
-            .unwrap_or(ChildPhaseObservation::Unknown),
+        child_phase,
+        phase_capture: PhaseCaptureObservation {
+            admission: phase_admission,
+            read,
+        },
     });
     Err(refusal)
 }

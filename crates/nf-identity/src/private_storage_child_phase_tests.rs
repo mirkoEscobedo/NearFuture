@@ -1,5 +1,8 @@
 use super::*;
 
+#[path = "private_storage_capture_tests.rs"]
+mod capture;
+
 #[test]
 fn child_phase_observation_unavailable_never_creates_inside_protected_roots() {
     let fixture = PhaseFixture::new();
