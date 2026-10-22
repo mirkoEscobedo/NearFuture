@@ -135,7 +135,7 @@ function admitCatalog(budget) {
       fail('Bounds');
     total += item.bytes;
   }
-  if (total !== 6754 || total > 65536) fail('Bounds');
+  if (total !== 6794 || total > 65536) fail('Bounds');
   budget.check();
 }
 /** @param {(typeof registeredFiles)[number]} item @param {Budget} budget

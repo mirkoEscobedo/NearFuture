@@ -47,12 +47,20 @@ credited from an ordinary ignored/skipped result.
 The merge retains #94's `PrivateVault::create_diagnosed` fixture call. Seventy-five
 non-workflow files changed by source91 remain exact source blobs; the workflow
 is composed with current strict qualification. Five runtime-observer catalog
-and oracle files admit the inspected current public manifest (2830 bytes,
-SHA-256 `12cce1f04b2cc31e02729451c6073003c2442489a31b843b828d409f700b2cb3`).
+and oracle files admit the inspected current public manifest (2870 bytes,
+SHA-256 `3372b25671e1e9c068777435daf941fa03912ae9c398f906de4142049d311adc`).
 Its known delivery/proxy test and profile command additions replace the older
 manifest pin. Exact body/hash checks and the 65536-byte ceiling remain intact;
-the exact three-file total is 6754 bytes. Independent fixture/golden literals
-are updated without using the production encoder. PR90's reader changes add the
+the exact three-file total is 6794 bytes. Independent fixture/golden literals
+are updated without using the production encoder. The #98 composition also
+retains the required Nex reproducibility test registration. Its 40 added manifest
+bytes replace the earlier #104 pin (2830 bytes; three-file total 6754). The static
+golden remains 1603 bytes, SHA-256
+`a486cbc37f272dfcc5063ba27a8003a0c92461d42049531d7c4a84a33a5180fd`.
+`tests/runtime-manifest/runtime-catalog-consistency.test.mjs` reads the selected
+source bytes and checks the production catalog, independent fixture and golden
+pins during ordinary discovery, without invoking the observer or changing any
+expectations. The caller-owned bounded observer case remains separately required. PR90's reader changes add the
 restore API while preserving its original read-only connection and test; PR83's
 CLI adds explicit restoration/support arguments and retained status cases.
 

@@ -1,0 +1,10 @@
+ascending|high,40400000,false,true,false,false,N;low,3f800000,false,true,false,false,N;fourth,40800000,false,true,false,false,U;middle,40000000,false,true,false,false,N
+skips|recent,00000000,true,false,true,true,U;cannot,3f800000,false,false,true,true,U;commission,40000000,false,true,true,true,U;offensive,40400000,false,true,false,true,U;one,40800000,false,true,false,false,N;two,40a00000,false,true,false,false,N;three,40c00000,false,true,false,false,N;unreached,40e00000,false,true,false,false,U
+early_return|null,00000000,false,true,false,false,N;returned,3f800000,false,true,false,false,R;unreached,40000000,false,true,false,false,U
+signed_nan|nan_first,ffc00002,true,true,false,false,U;positive_zero,00000000,true,true,false,false,U;positive_infinity,7f800000,true,true,false,false,U;negative_zero,80000000,true,true,false,false,U;negative_infinity,ff800000,true,true,false,false,U;finite,3f800000,true,true,false,false,U;nan_second,7fc00001,true,true,false,false,U
+finite_ties|zeta,3f800000,true,true,false,false,U;alpha,3f800000,true,true,false,false,U
+duplicates|repeat,00000000,false,true,false,false,N;repeat,00000000,false,true,false,false,N;returned,3f800000,false,true,false,false,R
+empty|-
+missing|missing,00000000,false,true,false,false,U
+skipped_missing|skipped,00000000,true,true,false,false,U
+unreached_missing|returned,00000000,false,true,false,false,R;unreached,3f800000,false,true,false,false,U

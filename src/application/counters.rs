@@ -8,7 +8,7 @@ pub(super) struct Counts {
     pub unavailable: u64,
     pub matched: u64,
     pub mismatched: u64,
-    pub facets: [u64; 6],
+    pub facets: [u64; 16],
     pub failures: u64,
     pub revocations: u64,
 }
@@ -23,6 +23,16 @@ pub(super) fn index(value: Difference) -> usize {
         Difference::Decision => 3,
         Difference::Draws => 4,
         Difference::Effects => 5,
+        Difference::FirstConcernKind => 6,
+        Difference::FirstConcernLifecycle => 7,
+        Difference::FirstConcernPriority => 8,
+        Difference::FirstEligibilityKind => 9,
+        Difference::FirstEligibilityDecision => 10,
+        Difference::FirstActionPriority => 11,
+        Difference::FirstProposalKind => 12,
+        Difference::FirstProposalDecision => 13,
+        Difference::FirstProposalDraws => 14,
+        Difference::FirstProposalEffects => 15,
     }
 }
 impl Counts {

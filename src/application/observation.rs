@@ -117,8 +117,18 @@ impl ProducerObservationV1 {
             Difference::Decision,
             Difference::Draws,
             Difference::Effects,
+            Difference::FirstConcernKind,
+            Difference::FirstConcernLifecycle,
+            Difference::FirstConcernPriority,
+            Difference::FirstEligibilityKind,
+            Difference::FirstEligibilityDecision,
+            Difference::FirstActionPriority,
+            Difference::FirstProposalKind,
+            Difference::FirstProposalDecision,
+            Difference::FirstProposalDraws,
+            Difference::FirstProposalEffects,
         ];
-        let mut records = Vec::with_capacity(8);
+        let mut records = Vec::with_capacity(18);
         for (difference, count) in differences.into_iter().zip(counts.facets) {
             if count != 0 {
                 let (code, difference) = facet(difference);
@@ -204,6 +214,28 @@ fn facet(difference: Difference) -> (RegisteredProducerCodeV1, Difference) {
         Difference::Decision => RegisteredProducerCodeV1::NexDecisionMismatch,
         Difference::Draws => RegisteredProducerCodeV1::NexDrawsMismatch,
         Difference::Effects => RegisteredProducerCodeV1::NexEffectsMismatch,
+        Difference::FirstConcernKind => RegisteredProducerCodeV1::NexFirstConcernKindMismatch,
+        Difference::FirstConcernLifecycle => {
+            RegisteredProducerCodeV1::NexFirstConcernLifecycleMismatch
+        }
+        Difference::FirstConcernPriority => {
+            RegisteredProducerCodeV1::NexFirstConcernPriorityMismatch
+        }
+        Difference::FirstEligibilityKind => {
+            RegisteredProducerCodeV1::NexFirstEligibilityKindMismatch
+        }
+        Difference::FirstEligibilityDecision => {
+            RegisteredProducerCodeV1::NexFirstEligibilityDecisionMismatch
+        }
+        Difference::FirstActionPriority => RegisteredProducerCodeV1::NexFirstActionPriorityMismatch,
+        Difference::FirstProposalKind => RegisteredProducerCodeV1::NexFirstProposalKindMismatch,
+        Difference::FirstProposalDecision => {
+            RegisteredProducerCodeV1::NexFirstProposalDecisionMismatch
+        }
+        Difference::FirstProposalDraws => RegisteredProducerCodeV1::NexFirstProposalDrawsMismatch,
+        Difference::FirstProposalEffects => {
+            RegisteredProducerCodeV1::NexFirstProposalEffectsMismatch
+        }
     };
     (code, difference)
 }
