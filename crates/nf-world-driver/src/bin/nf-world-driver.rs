@@ -1,4 +1,4 @@
-use nf_world_driver::{Command, Driver, DriverError, parse_command};
+use nf_world_driver::{Command, Driver, DriverError, parse_command, project_miniature_status};
 use std::{io::Write, process::ExitCode};
 fn main() -> ExitCode {
     match execute() {
@@ -31,9 +31,42 @@ fn execute() -> Result<(), DriverError> {
             .map_err(|_| DriverError::Io);
     }
     let command = parse_command(&args).map_err(|_| DriverError::InvalidCommand)?;
+    let redacted = matches!(&command, Command::StatusRedacted(_));
     let snapshot = match command {
         Command::Create(options) => Driver::create(*options)?.status()?,
         Command::Status(options) => Driver::read_status(options)?,
+        Command::StatusRedacted(options) => Driver::read_only_status(options)?.snapshot().clone(),
+        Command::SupportPreview(options) => {
+            let reader = Driver::read_only_status(options)?;
+            let output = nf_world_driver::preview_miniature_support(reader.snapshot())
+                .map_err(|_| DriverError::Limit)?;
+            return std::io::stdout()
+                .lock()
+                .write_all(output.as_str().as_bytes())
+                .map_err(|_| DriverError::Io);
+        }
+        Command::RestoreIsolated(options) => {
+            let reader = nf_store::miniature::MiniatureReader::restore_backup_to_new_path(
+                options.backup,
+                options.destination,
+                options.protected,
+                options.confirmation,
+            )?;
+            // Qualification is the maintained API guarantee. Reader Drop has
+            // no fallible close receipt and grants no writer or active authority.
+            drop(reader);
+            return std::io::stdout()
+                .lock()
+                .write_all(
+                    concat!(
+                        "{\"format\":\"NF-OPERATOR-ISOLATED-RESTORE-1\",",
+                        "\"result\":\"new_read_only_copy\",\"store_profile\":\"profile2\",",
+                        "\"activation\":\"unavailable\"}"
+                    )
+                    .as_bytes(),
+                )
+                .map_err(|_| DriverError::Io);
+        }
         Command::Step(options) => {
             use nf_store::miniature::{MiniatureCancelCause, MiniatureRequestStatus};
             use nf_world_driver::{ActionRequest, PendingPolicy};
@@ -81,6 +114,13 @@ fn execute() -> Result<(), DriverError> {
             driver.status()?
         }
     };
+    if redacted {
+        let output = project_miniature_status(&snapshot).map_err(|_| DriverError::Limit)?;
+        return std::io::stdout()
+            .lock()
+            .write_all(output.as_str().as_bytes())
+            .map_err(|_| DriverError::Io);
+    }
     let g = snapshot.world.component().genesis();
     let m = snapshot.world.metadata();
     let hash = nf_kernel::miniature::miniature_state_hash(&snapshot.world)

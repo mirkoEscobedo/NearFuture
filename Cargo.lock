@@ -2009,6 +2009,9 @@ name = "near-future"
 version = "0.1.0"
 dependencies = [
  "nf-contract",
+ "nf-identity",
+ "nf-nex-boundary",
+ "nf-nex-shadow",
 ]
 
 [[package]]
@@ -2117,6 +2120,7 @@ name = "nf-nex-shadow"
 version = "0.1.0"
 dependencies = [
  "nf-contract",
+ "nf-identity",
  "nf-nex-boundary",
  "sha2 0.10.9",
 ]
@@ -2183,6 +2187,7 @@ dependencies = [
  "nf-kernel",
  "nf-store",
  "nf-world",
+ "rusqlite",
  "sha2 0.10.9",
  "zeroize",
 ]

@@ -3,8 +3,8 @@ mod pacing;
 pub use pacing::{DueHint, Pacer, PacingError};
 mod command;
 pub use command::{
-    ActionSelection, Command, CommandError, CreateOptions, OpenOptions, PendingPolicy, RunOptions,
-    SignerOptions, StepOptions, command_help, parse_command,
+    ActionSelection, Command, CommandError, CreateOptions, IsolatedRestoreOptions, OpenOptions,
+    PendingPolicy, RunOptions, SignerOptions, StepOptions, command_help, parse_command,
 };
 mod signer;
 pub use signer::{SignerError, VaultSigner};
@@ -23,5 +23,12 @@ pub use actors::ActorRequest;
 mod run_budget;
 #[cfg(test)]
 extern crate self as nf_world_driver;
+mod operator_status;
 #[cfg(test)]
 mod run_budget_tests;
+pub use operator_status::{
+    RedactedMiniatureStatusV1, StatusProjectionError, project_miniature_status,
+};
+
+mod operator_support;
+pub use operator_support::{RedactedMiniatureSupportPreviewV1, preview_miniature_support};

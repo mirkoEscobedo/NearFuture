@@ -23,6 +23,14 @@ pub struct ImmutableSnapshot {
     digest: [u8; 32],
 }
 impl ImmutableSnapshot {
+    pub(crate) fn from_recovered(state: &State, revision: u64) -> Result<Self> {
+        let bytes = codec::encode(state)?;
+        Ok(Self {
+            revision,
+            digest: hash(&bytes),
+            bytes,
+        })
+    }
     pub fn revision(&self) -> u64 {
         self.revision
     }
