@@ -49,6 +49,7 @@ public final class OwnedNodeConnection implements AutoCloseable {
         OwnedNodeConnection owned = null;
         Process spawned = null;
         boolean transferred = false;
+        NodeFailure.StartupDetail startupDetail = NodeFailure.StartupDetail.EXECUTABLE_IO;
         try {
             verifyExecutable(launch, current, deadline);
             requireCurrent(current, deadline);
@@ -58,11 +59,13 @@ public final class OwnedNodeConnection implements AutoCloseable {
                 hex(scope.universe()), hex(scope.history()), hex(scope.ruleset()), hex(scope.content()),
                 hex(scope.principal().getAccountId().getValue()), hex(scope.principal().getDeviceId().getValue()),
                 Long.toString(launch.durationMillis()));
+            startupDetail = NodeFailure.StartupDetail.CHILD_START_IO;
             spawned = new ProcessBuilder(command)
                 .redirectInput(ProcessBuilder.Redirect.PIPE).redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectError(ProcessBuilder.Redirect.DISCARD).start();
             owned = new OwnedNodeConnection(spawned, current);
             owned.delayHandoff(faults, deadline);
+            startupDetail = NodeFailure.StartupDetail.ACTIVATION_IO;
             owned.activate(launch.scope(), deadline);
             transferred = true;
             return owned;
@@ -70,8 +73,10 @@ public final class OwnedNodeConnection implements AutoCloseable {
             throw failure;
         } catch (AuthFailure rejected) {
             throw new NodeFailure(NodeFailure.Code.AUTHENTICATION);
-        } catch (IOException | NoSuchAlgorithmException failure) {
-            throw new NodeFailure(NodeFailure.Code.STARTUP);
+        } catch (IOException failure) {
+            throw new NodeFailure(startupDetail);
+        } catch (NoSuchAlgorithmException failure) {
+            throw new NodeFailure(NodeFailure.StartupDetail.EXECUTABLE_ALGORITHM);
         } catch (RuntimeException failure) {
             throw new NodeFailure(NodeFailure.Code.PROTOCOL);
         } finally {

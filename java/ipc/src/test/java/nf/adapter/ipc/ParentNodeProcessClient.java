@@ -11,7 +11,7 @@ public final class ParentNodeProcessClient {
     private ParentNodeProcessClient() { }
     public static void main(String[] args) {
         try { run(args); System.out.println("PARENT_NODE_AUTH_SHUTDOWN_OK"); }
-        catch (NodeFailure failure) { System.err.println("PARENT_OWNER_FAILED: " + failure.code().name()); System.exit(1); }
+        catch (NodeFailure failure) { System.err.println("PARENT_OWNER_FAILED: " + failure.getMessage()); System.exit(1); }
         catch (Exception failure) { System.err.println("PARENT_OWNER_FAILED: INVALID"); System.exit(1); }
     }
     private static void run(String[] args) throws InterruptedException {
@@ -35,6 +35,27 @@ public final class ParentNodeProcessClient {
         if (args[4].equals("handoff-delay")) { DiagnosticHandoffProcessScenario.run(launch); return; }
         if (args[4].equals("handoff-cancel") || args[4].equals("handoff-interrupt")) {
             DiagnosticHandoffCancellationScenario.run(launch, args[4].equals("handoff-interrupt")); return;
+        }
+        if (args[4].equals("unlaunchable")) {
+            try (OwnedNodeConnection unexpected = OwnedNodeConnection.open(launch, () -> true)) {
+                unexpected.runtimeSession();
+                throw new AssertionError("invalid executable unexpectedly activated");
+            } catch (NodeFailure refused) {
+                if (refused.code() != NodeFailure.Code.STARTUP) {
+                    throw new AssertionError("unlaunchable executable must fail startup");
+                }
+                if (Files.exists(launch.vault().resolve("blob-java-parent-owner"))
+                        || ProcessHandle.current().children().anyMatch(child -> child.info().command()
+                            .map(command -> Path.of(command).equals(launch.executable())).orElse(false))) {
+                    throw new AssertionError("unlaunchable startup left publication or owned child");
+                }
+                if (!"STARTUP CHILD_START_IO".equals(refused.getMessage())
+                        || refused.getMessage().length() > 64
+                        || refused.getCause() != null || refused.getSuppressed().length != 0) {
+                    throw new AssertionError("startup refusal must retain closed CHILD_START_IO");
+                }
+            }
+            return;
         }
         if (args[4].equals("wrong-pin") || args[4].equals("cancelled-before")) {
             NodeFailure.Code expected = args[4].equals("wrong-pin") ? NodeFailure.Code.PIN : NodeFailure.Code.CANCELLED;

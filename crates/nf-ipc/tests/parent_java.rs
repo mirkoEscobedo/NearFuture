@@ -2,6 +2,7 @@ use nf_identity::private_storage::PrivateVault;
 use sha2::{Digest, Sha256};
 use std::{
     fs,
+    io::Write,
     path::PathBuf,
     process::{Child, Command, Stdio},
     time::{Duration, Instant},
@@ -71,6 +72,21 @@ fn run_client(mode: &str) {
             "benign fixture compilation failed: {}",
             String::from_utf8_lossy(&output.stderr)
         );
+        target
+    } else if mode == "unlaunchable" {
+        let target = root.join("unlaunchable-parent.exe");
+        let mut options = fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut fixture = options.open(&target).unwrap();
+        fixture
+            .write_all(b"NF_IPC_UNLAUNCHABLE_FIXTURE_V1\n")
+            .unwrap();
+        drop(fixture);
         target
     } else {
         executable
@@ -229,4 +245,10 @@ fn java_default_startup_options_emit_no_worker_fault_events() {
 #[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
 fn java_handoff_delay_consumes_original_stalled_child_startup_budget() {
     run_client("stalled-handoff-budget");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_background_owner_reports_closed_startup_stage_for_unlaunchable_executable() {
+    run_client("unlaunchable");
 }
