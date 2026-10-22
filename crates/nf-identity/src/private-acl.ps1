@@ -64,7 +64,7 @@ if ($bodyPublished -and $script:FirstPhaseAttempted) {
 }
 $ErrorActionPreference = 'Stop'
 try {
-    Import-Module -Name (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Security/Microsoft.PowerShell.Security.psd1') -ErrorAction Stop
+    Import-Module -Name ([IO.Path]::Combine($PSHOME,'Modules/Microsoft.PowerShell.Security/Microsoft.PowerShell.Security.psd1')) -ErrorAction Stop
     Write-PrivateAclPhase 'SECURITY_MODULE_READY'
     $item = Get-Item -LiteralPath $PrivatePath -Force
     if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { Write-PrivateAclPhase 'REFUSED'; exit 2 }
