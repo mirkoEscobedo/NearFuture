@@ -1,6 +1,37 @@
-param([Parameter(Mandatory=$true)][string]$PrivatePath,[switch]$Initialize,[string]$PhasePath = '')
+param([Parameter(Mandatory=$true)][string]$PrivatePath,[switch]$Initialize,[string]$PhasePath = '',[string]$HealthPath = '')
 $script:PhaseSequence = 0
 $script:PhaseBytes = 0
+$script:FirstPhaseAttempted = $false
+$script:FirstPhasePublished = $false
+$script:HealthSequence = 0
+$script:HealthBytes = 0
+function Write-PrivateAclHealth([string]$Health) {
+    $stream = $null
+    try {
+        if ([string]::IsNullOrEmpty($HealthPath)) { return $false }
+        if ([string]::IsNullOrEmpty($PhasePath) -or ![IO.File]::Exists($PhasePath) -or
+            [IO.Path]::GetFileName($PhasePath) -cnotmatch '^\.nf-acl-phase-[a-f0-9]{32}\.tmp$') { return $false }
+        if ([string]::IsNullOrEmpty($HealthPath) -or $HealthPath -ieq $PhasePath -or
+            [IO.Path]::GetFileName($HealthPath) -cnotmatch '^\.nf-acl-phase-[a-f0-9]{32}\.tmp$') { return $false }
+        if (!(($script:HealthSequence -eq 0 -and $Health -ceq 'BODY') -or
+            ($script:HealthSequence -eq 1 -and @('FIRST_PUBLISHED','FIRST_FAILED') -ccontains $Health))) { return $false }
+        $next = $script:HealthSequence + 1
+        $bytes = [Text.Encoding]::ASCII.GetBytes(('NFACLH1|' + $next + '|' + $Health + [char]10))
+        if ($script:HealthBytes + $bytes.Length -gt 64) { return $false }
+        $stream = [IO.File]::Open($HealthPath,[IO.FileMode]::Open,[IO.FileAccess]::Write,[IO.FileShare]::ReadWrite)
+        if ($stream.Length -ne $script:HealthBytes) { return $false }
+        $null = $stream.Seek(0,[IO.SeekOrigin]::End)
+        $stream.Write($bytes,0,$bytes.Length)
+        $stream.Flush()
+        $script:HealthSequence = $next
+        $script:HealthBytes += $bytes.Length
+        return $true
+    } catch {
+        return $false # This independent observation never changes the ACL result.
+    } finally {
+        if ($null -ne $stream) { try { $stream.Dispose() } catch {} }
+    }
+}
 function Write-PrivateAclPhase([string]$Phase) {
     $stream = $null
     try {
@@ -10,6 +41,7 @@ function Write-PrivateAclPhase([string]$Phase) {
         $next = $script:PhaseSequence + 1
         $bytes = [Text.Encoding]::ASCII.GetBytes(('NFACL1|' + $next + '|' + $Phase + [char]10))
         if ($script:PhaseBytes + $bytes.Length -gt 512) { return }
+        if ($Phase -ceq 'SCRIPT_BODY_ENTERED' -and $next -eq 1) { $script:FirstPhaseAttempted = $true }
         $stream = [IO.File]::Open($PhasePath,[IO.FileMode]::Open,[IO.FileAccess]::Write,[IO.FileShare]::ReadWrite)
         if ($stream.Length -ne $script:PhaseBytes) { return }
         $null = $stream.Seek(0,[IO.SeekOrigin]::End)
@@ -17,13 +49,19 @@ function Write-PrivateAclPhase([string]$Phase) {
         $stream.Flush()
         $script:PhaseSequence = $next
         $script:PhaseBytes += $bytes.Length
+        if ($Phase -ceq 'SCRIPT_BODY_ENTERED' -and $next -eq 1) { $script:FirstPhasePublished = $true }
     } catch {
         # Observation failure never changes the ACL result.
     } finally {
         if ($null -ne $stream) { try { $stream.Dispose() } catch {} }
     }
 }
+$bodyPublished = Write-PrivateAclHealth 'BODY'
 Write-PrivateAclPhase 'SCRIPT_BODY_ENTERED'
+if ($bodyPublished -and $script:FirstPhaseAttempted) {
+    $outcome = if ($script:FirstPhasePublished) { 'FIRST_PUBLISHED' } else { 'FIRST_FAILED' }
+    $null = Write-PrivateAclHealth $outcome
+}
 $ErrorActionPreference = 'Stop'
 try {
     Import-Module -Name (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Security/Microsoft.PowerShell.Security.psd1') -ErrorAction Stop

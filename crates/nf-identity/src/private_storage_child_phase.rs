@@ -277,6 +277,12 @@ impl PhaseSidecar {
     }
 
     fn read_bounded(&mut self) -> Result<(ChildPhaseObservation, PhaseRead), PhaseReadFailure> {
+        self.read_bounded_bytes(512)
+            .map(|bytes| classify_bounded_read(&bytes))
+    }
+
+    /// The caller must establish the owned child's terminal state before reading.
+    pub(super) fn read_bounded_bytes(&mut self, limit: u64) -> Result<Vec<u8>, PhaseReadFailure> {
         let metadata = self
             .file
             .metadata()
@@ -284,7 +290,7 @@ impl PhaseSidecar {
         if !metadata.is_file() {
             return Err(PhaseReadFailure::NonRegular);
         }
-        if metadata.len() > 512 {
+        if metadata.len() > limit {
             return Err(PhaseReadFailure::Oversize);
         }
         self.file
@@ -292,10 +298,13 @@ impl PhaseSidecar {
             .map_err(|_| PhaseReadFailure::SeekUnavailable)?;
         let mut bytes = Vec::new();
         (&mut self.file)
-            .take(513)
+            .take(limit + 1)
             .read_to_end(&mut bytes)
             .map_err(|_| PhaseReadFailure::ReadUnavailable)?;
-        Ok(classify_bounded_read(&bytes))
+        if bytes.len() as u64 > limit {
+            return Err(PhaseReadFailure::Oversize);
+        }
+        Ok(bytes)
     }
 }
 

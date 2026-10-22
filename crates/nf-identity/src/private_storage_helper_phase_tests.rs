@@ -53,6 +53,9 @@ impl Drop for NativeFixture {
     }
 }
 
+#[path = "private_storage_helper_health_tests.rs"]
+mod health;
+
 #[test]
 fn real_helper_phase_contract_refuses_then_initializes_with_closed_progress() {
     let _serial = crate::owned_process::ACL_HELPER_TEST_LOCK
