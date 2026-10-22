@@ -15,6 +15,9 @@ import org.nearfuture.ipc.v1.LocalEndpointRole;
 final class DiagnosticLifecycleHandoffScenario {
     private DiagnosticLifecycleHandoffScenario() { }
 
+    enum AuthCase { LIFECYCLE_HANDOFF, RETAINED_STALE, DEFAULT_MISSING, DEFAULT_EXPLICIT_ZERO_FALSE }
+    enum Phase { INITIAL, RENEWAL, REPLACEMENT }
+
     static void run(NodeLaunch launch) throws InterruptedException {
         Path capture = launch.vault().getParent().resolve("lifecycle-handoff-delay.jfr");
         if (Files.exists(capture, LinkOption.NOFOLLOW_LINKS)) {
@@ -73,18 +76,56 @@ final class DiagnosticLifecycleHandoffScenario {
     }
 
     static long authenticatedBoth(LifecycleMailbox mailbox, long after) throws InterruptedException {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
+        return authenticatedBoth(mailbox, after, AuthCase.LIFECYCLE_HANDOFF, Phase.INITIAL);
+    }
+
+    static long authenticatedBoth(LifecycleMailbox mailbox, long after, AuthCase scenario, Phase phase)
+            throws InterruptedException {
+        long started = System.nanoTime();
+        long deadline = started + TimeUnit.SECONDS.toNanos(15);
         long observed = 0;
         boolean control = false;
         boolean bulk = false;
+        LifecycleMailbox.State controlLast = null;
+        LifecycleMailbox.State bulkLast = null;
+        long controlSampleEpoch = 0;
+        long bulkSampleEpoch = 0;
         while (System.nanoTime() < deadline) {
             long epoch = mailbox.currentEpoch();
             if (epoch != observed) { observed = epoch; control = false; bulk = false; }
-            control |= mailbox.poll(LocalEndpointRole.LOCAL_ENDPOINT_ROLE_CONTROL) == LifecycleMailbox.State.AUTHENTICATED;
-            bulk |= mailbox.poll(LocalEndpointRole.LOCAL_ENDPOINT_ROLE_BULK) == LifecycleMailbox.State.AUTHENTICATED;
+            LifecycleMailbox.State controlState = mailbox.poll(LocalEndpointRole.LOCAL_ENDPOINT_ROLE_CONTROL);
+            if (controlState != null) { controlLast = controlState; controlSampleEpoch = epoch; }
+            control |= controlState == LifecycleMailbox.State.AUTHENTICATED;
+            LifecycleMailbox.State bulkState = mailbox.poll(LocalEndpointRole.LOCAL_ENDPOINT_ROLE_BULK);
+            if (bulkState != null) { bulkLast = bulkState; bulkSampleEpoch = epoch; }
+            bulk |= bulkState == LifecycleMailbox.State.AUTHENTICATED;
             if (control && bulk && epoch > after && mailbox.isCurrent(epoch)) return epoch;
             Thread.sleep(10);
         }
-        throw new AssertionError("real lifecycle owner did not authenticate both current roles");
+        // Sequential failure observations: neither this snapshot nor a sample epoch is a producer certificate.
+        long finalEpoch = mailbox.currentEpoch();
+        boolean finalActive = mailbox.active();
+        long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+        throw new AssertionError(authFailureContext(scenario, phase, after, observed, finalEpoch, finalActive,
+            controlLast, controlSampleEpoch, control, bulkLast, bulkSampleEpoch, bulk, elapsedMillis));
+    }
+
+    static String authFailureContext(AuthCase scenario, Phase phase, long afterEpoch, long observedEpoch,
+            long currentEpoch, boolean active, LifecycleMailbox.State controlLast, long controlSampleEpoch,
+            boolean controlAuthSeen, LifecycleMailbox.State bulkLast, long bulkSampleEpoch,
+            boolean bulkAuthSeen, long elapsedMillis) {
+        java.util.Objects.requireNonNull(scenario);
+        java.util.Objects.requireNonNull(phase);
+        String context = "real lifecycle owner did not authenticate both current roles"
+            + ";scenario=" + scenario.name() + ";phase=" + phase.name()
+            + ";afterEpoch=" + afterEpoch + ";observedEpoch=" + observedEpoch
+            + ";currentEpoch=" + currentEpoch + ";active=" + active
+            + ";controlLast=" + (controlLast == null ? "NONE" : controlLast.name())
+            + ";controlSampleEpoch=" + controlSampleEpoch + ";controlAuthSeen=" + controlAuthSeen
+            + ";bulkLast=" + (bulkLast == null ? "NONE" : bulkLast.name())
+            + ";bulkSampleEpoch=" + bulkSampleEpoch + ";bulkAuthSeen=" + bulkAuthSeen
+            + ";elapsedMillis=" + elapsedMillis + ";finalSnapshot=NON_ATOMIC";
+        if (context.length() > 512) throw new AssertionError("closed authentication failure context exceeded512 chars");
+        return context;
     }
 }

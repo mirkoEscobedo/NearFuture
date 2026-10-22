@@ -25,7 +25,9 @@ final class DiagnosticDefaultOptionsScenario {
                     }
                     return DiagnosticConfiguration.configuredOwner();
                 } finally { DiagnosticStartupConfigurationScenario.restore(previous); }
-            }, 0, false);
+            }, 0, false, explicit
+                ? DiagnosticLifecycleHandoffScenario.AuthCase.DEFAULT_EXPLICIT_ZERO_FALSE
+                : DiagnosticLifecycleHandoffScenario.AuthCase.DEFAULT_MISSING);
         } finally { DiagnosticStartupConfigurationScenario.restore(previous); }
     }
 }

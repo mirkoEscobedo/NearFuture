@@ -27,6 +27,12 @@ final class DiagnosticStaleMailboxScenario {
 
     static void run(NodeLaunch launch, Supplier<LifecycleOwner> ownerFactory, long expectedDelayMillis,
             boolean expectedStale) throws InterruptedException {
+        run(launch, ownerFactory, expectedDelayMillis, expectedStale,
+            DiagnosticLifecycleHandoffScenario.AuthCase.RETAINED_STALE);
+    }
+
+    static void run(NodeLaunch launch, Supplier<LifecycleOwner> ownerFactory, long expectedDelayMillis,
+            boolean expectedStale, DiagnosticLifecycleHandoffScenario.AuthCase authCase) throws InterruptedException {
         Path before = launch.vault().getParent().resolve("stale-before-revoke.jfr");
         Path after = launch.vault().getParent().resolve("stale-after-revoke.jfr");
         if (Files.exists(before, LinkOption.NOFOLLOW_LINKS) || Files.exists(after, LinkOption.NOFOLLOW_LINKS)) {
@@ -46,9 +52,11 @@ final class DiagnosticStaleMailboxScenario {
                 if (owner == null) throw new AssertionError("enabled startup owner required");
                 try {
                     LifecycleMailbox old = owner.activate(401);
-                    oldEpoch = DiagnosticLifecycleHandoffScenario.authenticatedBoth(old, 0);
+                    oldEpoch = DiagnosticLifecycleHandoffScenario.authenticatedBoth(old, 0, authCase,
+                        DiagnosticLifecycleHandoffScenario.Phase.INITIAL);
                     oldChild = exactChild(launch);
-                    renewed = DiagnosticLifecycleHandoffScenario.authenticatedBoth(old, oldEpoch);
+                    renewed = DiagnosticLifecycleHandoffScenario.authenticatedBoth(old, oldEpoch, authCase,
+                        DiagnosticLifecycleHandoffScenario.Phase.RENEWAL);
                     if (!old.active() || !old.isCurrent(renewed) || !oldChild.isAlive()) {
                         throw new AssertionError("natural real epoch renewal must preserve active old generation");
                     }
@@ -62,7 +70,8 @@ final class DiagnosticStaleMailboxScenario {
                             || old.poll(LocalEndpointRole.LOCAL_ENDPOINT_ROLE_BULK) != null) {
                         throw new AssertionError("actual generation replacement must synchronously revoke old mailbox");
                     }
-                    long currentEpoch = DiagnosticLifecycleHandoffScenario.authenticatedBoth(current, 0);
+                    long currentEpoch = DiagnosticLifecycleHandoffScenario.authenticatedBoth(current, 0, authCase,
+                        DiagnosticLifecycleHandoffScenario.Phase.REPLACEMENT);
                     newChild = exactChild(launch);
                     if (oldChild.isAlive() || oldChild.pid() == newChild.pid() || !current.isCurrent(currentEpoch)) {
                         throw new AssertionError("new genuine authenticated mailbox must remain independent of old release");
