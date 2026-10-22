@@ -121,3 +121,29 @@ Revoked generations cannot restart. Headless real-process scenarios cover
 renewal beyond idle expiry, campaign replacement, suspension, three killed child
 lifetimes and rejection of queued authentication after the final death. They
 do not substitute for native callback, serialization or responsiveness evidence.
+
+## Startup-only fault controls
+
+Diagnostic IPC remains disabled unless `nf.ipc.diagnostic.enabled=true` and the
+existing trusted launch properties are supplied. `onApplicationLoad` reads those
+properties once through `DiagnosticConfiguration.configuredOwner()`; callbacks
+and the worker do not reread diagnostic configuration.
+
+| Optional property | Default | Accepted values and effect |
+| --- | --- | --- |
+| `nf.ipc.diagnostic.handoffDelayMillis` | `0` | Canonical decimal integer `0` through `5000`. The existing background owner consumes the delay once before the real handoff, within its original15-second startup budget. |
+| `nf.ipc.diagnostic.retainStalePublication` | `false` | Exact lowercase `true` or `false`. When true, retain one genuinely authenticated mailbox/epoch/state and attempt that old control/bulk publication only after its generation is revoked. |
+
+Whitespace, alternate boolean spellings and out-of-range/noncanonical delays
+are refused as `INVALID`; invalid enabled diagnostics leave the adapter disabled.
+Absent options and explicit `0`/`false` add no fault event or retained-value
+publication. These are one-shot options for that owner, not per-frame or
+per-reconnect schedules. Active connection-epoch renewal does not release the
+retained value, and a new/current mailbox is never used for that old publication.
+
+The worker emits bounded `nf.DiagnosticHandoffDelay` and
+`nf.DiagnosticStaleMailbox` JFR events for actual injected operations. They record
+real delay duration or actual old-mailbox publish results without private paths,
+tokens or peer bytes. No authenticated tuple means no stale-release receipt.
+These portable diagnostics do not establish native campaign responsiveness,
+save/load serialization or disposable-campaign acceptance.

@@ -103,7 +103,7 @@ impl DiagnosticStreamObservationV1 {
 impl DiagnosticStream {
     /// Count the actual retained queue without draining it or exposing identities.
     pub fn redacted_observation(&self) -> DiagnosticStreamObservationV1 {
-        let mut counts = [0_u64; 6];
+        let mut counts = [0_u64; 16];
         for diagnostic in &self.queue {
             let index = match diagnostic.difference {
                 Difference::Kind => 0,
@@ -112,6 +112,16 @@ impl DiagnosticStream {
                 Difference::Decision => 3,
                 Difference::Draws => 4,
                 Difference::Effects => 5,
+                Difference::FirstConcernKind => 6,
+                Difference::FirstConcernLifecycle => 7,
+                Difference::FirstConcernPriority => 8,
+                Difference::FirstEligibilityKind => 9,
+                Difference::FirstEligibilityDecision => 10,
+                Difference::FirstActionPriority => 11,
+                Difference::FirstProposalKind => 12,
+                Difference::FirstProposalDecision => 13,
+                Difference::FirstProposalDraws => 14,
+                Difference::FirstProposalEffects => 15,
             };
             counts[index] += 1;
         }
@@ -123,8 +133,18 @@ impl DiagnosticStream {
             Difference::Decision,
             Difference::Draws,
             Difference::Effects,
+            Difference::FirstConcernKind,
+            Difference::FirstConcernLifecycle,
+            Difference::FirstConcernPriority,
+            Difference::FirstEligibilityKind,
+            Difference::FirstEligibilityDecision,
+            Difference::FirstActionPriority,
+            Difference::FirstProposalKind,
+            Difference::FirstProposalDecision,
+            Difference::FirstProposalDraws,
+            Difference::FirstProposalEffects,
         ];
-        let mut difference_counts = Vec::with_capacity(6);
+        let mut difference_counts = Vec::with_capacity(16);
         for (difference, count) in differences.into_iter().zip(counts) {
             if count != 0 {
                 difference_counts.push(DiagnosticDifferenceCountV1 { difference, count });

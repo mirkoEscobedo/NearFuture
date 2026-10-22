@@ -40,7 +40,7 @@ fn run_client(mode: &str) {
     let vault = PrivateVault::create_diagnosed(&vault_path, &saves)
         .unwrap_or_else(|failure| panic!("private vault create failed: {failure:?}"));
     let executable = PathBuf::from(env!("CARGO_BIN_EXE_nf-ipc-node"));
-    let executable = if mode == "stalled-child" {
+    let executable = if mode == "stalled-child" || mode == "stalled-handoff-budget" {
         let target = root.join(format!("stalled-parent{}", std::env::consts::EXE_SUFFIX));
         let mut compile = Command::new(std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()));
         #[cfg(windows)]
@@ -185,4 +185,48 @@ fn java_background_owner_times_out_a_stalled_child_and_forcibly_reaps_it() {
 #[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
 fn abrupt_java_parent_death_closes_private_pipe_and_reaps_authenticated_rust_child() {
     run_client("abrupt-jvm");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_background_owner_records_one_real_handoff_delay_and_reaps_on_close() {
+    run_client("handoff-delay");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_background_owner_cancels_and_interrupts_real_handoff_delay_then_reaps() {
+    run_client("handoff-cancel");
+    run_client("handoff-interrupt");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_lifecycle_owner_propagates_one_shot_delay_to_real_background_handoff() {
+    run_client("lifecycle-handoff-delay");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_lifecycle_owner_releases_real_stale_mailbox_only_after_generation_revocation() {
+    run_client("lifecycle-stale-mailbox");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_startup_configuration_reaches_real_worker_before_properties_are_removed() {
+    run_client("lifecycle-startup-options");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_default_startup_options_emit_no_worker_fault_events() {
+    run_client("lifecycle-default-options");
+    run_client("lifecycle-zero-options");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_handoff_delay_consumes_original_stalled_child_startup_budget() {
+    run_client("stalled-handoff-budget");
 }

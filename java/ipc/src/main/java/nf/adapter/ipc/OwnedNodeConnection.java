@@ -39,7 +39,12 @@ public final class OwnedNodeConnection implements AutoCloseable {
     }
 
     public static OwnedNodeConnection open(NodeLaunch launch, BooleanSupplier current) {
-        if (launch == null || current == null) throw new NodeFailure(NodeFailure.Code.INVALID);
+        return open(launch, current, new DiagnosticFaultPlan(0));
+    }
+
+    /** Opt-in faults run only on this blocking owner and consume its original startup budget. */
+    public static OwnedNodeConnection open(NodeLaunch launch, BooleanSupplier current, DiagnosticFaultPlan faults) {
+        if (launch == null || current == null || faults == null) throw new NodeFailure(NodeFailure.Code.INVALID);
         long deadline = System.nanoTime() + STARTUP_NANOS;
         OwnedNodeConnection owned = null;
         Process spawned = null;
@@ -57,6 +62,7 @@ public final class OwnedNodeConnection implements AutoCloseable {
                 .redirectInput(ProcessBuilder.Redirect.PIPE).redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectError(ProcessBuilder.Redirect.DISCARD).start();
             owned = new OwnedNodeConnection(spawned, current);
+            owned.delayHandoff(faults, deadline);
             owned.activate(launch.scope(), deadline);
             transferred = true;
             return owned;
@@ -79,6 +85,31 @@ public final class OwnedNodeConnection implements AutoCloseable {
     }
 
     private static String hex(ByteString bytes) { return HexFormat.of().formatHex(bytes.toByteArray()); }
+
+    private void delayHandoff(DiagnosticFaultPlan faults, long deadline) {
+        requireAlive(deadline);
+        long millis = faults.claimHandoffDelayMillis();
+        if (millis == 0) return;
+        DiagnosticHandoffDelay event = new DiagnosticHandoffDelay();
+        event.requestedMillis = millis;
+        event.outcome = "FAILED";
+        event.begin();
+        try {
+            long until = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(millis);
+            while (System.nanoTime() - until < 0) {
+                requireAlive(deadline);
+                pause();
+            }
+            requireAlive(deadline);
+            event.outcome = "COMPLETED";
+        } catch (NodeFailure refused) {
+            event.outcome = refused.code().name();
+            throw refused;
+        } finally {
+            event.end();
+            event.commit();
+        }
+    }
 
     private static void verifyExecutable(NodeLaunch launch, BooleanSupplier current, long deadline)
             throws IOException, NoSuchAlgorithmException {

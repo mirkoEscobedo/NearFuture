@@ -75,6 +75,16 @@ fn difference(value: Difference) -> &'static str {
         Difference::Decision => "decision",
         Difference::Draws => "draws",
         Difference::Effects => "effects",
+        Difference::FirstConcernKind => "first_concern_kind",
+        Difference::FirstConcernLifecycle => "first_concern_lifecycle",
+        Difference::FirstConcernPriority => "first_concern_priority",
+        Difference::FirstEligibilityKind => "first_eligibility_kind",
+        Difference::FirstEligibilityDecision => "first_eligibility_decision",
+        Difference::FirstActionPriority => "first_action_priority",
+        Difference::FirstProposalKind => "first_proposal_kind",
+        Difference::FirstProposalDecision => "first_proposal_decision",
+        Difference::FirstProposalDraws => "first_proposal_draws",
+        Difference::FirstProposalEffects => "first_proposal_effects",
     }
 }
 
@@ -213,6 +223,16 @@ fn record_bytes(record: &Diagnostic, bytes: &mut Vec<u8>) {
         Difference::Decision => 3,
         Difference::Draws => 4,
         Difference::Effects => 5,
+        Difference::FirstConcernKind => 6,
+        Difference::FirstConcernLifecycle => 7,
+        Difference::FirstConcernPriority => 8,
+        Difference::FirstEligibilityKind => 9,
+        Difference::FirstEligibilityDecision => 10,
+        Difference::FirstActionPriority => 11,
+        Difference::FirstProposalKind => 12,
+        Difference::FirstProposalDecision => 13,
+        Difference::FirstProposalDraws => 14,
+        Difference::FirstProposalEffects => 15,
     });
 }
 

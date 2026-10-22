@@ -1,0 +1,8 @@
+# Public raw facts only: case|pool|optional_target (dash means absent).
+# Enemy: id,raw_u32_hex,recent_war,can_ceasefire,commissioned_player,offensive_blocked,N/R/U.
+# Outer checkPeace gates are prerequisites; supplied pools are nonempty. No expected-result columns.
+explicit_nonmember|low,3f800000,false,true,false,false,R|target,41100000,false,true,false,false,R
+target_null_no_fallback|low,3f800000,false,true,false,false,R|target,41100000,false,true,false,false,N
+blocked_target_no_fallback|low,3f800000,false,true,false,false,R|target,41100000,false,true,false,true,U
+absent_target|high,41100000,false,true,false,false,R;low,3f800000,false,true,false,false,N|-
+missing_target_return|low,3f800000,false,true,false,false,R|target,41100000,false,true,false,false,U

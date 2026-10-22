@@ -25,8 +25,7 @@ public final class NearFutureModPlugin extends BaseModPlugin {
     public void onApplicationLoad() {
         if (ipcOwner != null) return;
         try {
-            var launch = DiagnosticConfiguration.configured();
-            if (launch != null) ipcOwner = new LifecycleOwner(launch);
+            ipcOwner = DiagnosticConfiguration.configuredOwner();
         } catch (NodeFailure unavailable) { /* Explicit invalid diagnostics remain disabled. */ }
     }
 

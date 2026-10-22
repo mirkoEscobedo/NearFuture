@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readStable, sha256, gitBlob } from './io.mjs';
 
 export const PUBLIC_FILES = [
-  { path: 'package.json', bytes: 2830, sha256: '12cce1f04b2cc31e02729451c6073003c2442489a31b843b828d409f700b2cb3' },
+  { path: 'package.json', bytes: 2870, sha256: '3372b25671e1e9c068777435daf941fa03912ae9c398f906de4142049d311adc' },
   { path: 'tools/runtime-manifest/metadata.mjs', bytes: 2309, sha256: '578cf38b6356116cdd2497fe7f29f98b09ac5284a2e5221df8e4b6b8c70719d2' },
   { path: 'config/runtime-support.json', bytes: 1615, sha256: '5a98cff8375686598578c4edc76e9412203b9fc27f04c6e37a0a697635333acf' },
 ];

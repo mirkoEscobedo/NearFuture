@@ -21,10 +21,21 @@ public final class ParentNodeProcessClient {
         NodeLaunch launch = new NodeLaunch(Path.of(args[0]), pin,
             Path.of(args[1]), Path.of(args[2]), "java-parent-owner", ParentHandoffFixture.scope(), 60000);
         if (args[4].equals("stalled-child")) { StalledChildProcessScenario.run(launch); return; }
+        if (args[4].equals("stalled-handoff-budget")) { DiagnosticStartupBudgetScenario.run(launch); return; }
         if (args[4].equals("abrupt-jvm")) { AbruptJvmProcessScenario.run(launch); return; }
         if (args[4].equals("abrupt-jvm-owner")) { AbruptJvmProcessScenario.runOwner(launch); return; }
         if (args[4].equals("lifecycle")) { LifecycleOwnerProcessScenario.run(launch); return; }
         if (args[4].equals("lifecycle-failure")) { LifecycleFailureProcessScenario.run(launch); return; }
+        if (args[4].equals("lifecycle-handoff-delay")) { DiagnosticLifecycleHandoffScenario.run(launch); return; }
+        if (args[4].equals("lifecycle-stale-mailbox")) { DiagnosticStaleMailboxScenario.run(launch); return; }
+        if (args[4].equals("lifecycle-startup-options")) { DiagnosticStartupConfigurationScenario.run(launch); return; }
+        if (args[4].equals("lifecycle-default-options") || args[4].equals("lifecycle-zero-options")) {
+            DiagnosticDefaultOptionsScenario.run(launch, args[4].equals("lifecycle-zero-options")); return;
+        }
+        if (args[4].equals("handoff-delay")) { DiagnosticHandoffProcessScenario.run(launch); return; }
+        if (args[4].equals("handoff-cancel") || args[4].equals("handoff-interrupt")) {
+            DiagnosticHandoffCancellationScenario.run(launch, args[4].equals("handoff-interrupt")); return;
+        }
         if (args[4].equals("wrong-pin") || args[4].equals("cancelled-before")) {
             NodeFailure.Code expected = args[4].equals("wrong-pin") ? NodeFailure.Code.PIN : NodeFailure.Code.CANCELLED;
             boolean current = args[4].equals("wrong-pin");

@@ -50,6 +50,27 @@ tasks.register('lifecycleMailboxTest', JavaExec) {
 }
 
 tasks.named('check') { dependsOn 'lifecycleMailboxTest' }
+tasks.register('diagnosticFaultConfigurationTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.DiagnosticFaultConfigurationTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'diagnosticFaultConfigurationTest' }
+tasks.register('diagnosticHandoffDelayTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.DiagnosticHandoffDelayTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'diagnosticHandoffDelayTest' }
+tasks.register('diagnosticFaultBoundsTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.DiagnosticFaultBoundsTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'diagnosticFaultBoundsTest' }
 tasks.register('authSocketClient', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath

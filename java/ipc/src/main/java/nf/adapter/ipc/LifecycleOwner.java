@@ -7,15 +7,25 @@ import org.nearfuture.ipc.v1.LocalEndpointRole;
 /** One application-started background owner. Callback methods exchange only bounded values. */
 public final class LifecycleOwner {
     private final NodeLaunch launch;
+    private final DiagnosticFaultPlan faults;
     private final AtomicReference<LifecycleMailbox> requested = new AtomicReference<>();
     private volatile boolean running = true;
     private volatile boolean stopped;
     private long lastGeneration;
+    private RetainedMailbox retained;
+
+    private record RetainedMailbox(LifecycleMailbox mailbox, long epoch, LifecycleMailbox.State state) { }
 
     /** Application startup only: creates the sole daemon before campaign callbacks are installed. */
     public LifecycleOwner(NodeLaunch launch) {
-        if (launch == null) throw new NodeFailure(NodeFailure.Code.INVALID);
+        this(launch, new DiagnosticFaultPlan(0));
+    }
+
+    /** Startup injection only; the existing worker exclusively consumes the one-shot fault plan. */
+    public LifecycleOwner(NodeLaunch launch, DiagnosticFaultPlan faults) {
+        if (launch == null || faults == null) throw new NodeFailure(NodeFailure.Code.INVALID);
         this.launch = launch;
+        this.faults = faults;
         Thread worker = new Thread(this::run, "nf-local-readonly-owner");
         worker.setDaemon(true);
         worker.start();
@@ -43,12 +53,21 @@ public final class LifecycleOwner {
     private void run() {
         try {
             while (running) {
+                releaseRevoked();
                 LifecycleMailbox mailbox = requested.get();
                 if (mailbox == null) { pause(); continue; }
                 serve(mailbox);
                 while (current(mailbox)) pause();
+                releaseRevoked();
             }
-        } finally { running = false; suspend(); stopped = true; }
+        } finally {
+            running = false;
+            try { suspend(); }
+            finally {
+                try { releaseRevoked(); }
+                finally { stopped = true; }
+            }
+        }
     }
     private void serve(LifecycleMailbox mailbox) {
         // Three finite child lifetimes per campaign binding, including failed starts.
@@ -69,7 +88,11 @@ public final class LifecycleOwner {
         publish(mailbox, epoch, LifecycleMailbox.State.STARTING);
         OwnedNodeConnection connection = null;
         try {
-            connection = OwnedNodeConnection.open(launch, () -> current(mailbox));
+            connection = OwnedNodeConnection.open(launch, () -> current(mailbox), faults);
+            if (retained == null && connection.authenticatedBoth() && current(mailbox)
+                    && mailbox.isCurrent(epoch) && faults.claimStaleCapture()) {
+                retained = new RetainedMailbox(mailbox, epoch, LifecycleMailbox.State.AUTHENTICATED);
+            }
             publish(mailbox, epoch, LifecycleMailbox.State.AUTHENTICATED);
             long renew = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
             while (current(mailbox)) {
@@ -86,10 +109,27 @@ public final class LifecycleOwner {
             }
         } finally {
             // Fence even unexpected failure BEFORE any bounded but blocking cleanup.
-            long terminalEpoch = mailbox.beginConnection();
-            publish(mailbox, terminalEpoch, LifecycleMailbox.State.UNAVAILABLE);
-            if (connection != null) connection.close();
+            try {
+                long terminalEpoch = mailbox.beginConnection();
+                publish(mailbox, terminalEpoch, LifecycleMailbox.State.UNAVAILABLE);
+                releaseRevoked();
+            } finally { if (connection != null) connection.close(); }
         }
+    }
+
+    private void releaseRevoked() {
+        RetainedMailbox old = retained;
+        if (old == null || old.mailbox().active()) return;
+        retained = null;
+        DiagnosticStaleMailbox event = new DiagnosticStaleMailbox();
+        event.oldEpoch = old.epoch();
+        event.state = old.state().name();
+        event.oldActive = old.mailbox().active();
+        event.controlAccepted = old.mailbox().publish(LocalEndpointRole.LOCAL_ENDPOINT_ROLE_CONTROL,
+            old.epoch(), old.state());
+        event.bulkAccepted = old.mailbox().publish(LocalEndpointRole.LOCAL_ENDPOINT_ROLE_BULK,
+            old.epoch(), old.state());
+        event.commit();
     }
     private static void publish(LifecycleMailbox mailbox, long epoch, LifecycleMailbox.State state) {
         mailbox.publish(LocalEndpointRole.LOCAL_ENDPOINT_ROLE_CONTROL, epoch, state);
