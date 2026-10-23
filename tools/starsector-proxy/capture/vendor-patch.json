@@ -1,0 +1,34 @@
+[
+  {
+    "path": "dist/server.js",
+    "qualifiedSha256": "70aee012d22d311656f55dbc69f1287def308e093b0563efa5d124e607aaa180",
+    "edits": [
+      {
+        "before": "            try {\n                await mcpContext.mcpReq.log(result.isError ? 'warning' : 'debug', {",
+        "after": "            await opts.onToolResult?.({ definition, args, result: finalResult, durationMs, mcpContext });\n            try {\n                await mcpContext.mcpReq.log(result.isError ? 'warning' : 'debug', {"
+      },
+      {
+        "before": "if (isStdioEntrypoint(process.argv[1])) {\n    const handle = serveStdio(() => createComputerUseServer(), {\n        legacy: 'serve',\n        maxSubscriptions: 256,\n        transport: new TasksExtensionTransport(new StdioServerTransport(), taskManager),\n        onerror: error => console.error('[computer-use-mcp]', error.message),\n    });\n    console.error('[computer-use-mcp] Server running (MCP 2026-07-28 + legacy 2025)');\n    const shutdown = async () => { await handle.close(); };\n    process.once('SIGINT', () => { void shutdown().finally(() => process.exit(0)); });\n    process.once('SIGTERM', () => { void shutdown().finally(() => process.exit(0)); });\n}\n",
+        "after": "/** Serve the same vendor STDIO route with optional host observation. */\nexport function serveComputerUseStdio(opts = {}, stdio = {}) {\n    return serveStdio(() => createComputerUseServer(opts), {\n        legacy: 'serve',\n        maxSubscriptions: 256,\n        transport: new TasksExtensionTransport(stdio.transport ?? new StdioServerTransport(), taskManager),\n        onerror: stdio.onerror ?? (error => console.error('[computer-use-mcp]', error.message)),\n    });\n}\nif (isStdioEntrypoint(process.argv[1])) {\n    const handle = serveComputerUseStdio();\n    console.error('[computer-use-mcp] Server running (MCP 2026-07-28 + legacy 2025)');\n    const shutdown = async () => { await handle.close(); };\n    process.once('SIGINT', () => { void shutdown().finally(() => process.exit(0)); });\n    process.once('SIGTERM', () => { void shutdown().finally(() => process.exit(0)); });\n}\n"
+      }
+    ]
+  },
+  {
+    "path": "dist/server.d.ts",
+    "qualifiedSha256": "c04337dbd9235da661c9126d041feec5d7b73ce78b084b7554d5cd8bf739b68c",
+    "edits": [
+      {
+        "before": "import { ToolRegistry } from './registry/registry.js';",
+        "after": "import { ToolRegistry } from './registry/registry.js';\nimport type { ServeStdioOptions, StdioServerHandle } from '@modelcontextprotocol/server/stdio';"
+      },
+      {
+        "before": "    /** Publish a state-derived update through an embedding transport",
+        "after": "    /** Awaited read-only observation before reply. Return values are ignored; errors fail the call. */\n    onToolResult?: (context: Parameters<NonNullable<ConstructorParameters<typeof ToolRegistry>[0]['afterToolCall']>>[0]) => Promise<void> | void;\n    /** Publish a state-derived update through an embedding transport"
+      },
+      {
+        "before": "export declare function createComputerUseServer(opts?: ServerOptions): McpServer;",
+        "after": "export declare function createComputerUseServer(opts?: ServerOptions): McpServer;\n/** Existing standard transport and task manager; no process signal handlers are installed for embeddings. */\nexport declare function serveComputerUseStdio(opts?: ServerOptions, stdio?: Pick<ServeStdioOptions, 'transport' | 'onerror'>): StdioServerHandle;"
+      }
+    ]
+  }
+]
