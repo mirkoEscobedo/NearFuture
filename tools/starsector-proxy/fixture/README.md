@@ -60,6 +60,10 @@ Construct the files in this order to avoid a digest cycle:
 2. Freeze the support manifest returned from the complete provider input
    inventory, including `menu-launch-grant.mjs` and `fixture/menu-launch.ps1`.
    Keep installed runtime and executable pins. Exclude scenario authority files.
+   Also create the scenario-local `source-pins.private.json` as a byte-identical,
+   create-only copy of `frozen-support-pins.private.json`, and verify their
+   digests. The controller unconditionally records this bookkeeping input,
+   including for menu-only runs. The copy grants no owned-node-kill authority.
 3. Write the launch grant with exactly `schemaVersion: 1`,
    `kind: "FINITE_MENU_LAUNCH_GRANT_V1"`, `phase: "CAMPAIGN_BINDING_ONLY"`,
    `authorized: true`, `issuer: "/root"`, `driver: "/root/recovery_game_driver"`,
@@ -70,7 +74,10 @@ Construct the files in this order to avoid a digest cycle:
    ownership, and existing 8-action/3-invocation/180000ms/480000ms bounds. Its
    batches are unique members of B1/B2/B3 and include the launcher batch B1.
 5. Freeze the menu lease with the completed plan digest and identical launch
-   descriptor. Optional `sessionWatchdogMs` in plan/lease must be exactly 480000.
+   descriptor. Either omit optional `sessionWatchdogMs` from both plan and lease,
+   or declare the integer 480000 in both. The runner checks this paired presence
+   before creating the supervisor; passing the launch protection or JS grant
+   validator alone does not establish the runner's watchdog agreement.
    Recording-profile, seed, campaign and owned-node-kill extensions refuse.
 6. Run the maintained protected launch. Both launch gates verify the same grant,
    actual binding pair and current tooling pins, plus all original protection
