@@ -8,11 +8,12 @@ import { Client, StreamableHTTPClientTransport } from '../computer-use-mcp/node_
 import { readBatchAuthorization, claimBatchAuthorization } from './batch-authorization.mjs';
 import { write, root } from './batch-test-fixture.mjs';
 import { startGuardedHttpChild } from './guarded-http-child.mjs';
-import { fixtureProbeSources } from './fixture-binding.mjs';
 import { syntheticFixtureBinding } from './fixture-test-binding.mjs';
+import { syntheticMenuLaunch } from './menu-launch-test-grant.mjs';
+import { menuLaunchSources } from './menu-launch-grant.mjs';
 
 const digest = (/** @type {string} */ path) => createHash('sha256').update(readFileSync(path)).digest('hex');
-const sources = ['tools/starsector-proxy/fixture-binding.mjs', ...fixtureProbeSources];
+const sources = menuLaunchSources;
 function setup(withConsent = false) {
     // Self-contained filesystem authority with the real admission schema. Probe
     // source bytes are inert: only that external OS boundary is replaced below.
@@ -44,6 +45,8 @@ function setup(withConsent = false) {
     const pins = resolve(f.scenario, 'frozen-support-pins.private.json');
     write(pins, { pins: sources.map(path => ({ path: resolve(syntheticRoot, path), sha256: digest(resolve(syntheticRoot, path)) })) });
     f.lease.supportPinsSha256 = digest(pins); f.refresh();
+    Object.assign(f.lease, syntheticMenuLaunch(syntheticRoot, scenario).lease);
+    auth.planSha256 = digest(paths.plan); f.refresh();
     const runID = 'http-child-' + randomBytes(8).toString('hex');
     const output = resolve(syntheticRoot, '.tmp/starsector-proxy', runID); mkdirSync(output);
     const probeRoot = mkdtempSync(resolve(syntheticRoot, '.tmp/starsector-proxy/scenarios/synthetic-child-probe-'));

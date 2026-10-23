@@ -21,7 +21,7 @@ export const ownedHttpSources = Object.freeze(['.agentic/project.json', 'tools/s
     'tools/starsector-proxy/direct-mcp.mjs', 'tools/starsector-proxy/direct-frames.mjs',
     'tools/starsector-proxy/guarded-http-child.mjs',
     'tools/starsector-proxy/guarded-http.mjs', 'tools/starsector-proxy/guarded-mcp.mjs', 'tools/starsector-proxy/finite-consent.mjs',
-    'tools/starsector-proxy/batch-authorization.mjs', 'tools/starsector-proxy/batch-session.mjs', 'tools/starsector-proxy/campaign-authority.mjs',
+    'tools/starsector-proxy/batch-authorization.mjs', 'tools/starsector-proxy/menu-launch-grant.mjs', 'tools/starsector-proxy/batch-session.mjs', 'tools/starsector-proxy/campaign-authority.mjs',
     'tools/starsector-proxy/fixture-binding.mjs', ...fixtureProbeSources]);
 /** Explicit complete installed runtime inventory, without an import resolver.
  * @param {string} root @param {string} powershell @param {string} supervisor */

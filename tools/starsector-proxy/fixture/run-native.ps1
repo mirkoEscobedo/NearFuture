@@ -9,7 +9,7 @@ $root=$binding.repositoryRoot
 $evidence=$EvidenceRoot
 if($Phase-eq'launch'){$SessionWatchdogMs=Read-NativeSessionWatchdog $evidence $SessionWatchdogMs}
 $admission=if($Phase-eq'launch'){'admit-launch'}else{'admit-probe'}
-& (Join-Path $PSScriptRoot 'protection-check.ps1') -BindingPath $BindingPath -BindingSha256 $BindingSha256 -Phase $admission -EvidenceRoot $evidence
+$null=& (Join-Path $PSScriptRoot 'protection-check.ps1') -BindingPath $BindingPath -BindingSha256 $BindingSha256 -Phase $admission -EvidenceRoot $evidence
 $output="$evidence/$Phase-supervisor.private.json"
 if(Test-Path -LiteralPath $output){throw 'Preserve existing native evidence; no unnamed retry'}
 $verification="$evidence/supervision-$Phase"

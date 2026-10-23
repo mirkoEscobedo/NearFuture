@@ -237,6 +237,14 @@ attempts still govern each call. Unknown input or shutdown cannot transfer to E2
 
 Source qualification and synthetic stdio/HTTP checks do not refresh an already
 loaded MCP frontend or establish live desktop capture, game input or exit success.
+
+Fresh V1 menu flows also require the immutable launch-grant composition in
+`tools/starsector-proxy/fixture/README.md`. The frozen menu plan and lease bind a
+separate launch-only grant; both protected launch gates validate it and the
+finite provider requires the actual controller's original lease digest. This
+keeps launcher authority and menu input scopes distinct without editing a live
+lease. Old independently constructed synthetic launch/input fixtures do not
+prove this composition. The change does not qualify V2 campaign handoff.
 A supported host or connection refresh and separately admitted native validation
 remain required before using newly registered tools in a live scenario.
 

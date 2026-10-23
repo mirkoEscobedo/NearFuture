@@ -46,6 +46,50 @@ and its `driverRole` must match the current lease. The provider/child independen
 verify this binding before the ownership probe and recheck it afterward. See
 `docs/starsector-proxy.md` for the complete clean-checkout dependency route.
 
+## Immutable menu launch authority
+
+New V1 menu batches require an explicit `launchGrant` descriptor in both the
+frozen plan and `MENU_SMOKE_ONLY` lease. It has exactly `path` and `sha256`, naming
+the scenario-local `menu-launch-grant.private.json`. This grant authorizes only
+protected launcher entry; it does not change the meaning of either lease phase
+or authorize campaign loading, saving, seeded entry or an owned-node kill.
+
+Construct the files in this order to avoid a digest cycle:
+
+1. Complete fixture preparation and freeze the existing fixture receipt/binding.
+2. Freeze the support manifest returned from the complete provider input
+   inventory, including `menu-launch-grant.mjs` and `fixture/menu-launch.ps1`.
+   Keep installed runtime and executable pins. Exclude scenario authority files.
+3. Write the launch grant with exactly `schemaVersion: 1`,
+   `kind: "FINITE_MENU_LAUNCH_GRANT_V1"`, `phase: "CAMPAIGN_BINDING_ONLY"`,
+   `authorized: true`, `issuer: "/root"`, `driver: "/root/recovery_game_driver"`,
+   `scenarioId`, `fixtureBinding` (`path`, `sha256`), `fixtureReceiptSha256`,
+   `supportPinsSha256`, `ownedGameHardTimeoutMs: 480000` and
+   `campaignLoadSaveAllowed: false`. It contains no plan digest.
+4. Freeze the plan with its fixture and launch descriptors, exact driver
+   ownership, and existing 8-action/3-invocation/180000ms/480000ms bounds. Its
+   batches are unique members of B1/B2/B3 and include the launcher batch B1.
+5. Freeze the menu lease with the completed plan digest and identical launch
+   descriptor. Optional `sessionWatchdogMs` in plan/lease must be exactly 480000.
+   Recording-profile, seed, campaign and owned-node-kill extensions refuse.
+6. Run the maintained protected launch. Both launch gates verify the same grant,
+   actual binding pair and current tooling pins, plus all original protection
+   and recording checks. The controller records the validated descriptor and
+   actual frozen root-lease digest before starting the launcher.
+7. Issue each original single-use B1/B2/B3 authorization only after obtaining
+   its current owned-process receipt. The finite provider/child and mutation
+   checks independently reread the grant and require the controller's original
+   root-lease digest. A later replacement lease cannot inherit the launch.
+
+No live plan, grant, binding or lease is rewritten during this sequence. The
+source-composition regression exercises real PowerShell launch admission and
+the real JS finite validator with generated protected files and process data;
+it launches no game and does not qualify native input or ordinary exit.
+
+This V1 composition does not qualify V2 paused-campaign handoff. V2 needs a
+separately admitted immutable successor authority derived from actual postlaunch
+witnesses; changing a V1 lease in place is not that handoff.
+
 Run preparation through `workspace-template verify` with its existing 180s
 owned Windows Job. After its actual PASS and protection checks, the runner's
 `-Phase ownership-probe` retains the separate 60s probe. Launch requires a

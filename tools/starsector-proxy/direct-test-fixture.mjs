@@ -13,6 +13,7 @@ import { createGuardedMcp } from './guarded-mcp.mjs';
 import { createFiniteConsentMcp } from './finite-consent.mjs';
 import { serveGuardedHttp } from './guarded-http.mjs';
 import { syntheticFixtureBinding } from './fixture-test-binding.mjs';
+import { syntheticMenuLaunch } from './menu-launch-test-grant.mjs';
 const base = resolve(fileURLToPath(new URL('../../.tmp', import.meta.url)));
 export const syntheticDoctor = { ok: true, summary: { passed: 1, warned: 0, failed: 0, skipped: 0 },
     platform: { os: 'win32', arch: 'x64', node: process.version }, checks: [] };
@@ -72,6 +73,7 @@ export function directFixture(changes = {}) {
         supervisorJobPids: [100, 101], hardTimeoutMs: 480000, installation: resolve(scenario, 'installation'), fixtureReceiptSha256: fixtureSha });
     write(paths.ownedReceiptPath, { processes: [{ pid: 101, inSupervisorJob: true, supervisorJobPids: [100, 101], sessionId: 1,
         creationTime: new Date(now - 1000).toISOString(), executable: resolve(scenario, 'installation/java.exe') }] });
+    syntheticMenuLaunch(root, scenario);
     write(source, { schemaVersion: 1, scenario, batch: 'B1', ...paths,
         planSha256: sha(paths.planPath), leaseSha256: sha(paths.leasePath), ownedReceiptSha256: sha(paths.ownedReceiptPath) });
     const nextSource = resolve(scenario, 'B2-authorization.private.json'), nextOwned = resolve(scenario, 'driver-B2-owned.private.json');

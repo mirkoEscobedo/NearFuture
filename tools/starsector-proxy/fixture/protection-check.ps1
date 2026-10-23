@@ -2,6 +2,7 @@ param([Parameter(Mandatory)][string]$BindingPath,[Parameter(Mandatory)][string]$
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'fixture-inputs.ps1')
 . (Join-Path $PSScriptRoot 'seed-fixture.ps1')
+. (Join-Path $PSScriptRoot 'menu-launch.ps1')
 $binding=Read-NativeFixtureBinding $BindingPath $BindingSha256
 if([string]::IsNullOrWhiteSpace($EvidenceRoot)){$EvidenceRoot=$binding.fixtureRoot}
 if($Phase-cnotin@('before-smoke','after-smoke','admit-launch','admit-probe','admit-seed-stage','validate-runtime')){throw 'Explicit protection phase required'}
@@ -50,6 +51,7 @@ function Read-NativeLease([string]$Path) {
  if(!(Test-Path -LiteralPath $Path -PathType Leaf)){throw 'Explicit current bounded driver lease required'}
  Assert-OrdinaryPath $Path
  try{$lease=Get-Content -LiteralPath $Path -Raw|ConvertFrom-Json}catch{throw 'Explicit current bounded driver lease required'}
+ if($lease.phase-ceq'MENU_SMOKE_ONLY'){return (Read-NativeMenuLaunchLease $Path $binding $BindingPath $BindingSha256)}
  if(($lease.schemaVersion-isnot[int]-and$lease.schemaVersion-isnot[long])-or$lease.schemaVersion-ne1-or$lease.scenarioId-isnot[string]-or$lease.scenarioId-cne$binding.fixtureId){throw 'Exact campaign binding lease required'}
  foreach($key in @('planSha256','fixtureReceiptSha256')){if($lease.$key-isnot[string]-or$lease.$key-cnotmatch'^[A-Fa-f0-9]{64}$'){throw 'Bound campaign binding lease required'}}
  if($lease.authorized-isnot[bool]-or$lease.authorized-ne$true-or$lease.driver-isnot[string]-or$lease.driver-cne$binding.driverRole-or$lease.phase-isnot[string]-or$lease.phase-cne'CAMPAIGN_BINDING_ONLY'){throw 'Explicit current bounded driver lease required'}
@@ -200,7 +202,11 @@ $receipt=Read-FrozenReceipt "$prepared/protected-fixture-receipt.private.json" "
 if($Phase-eq'admit-launch'-and(Get-FileHash -LiteralPath "$prepared/protected-fixture-receipt.private.json" -Algorithm SHA256).Hash-ine$lease.fixtureReceiptSha256){throw 'Campaign fixture binding changed'}
 Assert-FrozenProvenance $receipt $prepared
 $record=Read-ProtectionState $prepared $source ($Phase-ne'after-smoke') $seed
-if($Phase-in@('admit-launch','admit-seed-stage')){return}
+if($Phase-eq'admit-launch'){
+ if($lease.phase-ceq'MENU_SMOKE_ONLY'){return [pscustomobject]@{launchGrant=$lease.launchGrant;rootLeaseSha256=(Get-FileHash -LiteralPath "$EvidenceRoot/native-lane-lease.private.json" -Algorithm SHA256).Hash}}
+ return
+}
+if($Phase-eq'admit-seed-stage'){return}
 $record.phase=$Phase
 $record|ConvertTo-Json -Depth 6|Set-Content $output
 Write-Output "Protection boundary $Phase verified: original and backup hashes/census unchanged; no live game."
