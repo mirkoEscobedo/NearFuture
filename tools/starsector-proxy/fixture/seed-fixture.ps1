@@ -259,7 +259,53 @@ function Invoke-NativeSeedStage([string]$BindingPath,[string]$BindingSha256,[str
  $receiptHash=Write-NativeSeedCreateNewJson $receiptPath $receipt
  return [pscustomobject]@{schemaVersion=1;kind='NATIVE99_SEED_STAGE_COMPLETED_V1';receiptPath=$receiptPath;receiptSha256=$receiptHash;nativeAuthority=$false}
 }
+function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
+ $planControl=$null-ne$Plan-and@($Plan.PSObject.Properties.Name)-ccontains'campaignControl'
+ $leaseControl=$null-ne$Lease-and@($Lease.PSObject.Properties.Name)-ccontains'campaignControl'
+ if($planControl-ne$leaseControl){throw 'Campaign control plan and lease must agree'}
+ if(!$planControl){return}
+ foreach($control in @($Plan.campaignControl,$Lease.campaignControl)){
+  Assert-NativeSeedFields $control @('schemaVersion','profile')
+  Assert-NativeSeedInteger $control.schemaVersion 1 1
+  if($control.profile-isnot[string]-or$control.profile-cne'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE'){throw 'Closed campaign control profile required'}
+ }
+ if($Plan.scenarioId-cne$Binding.fixtureId-or$Lease.scenarioId-cne$Binding.fixtureId-or$Lease.phase-cne'CAMPAIGN_BINDING_ONLY'-or$Lease.schemaVersion-ne1-or$Lease.authorized-isnot[bool]-or!$Lease.authorized-or$Lease.issuer-cne'/root'-or$Lease.driver-cne'/root/recovery_game_driver'-or$Binding.driverRole-cne$Lease.driver){throw 'Closed campaign control launch authority required'}
+ if($Plan.ownership.driver-cne$Lease.driver-or$Plan.ownership.onlyGameInputDriver-isnot[bool]-or!$Plan.ownership.onlyGameInputDriver-or[IO.Path]::GetFullPath($Plan.paths.scenario)-cne[IO.Path]::GetFullPath($Binding.fixtureRoot)){throw 'Campaign control driver and scenario required'}
+ foreach($pair in @(@('maxScenarioActionsIncludingActivations',8),@('maxProxyInvocations',3),@('proxyTimeoutMs',180000),@('ownedGameHardTimeoutMs',480000))){Assert-NativeSeedInteger $Plan.bounds.($pair[0]) $pair[1] $pair[1]}
+ foreach($pair in @(@('maxActions',8),@('maxProxyInvocations',3),@('ownedGameHardTimeoutMs',480000))){Assert-NativeSeedInteger $Lease.($pair[0]) $pair[1] $pair[1]}
+ if($Lease.campaignLoadSaveAllowed-isnot[bool]-or$Lease.campaignLoadSaveAllowed){throw 'Campaign control refuses general save and load authority'}
+ $batches=@($Plan.batches)
+ if($batches.Count-ne3-or(@($batches.id|Sort-Object -Unique)-join',')-cne'B1,E1,E2'){throw 'Campaign control requires exactly B1 E1 E2'}
+ Assert-NativeSeedFields $Plan.historyBaseline @('overallAttempts','uiAttempts','reservedActions','sentActions')
+ foreach($key in @('overallAttempts','uiAttempts','reservedActions','sentActions')){Assert-NativeSeedInteger $Plan.historyBaseline.$key 0 9007199254740991}
+ if($Plan.historyBaseline.sentActions-gt$Plan.historyBaseline.reservedActions){throw 'Campaign control original action history required'}
+ Assert-NativeSeedInteger $Plan.callerAdmissionDeadlineMs 1 9007199254740991
+ Assert-NativeSeedInteger $Lease.callerAdmissionDeadlineMs $Plan.callerAdmissionDeadlineMs $Plan.callerAdmissionDeadlineMs
+ $remaining=$Plan.callerAdmissionDeadlineMs-[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+ if($remaining-lt150000-or$remaining-gt480000){throw 'Campaign control original caller admission deadline required'}
+ $planWatchdog=@($Plan.PSObject.Properties.Name)-ccontains'sessionWatchdogMs'
+ $leaseWatchdog=@($Lease.PSObject.Properties.Name)-ccontains'sessionWatchdogMs'
+ if($planWatchdog-ne$leaseWatchdog){throw 'Campaign control watchdog must be paired'}
+ if($planWatchdog){Assert-NativeSeedInteger $Plan.sessionWatchdogMs 480000 480000;Assert-NativeSeedInteger $Lease.sessionWatchdogMs 480000 480000}
+ foreach($authority in @($Plan,$Lease)){
+  foreach($key in @('ownedNodeKill','campaign','e1MenuReceipt')){if(@($authority.PSObject.Properties.Name)-ccontains$key){throw 'Campaign control refuses unrelated phase authority'}}
+  if(@($authority.PSObject.Properties.Name)-cnotcontains'seed'){throw 'Campaign control requires one manifest-bound disposable seed'}
+ }
+ $supportPath=Join-Path $Binding.fixtureRoot 'frozen-support-pins.private.json'
+ if([IO.Path]::GetFullPath($Lease.supportPinsPath)-cne[IO.Path]::GetFullPath($supportPath)){throw 'Campaign control exact support manifest required'}
+ $support=Read-NativeSeedJson $supportPath $Lease.supportPinsSha256 262144
+ Assert-NativeSeedFields $support @('pins')
+ $sources=@('guarded-http-ownership.ps1','campaign-authority.mjs','batch-authorization.mjs','batch-session.mjs','finite-consent.mjs','fixture-binding.mjs','direct-frames.mjs')+@('native-controller.ps1','protection-check.ps1','fixture-inputs.ps1','seed-fixture.ps1','publish-owned-snapshot.ps1','session-watchdog.ps1','menu-launch.ps1'|ForEach-Object {'fixture/'+$_})
+ foreach($relative in $sources){
+  $path=[IO.Path]::GetFullPath((Join-Path $Binding.repositoryRoot ('tools/starsector-proxy/'+$relative)))
+  $pins=@($support.pins|Where-Object {$_.path-is[string]-and[IO.Path]::GetFullPath($_.path)-ceq$path})
+  if($pins.Count-ne1){throw 'Campaign control current tooling pin required'}
+  Assert-NativeSeedOrdinary $path
+  if((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash-ine$pins[0].sha256){throw 'Campaign control tooling source changed'}
+ }
+}
 function Read-NativeSeedPolicy($Binding,$Plan,$Lease) {
+ Assert-NativeCampaignControl $Binding $Plan $Lease
  $planOptIn=$null-ne$Plan-and@($Plan.PSObject.Properties.Name)-ccontains'seed'
  $leaseOptIn=$null-ne$Lease-and@($Lease.PSObject.Properties.Name)-ccontains'seed'
  if($planOptIn-ne$leaseOptIn){throw 'Seed plan and lease authority must agree'}

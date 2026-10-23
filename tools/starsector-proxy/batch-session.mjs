@@ -1,6 +1,7 @@
 // @ts-check
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { validateCampaignBinding, reserveCampaignAction, finishCampaignAction } from './campaign-authority.mjs';
+import { completePng } from './direct-frames.mjs';
 const observations = new Set(['doctor', 'policy_status', 'list_windows', 'get_window',
     'get_frontmost_app', 'get_display_size', 'list_running_apps', 'screenshot', 'wait']);
 const batches = {
@@ -12,7 +13,7 @@ const batches = {
 /** Validate the closed in-memory binding; file/lease custody is checked by the caller too.
  * @param {any} authorization */
 export function validateBatchBinding(authorization) {
-    if (authorization?.schemaVersion === 2) { validateCampaignBinding(authorization); return; }
+    if ([2, 3].includes(authorization?.schemaVersion)) { validateCampaignBinding(authorization); return; }
     const keys = ['batch', 'ownedPids', 'planSha256', 'runID', 'scenario', 'schemaVersion'];
     if (!authorization || typeof authorization !== 'object' || Array.isArray(authorization) ||
         Object.keys(authorization).sort().join() !== keys.join() || authorization.schemaVersion !== 1 ||
@@ -41,13 +42,20 @@ function textJson(result) {
 export function createBatchSession(session, authorization, record = () => {}) {
     validateBatchBinding(authorization);
     const binding = structuredClone(authorization);
-    const campaign = binding.schemaVersion === 2;
+    const campaign = [2, 3].includes(binding.schemaVersion);
+    const seededLauncher = binding.schemaVersion === 3 && binding.batch === 'B1';
+    const seededEntry = binding.schemaVersion === 3 && binding.batch === 'E1';
+    const seededExitConfirmation = binding.schemaVersion === 3 && binding.batch === 'E2' && binding.exitConfirmation !== undefined;
     const escapeBatch = campaign && binding.batch === 'E1';
-    const sequence = campaign ? [{ tool: escapeBatch ? 'key' : 'left_click', optional: false }]
+    const sequence = seededLauncher ? batches.B1 : seededEntry ?
+        [{ tool: 'left_click' }, { tool: 'left_click' }, { tool: 'left_click' }, { tool: 'key' }] :
+        seededExitConfirmation ? [{ tool: 'left_click' }, { tool: 'left_click', optional: true }] :
+        campaign ? [{ tool: escapeBatch ? 'key' : 'left_click', optional: false }]
         : batches[/** @type {keyof typeof batches} */ (binding.batch)];
     let tail = Promise.resolve();
     let position = 0;
     let inputLatched = false;
+    let knownSeedPlay = false;
     let doctor = false, core = false, index = 0;
     const requestContext = new AsyncLocalStorage();
     /** @type {{number: number, tool: string} | undefined} */ let activeRequest;
@@ -55,10 +63,11 @@ export function createBatchSession(session, authorization, record = () => {}) {
     /** @type {Map<number, {value: any, index: number}>} */
     const windows = new Map();
     /** @type {{value: any, index: number} | undefined} */ let foreground;
-    /** @type {{id: number, index: number, bounds: string} | undefined} */ let capture;
+    /** @type {{id: number, index: number, bounds: string, pngBytes?: Buffer, capturedAtMs: number} | undefined} */ let capture;
     /** @param {any} value */
     const owned = value => value && binding.ownedPids.includes(value.pid) &&
-        (!campaign || value.windowId === binding.campaign.windowId) &&
+        (!campaign || value.windowId === binding.campaign.windowId ||
+            (seededLauncher && knownSeedPlay && !inputLatched)) &&
         Number.isSafeInteger(value.windowId) && /starsector/i.test(value.title ?? '') &&
         /^(java|starsector)\.exe$/i.test(value.bundleId ?? '') &&
         value.bounds && Number.isSafeInteger(value.bounds.x) && Number.isSafeInteger(value.bounds.y) &&
@@ -81,20 +90,30 @@ export function createBatchSession(session, authorization, record = () => {}) {
             if (!args || typeof args !== 'object' || Array.isArray(args)) refuse('tool arguments must be an object');
             if (signal?.aborted) refuse('request cancelled before dispatch');
             if (mutation) {
+                const escapeCall = escapeBatch && tool === 'key';
                 if (inputLatched) refuse('input authority already latched');
                 let next = position;
                 while (next < sequence.length && sequence[next].tool !== tool && sequence[next].optional) next++;
                 if (next >= sequence.length || sequence[next].tool !== tool) refuse('mutation outside remaining sequence');
                 // Reserve before any delegated effect. Failed/uncertain attempts are never refunded.
                 position = next + 1;
-                if (campaign) reserveCampaignAction(binding, args);
-                const fields = tool === 'activate_window' ? ['window_id', 'timeout_ms', 'approval_token']
-                    : escapeBatch ? ['text', 'repeat', 'target_window_id', 'target_app', 'focus_strategy']
+                if (campaign) {
+                    const target = windows.get(args.target_window_id);
+                    const after = capture?.pngBytes && capture.id === args.target_window_id && target &&
+                        capture.bounds === JSON.stringify(target.value.bounds) && target.value.isFocused === true &&
+                        foreground?.value?.pid === target.value.pid && (foreground?.index ?? -1) > capture.index && target.index > capture.index
+                        ? { pngBytes: capture.pngBytes, window: target.value, capturedAtMs: capture.capturedAtMs, observedAtMs: Date.now() } : undefined;
+                    reserveCampaignAction(binding, args, tool, after);
+                }
+                const fields = tool === 'activate_window' ? (campaign ? ['window_id', 'timeout_ms'] : ['window_id', 'timeout_ms', 'approval_token'])
+                    : escapeCall ? ['text', 'repeat', 'target_window_id', 'target_app', 'focus_strategy']
                     : campaign ? ['target_window_id', 'target_app', 'focus_strategy', 'coordinate']
                     : ['target_window_id', 'target_app', 'focus_strategy', 'coordinate', 'approval_token'];
                 if (Object.keys(args).some(key => !fields.includes(key))) refuse('unexpected mutation arguments');
-                if (escapeBatch && (tool !== 'key' || args.text !== 'escape' || args.repeat !== 1)) refuse('only one exact Escape is qualified');
-                if (campaign && !escapeBatch && (tool !== 'left_click' ||
+                if (escapeCall && (args.text !== 'escape' || args.repeat !== 1)) refuse('only one exact Escape is qualified');
+                if (seededEntry && position === 1 && JSON.stringify(args.coordinate) !==
+                    JSON.stringify(binding.b1MenuReceipt.loadCoordinate)) refuse('only the inspected Load Game coordinate is qualified');
+                if (campaign && !escapeBatch && !seededLauncher && !(seededExitConfirmation && position === 2) && (tool !== 'left_click' ||
                     JSON.stringify(args.coordinate) !== JSON.stringify(binding.e1MenuReceipt.exitCoordinate))) refuse('only the inspected ordinary Exit coordinate is qualified');
                 const id = tool === 'activate_window' ? args.window_id : args.target_window_id;
                 const target = windows.get(id);
@@ -106,7 +125,7 @@ export function createBatchSession(session, authorization, record = () => {}) {
                     (foreground?.index ?? -1) <= capture.index || target.index <= capture.index)) {
                     refuse('strict fresh focus/window checks required after BEFORE capture');
                 }
-                if (tool !== 'activate_window' && !escapeBatch) {
+                if (tool !== 'activate_window' && !escapeCall) {
                     const [x, y] = Array.isArray(args.coordinate) ? args.coordinate : [];
                     const bounds = target.value.bounds;
                     if (!Array.isArray(args.coordinate) || args.coordinate.length !== 2 || !Number.isSafeInteger(x) || !Number.isSafeInteger(y) ||
@@ -146,12 +165,27 @@ export function createBatchSession(session, authorization, record = () => {}) {
                     if (images?.length !== 1 || images[0].mimeType !== 'image/png' || !images[0].data) {
                         refuse('original PNG receipt missing');
                     }
-                    capture = { id: args.target_window_id, index: callIndex,
+                    let pngBytes;
+                    if (binding.schemaVersion === 3) {
+                        const encoded = images[0].data;
+                        if (typeof encoded !== 'string' || encoded.length > 44 * 1024 * 1024 ||
+                            !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) refuse('bounded canonical original PNG required');
+                        pngBytes = Buffer.from(encoded, 'base64');
+                        if (pngBytes.toString('base64') !== encoded) refuse('canonical original PNG required');
+                        const dimensions = completePng(pngBytes), window = windows.get(args.target_window_id)?.value;
+                        if (dimensions.width !== window?.bounds.width || dimensions.height !== window?.bounds.height) refuse('original PNG dimensions changed');
+                    }
+                    capture = { id: args.target_window_id, index: callIndex, pngBytes, capturedAtMs: Date.now(),
                         bounds: JSON.stringify(windows.get(args.target_window_id)?.value.bounds) };
                 }
             }
             if (inputLatched) latchCampaignFailure();
-            else if (campaign && mutation) finishCampaignAction(binding, false);
+            else if (campaign && mutation) {
+                finishCampaignAction(binding, false);
+                // Observation only: the Play sequence is exhausted. A new provider
+                // must separately prove this window's immutable owned handoff.
+                if (seededLauncher && tool === 'left_click') knownSeedPlay = true;
+            }
             record({ phase: 'after-dispatch', index: callIndex, tool, mutation, position, inputLatched });
             return result;
         } catch (error) {

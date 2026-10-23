@@ -248,6 +248,39 @@ prove this composition. The change does not qualify V2 campaign handoff.
 A supported host or connection refresh and separately admitted native validation
 remain required before using newly registered tools in a live scenario.
 
+The separate schema3 `DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE` profile composes one
+protected seeded launch with B1 Play, E1 Load Game → the sole copied disposable
+row → Load → inspected paused-seed Escape, and E2 ordinary Exit. B1 must close
+successfully with an inspected original main menu before E1 can claim ownership.
+Only this transfer permits a replacement game window on the same admitted owned
+PID; process birth, executable, Windows session and controller Job lineage remain
+bound. E1 and E2 retain strict campaign/window identity. Unknown input or provider
+closure cannot transfer authority.
+
+The original launch plan, lease and controller record remain immutable. New
+schema3 batches use fixed phase-local plan/lease files and a hash-bound original
+launch predecessor, as specified in `fixture/README.md`. Canonical schema2 keeps
+its existing Escape-only entry contract and cannot use this new predecessor.
+All phases share the original eight-action ceiling, including activation and any
+confirmation, three providers, 32 consent decisions per provider, 480000ms session,
+20-second startup, 180-second provider ceiling and 30-second cleanup reserve.
+Provider deadlines clip to the original effective root deadline; transfers do not
+refund actions or clear uncertainty.
+
+Each entry click requires a complete original AFTER followed by fresh owned-window
+and foreground checks. Escape additionally requires the driver's saved original
+and explicit inspection of the intended paused seed, bound to the manifest,
+staging receipt, last Load reservation, source and claim. E2 may declare one
+optional `Exit game?` / `Yes` confirmation in both its frozen plan and lease.
+That second click requires its own matching original-image inspection and exact
+coordinate. Other dialogs, save actions and general keys remain outside this flow.
+E2 rechecks historical B1/E1 authority and paused-image custody before input.
+
+Source and synthetic transport checks establish these guards only. A compatible
+private disposable seed, supported loaded-frontend refresh, actual visual checks,
+ordinary process exit and protected-save verification are separate native gates.
+This profile does not generate a seed or admit New Game, Continue or general save/load.
+
 The guard does not establish visible preconditions, AFTER images, frame freshness
 or scenario success. The Codex driver and OpenCode instructions still check those
 assertions. A completed runner/export or confident narrative does not qualify a test.

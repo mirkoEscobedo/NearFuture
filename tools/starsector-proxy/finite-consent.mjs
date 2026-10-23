@@ -28,9 +28,12 @@ function read(path) {
 /** @param {ReturnType<typeof readClaimedBatchAuthorization>} admitted */
 function grant(admitted) {
     const source = read(admitted.sourcePath);
-    const plan = read(resolve(admitted.binding.scenario, 'plan.json'));
-    const lease = read(resolve(admitted.binding.scenario, 'native-lane-lease.private.json'));
-    if (source.sha256 !== admitted.sourceSha256 || plan.sha256 !== admitted.binding.planSha256 ||
+    if (source.sha256 !== admitted.sourceSha256) throw new Error('Finite consent custody changed');
+    // The already validated authorization selects either the immutable original
+    // menu documents or fixed phase-local successors; do not reopen the launch pair.
+    const plan = read(source.value.planPath);
+    const lease = read(source.value.leasePath);
+    if (plan.sha256 !== admitted.binding.planSha256 ||
         lease.sha256 !== source.value.leaseSha256?.toLowerCase()) throw new Error('Finite consent custody changed');
     const value = plan.value.directHostConsent;
     if (!value || Array.isArray(value) || Object.keys(value).sort().join() !== 'maxCallsPerBatch,mode,schemaVersion' ||
@@ -58,8 +61,10 @@ export function readFiniteConsentAuthority({ root, source, runID }) {
  * @param {{sessionFactory?: typeof createSession, record?: (event: Record<string, unknown>) => void}} [options] */
 export function createFiniteConsentMcp({ root, source, runID }, options = {}) {
     const { admitted, consent } = readFiniteConsentAuthority({ root, source, runID });
-    const campaign = admitted.binding.schemaVersion === 2;
-    const allowed = new Set([...observations, ...(campaign ? [admitted.binding.batch === 'E1' ? 'key' : 'left_click'] : mutations[admitted.binding.batch])]);
+    const campaign = [2, 3].includes(admitted.binding.schemaVersion);
+    const allowed = new Set([...observations, ...(admitted.binding.schemaVersion === 3 ?
+        admitted.binding.batch === 'B1' ? mutations.B1 : admitted.binding.batch === 'E1' ? ['left_click', 'key'] : ['left_click'] :
+        campaign ? [admitted.binding.batch === 'E1' ? 'key' : 'left_click'] : mutations[admitted.binding.batch])]);
     /** @type {AsyncLocalStorage<{tool: string, args: any, signal?: AbortSignal, active: boolean, used: boolean}>} */
     const active = new AsyncLocalStorage();
     let attempts = 0;
@@ -80,7 +85,7 @@ export function createFiniteConsentMcp({ root, source, runID }, options = {}) {
             const current = readClaimedBatchAuthorization(source, { root, runID });
             if (current.sourceSha256 !== admitted.sourceSha256 || !isDeepStrictEqual(current.binding, admitted.binding) ||
                 !isDeepStrictEqual(grant(current), consent) || call.signal?.aborted) return false;
-            if (campaign && ['key', 'left_click'].includes(call.tool)) markCampaignActionSent(admitted.binding, call.args);
+            if (campaign && ['key', 'left_click', 'activate_window'].includes(call.tool)) markCampaignActionSent(admitted.binding, call.args, call.tool);
             approved = true;
             return true;
         } catch { return false; }

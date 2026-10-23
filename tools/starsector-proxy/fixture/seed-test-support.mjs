@@ -20,7 +20,8 @@ export function powershell(/** @type {string[]} */ args){
  return result;
 }
 
-export function seedFixture(){
+/** @param {{driverRole?: string}} [options] */
+export function seedFixture(options={}){
  mkdirSync(scenarios,{recursive:true});
  const source=mkdtempSync(resolve(scenarios,'seed-source-test-'));
  const evidence=mkdtempSync(resolve(scenarios,'seed-evidence-test-'));
@@ -54,7 +55,7 @@ export function seedFixture(){
  const runtimePin=json(resolve(target,'runtime-artifacts.private.json'),{schemaVersion:1,kind:'NATIVE99_CAMPAIGN_BINDING_RUNTIME_INPUTS',candidateHead,artifacts});
  const agentPath=resolve(target,'input-agent.jar'),agentPin=write(agentPath,'synthetic-agent');
  write(resolve(target,'agent/nf-presentation-agent.jar'),'synthetic-agent');
- const binding={schemaVersion:1,fixtureRoot:target,sourceInstallation:original,qualifiedRuntimeRoot:runtime,candidateHead,runtimeManifestSha256:runtimePin.sha256,presentationAgentPath:agentPath,presentationAgentSha256:agentPin.sha256,presentationClassSha256:'B'.repeat(64),driverRole:'/test/seed-driver'};
+ const binding={schemaVersion:1,fixtureRoot:target,sourceInstallation:original,qualifiedRuntimeRoot:runtime,candidateHead,runtimeManifestSha256:runtimePin.sha256,presentationAgentPath:agentPath,presentationAgentSha256:agentPin.sha256,presentationClassSha256:'B'.repeat(64),driverRole:options.driverRole??'/test/seed-driver'};
  const bindingPath=resolve(target,'fixture-binding.private.json'),bindingPin=json(bindingPath,binding);
  const pins={
   classSha256:binding.presentationClassSha256,agentSha256:agentPin.sha256,runtimeManifestSha256:runtimePin.sha256,
