@@ -28,8 +28,25 @@ jobs:
         run: cargo fetch --locked
       - name: Install vendored developer tools offline
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
+      - name: Install pinned native-tooling libraries without command links or install scripts
+        run: npm ci --prefix tools/computer-use-mcp --ignore-scripts --bin-links=false --no-audit --no-fund
       - name: Format, lint, boundaries, schemas, tooling and synthetic Java contracts
         run: npm run lint && npm run check:schemas && npm run test:tools && npm run check:java
+      - name: Qualify portable finite adapter and capture contracts
+        run: node --test tools/starsector-proxy/*.test.mjs tools/starsector-proxy/capture/capture-ascii-sha256.test.mjs tools/starsector-proxy/capture/capture-custody-config.test.mjs tools/starsector-proxy/capture/capture-intent-io.test.mjs tools/starsector-proxy/capture/declared-frame-path.test.mjs tools/starsector-proxy/capture/existing-direct-frames-regression.test.mjs tools/starsector-proxy/capture/probe-stdio.test.mjs
+      - name: Qualify Windows fixture and capture tooling without a game
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $env:NF_TEST_POWERSHELL = (Get-Command pwsh -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
+          $env:NF_CAPTURE_TEST_POWERSHELL = $env:NF_TEST_POWERSHELL
+          node --input-type=module -e "import { buildCaptureRuntime } from './tools/starsector-proxy/capture/build-runtime.mjs'; buildCaptureRuntime();"
+          $captureTests = @(Get-ChildItem tools/starsector-proxy/capture/*.test.mjs -File | Where-Object Name -ne 'capture-slot-projection.test.mjs' | ForEach-Object FullName)
+          $fixtureTests = @(Get-ChildItem tools/starsector-proxy/fixture/*.test.mjs -File | ForEach-Object FullName)
+          node --test @fixtureTests
+          node --test @captureTests
       - name: Observe Java and Rust mutual authentication on both local endpoints
         if: runner.os == 'Linux'
         shell: pwsh

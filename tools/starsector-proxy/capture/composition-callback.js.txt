@@ -1,0 +1,170 @@
+(function native99EvidenceComposition(x,b){
+"use strict";
+if(!x||!x.h||typeof x.h.now!=="function"||typeof x.h.call!=="function"||typeof x.write!=="function"||typeof x.verifyMetadataFiles!=="function")throw Error("EXACT_EXISTING_X_H_BINDING_REQUIRED");
+const h=x.h,q=s=>"'"+s.replace(/'/g,"''")+"'";
+const s=load("native99EvidenceCompositionState");
+if(!s||s.bindingId!==b.id||s.initializedBeforeClock!==true)throw Error("PRECLOCK_COMPOSITION_STATE_REQUIRED");
+function admitted(){
+ if(b.admitted!==true||b.fixtureSourceAdmitted!==true||b.expectedExeDataAdmitted!==true||b.rootPreflightFreshOrdinaryPathsAdmitted!==true)throw Error("FIXTURE_OR_COMPOSITION_NOT_ADMITTED");
+ if(load("feedbackDir")!==b.evidenceRoot||!Number.isInteger(b.captureRemainingGateMs)||b.captureRemainingGateMs<60000||!Number.isInteger(b.persistRemainingGateMs)||b.persistRemainingGateMs<60000)throw Error("EXACT_PATH_AND_TIME_BINDING_REQUIRED");
+}
+function keep(){store("native99EvidenceCompositionState",s);}
+function errorRecord(error){return {name:error?.name??null,message:String(error),stack:typeof error?.stack==="string"?error.stack:null};}
+function retainUnknown(label,error,startFileReceiptIndex){
+ if(!s.pending.includes(label))s.pending.push(label);
+ s.errors.push({phase:label,error:errorRecord(error),atMs:h.now(),terminalStatus:"POSSIBLY_PENDING_NOT_PROVEN_TERMINAL",
+ availableFileReceipts:load("feedbackFileTerminals").slice(startFileReceiptIndex??load("feedbackFileTerminals").length),
+ exactSessionHandle:"UNAVAILABLE_IF_FROZEN_H_SHELL_DISCARDED_RAW_SESSION_RESPONSE",
+ ownership:"No exact handle inferred from error text or caller boolean; root actual resolution required before any more dispatch"});
+ keep();
+}
+function actualMetadataFileReturn(r){
+ const saved=typeof r?.recordKey==="string"?load(r.recordKey):null,clock=load("feedbackClock");
+ return r?.kind==="APPLY_PATCH_METADATA_V1"&&r.tool==="apply_patch"&&r.status==="ACTUAL_FILE_TOOL_RETURNED_UNVERIFIED"&&r.rawResponseAvailable===true&&
+  Number.isSafeInteger(r.startMs)&&Number.isSafeInteger(r.endMs)&&r.endMs>=r.startMs&&r.startMs>=clock.startMs&&r.endMs<=clock.deadlineMs&&r.terminal===undefined&&
+  r.argumentsReference?.recordKey===r.recordKey&&r.argumentsReference.field==="args"&&r.rawReference?.recordKey===r.recordKey&&r.rawReference.field==="raw"&&
+  saved?.kind===r.kind&&saved.tool===r.tool&&saved.id===r.id&&saved.recordKey===r.recordKey&&saved.name===r.name&&saved.path===r.path&&saved.status===r.status&&saved.rawResponseAvailable===true&&
+  saved.startMs===r.startMs&&saved.endMs===r.endMs&&typeof saved.args?.patch==="string"&&saved.args.patch.length>0&&
+  saved.raw&&typeof saved.raw==="object"&&!Array.isArray(saved.raw)&&!saved.raw.isError&&!saved.raw.error;
+}
+async function metadataWrite(name,value){
+ if(s.pending.length)throw Error("NO_DISPATCH_WHILE_PENDING_OR_UNKNOWN");
+ const label="metadata:"+name,receiptIndex=load("feedbackFileTerminals").length;
+ s.pending.push(label);keep();
+ try{
+  const path=await x.write(name,value);
+  const available=load("feedbackFileTerminals").slice(receiptIndex),record=available.at(-1);
+  if(available.length!==1||record?.name!==name||!Array.isArray(record.records)||record.records.length===0||
+     record.records.some(r=>!actualMetadataFileReturn(r)))throw Error("METADATA_TERMINAL_PROOF_UNAVAILABLE");
+  s.pending=s.pending.filter(p=>p!==label);keep();return path;
+ }catch(error){retainUnknown(label,error,receiptIndex);throw error;}
+}
+function beginStage(){
+ if(s.stageInFlight)throw Error("DUPLICATE_STAGE");
+ s.stageInFlight={id:b.finalStageId,startMs:h.now(),fileReceiptIndex:load("feedbackFileTerminals").length};keep();
+}
+function stageCompleted(){
+ s.stageCompleted={...s.stageInFlight,endMs:h.now()};
+ s.stageInFlight=null;keep();
+}
+function stageFailed(error){
+ const active=s.stageInFlight??{id:b.finalStageId,fileReceiptIndex:load("feedbackFileTerminals").length};
+ retainUnknown("inherited-stage:"+active.id,error,active.fileReceiptIndex);
+ s.stageFailure={...active,error:errorRecord(error),endMs:h.now(),classification:"CONSERVATIVE_UNKNOWN_TERMINALITY_INCLUDING_MASKED_PROGRESS_MULTIPART_OR_BEFORE_QUERY_FAILURE"};
+ s.stageInFlight=null;keep();
+}
+
+function externalize(record){
+ const reference=s.imageReferences[record.id];
+ return {...record,raw:{...record.raw,content:record.raw?.content?.map(block=>{
+  if(block.type!=="image")return block;
+  if(reference)return {...block,data:{externalFullBase64File:reference}};
+  s.rawDurabilityGap=true;keep();
+  return {...block,data:{UNPERSISTED_ORIGINAL_IN_FUNCTIONS_STORE:{recordKey:"feedback_"+record.id,characters:typeof block.data==="string"?block.data.length:null,status:"HOLD_EXACT_IMAGE_NOT_DURABLE"}}};
+ })}};
+}
+
+async function captureFileOperation(mode,id,expected){
+ if(s.pending.length)throw Error("NO_DISPATCH_WHILE_PENDING_OR_UNKNOWN");
+ const adapter=load("native99CaptureAdapterBinding");
+ const input=JSON.stringify(expected);
+ if(input.length>24000)throw Error("BOUNDED_CAPTURE_FILE_COMMAND_REQUIRED");
+ const command="$ErrorActionPreference='Stop';"+
+  "if((Get-FileHash -Algorithm SHA256 -LiteralPath "+q(adapter.node.path)+").Hash.ToLowerInvariant() -cne "+q(adapter.node.sha256)+"){throw 'Node pin changed'};"+
+  "if((Get-FileHash -Algorithm SHA256 -LiteralPath "+q(adapter.cli.path)+").Hash.ToLowerInvariant() -cne "+q(adapter.cli.sha256)+"){throw 'Capture CLI pin changed'};"+
+  "& "+q(adapter.node.path)+" "+q(adapter.cli.path)+" "+q(mode)+" "+q(adapter.configuration.path)+" "+q(adapter.configuration.sha256)+" "+q(input)+";exit $LASTEXITCODE";
+ if(command.length>24000)throw Error("WINDOWS_CAPTURE_COMMAND_BOUND_REQUIRED");
+ const label="capture-file:"+mode+":"+id;
+ s.pending.push(label);keep();
+ let actual;
+ try{
+  actual=await h.shell(command);
+  s.transfers.push({id,kind:"CAPTURE_FILESYSTEM_COMMAND_V1",mode,...actual});keep();
+  if(actual?.terminal?.exit_code!==0||actual.terminal.session_id)throw Error("ACTUAL_CAPTURE_FILE_TERMINAL_REQUIRED");
+  const proof=JSON.parse(actual.terminal.output.replace(/^\uFEFF/,""));
+  return proof;
+ }catch(error){retainUnknown(label,error);throw error;}
+}
+function captureFileCompleted(mode,id){s.pending=s.pending.filter(p=>p!=="capture-file:"+mode+":"+id);keep();}
+async function capture(id){
+ admitted();h.requireTime(b.captureRemainingGateMs);
+ const slot=b.frames.find(f=>f.id===id);
+ if(!slot||s.captureAttempts.includes(id)||s.captureAttempts.length>=b.frames.length)throw Error("CLOSED_FRESH_FRAME_SLOT_REQUIRED");
+ const w=load("feedbackWindow");
+ if(!w||!Number.isSafeInteger(w.windowId)||w.windowId<=0||!Number.isInteger(w.bounds?.width)||!Number.isInteger(w.bounds?.height)||w.bounds.width<=0||w.bounds.height<=0)throw Error("CURRENT_BOUND_WINDOW_REQUIRED");
+ const adapter=load("native99CaptureAdapterBinding"),hash=eval(load("native99CaptureAsciiHashSource"));
+ if(!adapter||adapter.kind!=="NATIVE99_CAPTURE_ADAPTER_CALLER_BINDING_V1"||typeof hash!=="function"||
+    adapter.profileId!==load("native99UiProfileData")?.id||!slot.intentPath||!slot.callbackReceipt)throw Error("PINNED_CAPTURE_ADAPTER_BINDING_REQUIRED");
+ const root=load("native99OwnedRootClock"),record=root?.recordKey?load(root.recordKey):null;
+ const intent={schemaVersion:1,kind:"NATIVE99_CAPTURE_INTENT_V1",profileId:adapter.profileId,
+  batchId:load("native99UiBatchData").id,bindingId:b.id,frameId:id,createdMs:h.now(),
+  args:{quality:0,target_window_id:w.windowId,width:w.bounds.width,show_agent_pointer:false},window:w,
+  sourcePins:adapter.sourcePins,rootClock:root,batchClock:load("feedbackClock"),
+  producerWitness:load("native99UiProducerClockWitness"),rootCallRecord:{key:root?.recordKey,value:record},
+  ownedWitness:load("native99UiLastOwnedWitness")};
+ const intentText=(JSON.stringify(intent)+"\n").replace(/[\u007f-\uffff]/g,c=>"\\u"+c.charCodeAt(0).toString(16).padStart(4,"0"));
+ s.captureAttempts.push(id);keep();
+ const a=h.now(),publication=await captureFileOperation("publish",id,{intentText,expectedPointerSHA256:adapter.pointerSHA256});
+ if(publication.kind!=="NATIVE99_CAPTURE_INTENT_PUBLICATION_V1"||publication.profileId!==intent.profileId||
+    publication.batchId!==intent.batchId||publication.bindingId!==b.id||publication.frameId!==id||
+    publication.intentPath!==slot.intentPath||publication.intentSHA256!==hash(intentText)||
+    publication.immutableIntentReadbackExact!==true||publication.nativeAuthorityGranted!==false||
+    !/^[a-f0-9]{64}$/.test(publication.pointerSHA256))throw Error("EXACT_INTENT_PUBLICATION_PROOF_REQUIRED");
+ captureFileCompleted("publish",id);
+ adapter.pointerSHA256=publication.pointerSHA256;store("native99CaptureAdapterBinding",adapter);
+ h.requireTime(b.captureRemainingGateMs);
+ await h.call(id+"-capture","mcp__starsector_direct__screenshot",{quality:0,target_window_id:w.windowId,width:w.bounds.width,show_agent_pointer:false});
+ const raw=load("feedback_"+id+"-capture"),images=raw?.raw?.content?.filter(c=>c.type==="image");
+ store("native99ExactOriginal_"+id,raw);
+ if(images?.length!==1||images[0].mimeType!=="image/png")throw Error("EXACT_ONE_ORIGINAL_PNG_REQUIRED");
+ const payload=images[0].data;
+ if(typeof payload!=="string"||payload.length===0||payload.length>4194304||payload.length%4||!/^[A-Za-z0-9+/]*={0,2}$/.test(payload))throw Error("ORIGINAL_BASE64_INVALID_OR_ABOVE_QUALIFIED_CAPACITY");
+ h.requireTime(b.persistRemainingGateMs);
+ const expectedBytes=payload.length/4*3-(payload.endsWith("==")?2:payload.endsWith("=")?1:0);
+ const expected={profileId:intent.profileId,batchId:intent.batchId,bindingId:intent.bindingId,frameId:id,
+  intentPath:slot.intentPath,intentSHA256:hash(intentText),slot,captureOrdinal:b.frames.findIndex(f=>f.id===id)+1,
+  inlineImageSHA256:hash(payload),inlineImageCharacters:payload.length,
+  nonImageContent:raw.raw.content.filter(c=>c.type!=="image"),captureStartMs:raw.startMs,captureEndMs:raw.endMs};
+ const proof=await captureFileOperation("read",id,expected);
+ if(proof.kind!=="NATIVE99_CAPTURE_COMPLETION_READBACK_V1"||proof.frameId!==id||proof.bindingId!==b.id||
+    proof.intentSha256!==expected.intentSHA256||proof.png!==slot.png||proof.payload!==slot.payload||
+    proof.bytes!==expectedBytes||proof.width!==w.bounds.width||proof.height!==w.bounds.height||
+    proof.canonicalBase64Characters!==payload.length||proof.canonicalBase64SHA256!==expected.inlineImageSHA256||
+    proof.inlineImageDigestMatched!==true||proof.nonImageContentMatched!==true||proof.originalPayloadRoundtripExact!==true||
+    proof.freshness!=="UNKNOWN"||proof.wholeNativeAcceptance!==false)throw Error("EXACT_CALLBACK_COMPLETION_READBACK_REQUIRED");
+ captureFileCompleted("read",id);
+ const reference={schemaVersion:1,storage:"single-canonical-base64-file",artifact:slot.payload,canonicalCharacters:payload.length,canonicalSHA256:proof.canonicalBase64SHA256,payloadTextCharacters:proof.payloadTextCharacters,payloadTextSHA256:proof.payloadTextSHA256,normalization:"Remove exactly one callback writer final LF only",originalPNG:{path:slot.png,bytes:proof.bytes,sha256:proof.sha256,width:proof.width,height:proof.height},provenance:"Awaited native callback persisted the exact original; caller inline base64 SHA256 independently matched by filesystem readback; no resize/crop/recompression; freshness UNKNOWN",independentPrePersistencePngHash:"NOT_AVAILABLE_FOR_FRESH_CAPTURE",callbackReceipt:proof.callbackReceipt,callbackReceiptSHA256:proof.callbackReceiptSHA256};
+ s.imageReferences[raw.id]=reference;keep();
+ const frame={id,png:slot.png,bytes:proof.bytes,sha256:proof.sha256,width:proof.width,height:proof.height,captureId:raw.id,args:raw.args,startMs:a,endMs:h.now(),storage:"single-canonical-base64-file",payload:slot.payload};
+ const calls=load("feedbackCalls").slice(s.committedCalls).map(externalize),queries=load("feedbackQueries").slice(s.committedQueries);
+ await metadataWrite(slot.receiptRelative,{schemaVersion:1,kind:"NATIVE_ORIGINAL_SINGLE_FILE_RECEIPT",frame,externalFullBase64File:reference,calls,queries,transferReceipts:s.transfers.filter(r=>r.id===id),states:load("feedbackStates"),inputs:load("feedbackInputs"),rawDurabilityGap:s.rawDurabilityGap});
+ frame.receipt=b.evidenceRoot+"/"+slot.receiptRelative;
+ s.committedCalls=load("feedbackCalls").length;s.committedQueries=load("feedbackQueries").length;s.frames.push(frame);keep();
+ const frames=load("feedbackFrames");frames.push(frame);store("feedbackFrames",frames);
+ return frame;
+}
+async function terminalR(outcome){
+ const clock=load("feedbackClock"),entry=h.now(),decision={entryMs:entry,entryElapsedMs:entry-clock.startMs,sealStartLate:entry-clock.startMs>=165000,stage:outcome.stage,failure:outcome.failure??null,wholeNative99Acceptance:false,nativeLaneReleased:false};
+ s.terminalEntry=decision;keep();
+ const pending=s.pending.slice();
+ if(pending.length){const held={...decision,status:"HOLD_PENDING_OR_UNKNOWN_TRANSFER_NO_FURTHER_CALLS",pending,availableOwnershipEvidenceStore:"native99EvidenceCompositionState",availableFileReceiptsStore:"feedbackFileTerminals",exactSessionHandle:"UNAVAILABLE_IF_FROZEN_H_SHELL_DISCARDED_RAW_SESSION_RESPONSE; NOT_INFERRED",noFurtherDispatch:true,ownedCleanup:"ROOT_MUST_RESOLVE_EXACT_PENDING_TOOL_AND_RUNNER; NO_CLEANUP_DISPATCH",finishMs:h.now()};store("native99EvidenceTerminal",held);return held;}
+ let failure=null;
+ try{
+  const remainingCalls=load("feedbackCalls").slice(s.committedCalls).map(externalize);
+  const remainingQueries=load("feedbackQueries").slice(s.committedQueries);
+  await metadataWrite("metadata/final-calls-queries.private.json",{calls:remainingCalls,queries:remainingQueries,transfers:s.transfers,rawDurabilityGap:s.rawDurabilityGap});
+  const proof={...decision,status:"UI_BATCH_SEAL_PENDING",outcome,states:load("feedbackStates"),inputs:load("feedbackInputs"),frames:s.frames,rawDurabilityComplete:!s.rawDurabilityGap,ownedCleanup:{status:"UNBOUND_NOT_AWARDED_FROM_CALLER_BOOLEAN",requiredBindings:b.ownedCleanupRequiredBindings},pendingOwnedRunnerTerminal:true,nativeLaneReleased:false};
+  await metadataWrite("result.private.json",proof);
+  await metadataWrite("progress.json",proof);
+  await metadataWrite("metadata/final-write-timing.private.json",{terminalEntry:decision,requiredWriteReceipts:load("feedbackFileTerminals"),atMs:h.now(),ownedRunnerTerminal:"SEPARATE_MANDATORY_ACTUAL_RECEIPT_NOT_YET_CONSUMED"});
+  const last=load("feedbackFileTerminals").at(-1);
+  s.pending.push("metadata-readback");keep();
+  const metadataReadback=await x.verifyMetadataFiles();
+  s.pending=s.pending.filter(v=>v!=="metadata-readback");keep();
+  const finish=h.now();
+  const final={...decision,status:!decision.failure&&!decision.sealStartLate&&!s.rawDurabilityGap&&finish<=clock.deadlineMs?"UI_BATCH_EVIDENCE_SEALED_ONLY":"HOLD",finishMs:finish,finishElapsedMs:finish-clock.startMs,requiredFinalWriteReceipt:last,metadataReadback,ownedRunnerTerminal:"UNBOUND_PENDING",nativeLaneReleased:false,wholeNative99Acceptance:false};
+  store("native99EvidenceTerminal",final);return final;
+ }catch(error){failure=String(error);const held={...decision,status:s.pending.length?"HOLD_PENDING_OR_UNKNOWN_SEAL_NO_FURTHER_CALLS":"HOLD_REQUIRED_SEAL_FAILED",sealingError:failure,pending:s.pending.slice(),availableOwnershipEvidenceStore:"native99EvidenceCompositionState",availableFileReceiptsStore:"feedbackFileTerminals",terminality:s.pending.length?"POSSIBLY_PENDING_MISSING_EXACT_HANDLE":"NO_PENDING_MARKER_RECORDED",noFurtherDispatch:true,exactSessionHandle:"UNAVAILABLE_IF_FROZEN_H_SHELL_DISCARDED_RESPONSE",finishMs:h.now(),ownedCleanup:"UNBOUND_PENDING_NOT_DISPATCHED",nativeLaneReleased:false};store("native99EvidenceTerminal",held);return held;}
+}
+return {capture,terminalR,h,beginStage,stageCompleted,stageFailed};
+})
