@@ -1,0 +1,8 @@
+# Local configuration example. Replace both placeholders with qualified absolute paths.
+# Configure/reconnect through the supported client UI; source registration is not loaded-host evidence.
+[mcp_servers.starsector_finite]
+command = "node"
+args = ["<absolute-checkout>/tools/starsector-proxy/direct-mcp.mjs"]
+
+[mcp_servers.starsector_finite.env]
+NF_PROXY_OWNERSHIP_POWERSHELL = "<absolute-powershell-directory>/pwsh.exe"
