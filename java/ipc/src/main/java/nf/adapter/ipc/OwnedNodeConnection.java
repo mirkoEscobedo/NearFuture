@@ -25,17 +25,19 @@ public final class OwnedNodeConnection implements AutoCloseable {
     private final OutputStream parent;
     private final InputStream privateOutput;
     private final BooleanSupplier current;
+    private final NodeAttempt observation;
     private ParentHandoff handoff;
     private BackgroundChannel control;
     private BackgroundChannel bulk;
     private boolean authenticated;
     private boolean closed;
 
-    private OwnedNodeConnection(Process child, BooleanSupplier current) {
+    private OwnedNodeConnection(Process child, BooleanSupplier current, NodeAttempt observation) {
         this.child = child;
         this.parent = child.getOutputStream();
         this.privateOutput = child.getInputStream();
         this.current = current;
+        this.observation = observation;
     }
 
     public static OwnedNodeConnection open(NodeLaunch launch, BooleanSupplier current) {
@@ -44,6 +46,11 @@ public final class OwnedNodeConnection implements AutoCloseable {
 
     /** Opt-in faults run only on this blocking owner and consume its original startup budget. */
     public static OwnedNodeConnection open(NodeLaunch launch, BooleanSupplier current, DiagnosticFaultPlan faults) {
+        return open(launch, current, faults, new NodeAttempt());
+    }
+
+    static OwnedNodeConnection open(NodeLaunch launch, BooleanSupplier current, DiagnosticFaultPlan faults,
+            NodeAttempt observation) {
         if (launch == null || current == null || faults == null) throw new NodeFailure(NodeFailure.Code.INVALID);
         long deadline = System.nanoTime() + STARTUP_NANOS;
         OwnedNodeConnection owned = null;
@@ -60,31 +67,34 @@ public final class OwnedNodeConnection implements AutoCloseable {
                 hex(scope.principal().getAccountId().getValue()), hex(scope.principal().getDeviceId().getValue()),
                 Long.toString(launch.durationMillis()));
             startupDetail = NodeFailure.StartupDetail.CHILD_START_IO;
+            observation.phase(NodeAttempt.Phase.CHILD_START);
             spawned = new ProcessBuilder(command)
                 .redirectInput(ProcessBuilder.Redirect.PIPE).redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectError(ProcessBuilder.Redirect.DISCARD).start();
-            owned = new OwnedNodeConnection(spawned, current);
+            observation.created(spawned);
+            owned = new OwnedNodeConnection(spawned, current, observation);
+            observation.phase(NodeAttempt.Phase.HANDOFF_DELAY);
             owned.delayHandoff(faults, deadline);
             startupDetail = NodeFailure.StartupDetail.ACTIVATION_IO;
             owned.activate(launch.scope(), deadline);
             transferred = true;
             return owned;
         } catch (NodeFailure failure) {
-            throw failure;
+            throw observation.failure(failure);
         } catch (AuthFailure rejected) {
-            throw new NodeFailure(NodeFailure.Code.AUTHENTICATION);
+            throw observation.failure(new NodeFailure(NodeFailure.Code.AUTHENTICATION));
         } catch (IOException failure) {
-            throw new NodeFailure(startupDetail);
+            throw observation.failure(new NodeFailure(startupDetail));
         } catch (NoSuchAlgorithmException failure) {
-            throw new NodeFailure(NodeFailure.StartupDetail.EXECUTABLE_ALGORITHM);
+            throw observation.failure(new NodeFailure(NodeFailure.StartupDetail.EXECUTABLE_ALGORITHM));
         } catch (RuntimeException failure) {
-            throw new NodeFailure(NodeFailure.Code.PROTOCOL);
+            throw observation.failure(new NodeFailure(NodeFailure.Code.PROTOCOL));
         } finally {
             // Includes linkage/owner Errors: successful construction alone transfers
             // custody to the caller. A failed factory never abandons its child.
             if (!transferred) {
                 if (owned != null) owned.close();
-                else if (spawned != null) stopChild(spawned);
+                else if (spawned != null) stopChild(spawned, observation);
             }
         }
     }
@@ -136,6 +146,7 @@ public final class OwnedNodeConnection implements AutoCloseable {
     }
 
     private void activate(ParentHandoff.Scope scope, long deadline) throws IOException {
+        observation.phase(NodeAttempt.Phase.HANDOFF);
         byte[] nonce = new byte[32];
         byte[] packet = new byte[ParentHandoff.BYTES];
         try {
@@ -162,6 +173,8 @@ public final class OwnedNodeConnection implements AutoCloseable {
     }
 
     private BackgroundChannel authenticate(LocalEndpointRole role, long deadline) throws IOException {
+        observation.phase(role == LocalEndpointRole.LOCAL_ENDPOINT_ROLE_CONTROL
+            ? NodeAttempt.Phase.CONTROL_AUTH : NodeAttempt.Phase.BULK_AUTH);
         AuthContext context = handoff.context(role);
         BackgroundChannel channel = new BackgroundChannel(new InetSocketAddress(
             InetAddress.getByAddress(new byte[]{127, 0, 0, 1}), context.port()),
@@ -215,6 +228,7 @@ public final class OwnedNodeConnection implements AutoCloseable {
 
     /** Background only. The caller must advance its callback epoch before this disconnect. */
     public void reconnect() {
+        observation.phase(NodeAttempt.Phase.RECONNECT);
         authenticated = false;
         try {
             if (closed || handoff == null) throw new NodeFailure(NodeFailure.Code.CHILD_EXIT);
@@ -232,6 +246,7 @@ public final class OwnedNodeConnection implements AutoCloseable {
 
     /** One background turn. There are no application requests in this diagnostic checkpoint. */
     public void poll() {
+        observation.phase(NodeAttempt.Phase.POLL);
         if (closed) throw new NodeFailure(NodeFailure.Code.CHILD_EXIT);
         requireAlive(System.nanoTime() + TimeUnit.SECONDS.toNanos(1));
         try {
@@ -247,23 +262,26 @@ public final class OwnedNodeConnection implements AutoCloseable {
         if (control != null) try { control.close(); } catch (IOException ignored) { }
         if (bulk != null) try { bulk.close(); } catch (IOException ignored) { }
         if (handoff != null) handoff.close();
-        stopChild(child);
+        stopChild(child, observation);
     }
 
-    private static void stopChild(Process child) {
+    private static void stopChild(Process child, NodeAttempt observation) {
         boolean interrupted = Thread.interrupted();
         try {
             try { child.getOutputStream().close(); } catch (IOException ignored) { }
             boolean reaped = false;
+            boolean forced = false;
             try { reaped = child.waitFor(8, TimeUnit.SECONDS); }
             catch (InterruptedException stopped) { interrupted = true; }
             if (!reaped) {
+                forced = true;
                 child.destroyForcibly();
                 try { reaped = child.waitFor(2, TimeUnit.SECONDS); }
                 catch (InterruptedException stopped) { interrupted = true; }
             }
             try { child.getInputStream().close(); } catch (IOException ignored) { }
-            if (!reaped) throw new NodeFailure(NodeFailure.Code.CLEANUP);
+            if (!reaped) throw observation.failure(new NodeFailure(NodeFailure.Code.CLEANUP));
+            observation.reaped(child, forced);
         } finally { if (interrupted) Thread.currentThread().interrupt(); }
     }
 }

@@ -73,7 +73,7 @@ fn run_client(mode: &str) {
             String::from_utf8_lossy(&output.stderr)
         );
         target
-    } else if mode == "unlaunchable" {
+    } else if mode == "unlaunchable" || mode == "lifecycle-unlaunchable" {
         let target = root.join("unlaunchable-parent.exe");
         let mut options = fs::OpenOptions::new();
         options.write(true).create_new(true);
@@ -251,4 +251,16 @@ fn java_handoff_delay_consumes_original_stalled_child_startup_budget() {
 #[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
 fn java_background_owner_reports_closed_startup_stage_for_unlaunchable_executable() {
     run_client("unlaunchable");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_lifecycle_owner_retains_each_closed_failed_start_outcome() {
+    run_client("lifecycle-unlaunchable");
+}
+
+#[test]
+#[ignore = "requires NF_IPC_JAVA and NF_IPC_JAVA_CLASSPATH_FILE; exportAuthTestClasspath first"]
+fn java_lifecycle_owner_retains_revocation_and_factory_cleanup_outcome() {
+    run_client("lifecycle-revocation-outcome");
 }

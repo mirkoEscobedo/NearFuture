@@ -147,3 +147,40 @@ real delay duration or actual old-mailbox publish results without private paths,
 tokens or peer bytes. No authenticated tuple means no stale-release receipt.
 These portable diagnostics do not establish native campaign responsiveness,
 save/load serialization or disposable-campaign acceptance.
+
+## Closed owner-attempt observations
+
+The existing worker records one `nf.OwnerAttempt` outcome after each completed
+child lifetime or failed start, after terminal fencing and owned cleanup. It
+freezes ordinary immutable values: campaign generation, attempt 1–3, the last
+operation epoch and separate terminal epoch, closed phase/code/startup detail,
+whether a child was created, its owned PID, observed exit status and cleanup
+outcome. Revocation can make the terminal epoch zero; it does not suppress the
+old attempt's receipt. Reconnect updates the operation epoch without inventing
+a new child lifetime. No callback performs observation I/O or waits.
+
+The primary failure is captured before factory cleanup and survives a separate
+`CLEANUP` failure. Existing outward exception/retry behavior is retained: cleanup
+failure stops the owner. `NONE` means a normally completed attempt, not proof of
+authentication; `UNKNOWN` preserves an unexpected failure without classifying
+arbitrary throwable text. The event retains no throwable, message, path, command,
+token, handoff bytes or payload. Its five string fields contain only closed
+discriminators. Exit status is meaningful only when `exitObserved` is true.
+
+`NO_CHILD` means no successful process creation. `EXIT_REAPED` means exit was
+observed without requesting force, including a child already killed externally;
+it does not certify graceful application shutdown. `FORCE_REAPED` means force
+was requested and exit observed. `NOT_REAPED` retains an unknown/unreaped owned
+child. These observations do not change the original 15-second startup,
+eight-second cleanup grace or two-second force-reap bounds.
+
+Portable recordings explicitly enable `nf.OwnerAttempt` and exercise failed
+starts, killed children and revocation; the existing stalled-child fixture
+checks forced cleanup. They do not qualify a loaded native recording. Before
+native acceptance, bind the generated JFC to the actual candidate/runtime and
+verify this event's loaded settings and real-owner events, through qualified
+defaults or explicitly admitted configuration. The separately prepared native
+tooling recipe lacks an explicit entry; this does not prove the event disabled.
+Preserve historical/V1 recipe guarantees. Test-side `Recording.enable` and
+historical recordings cannot substitute for actual admission. No callback-observed state
+interval is a measured startup duration or a diagnosis of a storage deadline.

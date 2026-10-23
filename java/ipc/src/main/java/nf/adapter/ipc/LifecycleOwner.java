@@ -73,7 +73,7 @@ public final class LifecycleOwner {
         // Three finite child lifetimes per campaign binding, including failed starts.
         // A save/load creates a new binding; no callback performs a retry or process action.
         for (int attempt = 0; attempt < 3 && current(mailbox); attempt++) {
-            try { connectionAttempt(mailbox); }
+            try { connectionAttempt(mailbox, attempt + 1); }
             catch (NodeFailure failure) {
                 if (failure.code() == NodeFailure.Code.CLEANUP) {
                     // Never launch a successor if the exact owned child could not be reaped.
@@ -83,12 +83,14 @@ public final class LifecycleOwner {
             }
         }
     }
-    private void connectionAttempt(LifecycleMailbox mailbox) {
+    private void connectionAttempt(LifecycleMailbox mailbox, int attempt) {
         long epoch = mailbox.beginConnection();
         publish(mailbox, epoch, LifecycleMailbox.State.STARTING);
         OwnedNodeConnection connection = null;
+        NodeAttempt observation = new NodeAttempt();
+        boolean completed = false;
         try {
-            connection = OwnedNodeConnection.open(launch, () -> current(mailbox), faults);
+            connection = OwnedNodeConnection.open(launch, () -> current(mailbox), faults, observation);
             if (retained == null && connection.authenticatedBoth() && current(mailbox)
                     && mailbox.isCurrent(epoch) && faults.claimStaleCapture()) {
                 retained = new RetainedMailbox(mailbox, epoch, LifecycleMailbox.State.AUTHENTICATED);
@@ -107,13 +109,24 @@ public final class LifecycleOwner {
                 }
                 pause();
             }
+            completed = true;
+        } catch (NodeFailure failure) {
+            throw observation.failure(failure);
         } finally {
             // Fence even unexpected failure BEFORE any bounded but blocking cleanup.
+            long operationEpoch = epoch;
+            long terminalEpoch = 0;
             try {
-                long terminalEpoch = mailbox.beginConnection();
+                terminalEpoch = mailbox.beginConnection();
                 publish(mailbox, terminalEpoch, LifecycleMailbox.State.UNAVAILABLE);
                 releaseRevoked();
-            } finally { if (connection != null) connection.close(); }
+            } finally {
+                try { if (connection != null) connection.close(); }
+                finally {
+                    NodeAttempt.record(mailbox.generation(), attempt, operationEpoch,
+                        terminalEpoch, observation.snapshot(completed));
+                }
+            }
         }
     }
 

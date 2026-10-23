@@ -18,6 +18,7 @@ public final class LifecycleMailbox {
         this.fence = new SessionFence(generation);
     }
     public boolean active() { return fence.accepts(generation); }
+    long generation() { return generation; }
     public long currentEpoch() { return active() ? epoch : 0; }
     /** Called only by the single background owner; revocation may occur on the callback thread. */
     public long beginConnection() {

@@ -26,6 +26,8 @@ public final class ParentNodeProcessClient {
         if (args[4].equals("abrupt-jvm-owner")) { AbruptJvmProcessScenario.runOwner(launch); return; }
         if (args[4].equals("lifecycle")) { LifecycleOwnerProcessScenario.run(launch); return; }
         if (args[4].equals("lifecycle-failure")) { LifecycleFailureProcessScenario.run(launch); return; }
+        if (args[4].equals("lifecycle-unlaunchable")) { DiagnosticOwnerFailureScenario.run(launch); return; }
+        if (args[4].equals("lifecycle-revocation-outcome")) { DiagnosticOwnerRevocationScenario.run(launch); return; }
         if (args[4].equals("lifecycle-handoff-delay")) { DiagnosticLifecycleHandoffScenario.run(launch); return; }
         if (args[4].equals("lifecycle-stale-mailbox")) { DiagnosticStaleMailboxScenario.run(launch); return; }
         if (args[4].equals("lifecycle-startup-options")) { DiagnosticStartupConfigurationScenario.run(launch); return; }
