@@ -264,10 +264,12 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  $leaseControl=$null-ne$Lease-and@($Lease.PSObject.Properties.Name)-ccontains'campaignControl'
  if($planControl-ne$leaseControl){throw 'Campaign control plan and lease must agree'}
  if(!$planControl){return}
+ $inspection=$Plan.campaignControl.profile-ceq'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'
  foreach($control in @($Plan.campaignControl,$Lease.campaignControl)){
   Assert-NativeSeedFields $control @('schemaVersion','profile')
-  Assert-NativeSeedInteger $control.schemaVersion 1 1
-  if($control.profile-isnot[string]-or$control.profile-cne'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE'){throw 'Closed campaign control profile required'}
+  $version=if($inspection){2}else{1};$profile=if($inspection){'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'}else{'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE'}
+  Assert-NativeSeedInteger $control.schemaVersion $version $version
+  if($control.profile-isnot[string]-or$control.profile-cne$profile){throw 'Closed campaign control profile required'}
  }
  if($Plan.scenarioId-cne$Binding.fixtureId-or$Lease.scenarioId-cne$Binding.fixtureId-or$Lease.phase-cne'CAMPAIGN_BINDING_ONLY'-or$Lease.schemaVersion-ne1-or$Lease.authorized-isnot[bool]-or!$Lease.authorized-or$Lease.issuer-cne'/root'-or$Lease.driver-cne'/root/recovery_game_driver'-or$Binding.driverRole-cne$Lease.driver){throw 'Closed campaign control launch authority required'}
  if($Plan.ownership.driver-cne$Lease.driver-or$Plan.ownership.onlyGameInputDriver-isnot[bool]-or!$Plan.ownership.onlyGameInputDriver-or[IO.Path]::GetFullPath($Plan.paths.scenario)-cne[IO.Path]::GetFullPath($Binding.fixtureRoot)){throw 'Campaign control driver and scenario required'}
@@ -275,7 +277,8 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  foreach($pair in @(@('maxActions',8),@('maxProxyInvocations',3),@('ownedGameHardTimeoutMs',480000))){Assert-NativeSeedInteger $Lease.($pair[0]) $pair[1] $pair[1]}
  if($Lease.campaignLoadSaveAllowed-isnot[bool]-or$Lease.campaignLoadSaveAllowed){throw 'Campaign control refuses general save and load authority'}
  $batches=@($Plan.batches)
- if($batches.Count-ne3-or(@($batches.id|Sort-Object -Unique)-join',')-cne'B1,E1,E2'){throw 'Campaign control requires exactly B1 E1 E2'}
+ $batchCount=if($inspection){2}else{3};$batchNames=if($inspection){'B1,E1'}else{'B1,E1,E2'}
+ if($batches.Count-ne$batchCount-or(@($batches.id|Sort-Object -Unique)-join',')-cne$batchNames){throw 'Campaign control requires exact profile batches'}
  Assert-NativeSeedFields $Plan.historyBaseline @('overallAttempts','uiAttempts','reservedActions','sentActions')
  foreach($key in @('overallAttempts','uiAttempts','reservedActions','sentActions')){Assert-NativeSeedInteger $Plan.historyBaseline.$key 0 9007199254740991}
  if($Plan.historyBaseline.sentActions-gt$Plan.historyBaseline.reservedActions){throw 'Campaign control original action history required'}
@@ -289,7 +292,13 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  if($planWatchdog){Assert-NativeSeedInteger $Plan.sessionWatchdogMs 480000 480000;Assert-NativeSeedInteger $Lease.sessionWatchdogMs 480000 480000}
  foreach($authority in @($Plan,$Lease)){
   foreach($key in @('ownedNodeKill','campaign','e1MenuReceipt')){if(@($authority.PSObject.Properties.Name)-ccontains$key){throw 'Campaign control refuses unrelated phase authority'}}
-  if(@($authority.PSObject.Properties.Name)-cnotcontains'seed'){throw 'Campaign control requires one manifest-bound disposable seed'}
+  $hasSeed=@($authority.PSObject.Properties.Name)-ccontains'seed'
+  if(($inspection-and$hasSeed)-or(!$inspection-and!$hasSeed)){throw 'Campaign control exact profile seed authority required'}
+ }
+ if($inspection){
+  foreach($name in @('seed-manifest.private.json','seed-stage-plan.private.json','seed-stage-authority.private.json','seed-stage-claim.private.json','seed-stage-receipt.private.json')){if(Test-Path -LiteralPath (Join-Path $Binding.fixtureRoot $name)){throw 'First-page inspection refuses seed metadata'}}
+  $saves=Join-Path $Binding.fixtureRoot 'installation/saves';Assert-NativeSeedOrdinary $saves
+  if(!(Get-Item -LiteralPath $saves).PSIsContainer-or@(Get-ChildItem -LiteralPath $saves -Force).Count-ne0){throw 'Empty first-page inspection saves required'}
  }
  $supportPath=Join-Path $Binding.fixtureRoot 'frozen-support-pins.private.json'
  if([IO.Path]::GetFullPath($Lease.supportPinsPath)-cne[IO.Path]::GetFullPath($supportPath)){throw 'Campaign control exact support manifest required'}

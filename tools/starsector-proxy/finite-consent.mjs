@@ -61,8 +61,9 @@ export function readFiniteConsentAuthority({ root, source, runID }) {
  * @param {{sessionFactory?: typeof createSession, record?: (event: Record<string, unknown>) => void}} [options] */
 export function createFiniteConsentMcp({ root, source, runID }, options = {}) {
     const { admitted, consent } = readFiniteConsentAuthority({ root, source, runID });
-    const campaign = [2, 3].includes(admitted.binding.schemaVersion);
-    const allowed = new Set([...observations, ...(admitted.binding.schemaVersion === 3 ?
+    const campaign = [2, 3, 4].includes(admitted.binding.schemaVersion);
+    const allowed = new Set([...observations, ...(admitted.binding.schemaVersion === 4 ?
+        admitted.binding.batch === 'B1' ? mutations.B1 : ['left_click'] : admitted.binding.schemaVersion === 3 ?
         admitted.binding.batch === 'B1' ? mutations.B1 : admitted.binding.batch === 'E1' ? ['left_click', 'key'] : ['left_click'] :
         campaign ? [admitted.binding.batch === 'E1' ? 'key' : 'left_click'] : mutations[admitted.binding.batch])]);
     /** @type {AsyncLocalStorage<{tool: string, args: any, signal?: AbortSignal, active: boolean, used: boolean}>} */

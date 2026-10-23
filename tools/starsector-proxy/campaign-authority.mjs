@@ -1,6 +1,6 @@
 // @ts-check
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, lstatSync, openSync, closeSync, fsyncSync, renameSync, unlinkSync, realpathSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, lstatSync, openSync, closeSync, fsyncSync, renameSync, unlinkSync, realpathSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, dirname, basename, relative, isAbsolute } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { fixtureProbeSources, readFixtureBinding } from './fixture-binding.mjs';
@@ -12,6 +12,7 @@ export const campaignLaunchSources = Object.freeze([...fixtureProbeSources,
 
 const flow = 'PAUSED_CAMPAIGN_EXIT_NO_SAVE';
 const seedFlow = 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE';
+const inspectionFlow = 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE';
 /** @param {any} condition @param {string} message @returns {asserts condition} */
 function requireThat(condition, message) { if (!condition) throw new Error('Campaign authority refused: ' + message); }
 /** @param {string} path @param {number} [limit] */
@@ -135,12 +136,13 @@ function knownProviderClosure(context) {
 /** One new-profile-only, known-closed launcher-to-game window transfer.
  * @param {any} binding @param {any} reference @param {number} now @param {boolean} [historical] */
 function seedLauncherHandoff(binding, reference, now, historical = false) {
+    const firstPage = binding.schemaVersion === 4;
     const state = originalHistory(binding).value;
     const sourcePath = resolve(binding.scenario, 'B1-authorization.private.json');
     const source = read(sourcePath), claim = read(resolve(binding.scenario, 'guard-B1-consumed.private.json'));
     const initial = claim.value.binding;
     requireThat(state.b1ClaimSha256 === claim.sha256 && claim.value.sourcePath === sourcePath &&
-        claim.value.sourceSha256 === source.sha256 && initial?.schemaVersion === 3 && initial.batch === 'B1' &&
+        claim.value.sourceSha256 === source.sha256 && initial?.schemaVersion === binding.schemaVersion && [3, 4].includes(initial.schemaVersion) && initial.batch === 'B1' &&
         initial.sourcePath === sourcePath && initial.sourceSha256 === source.sha256 &&
         initial.planSha256 === source.value.planSha256?.toLowerCase() && initial.controllerSha256 === binding.controllerSha256 &&
         initial.scenario === binding.scenario && initial.workspaceRoot === binding.workspaceRoot &&
@@ -182,7 +184,7 @@ function seedLauncherHandoff(binding, reference, now, historical = false) {
     const receipt = read(path), value = receipt.value;
     requireThat(receipt.sha256 === reference.sha256 && closed(value, ['schemaVersion', 'kind', 'scenario', 'flow',
         'rootRecordKey', 'controllerSha256', 'b1', 'frame', 'inspection', 'provider']) && value.schemaVersion === 1 &&
-        value.kind === 'STARSECTOR_B1_MAIN_MENU_INSPECTION' && value.scenario === binding.scenario && value.flow === seedFlow &&
+        value.kind === 'STARSECTOR_B1_MAIN_MENU_INSPECTION' && value.scenario === binding.scenario && value.flow === binding.campaign.flow &&
         value.rootRecordKey === binding.campaign.rootClock.recordKey && value.controllerSha256 === binding.controllerSha256 &&
         closed(value.b1, ['sourceSha256', 'claimSha256', 'runID', 'reservationID']) &&
         value.b1.sourceSha256 === source.sha256 && value.b1.claimSha256 === claim.sha256 &&
@@ -208,16 +210,17 @@ function seedLauncherHandoff(binding, reference, now, historical = false) {
         m.window.isFocused === true && m.args.width === m.window.bounds?.width &&
         dimensions.width === m.window.bounds.width && dimensions.height === m.window.bounds.height &&
         isDeepStrictEqual(m.dimensions, dimensions), 'seeded main-menu original custody changed');
-    requireThat(closed(inspection, ['issuer', 'driver', 'inspectedAtMs', 'state', 'loadCoordinate']) &&
+    const entryField = firstPage ? 'newGameCoordinate' : 'loadCoordinate', coordinate = inspection?.[entryField];
+    requireThat(closed(inspection, ['issuer', 'driver', 'inspectedAtMs', 'state', entryField]) &&
         inspection.issuer === '/root' && inspection.driver === '/root/recovery_game_driver' &&
-        inspection.state === 'STARSECTOR_MAIN_MENU' && Array.isArray(inspection.loadCoordinate) &&
-        inspection.loadCoordinate.length === 2 && inspection.loadCoordinate.every((/** @type {any} */ n) => Number.isSafeInteger(n)) &&
-        inspection.loadCoordinate[0] >= m.window.bounds.x && inspection.loadCoordinate[0] < m.window.bounds.x + m.window.bounds.width &&
-        inspection.loadCoordinate[1] >= m.window.bounds.y && inspection.loadCoordinate[1] < m.window.bounds.y + m.window.bounds.height,
+        inspection.state === 'STARSECTOR_MAIN_MENU' && Array.isArray(coordinate) &&
+        coordinate.length === 2 && coordinate.every((/** @type {any} */ n) => Number.isSafeInteger(n)) &&
+        coordinate[0] >= m.window.bounds.x && coordinate[0] < m.window.bounds.x + m.window.bounds.width &&
+        coordinate[1] >= m.window.bounds.y && coordinate[1] < m.window.bounds.y + m.window.bounds.height,
     'seeded main-menu inspection required');
     const closedAt = knownProviderClosure({ binding, initial, initialSourceSha256: source.sha256,
         proof: value, providerClock, action, now });
-    return { receiptSha256: receipt.sha256, loadCoordinate: inspection.loadCoordinate, action, providerClock, closedAt, alreadyTransferred };
+    return { receiptSha256: receipt.sha256, loadCoordinate: coordinate, action, providerClock, closedAt, alreadyTransferred };
 }
 
 /** Qualify one known-closed E1 handoff. Past provider time is historical evidence,
@@ -353,6 +356,7 @@ function clock(campaign, controller, now, minimumRemainingMs = 20000) {
  * @param {any} campaign @param {string} scenario @param {string} root @param {string} controllerSha256
  * @returns {string} */
 function launchPredecessor(campaign, scenario, root, controllerSha256) {
+    const inspection = campaign.flow === inspectionFlow;
     /** @param {any} descriptor @param {string} name */
     function pinned(descriptor, name) {
         requireThat(closed(descriptor, ['path', 'sha256']) && typeof descriptor.path === 'string' &&
@@ -375,14 +379,14 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
         plan.ownership?.driver === '/root/recovery_game_driver' && plan.ownership.onlyGameInputDriver === true &&
         plan.bounds?.maxScenarioActionsIncludingActivations === 8 && plan.bounds.maxProxyInvocations === 3 &&
         plan.bounds.proxyTimeoutMs === 180000 && plan.bounds.ownedGameHardTimeoutMs === 480000 &&
-        Array.isArray(plan.batches) && plan.batches.length === 3 &&
-        [...new Set(plan.batches.map((/** @type {any} */ batch) => batch.id))].sort().join() === 'B1,E1,E2' &&
+        Array.isArray(plan.batches) && plan.batches.length === (inspection ? 2 : 3) &&
+        [...new Set(plan.batches.map((/** @type {any} */ batch) => batch.id))].sort().join() === (inspection ? 'B1,E1' : 'B1,E1,E2') &&
         lease.schemaVersion === 1 && lease.scenarioId === basename(scenario) && lease.authorized === true &&
         lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' && lease.phase === 'CAMPAIGN_BINDING_ONLY' &&
         lease.ownedGameHardTimeoutMs === 480000 && lease.maxActions === 8 && lease.maxProxyInvocations === 3 &&
         lease.campaignLoadSaveAllowed === false, 'closed original campaign launch scope required');
-    requireThat(closed(plan.campaignControl, ['schemaVersion', 'profile']) && plan.campaignControl.schemaVersion === 1 &&
-        plan.campaignControl.profile === 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE' &&
+    requireThat(closed(plan.campaignControl, ['schemaVersion', 'profile']) && plan.campaignControl.schemaVersion === (inspection ? 2 : 1) &&
+        plan.campaignControl.profile === (inspection ? inspectionFlow : seedFlow) &&
         isDeepStrictEqual(plan.campaignControl, lease.campaignControl), 'closed seed entry launch profile required');
     requireThat(![plan, lease].some(value => ['ownedNodeKill', 'campaign', 'e1MenuReceipt'].some(key => Object.hasOwn(value, key))),
         'unrelated launch phase authority refused');
@@ -418,6 +422,19 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
     const fixture = read(resolve(scenario, 'protected-fixture-receipt.private.json'));
     requireThat(lease.fixtureReceiptSha256?.toLowerCase() === fixture.sha256 &&
         controller.fixtureReceiptSha256?.toLowerCase() === fixture.sha256, 'original campaign fixture changed');
+    if (inspection) {
+        requireThat(!Object.hasOwn(plan, 'seed') && !Object.hasOwn(lease, 'seed'), 'first-page inspection refuses seed authority');
+        for (const name of ['seed-manifest.private.json', 'seed-stage-plan.private.json', 'seed-stage-authority.private.json',
+            'seed-stage-claim.private.json', 'seed-stage-receipt.private.json']) {
+            requireThat(!existsSync(resolve(scenario, name)), 'first-page inspection refuses seed metadata');
+        }
+        const saves = resolve(scenario, 'installation/saves');
+        for (let part = saves;; part = dirname(part)) {
+            requireThat(!lstatSync(part).isSymbolicLink(), 'ordinary empty inspection saves required');
+            if (dirname(part) === part) break;
+        }
+        requireThat(lstatSync(saves).isDirectory() && readdirSync(saves).length === 0, 'empty first-page inspection saves required');
+    } else {
     requireThat(closed(plan.seed, ['mode', 'manifestSha256', 'stagingReceiptSha256']) &&
         plan.seed.mode === 'LOAD_ONE_PRIVATE_DISPOSABLE_SEED' && isDeepStrictEqual(plan.seed, lease.seed), 'exact staged seed scope required');
     const manifest = read(resolve(scenario, 'seed-manifest.private.json'));
@@ -436,6 +453,7 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
         seedBytes += current.bytes.length;
     }
     requireThat(seedBytes <= 16 * 1024 * 1024, 'bounded staged seed required');
+    }
     requireThat(typeof lease.supportPinsPath === 'string' && resolve(lease.supportPinsPath) === resolve(scenario, 'frozen-support-pins.private.json'),
         'original campaign support manifest required');
     const support = read(lease.supportPinsPath);
@@ -452,10 +470,10 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
  * @param {string} path @param {{root: string, runID: string, now?: number, input?: boolean}} options */
 export function readCampaignAuthorization(path, { root, runID, now = Date.now(), input = false }) {
     const sourcePath = resolve(path), source = read(sourcePath), auth = source.value;
-    const seeded = auth.schemaVersion === 3;
+    const inspection = auth.schemaVersion === 4, seeded = [3, 4].includes(auth.schemaVersion);
     requireThat(closed(auth, ['batch', 'leasePath', 'leaseSha256', 'ownedReceiptPath', 'ownedReceiptSha256',
-        'planPath', 'planSha256', 'scenario', 'schemaVersion']) && [2, 3].includes(auth.schemaVersion) &&
-        typeof auth.scenario === 'string' && isAbsolute(auth.scenario) && (seeded ? ['B1', 'E1', 'E2'].includes(auth.batch) : ['E1', 'E2'].includes(auth.batch)) &&
+        'planPath', 'planSha256', 'scenario', 'schemaVersion']) && [2, 3, 4].includes(auth.schemaVersion) &&
+        typeof auth.scenario === 'string' && isAbsolute(auth.scenario) && (inspection ? ['B1', 'E1'].includes(auth.batch) : seeded ? ['B1', 'E1', 'E2'].includes(auth.batch) : ['E1', 'E2'].includes(auth.batch)) &&
         typeof runID === 'string' && /^[A-Za-z0-9_-]+$/.test(runID), 'closed V2 authorization required');
     const scenario = resolve(auth.scenario);
     requireThat(inside(resolve(root, '.tmp/starsector-proxy/scenarios'), scenario) &&
@@ -473,7 +491,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
     }
     const plan = files.planPath.value, lease = files.leasePath.value, campaign = plan.campaign;
     requireThat(closed(campaign, ['flow', 'windowId', 'rootClock', 'producerWitness', 'rootCallRecord',
-        'historyBaseline', 'maxReservedActions', ...(phaseLocal ? ['launchPredecessor'] : [])]) && campaign.flow === (seeded ? seedFlow : flow) &&
+        'historyBaseline', 'maxReservedActions', ...(phaseLocal ? ['launchPredecessor'] : [])]) && campaign.flow === (inspection ? inspectionFlow : seeded ? seedFlow : flow) &&
         Number.isSafeInteger(campaign.windowId) && campaign.windowId > 0 &&
         closed(campaign.historyBaseline, ['overallAttempts', 'uiAttempts', 'reservedActions', 'sentActions']) &&
         isDeepStrictEqual(campaign, lease.campaign),
@@ -516,7 +534,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
         plan.bounds?.maxScenarioActionsIncludingActivations === 8 && plan.bounds?.maxProxyInvocations === 3 &&
         plan.bounds?.proxyTimeoutMs === 180000 && plan.bounds?.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs &&
         plan.batches?.some((/** @type {any} */ batch) => batch.id === auth.batch) && lease.schemaVersion === auth.schemaVersion &&
-        lease.authorized === true && lease.phase === (seeded ? seedFlow : flow) && lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' &&
+        lease.authorized === true && lease.phase === (inspection ? inspectionFlow : seeded ? seedFlow : flow) && lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' &&
         lease.planSha256?.toLowerCase() === files.planPath.sha256 && lease.campaignLoadSaveAllowed === false &&
         lease.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs && lease.maxActions === 8 && lease.maxProxyInvocations === 3 &&
         Number.isSafeInteger(campaign.maxReservedActions) &&
@@ -529,7 +547,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
     clock(campaign, controller, now, input ? 120000 : 20000);
     const admitted = handoff ? 'loadCoordinate' in handoff
         ? { ...binding, b1MenuReceipt: { path: plan.b1MenuReceipt.path, sha256: handoff.receiptSha256,
-            loadCoordinate: handoff.loadCoordinate } }
+            ...(inspection ? { newGameCoordinate: handoff.loadCoordinate } : { loadCoordinate: handoff.loadCoordinate }) } }
         : { ...binding, e1MenuReceipt: { path: plan.e1MenuReceipt.path,
             sha256: handoff.receiptSha256, exitCoordinate: handoff.exitCoordinate } } : binding;
     return { sourcePath, sourceSha256: source.sha256, binding: admitted, claimPath: resolve(scenario, 'guard-' + auth.batch + '-consumed.private.json') };
@@ -537,7 +555,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
 
 /** @param {any} binding */
 export function validateCampaignBinding(binding) {
-    const seeded = binding?.schemaVersion === 3;
+    const inspection = binding?.schemaVersion === 4, seeded = [3, 4].includes(binding?.schemaVersion);
     requireThat(seeded || (!binding?.campaign?.launchPredecessor && binding?.originalPlanSha256 === undefined),
         'legacy campaign cannot use launch predecessor');
     const fields = ['schemaVersion', 'batch', 'runID', 'scenario', 'workspaceRoot', 'planSha256', 'ownedPids',
@@ -546,9 +564,9 @@ export function validateCampaignBinding(binding) {
     if (seeded && binding?.batch === 'E1') fields.push('b1MenuReceipt');
     if (binding?.campaign?.launchPredecessor) fields.push('originalPlanSha256');
     if (binding?.exitConfirmation !== undefined) fields.push('exitConfirmation');
-    requireThat(closed(binding, fields) && [2, 3].includes(binding.schemaVersion) &&
-        (seeded ? ['B1', 'E1', 'E2'].includes(binding.batch) : ['E1', 'E2'].includes(binding.batch)) &&
-        binding.campaign?.flow === (seeded ? seedFlow : flow) && (!seeded || binding.campaign.launchPredecessor) && Number.isSafeInteger(binding.campaign.windowId) &&
+    requireThat(closed(binding, fields) && [2, 3, 4].includes(binding.schemaVersion) &&
+        (inspection ? ['B1', 'E1'].includes(binding.batch) : seeded ? ['B1', 'E1', 'E2'].includes(binding.batch) : ['E1', 'E2'].includes(binding.batch)) &&
+        binding.campaign?.flow === (inspection ? inspectionFlow : seeded ? seedFlow : flow) && (!seeded || binding.campaign.launchPredecessor) && Number.isSafeInteger(binding.campaign.windowId) &&
         typeof binding.workspaceRoot === 'string' && isAbsolute(binding.workspaceRoot) &&
         typeof binding.scenario === 'string' && inside(resolve(binding.workspaceRoot, '.tmp/starsector-proxy/scenarios'), binding.scenario) &&
         binding.sourcePath === resolve(binding.scenario, binding.batch + '-authorization.private.json') &&
@@ -558,7 +576,7 @@ export function validateCampaignBinding(binding) {
         binding.ownedPids.every((/** @type {any} */ pid) => Number.isSafeInteger(pid) && pid > 0) &&
         new Set(binding.ownedPids).size === binding.ownedPids.length &&
         (binding.batch !== 'E2' || closed(binding.e1MenuReceipt, ['path', 'sha256', 'exitCoordinate'])) &&
-        (!seeded || binding.batch !== 'E1' || closed(binding.b1MenuReceipt, ['path', 'sha256', 'loadCoordinate'])) &&
+        (!seeded || binding.batch !== 'E1' || closed(binding.b1MenuReceipt, ['path', 'sha256', inspection ? 'newGameCoordinate' : 'loadCoordinate'])) &&
         (binding.exitConfirmation === undefined || (seeded && binding.batch === 'E2' && exitConfirmationProfile(binding.exitConfirmation))) &&
         (!binding.campaign.launchPredecessor || (typeof binding.originalPlanSha256 === 'string' && /^[a-f0-9]{64}$/.test(binding.originalPlanSha256))),
     'closed campaign binding required');
@@ -585,7 +603,7 @@ function update(binding, change, mode = 'current') {
 
 /** @param {any} binding */
 export function claimCampaignOwner(binding) {
-    if (binding.schemaVersion === 3 && binding.batch === 'E1') {
+    if ([3, 4].includes(binding.schemaVersion) && binding.batch === 'E1') {
         update(binding, state => {
             const proof = seedLauncherHandoff(binding, { path: binding.b1MenuReceipt.path,
                 sha256: binding.b1MenuReceipt.sha256 }, Date.now());
@@ -616,7 +634,7 @@ export function claimCampaignOwner(binding) {
         const startMs = Date.now(), root = binding.campaign.rootClock;
         state.provider = owner(binding);
         const claimSha256 = read(resolve(binding.scenario, 'guard-' + binding.batch + '-consumed.private.json')).sha256;
-        if (binding.schemaVersion === 3 && binding.batch === 'B1') state.b1ClaimSha256 = claimSha256;
+        if ([3, 4].includes(binding.schemaVersion) && binding.batch === 'B1') state.b1ClaimSha256 = claimSha256;
         else state.initialClaimSha256 = claimSha256;
         state.providerClock = { startMs, deadlineMs: Math.min(startMs + 180000, root.effectiveDeadlineMs - root.cleanupReserveMs) };
     });
@@ -692,7 +710,8 @@ export function reserveCampaignAction(binding, args, tool = binding.batch === 'E
                 ((completed.length < 2 && tool === 'left_click') || (completed.length === 2 && tool === 'key'));
             const exitConfirmation = binding.batch === 'E2' && previous.tool === 'left_click' && tool === 'left_click' &&
                 completed.length === 0 && exitConfirmationProfile(binding.exitConfirmation);
-            requireThat(binding.schemaVersion === 3 && (activationToPlay || seedEntry || exitConfirmation) && previous.status === 'AWAITING_AFTER' &&
+            requireThat(((binding.schemaVersion === 3 && (activationToPlay || seedEntry || exitConfirmation)) ||
+                (binding.schemaVersion === 4 && activationToPlay)) && previous.status === 'AWAITING_AFTER' &&
                 isDeepStrictEqual(owner(previous), owner(binding)) &&
                 closed(after, ['pngBytes', 'window', 'capturedAtMs', 'observedAtMs']) && Buffer.isBuffer(after.pngBytes) &&
                 after.pngBytes.length <= 32 * 1024 * 1024 && Number.isSafeInteger(previous.knownResultAtMs) &&

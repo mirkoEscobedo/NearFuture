@@ -69,14 +69,16 @@ export function seedInputSession(f, beforeEffect, observations = {}) {
 
 /** @param {any} f @param {string} runID @param {boolean} [claim] */
 export function claimSeededLauncher(f, runID, claim = true) {
-    const campaign = { ...f.campaign, flow: 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE' };
+    const inspection = f.plan.campaignControl.profile === 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE';
+    const schemaVersion = inspection ? 4 : 3;
+    const campaign = { ...f.campaign, flow: inspection ? 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE' : 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE' };
     const planPath = resolve(f.scenario, 'B1-plan.private.json'), leasePath = resolve(f.scenario, 'B1-lease.private.json');
     writeJson(planPath, { ...f.phasePlan, campaign, batches: [{ id: 'B1' }] });
-    writeJson(leasePath, { ...f.phaseLease, schemaVersion: 3, phase: campaign.flow, campaign, planSha256: filePin(planPath).sha256 });
+    writeJson(leasePath, { ...f.phaseLease, schemaVersion, phase: campaign.flow, campaign, planSha256: filePin(planPath).sha256 });
     const ownedReceiptPath = resolve(f.scenario, 'driver-B1-owned.private.json');
     writeJson(ownedReceiptPath, JSON.parse(readFileSync(resolve(f.scenario, 'driver-E1-owned.private.json'), 'utf8')));
     const source = resolve(f.scenario, 'B1-authorization.private.json');
-    writeJson(source, { schemaVersion: 3, scenario: f.scenario, batch: 'B1', planPath,
+    writeJson(source, { schemaVersion, scenario: f.scenario, batch: 'B1', planPath,
         planSha256: filePin(planPath).sha256, leasePath, leaseSha256: filePin(leasePath).sha256,
         ownedReceiptPath, ownedReceiptSha256: filePin(ownedReceiptPath).sha256 });
     if (claim) claimBatchAuthorization(readBatchAuthorization(source, { root: f.root, runID }));

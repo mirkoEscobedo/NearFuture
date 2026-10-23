@@ -431,3 +431,15 @@ Record log baselines and detect rotation before attributing a new event.
 Restore protected files only after the actual game has exited and current-file
 checks pass, preserving scenario-created data and user display preferences.
 See `starsector-debugging.md`.
+
+The separate first-page inspection profile is schema4
+`NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE`. It uses an empty protected fixture,
+immutable launch authority and only B1/E1: Play, known provider closure with an
+inspected main-menu New Game coordinate, one New Game click, then first-page
+observation. Its unchanged eight-action/three-provider/eight-minute ceilings do
+not authorize another phase. No wizard advancement, Cancel, E2, key or Save is
+implemented in this initial profile. End through maintained owned cleanup and
+after-smoke protection; report forced cleanup separately from ordinary exit.
+See `tools/starsector-proxy/fixture/README.md` for the exact no-seed authority and
+original-image receipt contract. This inspection does not generate a usable seed
+or establish native lifecycle acceptance.

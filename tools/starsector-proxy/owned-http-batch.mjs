@@ -96,10 +96,11 @@ export async function startOwnedHttpBatch({ root, source, runID, powershell,
     if (!isAbsolute(powershell) || !isAbsolute(supervisor) || (consentMode !== undefined && consentMode !== 'finite-explicit-consent')) throw new Error('Pinned finite provider configuration required');
     const admitted = readBatchAuthorization(source, { root, runID });
     readFixtureBinding(admitted);
-    const campaign = [2, 3].includes(admitted.binding.schemaVersion) ? /** @type {any} */ (admitted.binding).campaign : null;
+    const campaign = [2, 3, 4].includes(admitted.binding.schemaVersion) ? /** @type {any} */ (admitted.binding).campaign : null;
     const deadline = campaign ? Math.min(started + 180000, campaign.rootClock.effectiveDeadlineMs - campaign.rootClock.cleanupReserveMs) : started + 180000;
     const startupDeadline = Math.min(started + 20000, deadline);
-    const campaignMutations = admitted.binding.schemaVersion === 3 && admitted.binding.batch === 'B1' ? ['activate_window', 'left_click']
+    const campaignMutations = admitted.binding.schemaVersion === 4 ? admitted.binding.batch === 'B1' ? ['activate_window', 'left_click'] : ['left_click']
+        : admitted.binding.schemaVersion === 3 && admitted.binding.batch === 'B1' ? ['activate_window', 'left_click']
         : admitted.binding.batch === 'E1' ? admitted.binding.schemaVersion === 3 ? ['left_click', 'key'] : ['key'] : ['left_click'];
     const rawToolNames = campaign ? [...directToolNames.filter(name => !['activate_window', 'left_click', 'mouse_move'].includes(name)),
         ...campaignMutations] : directToolNames;

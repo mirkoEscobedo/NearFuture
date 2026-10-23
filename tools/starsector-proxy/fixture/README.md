@@ -322,3 +322,37 @@ lifecycle/performance acceptance. The existing seed provenance/staging contract
 remains required; actual game validation and loaded frontend qualification remain
 separate from generated-fixture and stdio/HTTP checks.
 
+# First New Game page inspection
+
+The separate schema4 `NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE` profile admits
+an empty protected fixture only. Original plan and lease both declare
+`campaignControl: {schemaVersion: 2, profile: "NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE"}`,
+the original caller deadline and history, and exactly B1/E1. The ceilings remain
+480000ms, eight cumulative actions and three providers; the unused provider slot
+does not authorize another phase. Seed authority, seed manifest/staging metadata
+and every private save entry are refused at launch and finite admission.
+
+Use the same immutable original launch/predecessor, phase-local files, source
+pins, process lineage, exclusive claims, clipped clocks and finite consent.
+B1 permits optional activation and Play. After known B1 closure, the driver
+inspects its saved full original main-menu image and freezes the existing
+`B1-menu-inspected.private.json` shape with the new flow and the exact inspection
+field `newGameCoordinate` instead of `loadCoordinate`. The original PNG, raw result,
+metadata, source, reservation and capture-completion chronology remain required.
+When republishing an original through `persistDirectFrame`, retain actual call and
+attempt provenance; automatic capture receipt alone does not supply that proof.
+
+E1 permits exactly one left click at that inspected New Game coordinate, then
+observations only. Capture and inspect the first wizard page. E2, cancellation,
+wizard advancement, typing, keys, saving and a second click are unavailable in
+this initial profile. It therefore ends with maintained identity-bound owned
+cleanup and after-smoke protection. Keep its final action reservation and failed
+controller stop outcome as evidence; do not clear, refund or call forced cleanup
+ordinary exit. A later cancellation route requires its own observed controls and
+qualified finite implementation.
+
+Report first-page observation, provider closure, forced cleanup and original-save
+protection separately. This profile creates no saved seed and qualifies no
+campaign compatibility, lifecycle authentication or alpha capability. Generated
+tests do not establish the loaded frontend or real wizard state.
+
