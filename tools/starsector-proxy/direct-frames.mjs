@@ -6,7 +6,7 @@ import { crc32, inflateSync } from 'node:zlib';
 
 /** Validate a complete native lossless PNG without changing a byte.
  * @param {Buffer} bytes */
-function completePng(bytes) {
+export function completePng(bytes) {
     if (bytes.length < 57 || bytes.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') throw new Error('Complete original PNG required');
     let offset = 8, header, ended = false, idatEnded = false, palette = false;
     /** @type {Buffer[]} */ const compressed = [];
