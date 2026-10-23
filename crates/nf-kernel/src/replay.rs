@@ -63,7 +63,7 @@ pub fn apply_batch(world: &World, batch: &CommittedBatch) -> Result<World, Rejec
     }
     Ok(next)
 }
-fn validate_committed_pair(
+pub(crate) fn validate_committed_pair(
     world: &World,
     job: &Job,
     pair: &[Event],

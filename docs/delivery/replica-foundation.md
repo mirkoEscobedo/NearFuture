@@ -50,3 +50,15 @@ does not complete authenticated follower convergence, consistent gap snapshots,
 archive authorization/retention/quotas, failover or disk-failure recovery.
 Those acceptance criteria stay visible in open parent #39; broader #65 work is
 preserved separately. No receipt/Portal/Chat completion becomes a prerequisite.
+
+The thin replay candidate preserves all five #84 source blobs exactly. Its
+independent committed-market test compares scoped replay with genuine settlement output,
+then exercises a cumulative cap one byte short of two replays and sticky refusal.
+The manifest registers `bounded-committed-replay` under the existing full Rust
+regression gate, without activating a runtime service or writer. Candidate
+preparation is not landing or current qualification; the live issue and thin PR
+must record their actual results and prerequisite landing before completion.
+
+Additional public scoped-entry controls exercise default replay parity, exact
+entry/depth boundaries, sticky cumulative entry refusal, malformed batch shapes
+and unadmitted events even when their advertised after hash matches.
