@@ -5,6 +5,11 @@ import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import { startOwnedServer } from './owned-server.mjs';
 
+const syntheticRoot = process.platform === 'win32' ? 'E:\\repo' : '/synthetic-repo';
+const expectedAuditPath = process.platform === 'win32'
+    ? 'E:/repo/.tmp/starsector-proxy/computer-use-audit.jsonl'
+    : '/synthetic-repo/.tmp/starsector-proxy/computer-use-audit.jsonl';
+
 for (const initial of ['pending', 'partial']) test(initial + ' profile waits for all four closed-profile rows and closes through stdin', async () => {
     /** @type {Array<{program: string, args: string[], options: any}>} */
     const calls = [];
@@ -35,7 +40,7 @@ for (const initial of ['pending', 'partial']) test(initial + ' profile waits for
         }
         return child;
     };
-    const runtime = await startOwnedServer({ executable: 'existing-cli', root: 'E:/repo', spawn: /** @type {typeof import('node:child_process').spawn} */ (spawn) });
+    const runtime = await startOwnedServer({ executable: 'existing-cli', root: syntheticRoot, spawn: /** @type {typeof import('node:child_process').spawn} */ (spawn) });
     assert.deepEqual(runtime.args, ['--server', 'http://127.0.0.1:45678']);
     assert.equal(runtime.env.OPENCODE_DB, ':memory:');
     assert.equal(runtime.env.OPENCODE_PASSWORD.length, 64);
@@ -43,11 +48,11 @@ for (const initial of ['pending', 'partial']) test(initial + ' profile waits for
     assert.ok(add);
     const config = JSON.parse(add.args[add.args.indexOf('--data') + 1]).config;
     assert.equal(config.codemode, false);
-    assert.equal(config.cwd, 'E:/repo');
+    assert.equal(config.cwd, syntheticRoot);
     assert.deepEqual(config.timeout, { startup: 20000, catalog: 20000, execution: 20000 });
     assert.equal(config.env, undefined);
     assert.deepEqual(config.environment, { COMPUTER_USE_PROFILE: 'core', COMPUTER_USE_ACTIVE_PROFILE: 'core',
-        COMPUTER_USE_AUDIT_LOG: 'E:/repo/.tmp/starsector-proxy/computer-use-audit.jsonl' });
+        COMPUTER_USE_AUDIT_LOG: expectedAuditPath });
     assert.equal(calls.filter(call => call.args.includes('experimental.mcp.add')).length, 1);
     assert.equal(lists, 2, 'complete ready profile is awaited without registering again');
     for (const call of calls) assert.ok(call.args.every(arg => !arg.includes(runtime.env.OPENCODE_PASSWORD)));
