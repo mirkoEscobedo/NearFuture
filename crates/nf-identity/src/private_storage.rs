@@ -8,12 +8,24 @@ use std::{
 };
 use zeroize::Zeroizing;
 
+#[path = "private_storage_child_phase.rs"]
+mod child_phase;
 #[path = "private_storage_diagnostics.rs"]
 mod diagnostics;
+#[cfg(all(test, windows))]
+#[path = "private_storage_helper_phase_tests.rs"]
+mod helper_phase_tests;
+#[path = "private_storage_writer_health.rs"]
+mod writer_health;
+pub use child_phase::{
+    ChildPhaseObservation, HelperPhase, PhaseAdmission, PhaseAdmissionFailure,
+    PhaseCaptureObservation, PhaseRead, PhaseReadFailure,
+};
 pub use diagnostics::{
     HelperCleanup, HelperObservation, PrivateStorageFailure, PrivateStorageReason,
     PrivateStorageStage, StorageIoFailure,
 };
+pub use writer_health::{FirstWriterHealth, HealthAdmission, HelperHealthObservation};
 
 pub struct PrivateVault {
     pub(crate) root: PathBuf,
@@ -42,7 +54,7 @@ impl PrivateVault {
                 &error,
             )
         })?;
-        private_access_diagnosed(path, true)?;
+        private_access_diagnosed(path, true, Some(game_save_root))?;
         Self::open_diagnosed(path, game_save_root)
     }
     /// Same open operation with closed failure context and unchanged ACL policy.
@@ -50,7 +62,7 @@ impl PrivateVault {
         path: &Path,
         game_save_root: &Path,
     ) -> Result<Self, PrivateStorageFailure> {
-        private_access_diagnosed(path, false)?;
+        private_access_diagnosed(path, false, Some(game_save_root))?;
         let root = fs::canonicalize(path).map_err(|error| {
             PrivateStorageFailure::with_io(
                 PrivateStorageStage::CanonicalizeVault,
@@ -168,7 +180,7 @@ impl PrivateVault {
     }
 }
 pub(crate) fn private_access(path: &Path, initialize: bool) -> Result<(), IdentityError> {
-    private_access_diagnosed(path, initialize).map_err(PrivateStorageFailure::legacy)
+    private_access_diagnosed(path, initialize, None).map_err(PrivateStorageFailure::legacy)
 }
 fn acl_stage(initialize: bool) -> PrivateStorageStage {
     if initialize {
@@ -179,7 +191,11 @@ fn acl_stage(initialize: bool) -> PrivateStorageStage {
 }
 
 #[cfg(windows)]
-fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), PrivateStorageFailure> {
+fn private_access_diagnosed(
+    path: &Path,
+    initialize: bool,
+    save_root: Option<&Path>,
+) -> Result<(), PrivateStorageFailure> {
     use std::{
         os::windows::{fs::MetadataExt, process::CommandExt},
         process::{Command, Stdio},
@@ -195,6 +211,10 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
             PrivateStorageReason::Reparse,
         ));
     }
+    // Observation preparation is best effort and outside both protected roots.
+    let (mut phases, phase_admission) =
+        child_phase::PhaseSidecar::prepare_captured(path, save_root);
+    let (mut health, health_admission) = writer_health::prepare(path, save_root, phases.is_some());
     let mut command = Command::new("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe");
     command
         .args([
@@ -210,6 +230,12 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
         .arg(path);
     if initialize {
         command.arg("-Initialize");
+    }
+    if let Some(phases) = phases.as_ref() {
+        command.arg("-PhasePath").arg(phases.path());
+    }
+    if let Some(health) = health.as_ref() {
+        command.arg("-HealthPath").arg(health.path());
     }
     let started = Instant::now();
     let spawned = command
@@ -229,6 +255,12 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
                 poll_micros: None,
                 exit_code: None,
                 cleanup: None,
+                child_phase: ChildPhaseObservation::Unknown,
+                phase_capture: PhaseCaptureObservation {
+                    admission: phase_admission,
+                    read: PhaseRead::NotAttempted,
+                },
+                writer_health: HelperHealthObservation::not_attempted(health_admission),
             });
             return Err(failure);
         }
@@ -244,11 +276,22 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
                     return Ok(());
                 }
                 let mut failure = PrivateStorageFailure::new(stage, PrivateStorageReason::Exit);
+                let poll_micros = poll_started.elapsed().as_micros();
+                let (child_phase, read) = phases
+                    .as_mut()
+                    .map(|phases| phases.observe_captured_after_terminal(true))
+                    .unwrap_or((ChildPhaseObservation::Unknown, PhaseRead::NotAttempted));
                 failure.helper = Some(HelperObservation {
                     spawn_micros,
-                    poll_micros: Some(poll_started.elapsed().as_micros()),
+                    poll_micros: Some(poll_micros),
                     exit_code: status.code(),
                     cleanup: None,
+                    child_phase,
+                    phase_capture: PhaseCaptureObservation {
+                        admission: phase_admission,
+                        read,
+                    },
+                    writer_health: writer_health::observe(health.as_mut(), health_admission, true),
                 });
                 return Err(failure);
             }
@@ -270,16 +313,37 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
             .map_err(|error| StorageIoFailure::from(&error)),
     });
     let mut refusal = refusal;
+    let terminal_confirmed = cleanup
+        .as_ref()
+        .is_some_and(|cleanup| cleanup.wait_result.is_ok());
+    let (child_phase, read) = phases
+        .as_mut()
+        .map(|phases| phases.observe_captured_after_terminal(terminal_confirmed))
+        .unwrap_or((ChildPhaseObservation::Unknown, PhaseRead::NotAttempted));
     refusal.helper = Some(HelperObservation {
         spawn_micros,
         poll_micros: Some(poll_micros),
         exit_code: None,
         cleanup,
+        child_phase,
+        phase_capture: PhaseCaptureObservation {
+            admission: phase_admission,
+            read,
+        },
+        writer_health: writer_health::observe(
+            health.as_mut(),
+            health_admission,
+            terminal_confirmed,
+        ),
     });
     Err(refusal)
 }
 #[cfg(unix)]
-fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), PrivateStorageFailure> {
+fn private_access_diagnosed(
+    path: &Path,
+    initialize: bool,
+    _save_root: Option<&Path>,
+) -> Result<(), PrivateStorageFailure> {
     use std::os::unix::fs::{MetadataExt, PermissionsExt};
     let stage = acl_stage(initialize);
     let metadata = fs::symlink_metadata(path).map_err(|error| {
@@ -319,7 +383,11 @@ fn private_access_diagnosed(path: &Path, initialize: bool) -> Result<(), Private
     Ok(())
 }
 #[cfg(not(any(windows, unix)))]
-fn private_access_diagnosed(_path: &Path, initialize: bool) -> Result<(), PrivateStorageFailure> {
+fn private_access_diagnosed(
+    _path: &Path,
+    initialize: bool,
+    _save_root: Option<&Path>,
+) -> Result<(), PrivateStorageFailure> {
     Err(PrivateStorageFailure::new(
         acl_stage(initialize),
         PrivateStorageReason::UnsupportedPlatform,

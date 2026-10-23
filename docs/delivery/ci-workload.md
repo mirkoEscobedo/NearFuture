@@ -1,5 +1,44 @@
 # Headless CI workload and qualification
 
+## Complete Rust partition (#98 recovery)
+
+The required `public-rust` group now runs three suites on each of Linux and
+Windows, retaining the existing 20-minute job bounds and `fail-fast: false`.
+The selector reads locked/offline Cargo workspace metadata and validates the
+actual workflow matrix before executing Cargo. Every workspace package belongs
+to exactly one suite; new packages enter the remainder. Missing/duplicate suite,
+platform or required package selections refuse execution.
+
+| Suite | Complete package selection |
+| --- | --- |
+| store | nf-store |
+| peers | nf-identity, nf-ipc, nf-transport |
+| remainder | All other actual workspace members, excluding those four packages |
+
+Each command uses ordinary `cargo test` selection, including unit, binary,
+integration and doc tests, locked/offline dependencies and the retained #98
+`--test-threads=1` invocation. No target/name filter, new ignore or production
+deadline change is introduced. Store retains its fresh caller-owned restore
+refusal inputs and original artifact retention. Other operator, interop, release,
+profile and Linux fault checks remain required. Local `npm run check` still runs
+the full original aggregate.
+
+The same six required groups and strict always-running qualification check
+remain. Six Rust matrix children replace two: fifteen total required check
+records must succeed. The workflow validator rejects missing cells; GitHub's
+matrix result and the existing qualification CLI refuse failed, cancelled,
+skipped or absent required groups. Inspect actual child results before landing.
+
+The retained #98 PR logs show successful progress until the overall 20-minute
+cutoff, including completed `driver_cli_actions` in another attempt and the
+same-head push. They do not establish a driver deadlock. Historical failed
+attempts and repair/retry counts remain recorded separately from the human's
+bounded recovery authorization. Partitioning addresses accumulated workload;
+it does not explain unrelated ACL/private-storage failures or guarantee timing.
+Current target/head checks and protected serial landing still govern acceptance.
+
+## Earlier build/Rust separation (retained evidence)
+
 Refs #92, #93. This is a capacity repair within the protected headless integration profile. It preserves the complete check workload and all child job deadlines. The original blocked candidate `13d5efa` and its failed runs remain evidence; this change neither explains nor repairs opaque private-storage or Linux fault-worker failures.
 
 The Windows public jobs on [the #95 candidate](https://github.com/mirkoEscobedo/NearFuture/actions/runs/39308549553/job/118251855188) and [the #96 push](https://github.com/mirkoEscobedo/NearFuture/actions/runs/39312371487/job/118264978891) exceeded the existing 20-minute limit. In the latter, workspace Rust completed around 19:53:36 UTC, tooling began at19:53:43, and cancellation occurred at19:56:24; the job began at19:36:24. This supports giving the full Rust suite and the remaining checks their own bounded jobs. A cancelled game-lane subprocess is not independently established as a product defect.

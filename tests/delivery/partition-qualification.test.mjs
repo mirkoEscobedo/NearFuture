@@ -5,7 +5,7 @@ import test from 'node:test';
 
 function successfulJobs() {
     return Object.fromEntries([
-        'public-build', 'public-rust', 'windows-interop', 'release-build', 'profile-smoke',
+        'public-build', 'public-rust', 'windows-interop', 'release-build', 'profile-smoke', 'operator-public',
     ].map(name => [name, { result: 'success' }]));
 }
 

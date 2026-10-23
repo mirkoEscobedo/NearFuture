@@ -1,4 +1,6 @@
 //! Closed storage diagnostics: no paths, helper text, identity or private payloads.
+use super::child_phase::{ChildPhaseObservation, PhaseCaptureObservation};
+use super::writer_health::HelperHealthObservation;
 use crate::model::IdentityError;
 use std::io;
 
@@ -54,6 +56,12 @@ pub struct HelperObservation {
     pub poll_micros: Option<u128>,
     pub exit_code: Option<i32>,
     pub cleanup: Option<HelperCleanup>,
+    /// Last complete marker after confirmed terminal; never helper text or authority values.
+    pub child_phase: ChildPhaseObservation,
+    /// Availability of this same bounded capture, without raw helper or authority values.
+    pub phase_capture: PhaseCaptureObservation,
+    /// Independent first-publication evidence after confirmed terminal, never raw helper output.
+    pub writer_health: HelperHealthObservation,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

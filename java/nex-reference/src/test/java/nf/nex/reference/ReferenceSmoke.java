@@ -27,6 +27,7 @@ public final class ReferenceSmoke {
         catch (IllegalArgumentException expected) { rejected = true; }
         if (!rejected) throw new AssertionError("Nonfinite reference input must be unavailable");
         ReferenceLifecycle.run();
+        System.out.println("PASS: copied-fact peace traversal checks " + PeaceTraversalCharacterization.run());
         System.out.println("PASS: isolated concern/peace source corpus " + WarCorpus.run() + "/" + PeaceCorpus.run());
     }
 }
