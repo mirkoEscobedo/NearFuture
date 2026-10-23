@@ -40,6 +40,7 @@ jobs:
           $env:NF_IPC_JAVA = 'java'
           $env:NF_IPC_JAVA_CLASSPATH_FILE = Join-Path (Get-Location) 'java/ipc/build/auth-test-classpath.txt'
           cargo test -p nf-ipc --test java_process --locked --offline -- --ignored --test-threads=1
+          cargo test -p nf-ipc --test parent_java --locked --offline -- --ignored --test-threads=1
       - name: Compare Rust shadow against actual Java reference outputs
         if: runner.os == 'Linux'
         shell: pwsh
@@ -361,6 +362,7 @@ jobs:
           $env:NF_IPC_JAVA = 'java'
           $env:NF_IPC_JAVA_CLASSPATH_FILE = Join-Path (Get-Location) 'java/ipc/build/auth-test-classpath.txt'
           cargo test -p nf-ipc --test java_process --locked --offline -- --ignored --test-threads=1
+          cargo test -p nf-ipc --test parent_java --locked --offline -- --ignored --test-threads=1
       - name: Compare Rust shadow against actual Java reference outputs
         shell: pwsh
         run: |
