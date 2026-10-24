@@ -443,3 +443,27 @@ after-smoke protection; report forced cleanup separately from ordinary exit.
 See `tools/starsector-proxy/fixture/README.md` for the exact no-seed authority and
 original-image receipt contract. This inspection does not generate a usable seed
 or establish native lifecycle acceptance.
+
+The separate schema5 `GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE` profile
+adds only one inspected Generate action and one first Continue. It requires
+binding3 with the fixed `VANILLA_UNCOMPRESSED_GENERATION` fixture profile: no
+enabled mods, an existing literal `compressSaveGameData:false`, private autosave
+disabled and the same original-save protection and runtime custody. Bindings1/2
+and profiles1–4 retain their previous scope.
+
+B1 remains optional activation then Play. E1 uses the inspected New Game control,
+then a separately inspected original blank-name page and exact Generate control.
+After known E1 closure, E2 requires the generated nonblank name, first Continue
+label/coordinate and full original action/image/provider lineage. E2 sends one
+first Continue, observes the resulting scene and ends through owned cleanup.
+The destination scene remains unknown until observed. This profile permits no
+typing, keys, later wizard input, Save, cancellation or ordinary Exit and creates
+no usable seed. Its clocks, action/provider ceilings, cumulative history and
+uncertainty latch are unchanged. See the fixture README for the receipt shapes.
+
+Generation authority also binds the carried `absoluteMaxReservedActions` and
+the fixed root history-admission receipt in both original and phase plan/lease
+pairs. A new run cannot replenish the remaining absolute allowance. After the
+exact known E2 Continue, observations alone may retain the game's one fixed
+common help-preference file. Earlier phases remain empty; other files, changed
+bytes, links, uncertain results and additional input refuse.

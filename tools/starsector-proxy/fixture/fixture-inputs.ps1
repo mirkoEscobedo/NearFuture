@@ -12,10 +12,19 @@ function Read-NativeFixtureBinding([string]$Path,[string]$ExpectedSha256) {
  if($file.PSIsContainer-or$file.Length-lt2-or$file.Length-gt16384-or(Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash-ine$ExpectedSha256){throw 'Fixture binding hash or size mismatch'}
  $binding=Get-Content -LiteralPath $Path -Raw|ConvertFrom-Json -DateKind String
  $version=$binding.schemaVersion
- if(($version-isnot[int]-and$version-isnot[long])-or$version-cnotin@(1,2)){throw 'Fixture input version required'}
+ if(($version-isnot[int]-and$version-isnot[long])-or$version-cnotin@(1,2,3)){throw 'Fixture input version required'}
+ if($version-eq3){
+  $document=[Text.Json.JsonDocument]::Parse([IO.File]::ReadAllText($Path))
+  try{
+   $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+   foreach($property in $document.RootElement.EnumerateObject()){if(!$seen.Add($property.Name)){throw 'Duplicate generation binding field refused'}}
+  }finally{$document.Dispose()}
+ }
  $names=@('schemaVersion','fixtureRoot','sourceInstallation','qualifiedRuntimeRoot','candidateHead','runtimeManifestSha256','presentationAgentPath','presentationAgentSha256','presentationClassSha256','driverRole')
  if($version-eq2){$names+='recordingProfileSha256'}
+ if($version-eq3){$names+='fixtureProfile'}
  if((@($binding.PSObject.Properties.Name|Sort-Object)-join',')-cne(@($names|Sort-Object)-join',')){throw 'Closed fixture input schema required'}
+ if($version-eq3-and($binding.fixtureProfile-isnot[string]-or$binding.fixtureProfile-cne'VANILLA_UNCOMPRESSED_GENERATION')){throw 'Closed vanilla generation fixture profile required'}
  foreach($key in @('fixtureRoot','sourceInstallation','qualifiedRuntimeRoot','presentationAgentPath')){
   if($binding.$key-isnot[string]-or![IO.Path]::IsPathFullyQualified($binding.$key)){throw 'Absolute fixture input path required'}
   Require-Ordinary $binding.$key
@@ -33,6 +42,44 @@ function Read-NativeFixtureBinding([string]$Path,[string]$ExpectedSha256) {
  $binding|Add-Member -NotePropertyName fixtureId -NotePropertyValue ([IO.Path]::GetFileName($fixture))
  if($version-eq2){$binding|Add-Member -NotePropertyName recordingProfile -NotePropertyValue (Read-NativeRecordingProfile $binding)}
  return $binding
+}
+
+function Read-NativeFixtureRecipe($Binding) {
+ $version=$Binding.schemaVersion
+ if(($version-isnot[int]-and$version-isnot[long])-or$version-cnotin@(1,2,3)){throw 'Fixture recipe version required'}
+ if($version-eq3){
+  if($Binding.fixtureProfile-cne'VANILLA_UNCOMPRESSED_GENERATION'){throw 'Closed vanilla generation fixture profile required'}
+  return [pscustomobject]@{enabledModsJson='{"enabledMods":[]}';requireUncompressed=$true}
+ }
+ return [pscustomobject]@{enabledModsJson='{"enabledMods":["near_future"]}';requireUncompressed=$false}
+}
+
+function Assert-NativeFixtureSettings($Binding,[string]$Text) {
+ if(!(Read-NativeFixtureRecipe $Binding).requireUncompressed){return}
+ # Preserve strings while removing the comments accepted by the game's settings file.
+ $clean=[regex]::Replace($Text,'"(?:\\.|[^"\\])*"|//[^\r\n]*|/\*[\s\S]*?\*/|#[^\r\n]*',[Text.RegularExpressions.MatchEvaluator]{
+  param($match)
+  if($match.Value.StartsWith('"')){return $match.Value}
+  return ''
+ })
+ # The game accepts float suffixes, leading decimal points and semicolon separators.
+ # Normalize only the parser view; preserve strings and original settings bytes.
+ $clean=[regex]::Replace($clean,'"(?:\\.|[^"\\])*"|(?<![A-Za-z0-9_.])(?<number>-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)[fF]?(?=\s*[;,}\]])|;',[Text.RegularExpressions.MatchEvaluator]{
+  param($match)
+  if($match.Value.StartsWith('"')){return $match.Value}
+  if($match.Value-ceq';'){return ','}
+  $number=$match.Groups['number'].Value
+  if($number.StartsWith('-.')){return '-0'+$number.Substring(1)}
+  if($number.StartsWith('.')){return '0'+$number}
+  return $number
+ })
+ $options=[Text.Json.JsonDocumentOptions]::new();$options.AllowTrailingCommas=$true
+ try{$document=[Text.Json.JsonDocument]::Parse($clean,$options)}catch{throw 'Generation requires uncompressed save data'}
+ try{
+  if($document.RootElement.ValueKind-ne[Text.Json.JsonValueKind]::Object){throw 'Generation requires uncompressed save data'}
+  $fields=@($document.RootElement.EnumerateObject()|Where-Object {$_.Name-ieq'compressSaveGameData'})
+  if($fields.Count-ne1-or$fields[0].Name-cne'compressSaveGameData'-or$fields[0].Value.ValueKind-ne[Text.Json.JsonValueKind]::False){throw 'Generation requires uncompressed save data'}
+ }finally{$document.Dispose()}
 }
 
 
@@ -55,7 +102,7 @@ function Assert-NativeRecordingProfileValue($Profile) {
  foreach($name in $Profile.enabledEvents){if($name-isnot[string]-or$name-cnotin$events-or!$seen.Add($name)){throw 'Exactly three unique recording events required'}}
 }
 function Read-NativeRecordingProfile($Binding) {
- if($Binding.schemaVersion-eq1){return $null}
+ if($Binding.schemaVersion-in@(1,3)){return $null}
  if($Binding.recordingProfileSha256-isnot[string]-or$Binding.recordingProfileSha256-cnotmatch'^[A-Fa-f0-9]{64}$'){throw 'Pinned recording profile required'}
  $path=Join-Path $Binding.fixtureRoot 'recording-profile.private.json'
  Assert-NativeRecordingOrdinary $path
@@ -113,7 +160,7 @@ function New-NativeRecordingConfiguration([xml]$DefaultJfc,$Profile=$null) {
  return ,$jfc
 }
 function Assert-NativeRecordingRecipe($Binding,$Receipt) {
- if($Binding.schemaVersion-eq1){return}
+ if($Binding.schemaVersion-in@(1,3)){return}
  $profile=Read-NativeRecordingProfile $Binding
  if($Receipt.recordingProfileSha256-isnot[string]-or$Receipt.recordingProfileSha256-ine$Binding.recordingProfileSha256){throw 'Frozen recording profile agreement required'}
  foreach($row in @(@('jre/lib/jfr/default.jfc','baseDefaultJfcSHA256'),@('jre/release','gameJvmReleaseSHA256'))){
@@ -139,7 +186,7 @@ function Assert-NativeRecordingRecipe($Binding,$Receipt) {
  if($occurrences.Count-ne1-or$flags.Count-ne1-or$flags[0].Value-cne$expectedFlag){throw 'Fixed private recording flag required'}
 }
 function Assert-NativeRecordingAuthority($Binding,$Receipt,$Plan,$Lease) {
- if($Binding.schemaVersion-eq1){
+ if($Binding.schemaVersion-in@(1,3)){
   foreach($value in @($Receipt,$Plan,$Lease)){
    if($null-ne$value-and@($value.PSObject.Properties.Name)-contains'recordingProfileSha256'){throw 'Legacy fixture cannot carry recording profile authority'}
   }

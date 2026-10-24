@@ -142,6 +142,8 @@ function Read-ProtectionState([string]$Prepared,[string]$Source,[bool]$Before,$S
  foreach($pattern in @('"maxAutosaveSlots"\s*:\s*3\s*,','"autosaveFeatureEnabled"\s*:\s*true','"autosaveEnabledByDefault"\s*:\s*true')){if([regex]::Matches($settings,$pattern).Count-ne1){throw 'Protected autosave retention changed'}}
  Assert-OrdinaryPath "$installation/starsector-core/data/config/settings.json"
  $privateSettings=[IO.File]::ReadAllText("$installation/starsector-core/data/config/settings.json")
+ Assert-NativeFixtureSettings $binding $privateSettings
+ if($binding.schemaVersion-eq3-and[IO.File]::ReadAllText("$installation/mods/enabled_mods.json")-cne(Read-NativeFixtureRecipe $binding).enabledModsJson){throw 'Generation requires no enabled mods'}
  foreach($key in @('autosaveFeatureEnabled','autosaveEnabledByDefault')){if([regex]::Matches($privateSettings,'"'+$key+'"\s*:\s*false').Count-ne1){throw 'Private autosave must remain disabled'}}
  $processes=@(Get-CimInstance Win32_Process -OperationTimeoutSec 10|Where-Object {$_.ExecutablePath-and($_.ExecutablePath.Replace('\','/').StartsWith(([IO.Path]::GetFullPath($installation).Replace('\','/').TrimEnd('/')+'/'),[StringComparison]::OrdinalIgnoreCase)-or$_.ExecutablePath.Replace('\','/').StartsWith(([IO.Path]::GetFullPath($Source).Replace('\','/').TrimEnd('/')+'/'),[StringComparison]::OrdinalIgnoreCase))})
  if($processes.Count){throw 'Game processes still live at protection boundary'}

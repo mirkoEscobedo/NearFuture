@@ -83,6 +83,7 @@ function Ensure-PrivateDirectory([string]$path){
  }
 }
 function Private-Settings([string]$text) {
+ Assert-NativeFixtureSettings $binding $text
  if([regex]::Matches($text,'"maxAutosaveSlots"\s*:\s*3\s*,').Count-ne1){throw 'Original autosave retention shape changed'}
  foreach($key in @('autosaveFeatureEnabled','autosaveEnabledByDefault')){
   $pattern='"'+$key+'"\s*:\s*true'
@@ -192,7 +193,7 @@ if($GuardedResume){
  Assert-PrivateDestination $modPath
  [IO.File]::WriteAllText($modPath,($mod|ConvertTo-Json -Depth 5))
 }
-Write-PrivateText "$installation/mods/enabled_mods.json" '{"enabledMods":["near_future"]}'
+Write-PrivateText "$installation/mods/enabled_mods.json" ((Read-NativeFixtureRecipe $binding).enabledModsJson)
 $privateSettings="$installation/starsector-core/data/config/settings.json"
 $settings=Private-Settings ([IO.File]::ReadAllText("$sourceRoot/starsector-core/data/config/settings.json"))
 Write-PrivateText $privateSettings $settings
