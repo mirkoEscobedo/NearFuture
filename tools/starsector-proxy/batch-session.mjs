@@ -13,7 +13,7 @@ const batches = {
 /** Validate the closed in-memory binding; file/lease custody is checked by the caller too.
  * @param {any} authorization */
 export function validateBatchBinding(authorization) {
-    if ([2, 3, 4].includes(authorization?.schemaVersion)) { validateCampaignBinding(authorization); return; }
+    if ([2, 3, 4, 5].includes(authorization?.schemaVersion)) { validateCampaignBinding(authorization); return; }
     const keys = ['batch', 'ownedPids', 'planSha256', 'runID', 'scenario', 'schemaVersion'];
     if (!authorization || typeof authorization !== 'object' || Array.isArray(authorization) ||
         Object.keys(authorization).sort().join() !== keys.join() || authorization.schemaVersion !== 1 ||
@@ -42,14 +42,17 @@ function textJson(result) {
 export function createBatchSession(session, authorization, record = () => {}) {
     validateBatchBinding(authorization);
     const binding = structuredClone(authorization);
-    const campaign = [2, 3, 4].includes(binding.schemaVersion);
-    const seededLauncher = [3, 4].includes(binding.schemaVersion) && binding.batch === 'B1';
+    const campaign = [2, 3, 4, 5].includes(binding.schemaVersion);
+    const seededLauncher = [3, 4, 5].includes(binding.schemaVersion) && binding.batch === 'B1';
     const seededEntry = binding.schemaVersion === 3 && binding.batch === 'E1';
-    const firstPageEntry = binding.schemaVersion === 4 && binding.batch === 'E1';
+    const firstPageEntry = [4, 5].includes(binding.schemaVersion) && binding.batch === 'E1';
+    const generationEntry = binding.schemaVersion === 5 && binding.batch === 'E1';
     const seededExitConfirmation = binding.schemaVersion === 3 && binding.batch === 'E2' && binding.exitConfirmation !== undefined;
+    const generationContinue = binding.schemaVersion === 5 && binding.batch === 'E2';
     const escapeBatch = campaign && binding.batch === 'E1';
     const sequence = seededLauncher ? batches.B1 : seededEntry ?
         [{ tool: 'left_click' }, { tool: 'left_click' }, { tool: 'left_click' }, { tool: 'key' }] :
+        generationEntry ? [{ tool: 'left_click' }, { tool: 'left_click' }] :
         firstPageEntry ? [{ tool: 'left_click' }] : seededExitConfirmation ? [{ tool: 'left_click' }, { tool: 'left_click', optional: true }] :
         campaign ? [{ tool: escapeBatch ? 'key' : 'left_click', optional: false }]
         : batches[/** @type {keyof typeof batches} */ (binding.batch)];
@@ -114,10 +117,11 @@ export function createBatchSession(session, authorization, record = () => {}) {
                 if (escapeCall && (args.text !== 'escape' || args.repeat !== 1)) refuse('only one exact Escape is qualified');
                 if (seededEntry && position === 1 && JSON.stringify(args.coordinate) !==
                     JSON.stringify(binding.b1MenuReceipt.loadCoordinate)) refuse('only the inspected Load Game coordinate is qualified');
-                if (firstPageEntry && JSON.stringify(args.coordinate) !== JSON.stringify(binding.b1MenuReceipt.newGameCoordinate)) {
+                if (firstPageEntry && (!generationEntry || position === 1) && JSON.stringify(args.coordinate) !== JSON.stringify(binding.b1MenuReceipt.newGameCoordinate)) {
                     refuse('only the inspected New Game coordinate is qualified');
                 }
-                if (campaign && !escapeBatch && !seededLauncher && !(seededExitConfirmation && position === 2) && (tool !== 'left_click' ||
+                if (generationContinue && JSON.stringify(args.coordinate) !== JSON.stringify(binding.e1GeneratedNameReceipt.continueCoordinate)) refuse('only the inspected first Continue coordinate is qualified');
+                if (campaign && !escapeBatch && !seededLauncher && !generationContinue && !(seededExitConfirmation && position === 2) && (tool !== 'left_click' ||
                     JSON.stringify(args.coordinate) !== JSON.stringify(binding.e1MenuReceipt.exitCoordinate))) refuse('only the inspected ordinary Exit coordinate is qualified');
                 const id = tool === 'activate_window' ? args.window_id : args.target_window_id;
                 const target = windows.get(id);
@@ -170,7 +174,7 @@ export function createBatchSession(session, authorization, record = () => {}) {
                         refuse('original PNG receipt missing');
                     }
                     let pngBytes;
-                    if ([3, 4].includes(binding.schemaVersion)) {
+                    if ([3, 4, 5].includes(binding.schemaVersion)) {
                         const encoded = images[0].data;
                         if (typeof encoded !== 'string' || encoded.length > 44 * 1024 * 1024 ||
                             !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) refuse('bounded canonical original PNG required');

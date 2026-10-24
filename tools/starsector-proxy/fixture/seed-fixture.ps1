@@ -262,12 +262,15 @@ function Invoke-NativeSeedStage([string]$BindingPath,[string]$BindingSha256,[str
 function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  $planControl=$null-ne$Plan-and@($Plan.PSObject.Properties.Name)-ccontains'campaignControl'
  $leaseControl=$null-ne$Lease-and@($Lease.PSObject.Properties.Name)-ccontains'campaignControl'
+ if($Binding.schemaVersion-eq3-and($null-ne$Plan-or$null-ne$Lease)-and(!$planControl-or!$leaseControl-or$Plan.campaignControl.profile-cne'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'-or$Lease.campaignControl.profile-cne'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE')){throw 'Generation fixture requires its explicit campaign control'}
  if($planControl-ne$leaseControl){throw 'Campaign control plan and lease must agree'}
  if(!$planControl){return}
+ $generation=$Plan.campaignControl.profile-ceq'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'
+ if($generation-and$Binding.schemaVersion-ne3){throw 'Generation campaign control requires its fixed fixture'}
  $inspection=$Plan.campaignControl.profile-ceq'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'
  foreach($control in @($Plan.campaignControl,$Lease.campaignControl)){
   Assert-NativeSeedFields $control @('schemaVersion','profile')
-  $version=if($inspection){2}else{1};$profile=if($inspection){'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'}else{'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE'}
+  $version=if($generation){3}elseif($inspection){2}else{1};$profile=if($generation){'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'}elseif($inspection){'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'}else{'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE'}
   Assert-NativeSeedInteger $control.schemaVersion $version $version
   if($control.profile-isnot[string]-or$control.profile-cne$profile){throw 'Closed campaign control profile required'}
  }
@@ -293,9 +296,9 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  foreach($authority in @($Plan,$Lease)){
   foreach($key in @('ownedNodeKill','campaign','e1MenuReceipt')){if(@($authority.PSObject.Properties.Name)-ccontains$key){throw 'Campaign control refuses unrelated phase authority'}}
   $hasSeed=@($authority.PSObject.Properties.Name)-ccontains'seed'
-  if(($inspection-and$hasSeed)-or(!$inspection-and!$hasSeed)){throw 'Campaign control exact profile seed authority required'}
+  if((($inspection-or$generation)-and$hasSeed)-or(!$inspection-and!$generation-and!$hasSeed)){throw 'Campaign control exact profile seed authority required'}
  }
- if($inspection){
+ if($inspection-or$generation){
   foreach($name in @('seed-manifest.private.json','seed-stage-plan.private.json','seed-stage-authority.private.json','seed-stage-claim.private.json','seed-stage-receipt.private.json')){if(Test-Path -LiteralPath (Join-Path $Binding.fixtureRoot $name)){throw 'First-page inspection refuses seed metadata'}}
   $saves=Join-Path $Binding.fixtureRoot 'installation/saves';Assert-NativeSeedOrdinary $saves
   if(!(Get-Item -LiteralPath $saves).PSIsContainer-or@(Get-ChildItem -LiteralPath $saves -Force).Count-ne0){throw 'Empty first-page inspection saves required'}
@@ -304,7 +307,7 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  if([IO.Path]::GetFullPath($Lease.supportPinsPath)-cne[IO.Path]::GetFullPath($supportPath)){throw 'Campaign control exact support manifest required'}
  $support=Read-NativeSeedJson $supportPath $Lease.supportPinsSha256 262144
  Assert-NativeSeedFields $support @('pins')
- $sources=@('guarded-http-ownership.ps1','campaign-authority.mjs','batch-authorization.mjs','batch-session.mjs','finite-consent.mjs','fixture-binding.mjs','direct-frames.mjs')+@('native-controller.ps1','protection-check.ps1','fixture-inputs.ps1','seed-fixture.ps1','publish-owned-snapshot.ps1','session-watchdog.ps1','menu-launch.ps1'|ForEach-Object {'fixture/'+$_})
+ $sources=@('guarded-http-ownership.ps1','campaign-authority.mjs','batch-authorization.mjs','batch-session.mjs','finite-consent.mjs','fixture-binding.mjs','direct-frames.mjs','campaign-proof.mjs','generation-proof.mjs')+@('native-controller.ps1','protection-check.ps1','fixture-inputs.ps1','seed-fixture.ps1','publish-owned-snapshot.ps1','session-watchdog.ps1','menu-launch.ps1'|ForEach-Object {'fixture/'+$_})
  foreach($relative in $sources){
   $path=[IO.Path]::GetFullPath((Join-Path $Binding.repositoryRoot ('tools/starsector-proxy/'+$relative)))
   $pins=@($support.pins|Where-Object {$_.path-is[string]-and[IO.Path]::GetFullPath($_.path)-ceq$path})

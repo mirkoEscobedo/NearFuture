@@ -356,3 +356,49 @@ protection separately. This profile creates no saved seed and qualifies no
 campaign compatibility, lifecycle authentication or alpha capability. Generated
 tests do not establish the loaded frontend or real wizard state.
 
+# Generated-name and first Continue inspection
+
+Schema5 `GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE` is a separate profile.
+Both original launch documents declare exactly
+`campaignControl: {schemaVersion: 3, profile: "GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE"}`
+and exactly B1/E1/E2. It requires fixture binding3 and its only additional field
+`fixtureProfile: "VANILLA_UNCOMPRESSED_GENERATION"`; this binding cannot carry a
+recording-profile digest. The fixture retains legacy recording, all installed
+runtime pins and private vault initialization. Preparation enables zero mods
+and requires the source compression setting already false; it never rewrites
+compression or original files. Protection rechecks the exact empty enabled-mods
+recipe and literal uncompressed setting even if receipt digests are refreshed.
+Legacy fixture bindings and input profiles cannot select this recipe.
+
+B1 uses the existing inspected main-menu receipt with `newGameCoordinate`. E1
+first sends New Game, then freezes `E1-generate-inspected.private.json`: schema1,
+kind `STARSECTOR_NEW_GAME_GENERATE_INSPECTION`, `scenario`, `rootRecordKey`,
+`controllerSha256`, `sourceSha256`, `claimSha256`, `runID`, `reservationID`,
+`frame`, `inspection`. Its original/raw/metadata files live in `E1-generate/` with
+the standard `F1.original.png` and `capture-001` names. The inspection is exactly
+`issuer`, `driver`, `inspectedAtMs`, `state: "NEW_GAME_IDENT_CHIP_BLANK_NAME"`,
+`nameBlank:true`, `generateLabel:"GENERATE"`, `generateCoordinate`. Fresh current
+original bytes and post-capture focus admit only that Generate coordinate.
+
+After Generate, save the original/raw/metadata under `E1-generated-name/` and
+freeze `E1-generated-name-inspected.private.json`. Its fields are `schemaVersion:1`,
+`kind:"STARSECTOR_E1_GENERATED_NAME_INSPECTION"`, `scenario`, `flow`, `rootRecordKey`,
+`controllerSha256`, `e1`, `frame`, `inspection`, `provider`. The `e1` object binds
+`sourceSha256`, `claimSha256`, `runID`, `newGameReservationID` and
+`generateReservationID`. The inspection is exactly `issuer`, `driver`,
+`inspectedAtMs`, `state:"NEW_GAME_IDENT_CHIP_GENERATED_NAME"`, `generatedName`
+(nonblank, at most128 characters, no control characters), `continueLabel:"1. Continue"`
+and `continueCoordinate`. The frame and known-closed provider shapes match B1.
+
+E2 plan and lease bind that receipt through `e1GeneratedNameReceipt:{path,sha256}`.
+Admission revalidates both E1 reservations, the Generate inspection, original
+PNG/raw/metadata, historical B1/E1 authority and actual provider closure. E2
+permits exactly one first Continue at its inspected coordinate, then observations
+only. It uses no ordinary-menu/Exit receipt. Finish through maintained owned
+cleanup and after-smoke protection, preserving the unresolved final reservation
+and controller outcome. The first Continue destination is not assumed; no later
+wizard, typing, key, Save, cancellation, seed provenance or lifecycle acceptance
+is supplied. All prior failures, absolute action history and original deadlines
+remain in force. A qualified source checkout and actually refreshed supported
+frontend are required before live use.
+

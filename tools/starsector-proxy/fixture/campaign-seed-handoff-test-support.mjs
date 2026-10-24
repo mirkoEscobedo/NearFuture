@@ -11,10 +11,10 @@ import { persistDirectFrame } from '../direct-frames.mjs';
 /** @param {string} path */
 const filePin = path => { const pin = rawFilePin(path); return { ...pin, sha256: pin.sha256.toLowerCase() }; };
 
-/** @param {{inspection?: boolean}} [options] */
+/** @param {{inspection?: boolean, generation?: boolean}} [options] */
 export async function completedSeedLaunch(options = {}) {
     const f = campaignLaunchFixture(options);
-    const schemaVersion = options.inspection ? 4 : 3;
+    const schemaVersion = options.generation ? 5 : options.inspection ? 4 : 3;
     const helper = resolve(f.scenario, 'synthetic-provider-helper.exe');
     writeFileSync(helper, 'Generated identity only. Never executed.');
     const pinsPath = resolve(f.scenario, 'frozen-support-pins.private.json');
@@ -77,7 +77,7 @@ export async function completedSeedLaunch(options = {}) {
         json(resolve(output, 'owned-provider.stdout.private.txt'), { ok: true, command: 'verify', result: { verdict: 'PASS', steps: [child] } });
         writeFileSync(resolve(output, 'owned-provider.stderr.private.txt'), '');
         const receipt = { schemaVersion: 1, kind: 'STARSECTOR_B1_MAIN_MENU_INSPECTION', scenario: f.scenario,
-            flow: options.inspection ? 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE' : 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE', rootRecordKey: f.campaign.rootClock.recordKey,
+            flow: f.plan.campaignControl.profile, rootRecordKey: f.campaign.rootClock.recordKey,
             controllerSha256: filePin(f.controllerPath).sha256,
             b1: { sourceSha256: filePin(authority.source).sha256,
                 claimSha256: filePin(resolve(f.scenario, 'guard-B1-consumed.private.json')).sha256,
@@ -85,7 +85,7 @@ export async function completedSeedLaunch(options = {}) {
             frame: { pngPath: frame.pngPath, pngSha256: filePin(frame.pngPath).sha256, metadataPath: frame.metadataPath,
                 metadataSha256: filePin(frame.metadataPath).sha256, capturedAtMs },
             inspection: { issuer: '/root', driver: '/root/recovery_game_driver', inspectedAtMs: Date.now(),
-                state: 'STARSECTOR_MAIN_MENU', ...(options.inspection ? { newGameCoordinate: [40, 80] } : { loadCoordinate: [40, 80] }) },
+                state: 'STARSECTOR_MAIN_MENU', ...(options.inspection || options.generation ? { newGameCoordinate: [40, 80] } : { loadCoordinate: [40, 80] }) },
             provider: { readySha256: filePin(readyPath).sha256, terminalSha256: filePin(terminalPath).sha256,
                 observedClosedAtMs: Date.now(), providerReaped: true } };
         const receiptPath = resolve(f.scenario, 'B1-menu-inspected.private.json'); json(receiptPath, receipt);

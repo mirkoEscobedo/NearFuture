@@ -2,14 +2,25 @@
 // Generated files only. These are not game, save compatibility or native evidence.
 import assert from 'node:assert/strict';
 import { basename, resolve } from 'node:path';
-import { unlinkSync } from 'node:fs';
+import { unlinkSync, readFileSync } from 'node:fs';
 import { seedFixture, json, filePin, powershell, repository, quote } from './seed-test-support.mjs';
 import { campaignLaunchSources } from '../campaign-authority.mjs';
 
-/** @param {{inspection?: boolean, historyBaseline?: {overallAttempts: number, uiAttempts: number, reservedActions: number, sentActions: number}}} [options] */
+/** @param {{inspection?: boolean, generation?: boolean, historyBaseline?: {overallAttempts: number, uiAttempts: number, reservedActions: number, sentActions: number}}} [options] */
 export function campaignLaunchFixture(options = {}) {
     const f = seedFixture({ driverRole: '/root/recovery_game_driver' }), scenario = f.target;
-    if (options.inspection) {
+    const noSeed = options.inspection || options.generation;
+    if (options.generation) {
+        const binding = JSON.parse(readFileSync(f.bindingPath, 'utf8'));
+        Object.assign(binding, {schemaVersion: 3, fixtureProfile: 'VANILLA_UNCOMPRESSED_GENERATION'});
+        Object.assign(f.bindingPin, json(f.bindingPath, binding));
+        const frozen = JSON.parse(readFileSync(f.frozenPath, 'utf8'));
+        frozen.settingsSha256 = json(resolve(f.installation, 'starsector-core/data/config/settings.json'),
+            {autosaveFeatureEnabled: false, autosaveEnabledByDefault: false, compressSaveGameData: false}).sha256;
+        frozen.enabledModsSha256 = json(resolve(f.installation, 'mods/enabled_mods.json'), {enabledMods: []}).sha256;
+        json(f.frozenPath, frozen);
+    }
+    if (noSeed) {
         for (const name of ['seed-manifest.private.json', 'seed-stage-authority.private.json', 'seed-stage-plan.private.json']) {
             unlinkSync(resolve(scenario, name));
         }
@@ -18,15 +29,16 @@ export function campaignLaunchFixture(options = {}) {
     const callerAdmissionDeadlineMs = startMs + 420000;
     const planPath = resolve(scenario, 'plan.json');
     const leasePath = resolve(scenario, 'native-lane-lease.private.json');
-    const seed = options.inspection ? undefined : { mode: 'LOAD_ONE_PRIVATE_DISPOSABLE_SEED',
+    const seed = noSeed ? undefined : { mode: 'LOAD_ONE_PRIVATE_DISPOSABLE_SEED',
         manifestSha256: filePin(f.manifestPath).sha256,
         stagingReceiptSha256: filePin(resolve(scenario, 'seed-stage-receipt.private.json')).sha256 };
     const bounds = { maxScenarioActionsIncludingActivations: 8, maxProxyInvocations: 3,
         proxyTimeoutMs: 180000, ownedGameHardTimeoutMs: 480000 };
     const historyBaseline = structuredClone(options.historyBaseline ?? { overallAttempts: 3, uiAttempts: 2, reservedActions: 0, sentActions: 0 });
-    const campaignControl = options.inspection ? { schemaVersion: 2, profile: 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE' }
+    const campaignControl = options.generation ? { schemaVersion: 3, profile: 'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE' }
+        : options.inspection ? { schemaVersion: 2, profile: 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE' }
         : { schemaVersion: 1, profile: 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE' };
-    const plan = { scenarioId: basename(scenario), paths: { scenario }, ...(!options.inspection ? { seed } : {}), bounds, historyBaseline, campaignControl,
+    const plan = { scenarioId: basename(scenario), paths: { scenario }, ...(!noSeed ? { seed } : {}), bounds, historyBaseline, campaignControl,
         callerAdmissionDeadlineMs,
         fixtureBinding: { path: f.bindingPath, sha256: filePin(f.bindingPath).sha256 },
         ownership: { driver: '/root/recovery_game_driver', onlyGameInputDriver: true },
@@ -38,7 +50,7 @@ export function campaignLaunchFixture(options = {}) {
     }) });
     const launchLease = { schemaVersion: 1, scenarioId: basename(scenario), authorized: true,
         driver: '/root/recovery_game_driver', issuer: '/root', phase: 'CAMPAIGN_BINDING_ONLY', planSha256: filePin(planPath).sha256,
-        fixtureReceiptSha256: filePin(f.frozenPath).sha256, ...(!options.inspection ? { seed } : {}), campaignControl,
+        fixtureReceiptSha256: filePin(f.frozenPath).sha256, ...(!noSeed ? { seed } : {}), campaignControl,
         ownedGameHardTimeoutMs: 480000, maxActions: 8, maxProxyInvocations: 3, campaignLoadSaveAllowed: false,
         supportPinsPath, supportPinsSha256: filePin(supportPinsPath).sha256, callerAdmissionDeadlineMs };
     json(leasePath, launchLease);

@@ -19,7 +19,8 @@ function read(path, limit) {
     const stat = lstatSync(path);
     if (!stat.isFile() || stat.size < 2 || stat.size > limit) throw new Error('Bounded fixture binding custody required');
     const bytes = readFileSync(path);
-    return { value: JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/, '')),
+    const text = bytes.toString('utf8').replace(/^\uFEFF/, '');
+    return { text, value: JSON.parse(text),
         sha256: createHash('sha256').update(bytes).digest('hex') };
 }
 
@@ -40,14 +41,33 @@ export function readFixtureBinding(admitted) {
     }
     const path = resolve(descriptor.path), fixture = read(path, 16384);
     const value = fixture.value;
+    if (value?.schemaVersion === 3) {
+        // This closed binding has scalar values only. Tokenize complete JSON strings
+        // before identifying keys, so colons/escaped quotes in paths stay values.
+        const keys = new Set();
+        for (const token of fixture.text.matchAll(/"(?:\\.|[^"\\])*"/g)) {
+            if (!fixture.text.slice(token.index + token[0].length).trimStart().startsWith(':')) continue;
+            const key = JSON.parse(token[0]).toLowerCase();
+            if (keys.has(key)) throw new Error('Duplicate generation binding field refused');
+            keys.add(key);
+        }
+    }
     const fields = ['schemaVersion', 'fixtureRoot', 'sourceInstallation', 'qualifiedRuntimeRoot',
         'candidateHead', 'runtimeManifestSha256', 'presentationAgentPath', 'presentationAgentSha256',
         'presentationClassSha256', 'driverRole'];
     if (value?.schemaVersion === 2) fields.push('recordingProfileSha256');
+    if (value?.schemaVersion === 3) fields.push('fixtureProfile');
+    const control = plan.value.campaignControl;
+    const generation = control?.schemaVersion === 3 && control.profile === 'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'
+        && Object.keys(control).sort().join() === 'profile,schemaVersion';
     const lease = read(resolve(scenario, 'native-lane-lease.private.json'), 256 * 1024).value;
     const controller = read(resolve(scenario, 'controller-start.private.json'), 256 * 1024).value;
     if (fixture.sha256 !== descriptor.sha256.toLowerCase() || !value || Array.isArray(value)
-        || ![1, 2].includes(value.schemaVersion) || Object.keys(value).sort().join() !== fields.sort().join()
+        || ![1, 2, 3].includes(value.schemaVersion) || Object.keys(value).sort().join() !== fields.sort().join()
+        || (value.schemaVersion === 3) !== generation
+        || (value.schemaVersion === 3 && (value.fixtureProfile !== 'VANILLA_UNCOMPRESSED_GENERATION'
+            || (admitted.binding.schemaVersion !== undefined && admitted.binding.schemaVersion !== 5)))
+        || (admitted.binding.schemaVersion === 5 && !generation)
         || typeof value.fixtureRoot !== 'string' || !isAbsolute(value.fixtureRoot)
         || resolve(value.fixtureRoot) !== scenario || value.driverRole !== lease.driver
         || resolve(controller.installation ?? '') !== resolve(value.fixtureRoot, 'installation')) {
