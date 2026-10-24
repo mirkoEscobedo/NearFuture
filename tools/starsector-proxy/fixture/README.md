@@ -248,3 +248,111 @@ historical provenance; launch configuration must independently pin current code.
 Guided loading does not admit the one-shot owned-node-kill operation: its separate
 full source-row guard still refuses a changed controller against old stage pins.
 
+# Immutable seeded campaign entry and exit
+
+The schema3 `DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE` input profile uses the existing
+schema1 `CAMPAIGN_BINDING_ONLY` protected launch with one staged disposable seed.
+Its original plan and lease both declare
+`campaignControl: {schemaVersion: 1, profile: "DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE"}`
+and the same absolute integer `callerAdmissionDeadlineMs`. The original plan binds
+the prelaunch `historyBaseline` and exactly B1/E1/E2. Bounds remain eight actions,
+three providers and 480000ms. If an explicit `sessionWatchdogMs` is present, both
+documents must declare 480000. Current critical tooling and the complete provider
+runtime must be pinned independently of historical seed-staging pins.
+
+After actual launch, freeze `campaign-postlaunch.private.json` with exactly:
+`schemaVersion: 1`, `kind: "FINITE_CAMPAIGN_LAUNCH_PREDECESSOR"`, hash references
+`plan`, `lease`, `controller`, and original `rootClock`, `producerWitness`,
+`rootCallRecord`, `historyBaseline`, `maxReservedActions`. Each reference is
+`{path, sha256}` and names the original canonical launch files. The controller's
+actual birth/kernel identity, watchdog and recorded controller/outer deadlines
+must agree with the witness. The original caller cap and conservative minimum
+remain authoritative. Do not overwrite launch files with postlaunch observations.
+
+Each new batch uses `<batch>-plan.private.json`, `<batch>-lease.private.json`,
+`<batch>-authorization.private.json` and `driver-<batch>-owned.private.json`.
+The authorization uses schema3 and binds those exact paths and digests. Plan and
+lease share the closed campaign object: `flow`, `windowId`, `rootClock`,
+`producerWitness`, `rootCallRecord`, `historyBaseline`, `maxReservedActions`, and
+`launchPredecessor: {path, sha256}`. The absolute action maximum is the original
+baseline plus eight, including B1. Consent remains the existing matching
+`directHostConsent` grant. Schema2 retains canonical filenames and refuses this
+predecessor extension.
+
+B1 permits optional activation then Play. Its successful provider closure and
+`B1-menu-inspected.private.json` bind `B1-after/F1.original.png` and the matching
+`capture-001` raw/metadata files. The inspection identifies `STARSECTOR_MAIN_MENU`
+and its exact Load Game coordinate. E1's matching `b1MenuReceipt` reference in plan
+and lease admits the current game HWND only through the original owned process
+lineage; a new or reused PID is insufficient.
+
+E1 permits exactly three left clicks followed by one exact Escape. The first click
+uses the inspected Load Game coordinate; the driver verifies the sole staged row
+and Load button on current originals. Known action results require complete
+original AFTER images and renewed focus/window checks before the next action.
+The driver saves `E1-seed-paused/F1.original.png` and matching `capture-001` raw
+and metadata, then freezes `E1-seed-paused-inspected.private.json`. Its closed
+`STARSECTOR_SEED_PAUSE_INSPECTION` record binds root/controller/source/claim/run,
+the last Load reservation, original seed manifest/stage digests, frame digests and
+chronology, and the driver's `INTENDED_DISPOSABLE_SEED_PAUSED` inspection. Retain
+actual transport call/attempt IDs and timestamps when constructing frame provenance.
+Fresh focus checks follow that capture. A receipt alone leaves frame freshness
+`UNKNOWN`; it cannot replace visual inspection or establish campaign compatibility.
+
+After known E1 closure, the existing `E1-menu-inspected.private.json` shape binds
+the ordinary menu original under `E1-after/`. E2's matching `e1MenuReceipt` grant
+permits the inspected Exit coordinate. It rechecks original B1/E1 phase files,
+claims, known closure and paused-image custody, including after E2 claims ownership.
+Old provider clocks remain historical evidence, not renewed live deadlines.
+
+For one optional confirmation, both E2 documents must additionally freeze exactly
+`exitConfirmation: {schemaVersion: 1, dialogText: "Exit game?", confirmLabel: "Yes"}`.
+After Exit, the driver saves the current original under `E2-exit-confirmation/`
+and freezes `E2-exit-confirmation-inspected.private.json`. This uses the same
+root/source/claim/reservation/seed/frame custody fields as the pause record, kind
+`STARSECTOR_EXIT_CONFIRMATION_INSPECTION`, and inspection fields `issuer`, `driver`,
+`inspectedAtMs`, `state: "EXIT_GAME_CONFIRMATION"`, `dialogText`, `confirmLabel`,
+`confirmCoordinate`. Only the matching declared dialog/button and exact inspected
+coordinate admit the second click. Missing or unexpected confirmation stops input.
+
+Claims and reservations are never refunded. Keep original failures, cumulative
+history, saved originals and owned cleanup evidence. This route cannot generate
+a seed, use personal saves, start New Game, save/reload, kill the sidecar or certify
+lifecycle/performance acceptance. The existing seed provenance/staging contract
+remains required; actual game validation and loaded frontend qualification remain
+separate from generated-fixture and stdio/HTTP checks.
+
+# First New Game page inspection
+
+The separate schema4 `NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE` profile admits
+an empty protected fixture only. Original plan and lease both declare
+`campaignControl: {schemaVersion: 2, profile: "NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE"}`,
+the original caller deadline and history, and exactly B1/E1. The ceilings remain
+480000ms, eight cumulative actions and three providers; the unused provider slot
+does not authorize another phase. Seed authority, seed manifest/staging metadata
+and every private save entry are refused at launch and finite admission.
+
+Use the same immutable original launch/predecessor, phase-local files, source
+pins, process lineage, exclusive claims, clipped clocks and finite consent.
+B1 permits optional activation and Play. After known B1 closure, the driver
+inspects its saved full original main-menu image and freezes the existing
+`B1-menu-inspected.private.json` shape with the new flow and the exact inspection
+field `newGameCoordinate` instead of `loadCoordinate`. The original PNG, raw result,
+metadata, source, reservation and capture-completion chronology remain required.
+When republishing an original through `persistDirectFrame`, retain actual call and
+attempt provenance; automatic capture receipt alone does not supply that proof.
+
+E1 permits exactly one left click at that inspected New Game coordinate, then
+observations only. Capture and inspect the first wizard page. E2, cancellation,
+wizard advancement, typing, keys, saving and a second click are unavailable in
+this initial profile. It therefore ends with maintained identity-bound owned
+cleanup and after-smoke protection. Keep its final action reservation and failed
+controller stop outcome as evidence; do not clear, refund or call forced cleanup
+ordinary exit. A later cancellation route requires its own observed controls and
+qualified finite implementation.
+
+Report first-page observation, provider closure, forced cleanup and original-save
+protection separately. This profile creates no saved seed and qualifies no
+campaign compatibility, lifecycle authentication or alpha capability. Generated
+tests do not establish the loaded frontend or real wizard state.
+

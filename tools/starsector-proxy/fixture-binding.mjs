@@ -30,7 +30,8 @@ export function readFixtureBinding(admitted) {
     const { scenario, planSha256 } = admitted.binding;
     const plan = read(resolve(scenario, 'plan.json'), 256 * 1024);
     const descriptor = plan.value.fixtureBinding;
-    if (plan.sha256 !== planSha256 || !descriptor || Array.isArray(descriptor)
+    const originalPlanSha256 = 'originalPlanSha256' in admitted.binding ? admitted.binding.originalPlanSha256 : planSha256;
+    if (plan.sha256 !== originalPlanSha256 || !descriptor || Array.isArray(descriptor)
         || Object.keys(descriptor).sort().join() !== 'path,sha256'
         || typeof descriptor.path !== 'string' || !isAbsolute(descriptor.path)
         || resolve(descriptor.path) !== resolve(scenario, 'fixture-binding.private.json')

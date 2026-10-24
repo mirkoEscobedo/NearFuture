@@ -1,10 +1,18 @@
 // @ts-check
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, lstatSync, openSync, closeSync, fsyncSync, renameSync, unlinkSync, realpathSync } from 'node:fs';
+import { readFileSync, writeFileSync, lstatSync, openSync, closeSync, fsyncSync, renameSync, unlinkSync, realpathSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, dirname, basename, relative, isAbsolute } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import { fixtureProbeSources, readFixtureBinding } from './fixture-binding.mjs';
+import { completePng } from './direct-frames.mjs';
+
+export const campaignLaunchSources = Object.freeze([...fixtureProbeSources,
+    ...['campaign-authority.mjs', 'batch-authorization.mjs', 'batch-session.mjs', 'finite-consent.mjs',
+        'fixture-binding.mjs', 'direct-frames.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
 
 const flow = 'PAUSED_CAMPAIGN_EXIT_NO_SAVE';
+const seedFlow = 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE';
+const inspectionFlow = 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE';
 /** @param {any} condition @param {string} message @returns {asserts condition} */
 function requireThat(condition, message) { if (!condition) throw new Error('Campaign authority refused: ' + message); }
 /** @param {string} path @param {number} [limit] */
@@ -28,6 +36,9 @@ function closed(value, fields) {
     return value && typeof value === 'object' && !Array.isArray(value) &&
         Object.keys(value).sort().join() === [...fields].sort().join();
 }
+/** @param {any} value */
+const exitConfirmationProfile = value => closed(value, ['schemaVersion', 'dialogText', 'confirmLabel']) &&
+    value.schemaVersion === 1 && value.dialogText === 'Exit game?' && value.confirmLabel === 'Yes';
 /** @param {string} parent @param {string} child */
 function inside(parent, child) {
     const suffix = relative(resolve(parent), resolve(child));
@@ -71,6 +82,147 @@ function history(binding, now = Date.now()) {
     return receipt;
 }
 
+/** The same known-closed provider proof is shared by the two fixed transfers.
+ * This neither changes ownership nor supplies a new deadline. @param {any} context */
+function knownProviderClosure(context) {
+    const { binding, initial, initialSourceSha256, proof, providerClock, action, now } = context;
+    const { frame, inspection } = proof;
+    requireThat(['B1', 'E1'].includes(initial.batch), 'known provider batch required');
+    const provider = proof.provider, output = resolve(binding.workspaceRoot, '.tmp/starsector-proxy', initial.runID);
+    const ready = read(resolve(output, 'guarded-http-ready.private.json'));
+    const terminalPath = resolve(output, 'owned-provider-terminal.private.json'), terminal = read(terminalPath), t = terminal.value, r = ready.value;
+    const spool = read(resolve(output, 'owned-provider.stdout.private.txt'), 2 * 1024 * 1024).value;
+    const nodeExecutable = realpathSync.native(process.execPath);
+    const expectedStep = { command: nodeExecutable, args: [resolve(binding.workspaceRoot, 'tools/starsector-proxy/guarded-http-child.mjs')],
+        cwd: '.', processOwnership: 'windows-job-object', status: 0, timedOut: false };
+    /** @param {any} step */
+    const criticalStep = step => ({ command: step?.command, args: step?.args, cwd: step?.cwd,
+        processOwnership: step?.processOwnership, status: step?.status, timedOut: step?.timedOut });
+    const pins = read(resolve(binding.scenario, 'frozen-support-pins.private.json')).value.pins;
+    const helperPin = pins?.find((/** @type {any} */ pin) => typeof pin.path === 'string' && resolve(pin.path) === resolve(r.helper?.executable ?? ''));
+    requireThat(closed(provider, ['readySha256', 'terminalSha256', 'observedClosedAtMs', 'providerReaped']) &&
+        provider.readySha256 === ready.sha256 && provider.terminalSha256 === terminal.sha256 && provider.providerReaped === true &&
+        t.terminalObserved === true && t.cleanupUnknown === false && t.closeFailed === false && t.overflow === false && t.spawnFailed === false &&
+        t.terminalBoundToChild === true && t.verifierStatus === 0 && t.signal === null && t.verdict === 'PASS' &&
+        t.terminalReceipt === terminalPath && t.steps?.length === 1 && isDeepStrictEqual(criticalStep(t.steps[0]), expectedStep) &&
+        spool.ok === true && spool.command === 'verify' && spool.result?.verdict === 'PASS' && spool.result.steps?.length === 1 &&
+        isDeepStrictEqual(criticalStep(spool.result.steps[0]), expectedStep) &&
+        file(resolve(output, 'owned-provider.stderr.private.txt'), 2 * 1024 * 1024).bytes.length === 0 &&
+        r.schemaVersion === 1 && r.runID === initial.runID && r.batch === initial.batch && r.sourceSha256 === initialSourceSha256 &&
+        r.startupTimeoutMs === 20000 && r.consentMode === 'finite-explicit-consent' &&
+        Number.isSafeInteger(t.verifierPid) && t.verifierPid > 0 && r.node?.parentPid === t.verifierPid &&
+        r.node.executable === nodeExecutable && r.node.sessionId === read(resolve(binding.scenario, 'controller-start.private.json')).value.sessionId &&
+        Number.isSafeInteger(r.node.pid) && Number.isSafeInteger(r.helper?.pid) && r.node.pid > 0 && r.helper.pid > 0 && r.node.pid !== r.helper.pid &&
+        r.helper.parentPid === r.node.pid && r.helper.sessionId === r.node.sessionId &&
+        r.supervisorJobPids?.includes(r.node.pid) && r.supervisorJobPids.includes(r.helper.pid) &&
+        r.query === 'QueryInformationJobObject(NULL,JobObjectBasicProcessIdList)' && helperPin &&
+        helperPin.sha256?.toLowerCase() === file(r.helper.executable, 32 * 1024 * 1024).sha256,
+    'known provider closure required');
+    const safe = Number.isSafeInteger, closedAt = Date.parse(t.at), actualDeadline = Date.parse(t.deadline);
+    requireThat(safe(providerClock?.startMs) && providerClock.deadlineMs === Math.min(providerClock.startMs + 180000,
+        binding.campaign.rootClock.effectiveDeadlineMs - 30000) && safe(action.sentAtMs) && safe(action.knownResultAtMs) &&
+        safe(frame.capturedAtMs) && safe(inspection.inspectedAtMs) && safe(provider.observedClosedAtMs) &&
+        action.sentAtMs >= providerClock.startMs && action.knownResultAtMs >= action.sentAtMs &&
+        frame.capturedAtMs >= action.knownResultAtMs && closedAt >= frame.capturedAtMs && closedAt <= actualDeadline &&
+        actualDeadline <= providerClock.deadlineMs && provider.observedClosedAtMs >= closedAt && provider.observedClosedAtMs <= now &&
+        inspection.inspectedAtMs >= frame.capturedAtMs && inspection.inspectedAtMs <= now &&
+        Date.parse(r.at) >= providerClock.startMs && Date.parse(r.at) <= action.sentAtMs &&
+        Date.parse(r.node.creationTime) >= providerClock.startMs && Date.parse(r.node.creationTime) <= closedAt &&
+        Date.parse(r.helper.creationTime) >= Date.parse(r.node.creationTime) && Date.parse(r.helper.creationTime) <= closedAt,
+    'known provider closure chronology required');
+    return closedAt;
+}
+
+/** One new-profile-only, known-closed launcher-to-game window transfer.
+ * @param {any} binding @param {any} reference @param {number} now @param {boolean} [historical] */
+function seedLauncherHandoff(binding, reference, now, historical = false) {
+    const firstPage = binding.schemaVersion === 4;
+    const state = originalHistory(binding).value;
+    const sourcePath = resolve(binding.scenario, 'B1-authorization.private.json');
+    const source = read(sourcePath), claim = read(resolve(binding.scenario, 'guard-B1-consumed.private.json'));
+    const initial = claim.value.binding;
+    requireThat(state.b1ClaimSha256 === claim.sha256 && claim.value.sourcePath === sourcePath &&
+        claim.value.sourceSha256 === source.sha256 && initial?.schemaVersion === binding.schemaVersion && [3, 4].includes(initial.schemaVersion) && initial.batch === 'B1' &&
+        initial.sourcePath === sourcePath && initial.sourceSha256 === source.sha256 &&
+        initial.planSha256 === source.value.planSha256?.toLowerCase() && initial.controllerSha256 === binding.controllerSha256 &&
+        initial.scenario === binding.scenario && initial.workspaceRoot === binding.workspaceRoot &&
+        initial.originalPlanSha256 === binding.originalPlanSha256 &&
+        isDeepStrictEqual({ ...initial.campaign, windowId: binding.campaign.windowId }, binding.campaign),
+    'original seeded B1 lineage required');
+    for (const [key, name] of [['planPath', 'B1-plan.private.json'], ['leasePath', 'B1-lease.private.json'],
+        ['ownedReceiptPath', 'driver-B1-owned.private.json']]) {
+        requireThat(source.value[key] === resolve(binding.scenario, name) &&
+            read(source.value[key]).sha256 === source.value[key.replace('Path', 'Sha256')]?.toLowerCase(),
+        'original seeded B1 custody changed');
+    }
+    const originalOwned = read(source.value.ownedReceiptPath).value.processes;
+    const currentSource = read(binding.sourcePath).value;
+    const currentOwned = read(currentSource.ownedReceiptPath).value.processes;
+    const controller = read(resolve(binding.scenario, 'controller-start.private.json')).value;
+    requireThat(Array.isArray(originalOwned) && Array.isArray(currentOwned), 'seeded owned process lineage required');
+    for (const current of currentOwned) {
+        const original = originalOwned.find((/** @type {any} */ row) => row.pid === current.pid);
+        requireThat(original && initial.ownedPids.includes(current.pid) &&
+            original.creationTime === current.creationTime && original.sessionId === current.sessionId &&
+            current.sessionId === controller.sessionId && typeof original.executable === 'string' &&
+            resolve(original.executable).toLowerCase() === resolve(current.executable).toLowerCase() &&
+            (original.kernelCreationFileTime === undefined || original.kernelCreationFileTime === current.kernelCreationFileTime) &&
+            (original.parentPid === undefined || original.parentPid === current.parentPid) &&
+            [original, current].every(row => row.inSupervisorJob === true && Array.isArray(row.supervisorJobPids) &&
+                row.supervisorJobPids.includes(current.pid) && row.supervisorJobPids.includes(controller.controllerPid)),
+        'seeded owned process lineage changed');
+    }
+    requireThat(!historical || (binding.schemaVersion === 3 && binding.batch === 'E1'), 'historical seeded entry binding required');
+    const alreadyTransferred = historical || isDeepStrictEqual(state.provider, owner(binding));
+    const action = alreadyTransferred ? state.resolvedB1 : state.pending;
+    const providerClock = alreadyTransferred ? state.resolvedB1?.providerClock : state.providerClock;
+    requireThat(action?.status === 'AWAITING_AFTER' && action.tool === 'left_click' &&
+        isDeepStrictEqual(owner(action), owner(initial)) && action.args?.target_window_id === initial.campaign.windowId &&
+        (alreadyTransferred || isDeepStrictEqual(state.provider, owner(initial))), 'seeded Play reservation proof required');
+    const path = resolve(binding.scenario, 'B1-menu-inspected.private.json');
+    requireThat(closed(reference, ['path', 'sha256']) && reference.path === path, 'seeded menu proof reference required');
+    const receipt = read(path), value = receipt.value;
+    requireThat(receipt.sha256 === reference.sha256 && closed(value, ['schemaVersion', 'kind', 'scenario', 'flow',
+        'rootRecordKey', 'controllerSha256', 'b1', 'frame', 'inspection', 'provider']) && value.schemaVersion === 1 &&
+        value.kind === 'STARSECTOR_B1_MAIN_MENU_INSPECTION' && value.scenario === binding.scenario && value.flow === binding.campaign.flow &&
+        value.rootRecordKey === binding.campaign.rootClock.recordKey && value.controllerSha256 === binding.controllerSha256 &&
+        closed(value.b1, ['sourceSha256', 'claimSha256', 'runID', 'reservationID']) &&
+        value.b1.sourceSha256 === source.sha256 && value.b1.claimSha256 === claim.sha256 &&
+        value.b1.runID === initial.runID && value.b1.reservationID === action.reservationID &&
+        (!alreadyTransferred || action.menuReceiptSha256 === receipt.sha256), 'seeded Play reservation proof changed');
+    const frame = value.frame, inspection = value.inspection;
+    const pngPath = resolve(binding.scenario, 'B1-after/F1.original.png');
+    const metadataPath = resolve(binding.scenario, 'B1-after/capture-001.metadata.private.json');
+    const rawPath = resolve(binding.scenario, 'B1-after/capture-001.raw.private.json');
+    requireThat(closed(frame, ['pngPath', 'pngSha256', 'metadataPath', 'metadataSha256', 'capturedAtMs']) &&
+        frame.pngPath === pngPath && frame.metadataPath === metadataPath, 'seeded main-menu frame paths changed');
+    const png = file(pngPath, 32 * 1024 * 1024), metadata = read(metadataPath), m = metadata.value;
+    const raw = read(rawPath, 32 * 1024 * 1024), dimensions = completePng(png.bytes);
+    const images = raw.value.content?.filter((/** @type {any} */ row) => row.type === 'image');
+    requireThat(frame.pngSha256 === png.sha256 && frame.metadataSha256 === metadata.sha256 &&
+        raw.value.isError !== true && images?.length === 1 && images[0].mimeType === 'image/png' &&
+        typeof images[0].data === 'string' && png.bytes.toString('base64') === images[0].data &&
+        m.captureReceipt === true && m.rawPath === rawPath && m.rawSha256 === raw.sha256 &&
+        m.pngPath === pngPath && m.pngSha256 === png.sha256 && m.runID === initial.runID && m.batch === 'B1' &&
+        m.sourceSha256 === source.sha256 && m.reservationID === action.reservationID && m.capturedAtMs === frame.capturedAtMs &&
+        m.args?.target_window_id === binding.campaign.windowId && m.args.quality === 0 &&
+        m.window?.windowId === binding.campaign.windowId && binding.ownedPids.includes(m.window.pid) &&
+        m.window.isFocused === true && m.args.width === m.window.bounds?.width &&
+        dimensions.width === m.window.bounds.width && dimensions.height === m.window.bounds.height &&
+        isDeepStrictEqual(m.dimensions, dimensions), 'seeded main-menu original custody changed');
+    const entryField = firstPage ? 'newGameCoordinate' : 'loadCoordinate', coordinate = inspection?.[entryField];
+    requireThat(closed(inspection, ['issuer', 'driver', 'inspectedAtMs', 'state', entryField]) &&
+        inspection.issuer === '/root' && inspection.driver === '/root/recovery_game_driver' &&
+        inspection.state === 'STARSECTOR_MAIN_MENU' && Array.isArray(coordinate) &&
+        coordinate.length === 2 && coordinate.every((/** @type {any} */ n) => Number.isSafeInteger(n)) &&
+        coordinate[0] >= m.window.bounds.x && coordinate[0] < m.window.bounds.x + m.window.bounds.width &&
+        coordinate[1] >= m.window.bounds.y && coordinate[1] < m.window.bounds.y + m.window.bounds.height,
+    'seeded main-menu inspection required');
+    const closedAt = knownProviderClosure({ binding, initial, initialSourceSha256: source.sha256,
+        proof: value, providerClock, action, now });
+    return { receiptSha256: receipt.sha256, loadCoordinate: coordinate, action, providerClock, closedAt, alreadyTransferred };
+}
+
 /** Qualify one known-closed E1 handoff. Past provider time is historical evidence,
  * not a live E2 deadline. No unknown input or shutdown has a transfer path.
  * @param {any} binding @param {any} reference @param {number} now */
@@ -81,8 +233,8 @@ function menuHandoff(binding, reference, now) {
     const initialSource = read(sourcePath), claim = read(resolve(binding.scenario, 'guard-E1-consumed.private.json'));
     const initial = claim.value.binding;
     requireThat(rawHistory.value.initialClaimSha256 === claim.sha256 && claim.value.sourcePath === sourcePath &&
-        claim.value.sourceSha256 === initialSource.sha256 && initial?.schemaVersion === 2 &&
-        initial.planSha256 === initialSource.value.planSha256 && initial.sourceSha256 === initialSource.sha256 && initial.sourcePath === sourcePath && initial.batch === 'E1' &&
+        claim.value.sourceSha256 === initialSource.sha256 && initial?.schemaVersion === binding.schemaVersion &&
+        initial.planSha256 === initialSource.value.planSha256?.toLowerCase() && initial.sourceSha256 === initialSource.sha256 && initial.sourcePath === sourcePath && initial.batch === 'E1' &&
         initial.scenario === binding.scenario && initial.workspaceRoot === binding.workspaceRoot &&
         initial.controllerSha256 === binding.controllerSha256 && isDeepStrictEqual(initial.ownedPids, binding.ownedPids) &&
         isDeepStrictEqual(initial.campaign, binding.campaign), 'initial campaign lineage changed');
@@ -115,6 +267,23 @@ function menuHandoff(binding, reference, now) {
     const state = originalHistory(binding).value, alreadyTransferred = isDeepStrictEqual(state.provider, owner(binding));
     const action = alreadyTransferred ? state.resolvedE1 : state.pending;
     const providerClock = alreadyTransferred ? state.resolvedE1?.providerClock : state.providerClock;
+    if (binding.schemaVersion === 3) {
+        for (const [key, name] of [['planPath', 'E1-plan.private.json'], ['leasePath', 'E1-lease.private.json']]) {
+            requireThat(initialSource.value[key] === resolve(binding.scenario, name) &&
+                read(initialSource.value[key]).sha256 === initialSource.value[key.replace('Path', 'Sha256')]?.toLowerCase(),
+            'historical campaign phase custody changed');
+        }
+        seedLauncherHandoff(initial, { path: initial.b1MenuReceipt.path, sha256: initial.b1MenuReceipt.sha256 }, now, true);
+        const entry = state.resolvedActions?.filter((/** @type {any} */ row) => isDeepStrictEqual(owner(row), owner(initial)));
+        requireThat(entry?.length === 3 && entry.every((/** @type {any} */ row) => row.tool === 'left_click' && row.status === 'AWAITING_AFTER') &&
+            entry[2].pauseInspectionSha256 === read(resolve(binding.scenario, 'E1-seed-paused-inspected.private.json')).sha256 &&
+            action?.tool === 'key' && action.args?.text === 'escape' && action.args.repeat === 1,
+        'original paused seed entry proof changed');
+        const pausedPng = file(resolve(binding.scenario, 'E1-seed-paused/F1.original.png'), 32 * 1024 * 1024);
+        requireThat(pausedPng.sha256 === entry[2].after?.pngSha256 &&
+            seedSceneInspection(initial, entry[2], { ...entry[2].after, pngBytes: pausedPng.bytes }, now) === entry[2].pauseInspectionSha256,
+        'original paused seed image custody changed');
+    }
     const expectedOwner = owner(initial);
     requireThat(action?.status === 'AWAITING_AFTER' && isDeepStrictEqual(owner(action), expectedOwner) &&
         (alreadyTransferred || isDeepStrictEqual(state.provider, expectedOwner)), 'menu reservation proof is unresolved');
@@ -123,7 +292,7 @@ function menuHandoff(binding, reference, now) {
     const receipt = read(path), value = receipt.value;
     requireThat(receipt.sha256 === reference.sha256 && closed(value, ['schemaVersion', 'kind', 'scenario', 'flow',
         'rootRecordKey', 'controllerSha256', 'e1', 'frame', 'inspection', 'provider']) && value.schemaVersion === 1 &&
-        value.kind === 'STARSECTOR_E1_MENU_INSPECTION' && value.scenario === binding.scenario && value.flow === flow &&
+        value.kind === 'STARSECTOR_E1_MENU_INSPECTION' && value.scenario === binding.scenario && value.flow === binding.campaign.flow &&
         value.rootRecordKey === binding.campaign.rootClock.recordKey && value.controllerSha256 === binding.controllerSha256 &&
         closed(value.e1, ['sourceSha256', 'claimSha256', 'runID', 'reservationID']) &&
         value.e1.sourceSha256 === initialSource.sha256 && value.e1.claimSha256 === claim.sha256 &&
@@ -154,48 +323,8 @@ function menuHandoff(binding, reference, now) {
         inspection.exitCoordinate[0] >= m.window.bounds.x && inspection.exitCoordinate[0] < m.window.bounds.x + m.window.bounds.width &&
         inspection.exitCoordinate[1] >= m.window.bounds.y && inspection.exitCoordinate[1] < m.window.bounds.y + m.window.bounds.height,
     'menu reservation proof inspection required');
-    const provider = value.provider, output = resolve(binding.workspaceRoot, '.tmp/starsector-proxy', initial.runID);
-    const ready = read(resolve(output, 'guarded-http-ready.private.json'));
-    const terminalPath = resolve(output, 'owned-provider-terminal.private.json'), terminal = read(terminalPath), t = terminal.value, r = ready.value;
-    const spool = read(resolve(output, 'owned-provider.stdout.private.txt'), 2 * 1024 * 1024).value;
-    const nodeExecutable = realpathSync.native(process.execPath);
-    const expectedStep = { command: nodeExecutable, args: [resolve(binding.workspaceRoot, 'tools/starsector-proxy/guarded-http-child.mjs')],
-        cwd: '.', processOwnership: 'windows-job-object', status: 0, timedOut: false };
-    /** @param {any} step */
-    const criticalStep = step => ({ command: step?.command, args: step?.args, cwd: step?.cwd,
-        processOwnership: step?.processOwnership, status: step?.status, timedOut: step?.timedOut });
-    const pins = read(resolve(binding.scenario, 'frozen-support-pins.private.json')).value.pins;
-    const helperPin = pins?.find((/** @type {any} */ pin) => typeof pin.path === 'string' && resolve(pin.path) === resolve(r.helper?.executable ?? ''));
-    requireThat(closed(provider, ['readySha256', 'terminalSha256', 'observedClosedAtMs', 'providerReaped']) &&
-        provider.readySha256 === ready.sha256 && provider.terminalSha256 === terminal.sha256 && provider.providerReaped === true &&
-        t.terminalObserved === true && t.cleanupUnknown === false && t.closeFailed === false && t.overflow === false && t.spawnFailed === false &&
-        t.terminalBoundToChild === true && t.verifierStatus === 0 && t.signal === null && t.verdict === 'PASS' &&
-        t.terminalReceipt === terminalPath && t.steps?.length === 1 && isDeepStrictEqual(criticalStep(t.steps[0]), expectedStep) &&
-        spool.ok === true && spool.command === 'verify' && spool.result?.verdict === 'PASS' && spool.result.steps?.length === 1 &&
-        isDeepStrictEqual(criticalStep(spool.result.steps[0]), expectedStep) &&
-        file(resolve(output, 'owned-provider.stderr.private.txt'), 2 * 1024 * 1024).bytes.length === 0 &&
-        r.schemaVersion === 1 && r.runID === initial.runID && r.batch === 'E1' && r.sourceSha256 === initialSource.sha256 &&
-        r.startupTimeoutMs === 20000 && r.consentMode === 'finite-explicit-consent' &&
-        Number.isSafeInteger(t.verifierPid) && t.verifierPid > 0 && r.node?.parentPid === t.verifierPid &&
-        r.node.executable === nodeExecutable && r.node.sessionId === read(resolve(binding.scenario, 'controller-start.private.json')).value.sessionId &&
-        Number.isSafeInteger(r.node.pid) && Number.isSafeInteger(r.helper?.pid) && r.node.pid > 0 && r.helper.pid > 0 && r.node.pid !== r.helper.pid &&
-        r.helper.parentPid === r.node.pid && r.helper.sessionId === r.node.sessionId &&
-        r.supervisorJobPids?.includes(r.node.pid) && r.supervisorJobPids.includes(r.helper.pid) &&
-        r.query === 'QueryInformationJobObject(NULL,JobObjectBasicProcessIdList)' && helperPin &&
-        helperPin.sha256?.toLowerCase() === file(r.helper.executable, 32 * 1024 * 1024).sha256,
-    'known provider closure required');
-    const safe = Number.isSafeInteger, closedAt = Date.parse(t.at), actualDeadline = Date.parse(t.deadline);
-    requireThat(safe(providerClock?.startMs) && providerClock.deadlineMs === Math.min(providerClock.startMs + 180000,
-        binding.campaign.rootClock.effectiveDeadlineMs - 30000) && safe(action.sentAtMs) && safe(action.knownResultAtMs) &&
-        safe(frame.capturedAtMs) && safe(inspection.inspectedAtMs) && safe(provider.observedClosedAtMs) &&
-        action.sentAtMs >= providerClock.startMs && action.knownResultAtMs >= action.sentAtMs &&
-        frame.capturedAtMs >= action.knownResultAtMs && closedAt >= frame.capturedAtMs && closedAt <= actualDeadline &&
-        actualDeadline <= providerClock.deadlineMs && provider.observedClosedAtMs >= closedAt && provider.observedClosedAtMs <= now &&
-        inspection.inspectedAtMs >= frame.capturedAtMs && inspection.inspectedAtMs <= now &&
-        Date.parse(r.at) >= providerClock.startMs && Date.parse(r.at) <= action.sentAtMs &&
-        Date.parse(r.node.creationTime) >= providerClock.startMs && Date.parse(r.node.creationTime) <= closedAt &&
-        Date.parse(r.helper.creationTime) >= Date.parse(r.node.creationTime) && Date.parse(r.helper.creationTime) <= closedAt,
-    'known provider closure chronology required');
+    const closedAt = knownProviderClosure({ binding, initial, initialSourceSha256: initialSource.sha256,
+        proof: value, providerClock, action, now });
     return { receiptSha256: receipt.sha256, exitCoordinate: inspection.exitCoordinate, action, providerClock, closedAt, alreadyTransferred };
 }
 
@@ -216,25 +345,145 @@ function clock(campaign, controller, now, minimumRemainingMs = 20000) {
     requireThat(safe(effective) && r.effectiveDeadlineMs === effective && p.effectiveDeadlineMs === effective &&
         now >= r.startMs && effective - r.cleanupReserveMs - now >= minimumRemainingMs &&
         p.producerRecordKey === r.producerRecordKey && p.controllerPid === controller.controllerPid &&
-        p.controllerCreationTime === controller.at && /^[1-9][0-9]*$/.test(p.controllerKernelCreationFileTime) &&
+        p.controllerCreationTime === (campaign.launchPredecessor ? controller.controllerCreationTime : controller.at) &&
+        /^[1-9][0-9]*$/.test(p.controllerKernelCreationFileTime) &&
         call?.key === r.recordKey && call.value?.startMs === r.startMs &&
         typeof call.value.args?.cmd === 'string' && call.value.args.cmd.length > 0 &&
         safe(call.value.raw?.session_id) && call.value.raw.session_id > 0, 'original effective deadline or producer custody invalid');
+}
+
+/** Resolve a phase without changing the plan/lease captured by the actual launcher.
+ * @param {any} campaign @param {string} scenario @param {string} root @param {string} controllerSha256
+ * @returns {string} */
+function launchPredecessor(campaign, scenario, root, controllerSha256) {
+    const inspection = campaign.flow === inspectionFlow;
+    /** @param {any} descriptor @param {string} name */
+    function pinned(descriptor, name) {
+        requireThat(closed(descriptor, ['path', 'sha256']) && typeof descriptor.path === 'string' &&
+            isAbsolute(descriptor.path) && resolve(descriptor.path) === resolve(scenario, name) &&
+            typeof descriptor.sha256 === 'string' && /^[a-f0-9]{64}$/i.test(descriptor.sha256), 'exact launch predecessor reference required');
+        const found = read(descriptor.path);
+        requireThat(found.sha256 === descriptor.sha256.toLowerCase(), 'launch predecessor bytes changed');
+        return found;
+    }
+    const predecessor = pinned(campaign.launchPredecessor, 'campaign-postlaunch.private.json').value;
+    requireThat(closed(predecessor, ['schemaVersion', 'kind', 'plan', 'lease', 'controller', 'rootClock',
+        'producerWitness', 'rootCallRecord', 'historyBaseline', 'maxReservedActions']) && predecessor.schemaVersion === 1 &&
+        predecessor.kind === 'FINITE_CAMPAIGN_LAUNCH_PREDECESSOR', 'closed launch predecessor required');
+    const planFile = pinned(predecessor.plan, 'plan.json'), leaseFile = pinned(predecessor.lease, 'native-lane-lease.private.json');
+    const controllerFile = pinned(predecessor.controller, 'controller-start.private.json');
+    const plan = planFile.value, lease = leaseFile.value, controller = controllerFile.value;
+    requireThat(controllerFile.sha256 === controllerSha256 && controller.rootLeaseSha256?.toLowerCase() === leaseFile.sha256 &&
+        lease.planSha256?.toLowerCase() === planFile.sha256, 'original launch authority changed');
+    requireThat(plan.scenarioId === basename(scenario) && resolve(plan.paths?.scenario ?? '') === scenario &&
+        plan.ownership?.driver === '/root/recovery_game_driver' && plan.ownership.onlyGameInputDriver === true &&
+        plan.bounds?.maxScenarioActionsIncludingActivations === 8 && plan.bounds.maxProxyInvocations === 3 &&
+        plan.bounds.proxyTimeoutMs === 180000 && plan.bounds.ownedGameHardTimeoutMs === 480000 &&
+        Array.isArray(plan.batches) && plan.batches.length === (inspection ? 2 : 3) &&
+        [...new Set(plan.batches.map((/** @type {any} */ batch) => batch.id))].sort().join() === (inspection ? 'B1,E1' : 'B1,E1,E2') &&
+        lease.schemaVersion === 1 && lease.scenarioId === basename(scenario) && lease.authorized === true &&
+        lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' && lease.phase === 'CAMPAIGN_BINDING_ONLY' &&
+        lease.ownedGameHardTimeoutMs === 480000 && lease.maxActions === 8 && lease.maxProxyInvocations === 3 &&
+        lease.campaignLoadSaveAllowed === false, 'closed original campaign launch scope required');
+    requireThat(closed(plan.campaignControl, ['schemaVersion', 'profile']) && plan.campaignControl.schemaVersion === (inspection ? 2 : 1) &&
+        plan.campaignControl.profile === (inspection ? inspectionFlow : seedFlow) &&
+        isDeepStrictEqual(plan.campaignControl, lease.campaignControl), 'closed seed entry launch profile required');
+    requireThat(![plan, lease].some(value => ['ownedNodeKill', 'campaign', 'e1MenuReceipt'].some(key => Object.hasOwn(value, key))),
+        'unrelated launch phase authority refused');
+    const watchdogDeclared = Object.hasOwn(plan, 'sessionWatchdogMs');
+    requireThat(watchdogDeclared === Object.hasOwn(lease, 'sessionWatchdogMs') &&
+        (!watchdogDeclared || (plan.sessionWatchdogMs === 480000 && lease.sessionWatchdogMs === 480000)) &&
+        campaign.rootClock.sessionWatchdogMs === 480000, 'paired original campaign watchdog required');
+    for (const key of ['rootClock', 'producerWitness', 'rootCallRecord', 'historyBaseline', 'maxReservedActions']) {
+        requireThat(isDeepStrictEqual(campaign[key], predecessor[key]), 'immutable postlaunch clock or history changed');
+    }
+    requireThat(isDeepStrictEqual(plan.historyBaseline, campaign.historyBaseline) &&
+        campaign.maxReservedActions === plan.historyBaseline.reservedActions + 8, 'original global action budget required');
+    requireThat(Number.isSafeInteger(plan.callerAdmissionDeadlineMs) && plan.callerAdmissionDeadlineMs > 0 &&
+        lease.callerAdmissionDeadlineMs === plan.callerAdmissionDeadlineMs &&
+        campaign.rootClock.callerAdmissionDeadlineMs === plan.callerAdmissionDeadlineMs &&
+        campaign.rootClock.originalCallerAdmissionDeadlineMs === plan.callerAdmissionDeadlineMs,
+    'original caller admission deadline changed');
+    const birthMs = Date.parse(controller.controllerCreationTime), publishedMs = Date.parse(controller.at);
+    const outerMs = Date.parse(controller.conservativeOuterDeadlineUtc), controllerMs = Date.parse(controller.controllerDeadlineUtc);
+    const producer = campaign.producerWitness;
+    requireThat([birthMs, publishedMs, outerMs, controllerMs].every(Number.isSafeInteger) &&
+        campaign.rootClock.startMs <= birthMs && birthMs <= publishedMs && publishedMs < controllerMs &&
+        controllerMs <= outerMs && outerMs <= birthMs + 480000 &&
+        controller.sessionWatchdogMs === 480000 && producer.sessionWatchdogMs === controller.sessionWatchdogMs &&
+        producer.controllerCreationTime === controller.controllerCreationTime &&
+        typeof controller.controllerKernelCreationFileTime === 'string' &&
+        /^[1-9][0-9]*$/.test(controller.controllerKernelCreationFileTime) &&
+        producer.controllerKernelCreationFileTime === controller.controllerKernelCreationFileTime &&
+        Date.parse(producer.conservativeOuterDeadlineUtc) === outerMs &&
+        Date.parse(producer.controllerDeadlineUtc) === controllerMs,
+    'actual controller clock and identity required');
+    readFixtureBinding(/** @type {any} */ ({ binding: { scenario, planSha256: planFile.sha256 } }));
+    const fixture = read(resolve(scenario, 'protected-fixture-receipt.private.json'));
+    requireThat(lease.fixtureReceiptSha256?.toLowerCase() === fixture.sha256 &&
+        controller.fixtureReceiptSha256?.toLowerCase() === fixture.sha256, 'original campaign fixture changed');
+    if (inspection) {
+        requireThat(!Object.hasOwn(plan, 'seed') && !Object.hasOwn(lease, 'seed'), 'first-page inspection refuses seed authority');
+        for (const name of ['seed-manifest.private.json', 'seed-stage-plan.private.json', 'seed-stage-authority.private.json',
+            'seed-stage-claim.private.json', 'seed-stage-receipt.private.json']) {
+            requireThat(!existsSync(resolve(scenario, name)), 'first-page inspection refuses seed metadata');
+        }
+        const saves = resolve(scenario, 'installation/saves');
+        for (let part = saves;; part = dirname(part)) {
+            requireThat(!lstatSync(part).isSymbolicLink(), 'ordinary empty inspection saves required');
+            if (dirname(part) === part) break;
+        }
+        requireThat(lstatSync(saves).isDirectory() && readdirSync(saves).length === 0, 'empty first-page inspection saves required');
+    } else {
+    requireThat(closed(plan.seed, ['mode', 'manifestSha256', 'stagingReceiptSha256']) &&
+        plan.seed.mode === 'LOAD_ONE_PRIVATE_DISPOSABLE_SEED' && isDeepStrictEqual(plan.seed, lease.seed), 'exact staged seed scope required');
+    const manifest = read(resolve(scenario, 'seed-manifest.private.json'));
+    const staged = read(resolve(scenario, 'seed-stage-receipt.private.json'));
+    requireThat(plan.seed.manifestSha256?.toLowerCase() === manifest.sha256 &&
+        plan.seed.stagingReceiptSha256?.toLowerCase() === staged.sha256, 'original staged seed changed');
+    const save = manifest.value;
+    requireThat(save.kind === 'NATIVE99_DISPOSABLE_SEED_MANIFEST_V1' && save.gameVersion === '0.98a-RC8' &&
+        typeof save.saveDirectory === 'string' && /^[A-Za-z0-9_-]+$/.test(save.saveDirectory) &&
+        Array.isArray(save.files) && save.files.length === 2 &&
+        save.files.map((/** @type {any} */ row) => row.relative).sort().join() === 'campaign.xml,descriptor.xml', 'closed manifest-bound seed files required');
+    let seedBytes = 0;
+    for (const row of save.files) {
+        const current = file(resolve(scenario, 'installation/saves', save.saveDirectory, row.relative), 16 * 1024 * 1024);
+        requireThat(current.sha256 === row.sha256?.toLowerCase() && current.bytes.length === row.bytes, 'staged seed file changed');
+        seedBytes += current.bytes.length;
+    }
+    requireThat(seedBytes <= 16 * 1024 * 1024, 'bounded staged seed required');
+    }
+    requireThat(typeof lease.supportPinsPath === 'string' && resolve(lease.supportPinsPath) === resolve(scenario, 'frozen-support-pins.private.json'),
+        'original campaign support manifest required');
+    const support = read(lease.supportPinsPath);
+    requireThat(lease.supportPinsSha256?.toLowerCase() === support.sha256 && Array.isArray(support.value.pins), 'original campaign support changed');
+    for (const source of campaignLaunchSources) {
+        const path = resolve(root, source), pins = support.value.pins.filter((/** @type {any} */ pin) => pin.path === path);
+        requireThat(pins.length === 1 && pins[0].sha256?.toLowerCase() === file(path, 1024 * 1024).sha256,
+            'current campaign launch tooling pin required');
+    }
+    return planFile.sha256;
 }
 
 /** Closed V2 admission for Escape and its known-closed ordinary Exit handoff.
  * @param {string} path @param {{root: string, runID: string, now?: number, input?: boolean}} options */
 export function readCampaignAuthorization(path, { root, runID, now = Date.now(), input = false }) {
     const sourcePath = resolve(path), source = read(sourcePath), auth = source.value;
+    const inspection = auth.schemaVersion === 4, seeded = [3, 4].includes(auth.schemaVersion);
     requireThat(closed(auth, ['batch', 'leasePath', 'leaseSha256', 'ownedReceiptPath', 'ownedReceiptSha256',
-        'planPath', 'planSha256', 'scenario', 'schemaVersion']) && auth.schemaVersion === 2 &&
-        typeof auth.scenario === 'string' && isAbsolute(auth.scenario) && ['E1', 'E2'].includes(auth.batch) &&
+        'planPath', 'planSha256', 'scenario', 'schemaVersion']) && [2, 3, 4].includes(auth.schemaVersion) &&
+        typeof auth.scenario === 'string' && isAbsolute(auth.scenario) && (inspection ? ['B1', 'E1'].includes(auth.batch) : seeded ? ['B1', 'E1', 'E2'].includes(auth.batch) : ['E1', 'E2'].includes(auth.batch)) &&
         typeof runID === 'string' && /^[A-Za-z0-9_-]+$/.test(runID), 'closed V2 authorization required');
     const scenario = resolve(auth.scenario);
     requireThat(inside(resolve(root, '.tmp/starsector-proxy/scenarios'), scenario) &&
         sourcePath === resolve(scenario, auth.batch + '-authorization.private.json'), 'exact campaign scenario required');
     /** @type {Record<string, ReturnType<typeof read>>} */ const files = {};
-    for (const [key, expected] of Object.entries({ planPath: 'plan.json', leasePath: 'native-lane-lease.private.json',
+    const phaseLocal = typeof auth.planPath === 'string' && resolve(auth.planPath) === resolve(scenario, auth.batch + '-plan.private.json');
+    requireThat(seeded || !phaseLocal, 'legacy campaign cannot use launch predecessor');
+    requireThat(!seeded || phaseLocal, 'seed control requires fixed phase-local authority');
+    for (const [key, expected] of Object.entries({ planPath: phaseLocal ? auth.batch + '-plan.private.json' : 'plan.json',
+        leasePath: phaseLocal ? auth.batch + '-lease.private.json' : 'native-lane-lease.private.json',
         ownedReceiptPath: 'driver-' + auth.batch + '-owned.private.json' })) {
         requireThat(typeof auth[key] === 'string' && resolve(auth[key]) === resolve(scenario, expected), 'exact campaign custody path required');
         files[key] = read(auth[key]);
@@ -242,12 +491,13 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
     }
     const plan = files.planPath.value, lease = files.leasePath.value, campaign = plan.campaign;
     requireThat(closed(campaign, ['flow', 'windowId', 'rootClock', 'producerWitness', 'rootCallRecord',
-        'historyBaseline', 'maxReservedActions']) && campaign.flow === flow &&
+        'historyBaseline', 'maxReservedActions', ...(phaseLocal ? ['launchPredecessor'] : [])]) && campaign.flow === (inspection ? inspectionFlow : seeded ? seedFlow : flow) &&
         Number.isSafeInteger(campaign.windowId) && campaign.windowId > 0 &&
         closed(campaign.historyBaseline, ['overallAttempts', 'uiAttempts', 'reservedActions', 'sentActions']) &&
         isDeepStrictEqual(campaign, lease.campaign),
     'closed matching campaign flow required');
     const controllerFile = read(resolve(scenario, 'controller-start.private.json')), controller = controllerFile.value;
+    const originalPlanSha256 = phaseLocal ? launchPredecessor(campaign, scenario, root, controllerFile.sha256) : undefined;
     const owned = files.ownedReceiptPath.value;
     requireThat(Number.isSafeInteger(controller.controllerPid) && controller.controllerPid > 0 &&
         Number.isSafeInteger(controller.sessionId) && controller.sessionId > 0 &&
@@ -262,10 +512,20 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
             Date.parse(process.creationTime) <= now, 'owned target receipt required');
         return process.pid;
     });
-    const binding = { schemaVersion: 2, batch: auth.batch, runID, scenario, workspaceRoot: resolve(root), planSha256: files.planPath.sha256,
-        ownedPids, campaign, sourcePath, sourceSha256: source.sha256, controllerSha256: controllerFile.sha256 };
+    const exitConfirmation = seeded && auth.batch === 'E2' ? plan.exitConfirmation : undefined;
+    if (seeded && (plan.exitConfirmation !== undefined || lease.exitConfirmation !== undefined)) {
+        requireThat(auth.batch === 'E2' && exitConfirmationProfile(exitConfirmation) &&
+            isDeepStrictEqual(exitConfirmation, lease.exitConfirmation), 'closed matching exit confirmation declaration required');
+    }
+    const binding = { schemaVersion: auth.schemaVersion, batch: auth.batch, runID, scenario, workspaceRoot: resolve(root), planSha256: files.planPath.sha256,
+        ownedPids, campaign, sourcePath, sourceSha256: source.sha256, controllerSha256: controllerFile.sha256,
+        ...(originalPlanSha256 ? { originalPlanSha256 } : {}), ...(exitConfirmation ? { exitConfirmation } : {}) };
     let handoff;
-    if (auth.batch === 'E2') {
+    if (seeded && auth.batch === 'E1') {
+        requireThat(isDeepStrictEqual(plan.b1MenuReceipt, lease.b1MenuReceipt), 'seeded menu grant changed');
+        handoff = seedLauncherHandoff(binding, plan.b1MenuReceipt, now);
+        if (handoff.alreadyTransferred) history(binding, now);
+    } else if (auth.batch === 'E2') {
         requireThat(isDeepStrictEqual(plan.e1MenuReceipt, lease.e1MenuReceipt), 'menu reservation proof grant changed');
         handoff = menuHandoff(binding, plan.e1MenuReceipt, now);
         if (handoff.alreadyTransferred) history(binding, now);
@@ -273,8 +533,8 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
     requireThat(plan.scenarioId === basename(scenario) && resolve(plan.paths?.scenario ?? '') === scenario &&
         plan.bounds?.maxScenarioActionsIncludingActivations === 8 && plan.bounds?.maxProxyInvocations === 3 &&
         plan.bounds?.proxyTimeoutMs === 180000 && plan.bounds?.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs &&
-        plan.batches?.some((/** @type {any} */ batch) => batch.id === auth.batch) && lease.schemaVersion === 2 &&
-        lease.authorized === true && lease.phase === flow && lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' &&
+        plan.batches?.some((/** @type {any} */ batch) => batch.id === auth.batch) && lease.schemaVersion === auth.schemaVersion &&
+        lease.authorized === true && lease.phase === (inspection ? inspectionFlow : seeded ? seedFlow : flow) && lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' &&
         lease.planSha256?.toLowerCase() === files.planPath.sha256 && lease.campaignLoadSaveAllowed === false &&
         lease.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs && lease.maxActions === 8 && lease.maxProxyInvocations === 3 &&
         Number.isSafeInteger(campaign.maxReservedActions) &&
@@ -285,18 +545,28 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
         read(resolve(scenario, 'protected-fixture-receipt.private.json')).sha256 === lease.fixtureReceiptSha256?.toLowerCase() &&
         controller.fixtureReceiptSha256?.toLowerCase() === lease.fixtureReceiptSha256?.toLowerCase(), 'original support/fixture custody changed');
     clock(campaign, controller, now, input ? 120000 : 20000);
-    const admitted = handoff ? { ...binding, e1MenuReceipt: { path: plan.e1MenuReceipt.path,
-        sha256: handoff.receiptSha256, exitCoordinate: handoff.exitCoordinate } } : binding;
+    const admitted = handoff ? 'loadCoordinate' in handoff
+        ? { ...binding, b1MenuReceipt: { path: plan.b1MenuReceipt.path, sha256: handoff.receiptSha256,
+            ...(inspection ? { newGameCoordinate: handoff.loadCoordinate } : { loadCoordinate: handoff.loadCoordinate }) } }
+        : { ...binding, e1MenuReceipt: { path: plan.e1MenuReceipt.path,
+            sha256: handoff.receiptSha256, exitCoordinate: handoff.exitCoordinate } } : binding;
     return { sourcePath, sourceSha256: source.sha256, binding: admitted, claimPath: resolve(scenario, 'guard-' + auth.batch + '-consumed.private.json') };
 }
 
 /** @param {any} binding */
 export function validateCampaignBinding(binding) {
+    const inspection = binding?.schemaVersion === 4, seeded = [3, 4].includes(binding?.schemaVersion);
+    requireThat(seeded || (!binding?.campaign?.launchPredecessor && binding?.originalPlanSha256 === undefined),
+        'legacy campaign cannot use launch predecessor');
     const fields = ['schemaVersion', 'batch', 'runID', 'scenario', 'workspaceRoot', 'planSha256', 'ownedPids',
         'campaign', 'sourcePath', 'sourceSha256', 'controllerSha256'];
     if (binding?.batch === 'E2') fields.push('e1MenuReceipt');
-    requireThat(closed(binding, fields) && binding.schemaVersion === 2 && ['E1', 'E2'].includes(binding.batch) &&
-        binding.campaign?.flow === flow && Number.isSafeInteger(binding.campaign.windowId) &&
+    if (seeded && binding?.batch === 'E1') fields.push('b1MenuReceipt');
+    if (binding?.campaign?.launchPredecessor) fields.push('originalPlanSha256');
+    if (binding?.exitConfirmation !== undefined) fields.push('exitConfirmation');
+    requireThat(closed(binding, fields) && [2, 3, 4].includes(binding.schemaVersion) &&
+        (inspection ? ['B1', 'E1'].includes(binding.batch) : seeded ? ['B1', 'E1', 'E2'].includes(binding.batch) : ['E1', 'E2'].includes(binding.batch)) &&
+        binding.campaign?.flow === (inspection ? inspectionFlow : seeded ? seedFlow : flow) && (!seeded || binding.campaign.launchPredecessor) && Number.isSafeInteger(binding.campaign.windowId) &&
         typeof binding.workspaceRoot === 'string' && isAbsolute(binding.workspaceRoot) &&
         typeof binding.scenario === 'string' && inside(resolve(binding.workspaceRoot, '.tmp/starsector-proxy/scenarios'), binding.scenario) &&
         binding.sourcePath === resolve(binding.scenario, binding.batch + '-authorization.private.json') &&
@@ -305,7 +575,11 @@ export function validateCampaignBinding(binding) {
         Array.isArray(binding.ownedPids) && binding.ownedPids.length > 0 &&
         binding.ownedPids.every((/** @type {any} */ pid) => Number.isSafeInteger(pid) && pid > 0) &&
         new Set(binding.ownedPids).size === binding.ownedPids.length &&
-        (binding.batch !== 'E2' || closed(binding.e1MenuReceipt, ['path', 'sha256', 'exitCoordinate'])), 'closed campaign binding required');
+        (binding.batch !== 'E2' || closed(binding.e1MenuReceipt, ['path', 'sha256', 'exitCoordinate'])) &&
+        (!seeded || binding.batch !== 'E1' || closed(binding.b1MenuReceipt, ['path', 'sha256', inspection ? 'newGameCoordinate' : 'loadCoordinate'])) &&
+        (binding.exitConfirmation === undefined || (seeded && binding.batch === 'E2' && exitConfirmationProfile(binding.exitConfirmation))) &&
+        (!binding.campaign.launchPredecessor || (typeof binding.originalPlanSha256 === 'string' && /^[a-f0-9]{64}$/.test(binding.originalPlanSha256))),
+    'closed campaign binding required');
 }
 
 /** Lock and exact-byte CAS protect one ordinary launch ledger, not a new clock.
@@ -329,6 +603,20 @@ function update(binding, change, mode = 'current') {
 
 /** @param {any} binding */
 export function claimCampaignOwner(binding) {
+    if ([3, 4].includes(binding.schemaVersion) && binding.batch === 'E1') {
+        update(binding, state => {
+            const proof = seedLauncherHandoff(binding, { path: binding.b1MenuReceipt.path,
+                sha256: binding.b1MenuReceipt.sha256 }, Date.now());
+            requireThat(!proof.alreadyTransferred, 'seed entry provider already claimed');
+            const startMs = Date.now(), root = binding.campaign.rootClock;
+            state.resolvedB1 = { ...structuredClone(proof.action), providerClock: structuredClone(proof.providerClock),
+                menuReceiptSha256: proof.receiptSha256, providerClosedAtMs: proof.closedAt, resolvedAtMs: startMs };
+            state.initialClaimSha256 = read(resolve(binding.scenario, 'guard-E1-consumed.private.json')).sha256;
+            state.provider = owner(binding); state.pending = null;
+            state.providerClock = { startMs, deadlineMs: Math.min(startMs + 180000, root.effectiveDeadlineMs - root.cleanupReserveMs) };
+        }, 'handoff');
+        return;
+    }
     if (binding.batch === 'E2') {
         update(binding, state => {
             const proof = menuHandoff(binding, { path: binding.e1MenuReceipt.path, sha256: binding.e1MenuReceipt.sha256 }, Date.now());
@@ -345,33 +633,122 @@ export function claimCampaignOwner(binding) {
         requireThat(!state.provider && !state.pending, 'launch provider already claimed');
         const startMs = Date.now(), root = binding.campaign.rootClock;
         state.provider = owner(binding);
-        state.initialClaimSha256 = read(resolve(binding.scenario, 'guard-E1-consumed.private.json')).sha256;
+        const claimSha256 = read(resolve(binding.scenario, 'guard-' + binding.batch + '-consumed.private.json')).sha256;
+        if ([3, 4].includes(binding.schemaVersion) && binding.batch === 'B1') state.b1ClaimSha256 = claimSha256;
+        else state.initialClaimSha256 = claimSha256;
         state.providerClock = { startMs, deadlineMs: Math.min(startMs + 180000, root.effectiveDeadlineMs - root.cleanupReserveMs) };
     });
 }
 
+/** The driver inspects the actual original; capture receipt alone never means pause.
+ * @param {any} binding @param {any} previous @param {any} after @param {number} now @param {any} [args] */
+function seedSceneInspection(binding, previous, after, now, args) {
+    const confirmation = binding.batch === 'E2';
+    const prefix = confirmation ? 'E2-exit-confirmation' : 'E1-seed-paused';
+    const label = confirmation ? 'exit confirmation' : 'paused seed';
+    const path = resolve(binding.scenario, prefix + '-inspected.private.json');
+    requireThat(existsSync(path), label + ' inspection required before input');
+    const receipt = read(path), value = receipt.value;
+    const original = read(resolve(binding.scenario, 'plan.json')).value.seed;
+    requireThat(closed(value, ['schemaVersion', 'kind', 'scenario', 'rootRecordKey', 'controllerSha256',
+        'sourceSha256', 'claimSha256', 'runID', 'reservationID', 'manifestSha256', 'stagingReceiptSha256', 'frame', 'inspection']) &&
+        value.schemaVersion === 1 && value.kind === (confirmation ? 'STARSECTOR_EXIT_CONFIRMATION_INSPECTION' : 'STARSECTOR_SEED_PAUSE_INSPECTION') && value.scenario === binding.scenario &&
+        value.rootRecordKey === binding.campaign.rootClock.recordKey && value.controllerSha256 === binding.controllerSha256 &&
+        value.sourceSha256 === binding.sourceSha256 && value.runID === binding.runID && value.reservationID === previous.reservationID &&
+        value.claimSha256 === read(resolve(binding.scenario, 'guard-' + binding.batch + '-consumed.private.json')).sha256 &&
+        value.manifestSha256 === original.manifestSha256?.toLowerCase() &&
+        value.stagingReceiptSha256 === original.stagingReceiptSha256?.toLowerCase(), label + ' inspection lineage changed');
+    const frame = value.frame, inspection = value.inspection;
+    const pngPath = resolve(binding.scenario, prefix, 'F1.original.png');
+    const metadataPath = resolve(binding.scenario, prefix, 'capture-001.metadata.private.json');
+    const rawPath = resolve(binding.scenario, prefix, 'capture-001.raw.private.json');
+    requireThat(closed(frame, ['pngPath', 'pngSha256', 'metadataPath', 'metadataSha256', 'capturedAtMs']) &&
+        frame.pngPath === pngPath && frame.metadataPath === metadataPath, label + ' original paths changed');
+    const png = file(pngPath, 32 * 1024 * 1024), metadata = read(metadataPath), m = metadata.value;
+    const raw = read(rawPath, 32 * 1024 * 1024);
+    const images = raw.value.content?.filter((/** @type {any} */ row) => row.type === 'image');
+    const dimensions = completePng(png.bytes);
+    requireThat(png.sha256 === frame.pngSha256 && metadata.sha256 === frame.metadataSha256 && png.bytes.equals(after.pngBytes) &&
+        raw.value.isError !== true && images?.length === 1 && images[0].mimeType === 'image/png' &&
+        png.bytes.toString('base64') === images[0].data && m.captureReceipt === true &&
+        m.rawPath === rawPath && m.rawSha256 === raw.sha256 && m.pngPath === pngPath && m.pngSha256 === png.sha256 &&
+        m.runID === binding.runID && m.batch === binding.batch && m.sourceSha256 === binding.sourceSha256 &&
+        m.reservationID === previous.reservationID && m.capturedAtMs === frame.capturedAtMs &&
+        m.args?.target_window_id === binding.campaign.windowId && m.args.quality === 0 && m.args.width === after.window.bounds.width &&
+        m.window?.windowId === after.window.windowId && m.window.pid === after.window.pid && m.window.isFocused === true &&
+        isDeepStrictEqual(m.window.bounds, after.window.bounds) && isDeepStrictEqual(m.dimensions, dimensions) &&
+        dimensions.width === after.window.bounds.width && dimensions.height === after.window.bounds.height &&
+        Number.isSafeInteger(frame.capturedAtMs) && frame.capturedAtMs >= after.capturedAtMs && frame.capturedAtMs <= after.observedAtMs,
+    label + ' original custody changed');
+    requireThat(closed(inspection, ['issuer', 'driver', 'inspectedAtMs', 'state',
+        ...(confirmation ? ['dialogText', 'confirmLabel', 'confirmCoordinate'] : [])]) && inspection.issuer === '/root' &&
+        inspection.driver === '/root/recovery_game_driver' && inspection.state === (confirmation ? 'EXIT_GAME_CONFIRMATION' : 'INTENDED_DISPOSABLE_SEED_PAUSED') &&
+        Number.isSafeInteger(inspection.inspectedAtMs) && inspection.inspectedAtMs >= frame.capturedAtMs &&
+        inspection.inspectedAtMs <= after.observedAtMs && inspection.inspectedAtMs <= now, label + ' visible inspection required');
+    if (confirmation) requireThat(exitConfirmationProfile(binding.exitConfirmation) &&
+        inspection.dialogText === binding.exitConfirmation.dialogText && inspection.confirmLabel === binding.exitConfirmation.confirmLabel &&
+        Array.isArray(inspection.confirmCoordinate) && inspection.confirmCoordinate.length === 2 &&
+        inspection.confirmCoordinate.every((/** @type {any} */ value) => Number.isSafeInteger(value)) &&
+        isDeepStrictEqual(inspection.confirmCoordinate, args?.coordinate), 'matching declared exit confirmation required');
+    return receipt.sha256;
+}
+
 /** Full source/clock/history recheck immediately before every input reservation.
- * @param {any} binding @param {any} args */
-export function reserveCampaignAction(binding, args) {
+ * @param {any} binding @param {any} args @param {string} [tool] @param {any} [after] */
+export function reserveCampaignAction(binding, args, tool = binding.batch === 'E1' ? 'key' : 'left_click', after) {
     const admitted = readCampaignAuthorization(binding.sourcePath, { root: binding.workspaceRoot, runID: binding.runID, input: true });
     requireThat(isDeepStrictEqual(admitted.binding, binding), 'mutation custody changed');
     update(binding, state => {
+        if (state.pending) {
+            const previous = state.pending, now = Date.now();
+            const resolved = state.resolvedActions ?? [];
+            requireThat(Array.isArray(resolved) && resolved.length < 7, 'bounded resolved input history required');
+            const completed = resolved.filter((/** @type {any} */ row) => isDeepStrictEqual(owner(row), owner(binding)));
+            const activationToPlay = binding.batch === 'B1' && previous.tool === 'activate_window' &&
+                tool === 'left_click' && completed.length === 0;
+            const seedEntry = binding.batch === 'E1' && previous.tool === 'left_click' &&
+                ((completed.length < 2 && tool === 'left_click') || (completed.length === 2 && tool === 'key'));
+            const exitConfirmation = binding.batch === 'E2' && previous.tool === 'left_click' && tool === 'left_click' &&
+                completed.length === 0 && exitConfirmationProfile(binding.exitConfirmation);
+            requireThat(((binding.schemaVersion === 3 && (activationToPlay || seedEntry || exitConfirmation)) ||
+                (binding.schemaVersion === 4 && activationToPlay)) && previous.status === 'AWAITING_AFTER' &&
+                isDeepStrictEqual(owner(previous), owner(binding)) &&
+                closed(after, ['pngBytes', 'window', 'capturedAtMs', 'observedAtMs']) && Buffer.isBuffer(after.pngBytes) &&
+                after.pngBytes.length <= 32 * 1024 * 1024 && Number.isSafeInteger(previous.knownResultAtMs) &&
+                Number.isSafeInteger(after.capturedAtMs) && after.capturedAtMs >= previous.knownResultAtMs &&
+                Number.isSafeInteger(after.observedAtMs) && after.observedAtMs >= after.capturedAtMs && after.observedAtMs <= now &&
+                after.window?.windowId === binding.campaign.windowId && after.window.windowId ===
+                    (previous.tool === 'activate_window' ? previous.args.window_id : previous.args.target_window_id) &&
+                args.target_window_id === after.window.windowId && binding.ownedPids.includes(after.window.pid) &&
+                after.window.isFocused === true, 'known original AFTER required before next seeded action');
+            const dimensions = completePng(after.pngBytes);
+            requireThat(dimensions.width === after.window.bounds?.width && dimensions.height === after.window.bounds?.height,
+                'original AFTER dimensions changed');
+            const pauseInspectionSha256 = seedEntry && tool === 'key' ? seedSceneInspection(binding, previous, after, now) : undefined;
+            const exitConfirmationInspectionSha256 = exitConfirmation ? seedSceneInspection(binding, previous, after, now, args) : undefined;
+            state.resolvedActions = [...resolved, { ...previous, ...(pauseInspectionSha256 ? { pauseInspectionSha256 } : {}),
+                ...(exitConfirmationInspectionSha256 ? { exitConfirmationInspectionSha256 } : {}),
+                after: { captureReceipt: true, freshness: 'UNKNOWN',
+                pngSha256: createHash('sha256').update(after.pngBytes).digest('hex'),
+                window: structuredClone(after.window), capturedAtMs: after.capturedAtMs, observedAtMs: after.observedAtMs } }];
+            state.pending = null;
+        }
         requireThat(isDeepStrictEqual(state.provider, owner(binding)) && !state.pending &&
             state.history.reservedActions < binding.campaign.maxReservedActions, 'pending input or original action ceiling');
         state.history.reservedActions++;
         state.pending = { ...owner(binding), reservationID: binding.controllerSha256 + ':' + state.history.reservedActions,
-            tool: binding.batch === 'E1' ? 'key' : 'left_click', args: structuredClone(args), status: 'RESERVED' };
+            tool, args: structuredClone(args), status: 'RESERVED' };
     });
 }
 
 /** Exact one-shot finite callback marks dispatch only after current custody checks.
- * @param {any} binding @param {any} args */
-export function markCampaignActionSent(binding, args) {
+ * @param {any} binding @param {any} args @param {string} [tool] */
+export function markCampaignActionSent(binding, args, tool = binding.batch === 'E1' ? 'key' : 'left_click') {
     const admitted = readCampaignAuthorization(binding.sourcePath, { root: binding.workspaceRoot, runID: binding.runID, input: true });
     requireThat(isDeepStrictEqual(admitted.binding, binding), 'consent custody changed');
     update(binding, state => {
         requireThat(state.pending?.status === 'RESERVED' && isDeepStrictEqual(owner(state.pending), owner(binding)) &&
-            isDeepStrictEqual(state.pending.args, args), 'exact in-flight reservation required');
+            state.pending.tool === tool && isDeepStrictEqual(state.pending.args, args), 'exact in-flight reservation required');
         state.history.sentActions++; state.pending.status = 'SENT'; state.pending.sentAtMs = Date.now();
     });
 }
