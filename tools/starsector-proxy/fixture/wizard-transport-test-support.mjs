@@ -10,6 +10,7 @@ import { StdioServerTransport } from '../../computer-use-mcp/node_modules/@model
 import { serveDirectMcp } from '../direct-mcp.mjs';
 import { directFixture } from '../direct-test-fixture.mjs';
 import { requiredOwnedHttpFiles } from '../owned-http-batch.mjs';
+import { readBatchAuthorization } from '../batch-authorization.mjs';
 import { persistDirectFrame } from '../direct-frames.mjs';
 import { campaignLaunchFixture } from './campaign-launch-test-support.mjs';
 import { claimSeededLauncher, seedNativeSessionFactory, seedTarget } from './campaign-input-test-support.mjs';
@@ -19,9 +20,13 @@ const sha = path => filePin(path).sha256.toLowerCase();
 /** @param {any} result */
 const textJson = result => JSON.parse(result.content.find((/** @type {any} */ item) => item.type === 'text').text);
 
-/** Actual stdio/HTTP with generated external OS effects only. @param {boolean} [generation] */
-export async function exerciseWizardTransport(generation = false) {
-    const f = campaignLaunchFixture(generation ? {generation: true, historyBaseline: {overallAttempts: 38, uiAttempts: 35, reservedActions: 64, sentActions: 62}} : {inspection: true});
+/** Actual stdio/HTTP with generated external OS effects only.
+ * @param {boolean} [generation] @param {{commonPreference?: boolean, remainingBudget?: boolean}} [options] */
+export async function exerciseWizardTransport(generation = false, options = {}) {
+    const f = campaignLaunchFixture(generation ? {generation: true,
+        ...(options.remainingBudget ? {absoluteMaxReservedActions: 72,
+            historyBaseline: {overallAttempts: 39, uiAttempts: 36, reservedActions: 68, sentActions: 66}}
+            : {historyBaseline: {overallAttempts: 38, uiAttempts: 35, reservedActions: 64, sentActions: 62}})} : {inspection: true});
     const schemaVersion = generation ? 5 : 4, flow = f.plan.campaignControl.profile;
     const names = ['COMPUTER_USE_REQUIRE_APPROVAL', 'COMPUTER_USE_APPROVAL_TOKEN', 'COMPUTER_USE_AUDIT_LOG'];
     const old = names.map(name => process.env[name]);
@@ -116,10 +121,18 @@ export async function exerciseWizardTransport(generation = false) {
         f.refreshLaunch();
         const original = [f.planPath, f.leasePath].map(path => readFileSync(path));
         const b1 = claimSeededLauncher(f, runID, false);
+        if (options.remainingBudget) readBatchAuthorization(b1.source, {root: f.root, runID});
         provider = directFixture({ authority: { root: f.root, source: b1.source, runID, powershell, supervisor, consentMode: 'finite-explicit-consent' },
             sessionFactory: seedNativeSessionFactory(tool => {
-                assert.equal(ledger().history.sentActions, effects.length + (generation ? 63 : 1), 'guard marks exact consent before every native effect');
+                assert.equal(ledger().history.sentActions, effects.length + (generation ? options.remainingBudget ? 67 : 63 : 1), 'guard marks exact consent before every native effect');
                 effects.push(tool);
+                if (options.commonPreference && generation && effects.length === 4) {
+                    assert.equal(batch, 'E2');
+                    const common = resolve(f.installation, 'saves/common');
+                    mkdirSync(common);
+                    writeFileSync(resolve(common, 'core_shared_settings.json.data'),
+                        '{"campaignHelpPopupsOptionChecked": true}');
+                }
             }, { window: () => window }) });
         frontend = serveDirectMcp({ ...provider.options, spawn: provider.spawn, stdin: input, stdout: output });
         await client.connect(new StdioServerTransport(output, input));
@@ -164,7 +177,10 @@ export async function exerciseWizardTransport(generation = false) {
             await fixedAfter('E2-observed-scene'); await finish();
             assert.deepEqual(effects, ['left_click', 'left_click', 'left_click', 'left_click']);
             assert.equal(provider.starts(), 3);
-            assert.deepEqual(ledger().history, {overallAttempts: 38, uiAttempts: 35, reservedActions: 68, sentActions: 66});
+            assert.deepEqual(ledger().history, options.remainingBudget
+                ? {overallAttempts: 39, uiAttempts: 36, reservedActions: 72, sentActions: 70}
+                : {overallAttempts: 38, uiAttempts: 35, reservedActions: 68, sentActions: 66});
+            if (options.remainingBudget) assert.equal(ledger().history.reservedActions, f.campaign.maxReservedActions);
             assert.equal(ledger().pending.batch, 'E2'); assert.equal(ledger().resolvedE1.batch, 'E1');
         } else {
             const firstPageFrame = await fixedAfter('E1-first-page'); assert.ok(firstPageFrame.pngPath); await finish();

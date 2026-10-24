@@ -460,3 +460,10 @@ The destination scene remains unknown until observed. This profile permits no
 typing, keys, later wizard input, Save, cancellation or ordinary Exit and creates
 no usable seed. Its clocks, action/provider ceilings, cumulative history and
 uncertainty latch are unchanged. See the fixture README for the receipt shapes.
+
+Generation authority also binds the carried `absoluteMaxReservedActions` and
+the fixed root history-admission receipt in both original and phase plan/lease
+pairs. A new run cannot replenish the remaining absolute allowance. After the
+exact known E2 Continue, observations alone may retain the game's one fixed
+common help-preference file. Earlier phases remain empty; other files, changed
+bytes, links, uncertain results and additional input refuse.

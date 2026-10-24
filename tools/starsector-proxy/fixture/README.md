@@ -165,8 +165,9 @@ are still required.
 
 ## Optional generated disposable seed
 
-The ten-field binding above is unchanged. Without explicit seed authority the
-private save root must be empty. A seed claim or receipt also refuses an unseeded
+The ten-field binding above is unchanged. Without explicit seed authority,
+preparation and launch require an empty private save root. The generation
+profile's post-Continue observation exception is described below. A seed claim or receipt also refuses an unseeded
 launch, including a failed stage that copied no files. Staging does not authorize
 a game launch or input, and `-GuardedResume` remains refused.
 
@@ -373,6 +374,18 @@ points and semicolon separators in its parser view only; preparation preserves
 those bytes and strings.
 Legacy fixture bindings and input profiles cannot select this recipe.
 
+Original and phase plan/lease pairs also bind `absoluteMaxReservedActions` and
+the identical closed `historyAdmission:{path,sha256}` descriptor. Its path is
+the scenario-local `root-history-baseline.admitted.private.json`; its hash binds
+the root-admitted carried history. That receipt declares `schemaVersion:1`,
+`kind:"ROOT_ADMITTED_CARRIED_PRELAUNCH_HISTORY"`, `issuer:"/root"`,
+`driver:"/root/recovery_game_driver"`, the identical `historyBaseline` and
+`maxReservedActions`. The campaign/predecessor ceiling must equal that admitted
+absolute limit, between the already reserved count and at most eight more.
+Reusing a run never replenishes the carried limit. Root admission must preserve
+the historical ceiling; a new self-consistent phase cannot raise it. Other input
+profiles retain their existing budget contracts.
+
 B1 uses the existing inspected main-menu receipt with `newGameCoordinate`. E1
 first sends New Game, then freezes `E1-generate-inspected.private.json`: schema1,
 kind `STARSECTOR_NEW_GAME_GENERATE_INSPECTION`, `scenario`, `rootRecordKey`,
@@ -404,4 +417,13 @@ wizard, typing, key, Save, cancellation, seed provenance or lifecycle acceptance
 is supplied. All prior failures, absolute action history and original deadlines
 remain in force. A qualified source checkout and actually refreshed supported
 frontend are required before live use.
+
+Prelaunch, B1 and E1 still require empty private saves. Only after the exact known
+E2 Continue may observations accept one ordinary `common` directory containing
+only `core_shared_settings.json.data`, with these exact 41 UTF-8 bytes:
+`{"campaignHelpPopupsOptionChecked": true}`. No BOM or newline is included.
+Admission still checks current owner/claim/source, inspected coordinate, original
+clocks and the known `AWAITING_AFTER` reservation. Links, extra files/directories,
+different bytes, uncertain or incomplete actions and every further input refuse.
+This UI preference is preserved output; it supplies no campaign save or seed.
 

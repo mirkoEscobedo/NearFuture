@@ -6,7 +6,7 @@ import { unlinkSync, readFileSync } from 'node:fs';
 import { seedFixture, json, filePin, powershell, repository, quote } from './seed-test-support.mjs';
 import { campaignLaunchSources } from '../campaign-authority.mjs';
 
-/** @param {{inspection?: boolean, generation?: boolean, historyBaseline?: {overallAttempts: number, uiAttempts: number, reservedActions: number, sentActions: number}}} [options] */
+/** @param {{inspection?: boolean, generation?: boolean, absoluteMaxReservedActions?: number, historyBaseline?: {overallAttempts: number, uiAttempts: number, reservedActions: number, sentActions: number}}} [options] */
 export function campaignLaunchFixture(options = {}) {
     const f = seedFixture({ driverRole: '/root/recovery_game_driver' }), scenario = f.target;
     const noSeed = options.inspection || options.generation;
@@ -35,11 +35,18 @@ export function campaignLaunchFixture(options = {}) {
     const bounds = { maxScenarioActionsIncludingActivations: 8, maxProxyInvocations: 3,
         proxyTimeoutMs: 180000, ownedGameHardTimeoutMs: 480000 };
     const historyBaseline = structuredClone(options.historyBaseline ?? { overallAttempts: 3, uiAttempts: 2, reservedActions: 0, sentActions: 0 });
+    const maxReservedActions = options.generation && options.absoluteMaxReservedActions !== undefined
+        ? options.absoluteMaxReservedActions : historyBaseline.reservedActions + 8;
+    const historyAdmissionPath = resolve(scenario, 'root-history-baseline.admitted.private.json');
+    const generationAuthority = options.generation ? {absoluteMaxReservedActions: maxReservedActions,
+        historyAdmission: {path: historyAdmissionPath, sha256: json(historyAdmissionPath, {
+            schemaVersion: 1, kind: 'ROOT_ADMITTED_CARRIED_PRELAUNCH_HISTORY', issuer: '/root',
+            driver: '/root/recovery_game_driver', historyBaseline, maxReservedActions}).sha256.toLowerCase()}} : {};
     const campaignControl = options.generation ? { schemaVersion: 3, profile: 'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE' }
         : options.inspection ? { schemaVersion: 2, profile: 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE' }
         : { schemaVersion: 1, profile: 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE' };
     const plan = { scenarioId: basename(scenario), paths: { scenario }, ...(!noSeed ? { seed } : {}), bounds, historyBaseline, campaignControl,
-        callerAdmissionDeadlineMs,
+        callerAdmissionDeadlineMs, ...generationAuthority,
         fixtureBinding: { path: f.bindingPath, sha256: filePin(f.bindingPath).sha256 },
         ownership: { driver: '/root/recovery_game_driver', onlyGameInputDriver: true },
         batches: options.inspection ? [{ id: 'B1' }, { id: 'E1' }] : [{ id: 'B1' }, { id: 'E1' }, { id: 'E2' }] };
@@ -50,7 +57,7 @@ export function campaignLaunchFixture(options = {}) {
     }) });
     const launchLease = { schemaVersion: 1, scenarioId: basename(scenario), authorized: true,
         driver: '/root/recovery_game_driver', issuer: '/root', phase: 'CAMPAIGN_BINDING_ONLY', planSha256: filePin(planPath).sha256,
-        fixtureReceiptSha256: filePin(f.frozenPath).sha256, ...(!noSeed ? { seed } : {}), campaignControl,
+        fixtureReceiptSha256: filePin(f.frozenPath).sha256, ...(!noSeed ? { seed } : {}), campaignControl, ...generationAuthority,
         ownedGameHardTimeoutMs: 480000, maxActions: 8, maxProxyInvocations: 3, campaignLoadSaveAllowed: false,
         supportPinsPath, supportPinsSha256: filePin(supportPinsPath).sha256, callerAdmissionDeadlineMs };
     json(leasePath, launchLease);
@@ -82,7 +89,7 @@ export function campaignLaunchFixture(options = {}) {
         rootCallRecord: { key: rootClock.recordKey, value: { startMs,
             args: { cmd: 'GENERATED_NOT_RUN' }, raw: { session_id: 777 } } },
         historyBaseline,
-        maxReservedActions: historyBaseline.reservedActions + 8,
+        maxReservedActions,
         launchPredecessor: { path: originalLaunchPath, sha256: '' } };
     Object.assign(predecessor, { rootClock, producerWitness: campaign.producerWitness,
         rootCallRecord: campaign.rootCallRecord, historyBaseline, maxReservedActions: campaign.maxReservedActions });
@@ -91,7 +98,8 @@ export function campaignLaunchFixture(options = {}) {
     const phaseLeasePath = resolve(scenario, 'E1-lease.private.json');
     const directHostConsent = { schemaVersion: 1, mode: 'finite-explicit-consent', maxCallsPerBatch: 32 };
     const phasePlan = { scenarioId: basename(scenario), paths: { scenario }, bounds, campaign,
-        batches: [{ id: 'E1' }], directHostConsent };
+        batches: [{ id: 'E1' }], directHostConsent, ...generationAuthority,
+        ...(options.generation ? {historyBaseline} : {}) };
     json(phasePlanPath, phasePlan);
     const phaseLease = { ...launchLease, schemaVersion: 2, phase: campaign.flow, issuer: '/root',
         driver: '/root/recovery_game_driver', planSha256: filePin(phasePlanPath).sha256, campaign, directHostConsent };

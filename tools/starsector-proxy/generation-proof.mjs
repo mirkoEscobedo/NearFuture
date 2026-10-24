@@ -1,8 +1,69 @@
 // @ts-check
-import {resolve} from 'node:path';
+import {resolve,dirname} from 'node:path';
+import {lstatSync,readdirSync} from 'node:fs';
 import {isDeepStrictEqual} from 'node:util';
 import {requireThat,file,read,closed,knownProviderClosure} from './campaign-proof.mjs';
 import {completePng} from './direct-frames.mjs';
+
+/** Carry the root-admitted absolute ceiling instead of replenishing eight actions.
+ * @param {any} plan @param {any} lease @param {string} scenario */
+export function generationActionLimit(plan,lease,scenario) {
+    const reference=plan.historyAdmission,limit=plan.absoluteMaxReservedActions;
+    requireThat(closed(reference,['path','sha256'])&&
+        reference.path===resolve(scenario,'root-history-baseline.admitted.private.json')&&
+        typeof reference.sha256==='string'&&/^[a-f0-9]{64}$/.test(reference.sha256)&&
+        isDeepStrictEqual(reference,lease.historyAdmission), 'fixed carried history admission required');
+    const receipt=read(reference.path),value=receipt.value,baseline=plan.historyBaseline;
+    requireThat(receipt.sha256===reference.sha256&&value.schemaVersion===1&&
+        value.kind==='ROOT_ADMITTED_CARRIED_PRELAUNCH_HISTORY'&&value.issuer==='/root'&&
+        value.driver==='/root/recovery_game_driver'&&isDeepStrictEqual(value.historyBaseline,baseline)&&
+        Number.isSafeInteger(baseline?.reservedActions)&&Number.isSafeInteger(limit)&&
+        limit>=baseline.reservedActions&&limit<=baseline.reservedActions+8&&
+        limit===lease.absoluteMaxReservedActions&&limit===value.maxReservedActions,
+    'unchanged carried absolute action ceiling required');
+    return limit;
+}
+
+/** The game writes this UI preference on first Continue, not a campaign save.
+ * Nonempty output is observation-only after that exact known action.
+ * @param {any} binding @param {any} state @param {boolean} input @param {number} now */
+export function assertInspectionSaves(binding,state,input,now) {
+    const saves=resolve(binding.scenario,'installation/saves');
+    for(let part=saves;;part=dirname(part)) {
+        requireThat(!lstatSync(part).isSymbolicLink(),'ordinary empty inspection saves required');
+        if(dirname(part)===part)break;
+    }
+    requireThat(lstatSync(saves).isDirectory(),'empty first-page inspection saves required');
+    const entries=readdirSync(saves);
+    if(entries.length===0)return;
+    requireThat(binding.schemaVersion===5&&binding.batch==='E2'&&!input,
+        'empty first-page inspection saves required');
+    const expectedOwner={batch:'E2',runID:binding.runID,sourceSha256:binding.sourceSha256};
+    const action=state?.pending,clock=state?.providerClock;
+    const claim=read(resolve(binding.scenario,'guard-E2-consumed.private.json'));
+    requireThat(closed(claim.value,['sourcePath','sourceSha256','binding'])&&
+        claim.value.sourcePath===binding.sourcePath&&claim.value.sourceSha256===binding.sourceSha256&&
+        isDeepStrictEqual(claim.value.binding,binding)&&state.uncertain===false&&
+        isDeepStrictEqual(state.provider,expectedOwner)&&action?.status==='AWAITING_AFTER'&&
+        isDeepStrictEqual({batch:action.batch,runID:action.runID,sourceSha256:action.sourceSha256},expectedOwner)&&
+        action.tool==='left_click'&&action.reservationID===binding.controllerSha256+':'+state.history.reservedActions&&
+        closed(action.args,['coordinate','target_window_id','target_app','focus_strategy'])&&
+        action.args.target_window_id===binding.campaign.windowId&&action.args.target_app==='java.exe'&&
+        action.args.focus_strategy==='strict'&&
+        isDeepStrictEqual(action.args.coordinate,binding.e1GeneratedNameReceipt?.continueCoordinate)&&
+        Number.isSafeInteger(action.sentAtMs)&&Number.isSafeInteger(action.knownResultAtMs)&&
+        action.sentAtMs>=clock?.startMs&&action.knownResultAtMs>=action.sentAtMs&&
+        action.knownResultAtMs<=clock.deadlineMs&&action.knownResultAtMs<=now,
+    'known first Continue required for common preference observation');
+    const common=resolve(saves,'common'),settings=resolve(common,'core_shared_settings.json.data');
+    requireThat(entries.length===1&&entries[0]==='common'&&!lstatSync(common).isSymbolicLink()&&
+        lstatSync(common).isDirectory()&&
+        isDeepStrictEqual(readdirSync(common),['core_shared_settings.json.data']),
+    'only the fixed common UI preference is permitted');
+    requireThat(lstatSync(settings).nlink===1&&
+        file(settings,41).bytes.equals(Buffer.from('{"campaignHelpPopupsOptionChecked": true}','utf8')),
+    'exact common UI preference bytes required');
+}
 
 /** Complete original/raw/metadata custody for one fixed generated-name scene.
  * No scene claim is inferred from capture success. @param {any} context */

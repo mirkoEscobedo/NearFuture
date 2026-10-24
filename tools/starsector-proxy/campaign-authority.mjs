@@ -1,12 +1,12 @@
 // @ts-check
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, lstatSync, openSync, closeSync, fsyncSync, renameSync, unlinkSync, existsSync, readdirSync } from 'node:fs';
-import { resolve, dirname, basename, isAbsolute } from 'node:path';
+import { readFileSync, writeFileSync, openSync, closeSync, fsyncSync, renameSync, unlinkSync, existsSync } from 'node:fs';
+import { resolve, basename, isAbsolute } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { fixtureProbeSources, readFixtureBinding } from './fixture-binding.mjs';
 import { completePng } from './direct-frames.mjs';
 import { requireThat, file, read, closed, inside, knownProviderClosure } from './campaign-proof.mjs';
-import { inspectGenerationControl, generatedNameHandoff } from './generation-proof.mjs';
+import { inspectGenerationControl, generatedNameHandoff, assertInspectionSaves, generationActionLimit } from './generation-proof.mjs';
 
 export const campaignLaunchSources = Object.freeze([...fixtureProbeSources,
     ...['campaign-authority.mjs', 'batch-authorization.mjs', 'batch-session.mjs', 'finite-consent.mjs',
@@ -332,7 +332,8 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
         requireThat(isDeepStrictEqual(campaign[key], predecessor[key]), 'immutable postlaunch clock or history changed');
     }
     requireThat(isDeepStrictEqual(plan.historyBaseline, campaign.historyBaseline) &&
-        campaign.maxReservedActions === plan.historyBaseline.reservedActions + 8, 'original global action budget required');
+        campaign.maxReservedActions === (generation ? generationActionLimit(plan, lease, scenario)
+            : plan.historyBaseline.reservedActions + 8), 'original global action budget required');
     requireThat(Number.isSafeInteger(plan.callerAdmissionDeadlineMs) && plan.callerAdmissionDeadlineMs > 0 &&
         lease.callerAdmissionDeadlineMs === plan.callerAdmissionDeadlineMs &&
         campaign.rootClock.callerAdmissionDeadlineMs === plan.callerAdmissionDeadlineMs &&
@@ -362,12 +363,7 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
             'seed-stage-claim.private.json', 'seed-stage-receipt.private.json']) {
             requireThat(!existsSync(resolve(scenario, name)), 'first-page inspection refuses seed metadata');
         }
-        const saves = resolve(scenario, 'installation/saves');
-        for (let part = saves;; part = dirname(part)) {
-            requireThat(!lstatSync(part).isSymbolicLink(), 'ordinary empty inspection saves required');
-            if (dirname(part) === part) break;
-        }
-        requireThat(lstatSync(saves).isDirectory() && readdirSync(saves).length === 0, 'empty first-page inspection saves required');
+        if (inspection) assertInspectionSaves({scenario}, undefined, false, Date.now());
     } else {
     requireThat(closed(plan.seed, ['mode', 'manifestSha256', 'stagingReceiptSha256']) &&
         plan.seed.mode === 'LOAD_ONE_PRIVATE_DISPOSABLE_SEED' && isDeepStrictEqual(plan.seed, lease.seed), 'exact staged seed scope required');
@@ -475,7 +471,8 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
         lease.planSha256?.toLowerCase() === files.planPath.sha256 && lease.campaignLoadSaveAllowed === false &&
         lease.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs && lease.maxActions === 8 && lease.maxProxyInvocations === 3 &&
         Number.isSafeInteger(campaign.maxReservedActions) &&
-        campaign.maxReservedActions === campaign.historyBaseline.reservedActions + lease.maxActions,
+        campaign.maxReservedActions === (generation ? generationActionLimit(plan, lease, scenario)
+            : campaign.historyBaseline.reservedActions + lease.maxActions),
     'current finite root campaign lease required');
     requireThat(resolve(lease.supportPinsPath ?? '') === resolve(scenario, 'frozen-support-pins.private.json') &&
         read(lease.supportPinsPath).sha256 === lease.supportPinsSha256?.toLowerCase() &&
@@ -489,6 +486,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
             sha256: handoff.receiptSha256, continueCoordinate: handoff.continueCoordinate } }
         : { ...binding, e1MenuReceipt: { path: plan.e1MenuReceipt.path,
             sha256: handoff.receiptSha256, exitCoordinate: handoff.exitCoordinate } } : binding;
+    if (generation) assertInspectionSaves(admitted, originalHistory(admitted).value, input, now);
     return { sourcePath, sourceSha256: source.sha256, binding: admitted, claimPath: resolve(scenario, 'guard-' + auth.batch + '-consumed.private.json') };
 }
 
