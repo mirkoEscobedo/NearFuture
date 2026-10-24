@@ -3,6 +3,7 @@ $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'fixture-inputs.ps1')
 . (Join-Path $PSScriptRoot 'publish-owned-snapshot.ps1')
 . (Join-Path $PSScriptRoot 'session-watchdog.ps1')
+. (Join-Path $PSScriptRoot 'seed-preference.ps1')
 $binding=Read-NativeFixtureBinding $BindingPath $BindingSha256
 if(!$OwnershipProbeOnly){$SessionWatchdogMs=Read-NativeSessionWatchdog $EvidenceRoot $SessionWatchdogMs}
 & (Join-Path $PSScriptRoot 'protection-check.ps1') -BindingPath $BindingPath -BindingSha256 $BindingSha256 -Phase admit-probe -EvidenceRoot $EvidenceRoot
@@ -329,6 +330,8 @@ if($null-ne$launchAdmission){
 }
 $controllerStart|ConvertTo-Json -Depth 6|Set-Content "$EvidenceRoot/controller-start.private.json"
 # Visible interactive launcher is the authorized native test surface.
+$seedCreationPlan=Get-Content -LiteralPath "$EvidenceRoot/plan.json" -Raw|ConvertFrom-Json -DateKind String
+if($seedCreationPlan.campaignControl.profile-ceq'DISPOSABLE_SEED_CREATION'){$null=Assert-NativeSeedPreferenceUnchanged $seedCreationPlan $EvidenceRoot}
 $launcher=Start-Process -FilePath "$installation/starsector.exe" -WorkingDirectory $installation -WindowStyle Normal -PassThru
 $samples=[Collections.Generic.List[object]]::new()
 $seen=$false

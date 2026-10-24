@@ -427,3 +427,72 @@ clocks and the known `AWAITING_AFTER` reservation. Links, extra files/directorie
 different bytes, uncertain or incomplete actions and every further input refuse.
 This UI preference is preserved output; it supplies no campaign save or seed.
 
+# Disposable initial seed creation
+
+Schema6 `DISPOSABLE_SEED_CREATION` is distinct from the preceding observation
+profiles. Original launch plan and lease select exactly
+`campaignControl:{schemaVersion:4,profile:"DISPOSABLE_SEED_CREATION"}` and binding3
+`VANILLA_UNCOMPRESSED_GENERATION`. Both original and phase pairs bind identical
+`seedCreation:{mode:"CREATE_ONE_PRIVATE_DISPOSABLE_SEED",preference:{path,sha256}}`
+and `historyAdmission:{path,sha256}` descriptors. The fixed preference file is
+`seed-creation-preference.private.json`; its closed fields are schemaVersion1,
+kind `NATIVE_SEED_SHARED_PREFERENCE_V1`, view `Registry64`, node
+`/com/fs/starfarer`, valueName `canSkipTutorial`, registryValueName
+`can/Skip/Tutorial`, valueKind `String`, value `true`. Only this existing exact
+HKCU Java preference is read. Native launch and protection recheck it without
+enumeration, creation or writes.
+
+The fixed `root-history-baseline.admitted.private.json` grant uses schemaVersion2,
+kind `ROOT_ADMITTED_SEED_CREATION_HISTORY`, issuer `/root`, driver
+`/root/recovery_game_driver`, identical `historyBaseline`, `maxReservedActions`,
+and `previous:{result:{path,sha256},ledger:{path,sha256}}`. Both previous artifacts
+must be actual terminal evidence with unchanged guard counters and the truthful
+next attempt context. The cap is greater than the carried reserved count and at
+most eight more. New authority does not erase prior failures or replenish input
+within a run. Root-issued authority JSON uses canonical scalars and permits
+insignificant whitespace; duplicate fields refuse. Legacy grants are unchanged.
+
+The only route is eight left clicks: B1 Play; E1 New Game, Generate, first
+Continue; E2 Explorer/Apogee faster start, Normal, Skip it, Start game. No
+activation, key, typing, manual Save or extra provider is available. All original
+root/provider/startup/call/action/cleanup limits remain. An unavailable preferred
+choice stops the route instead of selecting another branch.
+
+Each E1 control after New Game and every E2 control uses
+`<batch>-wizard-<ordinal>-inspected.private.json`, kind
+`STARSECTOR_SEED_WIZARD_CONTROL`, with the closed lineage fields in
+`seed-wizard-proof.mjs`. Its fixed directory contains the original PNG, raw MCP
+result and metadata. Inspection binds issuer, driver, time, state, exact label,
+enabled=true, coordinate and generated name. E1 ends with
+`E1-occupation-inspected.private.json`, kind `STARSECTOR_E1_OCCUPATION_INSPECTION`,
+binding all three reservations and actual provider closure. E2 binds that receipt
+as `e1WizardReceipt:{path,sha256}`. Every control is checked against the actual
+clicked BEFORE, archived AFTER where present and inspection before dispatch.
+
+The final original lives under `E2-created-seed/`; the closed
+`E2-created-seed-inspected.private.json` has kind `STARSECTOR_NEW_SEED_INSPECTION`
+and inspection state `NEW_GAME_CAMPAIGN_VISIBLE`. Its frame time, paths, bytes
+and source capture must agree, followed by actual terminal E2 provider proof.
+Observations after the known Start may tolerate the game's partial initial-save
+write; partial files are never accepted as a usable seed.
+
+After all owned handles are terminal and reaped, freeze
+`seed-creation-closeout.private.json`, kind
+`ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT`, with carried/actual counters, separate
+raw cleanup outcome, original protection, exact two-file census and fixed
+evidence hashes. The V2 manifest kind is `NATIVE99_DISPOSABLE_SEED_MANIFEST_V2`.
+It adds canonical `sourceWorkspace` and uses immediate private scenario children;
+its five provenance pins include that completed closeout. This forms an acyclic
+chain: closeout pins XML/evidence, manifest pins closeout, stage authority pins
+manifest. The consumer rereads actual acknowledged clicks, original-image and
+provider custody, zero live source processes, original182/save178 protection,
+the exact41-byte common preference, and ordinary unlinked XML files. Version,
+uncompressed format, player-fleet reference, zero mods and 16 MiB total are
+independently validated. Current complete tooling pins allow at most1024 unique
+rows and262144 bytes for V2; a selected subset refuses. V1 retains its original
+131072-byte inventory limit and provenance reader. Valid V2 staging composes with
+the existing immutable seeded-entry launch validators; it grants no new input.
+
+Tests generate OS, visual and cleanup boundaries. Their real transport/validator
+coverage is source evidence, never a loaded-frontend or native campaign pass.
+

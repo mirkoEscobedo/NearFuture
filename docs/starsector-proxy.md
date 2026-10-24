@@ -467,3 +467,27 @@ pairs. A new run cannot replenish the remaining absolute allowance. After the
 exact known E2 Continue, observations alone may retain the game's one fixed
 common help-preference file. Earlier phases remain empty; other files, changed
 bytes, links, uncertain results and additional input refuse.
+
+The separate schema6 `DISPOSABLE_SEED_CREATION` profile permits a complete fixed
+vanilla wizard route. Original launch documents select control schema4 and the
+same binding3 uncompressed, zero-mod fixture recipe. B1 sends Play; E1 sends
+New Game, Generate and first Continue; E2 sends Explorer (faster start), Normal,
+visibly enabled Skip it and Start game. Every choice requires a current inspected
+original and exact enabled control. There is no activation, typing, key, manual
+Save, alternative wizard branch or ordinary Exit in this profile. The game may
+write its initial save after Start game. Unknown or disabled controls stop input.
+
+An explicit root-issued history2 grant carries the preceding actual result and
+ledger hashes and permits at most eight additional reservations. No old failure
+or reserved action is refunded. The eight-minute root clock, eight actions,
+three providers, 32 calls per provider and cleanup reserve remain unchanged.
+The one existing Java tutorial-skip preference must already be true; its exact
+read-only witness is checked before launch and after cleanup. It is never written.
+
+After owned cleanup, a separately versioned V2 seed manifest may qualify exactly
+two uncompressed save XML files, at most 16 MiB together, with zero enabled mods.
+The consumer rechecks the actual eight input acknowledgements, inspected images,
+provider closures, carried history, original-save protection and complete current
+tooling inventory. Partial output and forced cleanup remain separate outcomes;
+neither synthetic wizard tests nor a seed establish lifecycle or alpha acceptance.
+See the fixture README for the closed authority and provenance contract.

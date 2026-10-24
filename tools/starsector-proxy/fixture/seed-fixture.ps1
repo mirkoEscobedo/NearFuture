@@ -1,5 +1,8 @@
 # Exactly one generated disposable save. This module never loads a game or imports original saves.
 . (Join-Path $PSScriptRoot 'fixture-inputs.ps1')
+. (Join-Path $PSScriptRoot 'seed-creation-history.ps1')
+. (Join-Path $PSScriptRoot 'seed-preference.ps1')
+. (Join-Path $PSScriptRoot 'seed-provenance-v2.ps1')
 
 function Assert-NativeSeedFields($Value,[string[]]$Names) {
  if($Value-isnot[pscustomobject]-or(@($Value.PSObject.Properties.Name|Sort-Object)-join',')-cne(@($Names|Sort-Object)-join',')){throw 'Closed seed schema required'}
@@ -132,9 +135,10 @@ function Read-NativeSeedProvenance($Binding,$Manifest,[string]$Source,[string]$E
  }
  if(!(Test-NativeSeedSamePath $c.evidence.fixtureReceipt $paths.fixtureReceipt)){throw 'Seed source frozen receipt linkage mismatch'}
 }
-function Read-NativeSeedSource($Binding,[string]$ManifestSha256) {
+function Read-NativeSeedSource($Binding,[string]$ManifestSha256,$CurrentPins=$null,[string]$CurrentPinsSha256='') {
  $path=Join-Path $Binding.fixtureRoot 'seed-manifest.private.json'
  $manifest=Read-NativeSeedJson $path $ManifestSha256
+ if(($manifest.schemaVersion-is[int]-or$manifest.schemaVersion-is[long])-and$manifest.schemaVersion-eq2){return (Read-NativeModernSeedSource $Binding $manifest $ManifestSha256 $CurrentPins $CurrentPinsSha256)}
  Assert-NativeSeedFields $manifest @('schemaVersion','kind','sourceScenario','sourceEvidenceScenario','sourceRun','saveDirectory','gameVersion','files','provenance')
  Assert-NativeSeedInteger $manifest.schemaVersion 1 1
  if($manifest.schemaVersion-ne1-or$manifest.kind-cne'NATIVE99_DISPOSABLE_SEED_MANIFEST_V1'){throw 'Seed manifest version required'}
@@ -183,13 +187,17 @@ function Read-NativeSeedStageAuthority($Binding,[string]$AuthorityPath,[string]$
  Assert-NativeSeedFields $plan.seedStage @('mode','manifestSha256')
  if($plan.seedStage.mode-cne'STAGE_ONE_PRIVATE_DISPOSABLE_SEED'-or$plan.seedStage.manifestSha256-ine$authority.manifestSha256){throw 'Seed staging plan agreement required'}
  $null=Read-NativeSeedJson (Join-Path $Binding.fixtureRoot 'protected-fixture-receipt.private.json') $authority.fixtureReceiptSha256
- $pins=Read-NativeSeedJson (Join-Path $Binding.fixtureRoot 'source-pins.private.json') $authority.sourcePinsSha256 131072
+ $manifestHeader=Read-NativeSeedJson (Join-Path $Binding.fixtureRoot 'seed-manifest.private.json') $authority.manifestSha256
+ $modernManifest=($manifestHeader.schemaVersion-is[int]-or$manifestHeader.schemaVersion-is[long])-and$manifestHeader.schemaVersion-eq2
+ $pinLimit=if($modernManifest){262144}else{131072}
+ $pins=Read-NativeSeedJson (Join-Path $Binding.fixtureRoot 'source-pins.private.json') $authority.sourcePinsSha256 $pinLimit
+ if($modernManifest){Assert-NativeModernSeedPins $pins $Binding}
  foreach($name in @('fixture-inputs.ps1','seed-fixture.ps1','prepare-fixture.ps1','protection-check.ps1')){
   $path=Join-Path $PSScriptRoot $name
   $rows=@($pins.pins|Where-Object{$_.path-is[string]-and(Test-NativeSeedSamePath $_.path $path)})
   if($rows.Count-ne1-or$rows[0].sha256-isnot[string]-or(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash-ine$rows[0].sha256){throw 'Seed tooling source pins required'}
  }
- $source=Read-NativeSeedSource $Binding $authority.manifestSha256
+ $source=Read-NativeSeedSource $Binding $authority.manifestSha256 $pins $authority.sourcePinsSha256
  return [pscustomobject]@{authority=$authority;authoritySha256=$AuthoritySha256.ToUpperInvariant();source=$source}
 }
 function Write-NativeSeedCreateNewJson([string]$Path,$Value) {
@@ -262,15 +270,16 @@ function Invoke-NativeSeedStage([string]$BindingPath,[string]$BindingSha256,[str
 function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  $planControl=$null-ne$Plan-and@($Plan.PSObject.Properties.Name)-ccontains'campaignControl'
  $leaseControl=$null-ne$Lease-and@($Lease.PSObject.Properties.Name)-ccontains'campaignControl'
- if($Binding.schemaVersion-eq3-and($null-ne$Plan-or$null-ne$Lease)-and(!$planControl-or!$leaseControl-or$Plan.campaignControl.profile-cne'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'-or$Lease.campaignControl.profile-cne'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE')){throw 'Generation fixture requires its explicit campaign control'}
+ $creation=$Plan.campaignControl.profile-ceq'DISPOSABLE_SEED_CREATION'
+ if($Binding.schemaVersion-eq3-and($null-ne$Plan-or$null-ne$Lease)-and(!$planControl-or!$leaseControl-or$Plan.campaignControl.profile-cnotin@('GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE','DISPOSABLE_SEED_CREATION')-or$Lease.campaignControl.profile-cne$Plan.campaignControl.profile)){throw 'Generation fixture requires its explicit campaign control'}
  if($planControl-ne$leaseControl){throw 'Campaign control plan and lease must agree'}
  if(!$planControl){return}
  $generation=$Plan.campaignControl.profile-ceq'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'
- if($generation-and$Binding.schemaVersion-ne3){throw 'Generation campaign control requires its fixed fixture'}
+ if(($generation-or$creation)-and$Binding.schemaVersion-ne3){throw 'Generation campaign control requires its fixed fixture'}
  $inspection=$Plan.campaignControl.profile-ceq'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'
  foreach($control in @($Plan.campaignControl,$Lease.campaignControl)){
   Assert-NativeSeedFields $control @('schemaVersion','profile')
-  $version=if($generation){3}elseif($inspection){2}else{1};$profile=if($generation){'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'}elseif($inspection){'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'}else{'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE'}
+  $version=if($creation){4}elseif($generation){3}elseif($inspection){2}else{1};$profile=if($creation){'DISPOSABLE_SEED_CREATION'}elseif($generation){'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'}elseif($inspection){'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'}else{'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE'}
   Assert-NativeSeedInteger $control.schemaVersion $version $version
   if($control.profile-isnot[string]-or$control.profile-cne$profile){throw 'Closed campaign control profile required'}
  }
@@ -296,9 +305,9 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  foreach($authority in @($Plan,$Lease)){
   foreach($key in @('ownedNodeKill','campaign','e1MenuReceipt')){if(@($authority.PSObject.Properties.Name)-ccontains$key){throw 'Campaign control refuses unrelated phase authority'}}
   $hasSeed=@($authority.PSObject.Properties.Name)-ccontains'seed'
-  if((($inspection-or$generation)-and$hasSeed)-or(!$inspection-and!$generation-and!$hasSeed)){throw 'Campaign control exact profile seed authority required'}
+  if((($inspection-or$generation-or$creation)-and$hasSeed)-or(!$inspection-and!$generation-and!$creation-and!$hasSeed)){throw 'Campaign control exact profile seed authority required'}
  }
- if($inspection-or$generation){
+ if($inspection-or$generation-or$creation){
   foreach($name in @('seed-manifest.private.json','seed-stage-plan.private.json','seed-stage-authority.private.json','seed-stage-claim.private.json','seed-stage-receipt.private.json')){if(Test-Path -LiteralPath (Join-Path $Binding.fixtureRoot $name)){throw 'First-page inspection refuses seed metadata'}}
   $saves=Join-Path $Binding.fixtureRoot 'installation/saves';Assert-NativeSeedOrdinary $saves
   if(!(Get-Item -LiteralPath $saves).PSIsContainer-or@(Get-ChildItem -LiteralPath $saves -Force).Count-ne0){throw 'Empty first-page inspection saves required'}
@@ -307,7 +316,8 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  if([IO.Path]::GetFullPath($Lease.supportPinsPath)-cne[IO.Path]::GetFullPath($supportPath)){throw 'Campaign control exact support manifest required'}
  $support=Read-NativeSeedJson $supportPath $Lease.supportPinsSha256 262144
  Assert-NativeSeedFields $support @('pins')
- $sources=@('guarded-http-ownership.ps1','campaign-authority.mjs','batch-authorization.mjs','batch-session.mjs','finite-consent.mjs','fixture-binding.mjs','direct-frames.mjs','campaign-proof.mjs','generation-proof.mjs')+@('native-controller.ps1','protection-check.ps1','fixture-inputs.ps1','seed-fixture.ps1','publish-owned-snapshot.ps1','session-watchdog.ps1','menu-launch.ps1'|ForEach-Object {'fixture/'+$_})
+ if($creation){Assert-NativeSeedCreationHistory $Plan $Lease $Binding.fixtureRoot}
+ $sources=@('guarded-http-ownership.ps1','campaign-authority.mjs','batch-authorization.mjs','batch-session.mjs','finite-consent.mjs','fixture-binding.mjs','direct-frames.mjs','campaign-proof.mjs','generation-proof.mjs','seed-creation-history.mjs','seed-wizard-proof.mjs','seed-creation-output.mjs','seed-creation-custody.mjs')+@('native-controller.ps1','protection-check.ps1','fixture-inputs.ps1','seed-fixture.ps1','seed-creation-history.ps1','seed-preference.ps1','seed-provenance-v2.ps1','publish-owned-snapshot.ps1','session-watchdog.ps1','menu-launch.ps1'|ForEach-Object {'fixture/'+$_})
  foreach($relative in $sources){
   $path=[IO.Path]::GetFullPath((Join-Path $Binding.repositoryRoot ('tools/starsector-proxy/'+$relative)))
   $pins=@($support.pins|Where-Object {$_.path-is[string]-and[IO.Path]::GetFullPath($_.path)-ceq$path})

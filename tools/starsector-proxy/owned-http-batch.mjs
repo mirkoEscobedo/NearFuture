@@ -23,7 +23,9 @@ export const ownedHttpSources = Object.freeze(['.agentic/project.json', 'tools/s
     'tools/starsector-proxy/guarded-http.mjs', 'tools/starsector-proxy/guarded-mcp.mjs', 'tools/starsector-proxy/finite-consent.mjs',
     'tools/starsector-proxy/batch-authorization.mjs', 'tools/starsector-proxy/menu-launch-grant.mjs', 'tools/starsector-proxy/batch-session.mjs', 'tools/starsector-proxy/campaign-authority.mjs',
     'tools/starsector-proxy/fixture-binding.mjs', 'tools/starsector-proxy/campaign-proof.mjs',
-    'tools/starsector-proxy/generation-proof.mjs', ...fixtureProbeSources]);
+    'tools/starsector-proxy/generation-proof.mjs', 'tools/starsector-proxy/seed-creation-history.mjs',
+    'tools/starsector-proxy/seed-wizard-proof.mjs', 'tools/starsector-proxy/seed-creation-output.mjs',
+    'tools/starsector-proxy/seed-creation-custody.mjs', ...fixtureProbeSources]);
 /** Explicit complete installed runtime inventory, without an import resolver.
  * @param {string} root @param {string} powershell @param {string} supervisor */
 export function requiredOwnedHttpFiles(root, powershell, supervisor) {
@@ -97,10 +99,10 @@ export async function startOwnedHttpBatch({ root, source, runID, powershell,
     if (!isAbsolute(powershell) || !isAbsolute(supervisor) || (consentMode !== undefined && consentMode !== 'finite-explicit-consent')) throw new Error('Pinned finite provider configuration required');
     const admitted = readBatchAuthorization(source, { root, runID });
     readFixtureBinding(admitted);
-    const campaign = [2, 3, 4, 5].includes(admitted.binding.schemaVersion) ? /** @type {any} */ (admitted.binding).campaign : null;
+    const campaign = [2, 3, 4, 5, 6].includes(admitted.binding.schemaVersion) ? /** @type {any} */ (admitted.binding).campaign : null;
     const deadline = campaign ? Math.min(started + 180000, campaign.rootClock.effectiveDeadlineMs - campaign.rootClock.cleanupReserveMs) : started + 180000;
     const startupDeadline = Math.min(started + 20000, deadline);
-    const campaignMutations = [4, 5].includes(admitted.binding.schemaVersion) ? admitted.binding.batch === 'B1' ? ['activate_window', 'left_click'] : ['left_click']
+    const campaignMutations = admitted.binding.schemaVersion===6 ? ['left_click'] : [4, 5].includes(admitted.binding.schemaVersion) ? admitted.binding.batch === 'B1' ? ['activate_window', 'left_click'] : ['left_click']
         : admitted.binding.schemaVersion === 3 && admitted.binding.batch === 'B1' ? ['activate_window', 'left_click']
         : admitted.binding.batch === 'E1' ? admitted.binding.schemaVersion === 3 ? ['left_click', 'key'] : ['key'] : ['left_click'];
     const rawToolNames = campaign ? [...directToolNames.filter(name => !['activate_window', 'left_click', 'mouse_move'].includes(name)),

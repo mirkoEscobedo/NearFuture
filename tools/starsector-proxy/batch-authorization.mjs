@@ -35,7 +35,7 @@ export function readBatchAuthorization(path, { root, runID, now = Date.now() }) 
     const sourcePath = resolve(path);
     const source = read(sourcePath);
     const auth = source.value;
-    if ([2, 3, 4, 5].includes(auth?.schemaVersion)) return readCampaignAuthorization(sourcePath, { root, runID, now });
+    if ([2, 3, 4, 5, 6].includes(auth?.schemaVersion)) return readCampaignAuthorization(sourcePath, { root, runID, now });
     const keys = ['batch', 'leasePath', 'leaseSha256', 'ownedReceiptPath', 'ownedReceiptSha256',
         'planPath', 'planSha256', 'scenario', 'schemaVersion'];
     if (!auth || Array.isArray(auth) || Object.keys(auth).sort().join() !== keys.join() ||
@@ -104,7 +104,7 @@ export function readBatchAuthorization(path, { root, runID, now = Date.now() }) 
 export function claimBatchAuthorization(authorization) {
     writeFileSync(authorization.claimPath, JSON.stringify({ sourcePath: authorization.sourcePath,
         sourceSha256: authorization.sourceSha256, binding: authorization.binding }) + '\n', { flag: 'wx' });
-    if ([2, 3, 4, 5].includes(authorization.binding.schemaVersion)) claimCampaignOwner(authorization.binding);
+    if ([2, 3, 4, 5, 6].includes(authorization.binding.schemaVersion)) claimCampaignOwner(authorization.binding);
 }
 
 /** Independently re-read file/lease custody inside the owned MCP child before native initialization.

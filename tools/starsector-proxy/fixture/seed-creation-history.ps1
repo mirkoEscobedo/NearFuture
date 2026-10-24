@@ -1,0 +1,32 @@
+# New explicit seed-creation authority. Legacy generation and seed provenance remain separate.
+function Assert-NativeSeedCreationHistory($Plan,$Lease,[string]$Scenario) {
+ $null=Get-NativeSeedPreferenceWitness $Plan $Lease $Scenario
+ Assert-NativeSeedFields $Plan.historyAdmission @('path','sha256')
+ Assert-NativeSeedFields $Lease.historyAdmission @('path','sha256')
+ $reference=$Plan.historyAdmission
+ $path=Join-Path $Scenario 'root-history-baseline.admitted.private.json'
+ if($reference.path-cne$path-or$Lease.historyAdmission.path-cne$reference.path-or$Lease.historyAdmission.sha256-cne$reference.sha256){throw 'Fixed seed-creation history admission required'}
+ $grant=Read-NativeModernSeedJson $path $reference.sha256 262144
+ Assert-NativeSeedFields $grant @('schemaVersion','kind','issuer','driver','historyBaseline','maxReservedActions','previous')
+ Assert-NativeSeedInteger $grant.schemaVersion 2 2
+ if($grant.kind-cne'ROOT_ADMITTED_SEED_CREATION_HISTORY'-or$grant.issuer-cne'/root'-or$grant.driver-cne'/root/recovery_game_driver'){throw 'Explicit seed-creation extension required'}
+ Assert-NativeSeedFields $grant.historyBaseline @('overallAttempts','uiAttempts','reservedActions','sentActions')
+ foreach($key in @('overallAttempts','uiAttempts','reservedActions','sentActions')){Assert-NativeSeedInteger $grant.historyBaseline.$key $Plan.historyBaseline.$key $Plan.historyBaseline.$key}
+ $limit=$Plan.absoluteMaxReservedActions
+ Assert-NativeSeedInteger $limit ($Plan.historyBaseline.reservedActions+1) ($Plan.historyBaseline.reservedActions+8)
+ Assert-NativeSeedInteger $Lease.absoluteMaxReservedActions $limit $limit
+ Assert-NativeSeedInteger $grant.maxReservedActions $limit $limit
+ Assert-NativeSeedFields $grant.previous @('result','ledger')
+ $prior=@{}
+ foreach($key in @('result','ledger')){
+  $pin=$grant.previous.$key;Assert-NativeSeedFields $pin @('path','sha256')
+  if($pin.path-isnot[string]-or![IO.Path]::IsPathFullyQualified($pin.path)){throw 'Absolute previous seed history required'}
+  $prior[$key]=Read-NativeSeedJson $pin.path $pin.sha256 262144
+ }
+ $r=$prior.result;$l=$prior.ledger
+ if($r.schemaVersion-ne1-or$r.kind-cnotin@('ACTUAL_SCHEMA5_COMMON_PREFERENCE_PREFIX_DRIVER_CLOSEOUT','ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT')-or$r.allOwnedHandlesTerminalReaped-isnot[bool]-or!$r.allOwnedHandlesTerminalReaped-or$l.schemaVersion-ne2-or$l.kind-cne'STARSECTOR_FINITE_LAUNCH_HISTORY'){throw 'Completed previous seed history required'}
+ foreach($key in @('overallAttempts','uiAttempts','reservedActions','sentActions')){Assert-NativeSeedInteger $r.actions.actualGuard.$key $l.history.$key $l.history.$key}
+ foreach($key in @('overallAttempts','uiAttempts')){Assert-NativeSeedInteger $r.actions.currentRunContext.$key $Plan.historyBaseline.$key $Plan.historyBaseline.$key;Assert-NativeSeedInteger ($l.history.$key+1) $Plan.historyBaseline.$key $Plan.historyBaseline.$key}
+ foreach($key in @('reservedActions','sentActions')){Assert-NativeSeedInteger $l.history.$key $Plan.historyBaseline.$key $Plan.historyBaseline.$key}
+ Assert-NativeSeedInteger $r.actions.absoluteMaxReservedActions $Plan.historyBaseline.reservedActions 9007199254740991
+}
