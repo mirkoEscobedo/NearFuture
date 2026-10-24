@@ -62,6 +62,17 @@ function Assert-NativeFixtureSettings($Binding,[string]$Text) {
   if($match.Value.StartsWith('"')){return $match.Value}
   return ''
  })
+ # The game accepts float suffixes, leading decimal points and semicolon separators.
+ # Normalize only the parser view; preserve strings and original settings bytes.
+ $clean=[regex]::Replace($clean,'"(?:\\.|[^"\\])*"|(?<![A-Za-z0-9_.])(?<number>-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)[fF]?(?=\s*[;,}\]])|;',[Text.RegularExpressions.MatchEvaluator]{
+  param($match)
+  if($match.Value.StartsWith('"')){return $match.Value}
+  if($match.Value-ceq';'){return ','}
+  $number=$match.Groups['number'].Value
+  if($number.StartsWith('-.')){return '-0'+$number.Substring(1)}
+  if($number.StartsWith('.')){return '0'+$number}
+  return $number
+ })
  $options=[Text.Json.JsonDocumentOptions]::new();$options.AllowTrailingCommas=$true
  try{$document=[Text.Json.JsonDocument]::Parse($clean,$options)}catch{throw 'Generation requires uncompressed save data'}
  try{

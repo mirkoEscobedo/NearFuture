@@ -13,7 +13,7 @@ test('actual generation preparation writes the closed private recipe and preserv
         const source=f.binding.sourceInstallation,runtime=f.binding.qualifiedRuntimeRoot;
         const originals=[...Array.from({length:178},(_,i)=>['saves/save-'+i+'.txt','generated-save-'+i]),
             ['vmparams','generated vmparams'],['mods/enabled_mods.json','{"enabledMods":["near_future"]}'],
-            ['starsector-core/data/config/settings.json','{"maxAutosaveSlots":3,"autosaveFeatureEnabled":true,"autosaveEnabledByDefault":true,"compressSaveGameData":false}'],
+            ['starsector-core/data/config/settings.json','{"maxAutosaveSlots":3,"autosaveFeatureEnabled":true,"autosaveEnabledByDefault":true,"scale":.5f;"compressSaveGameData":false}'],
             ['starsector-core/compiler_directives.txt','generated directives']];
         const baseline=originals.map(([path,text])=>({path,...write(resolve(source,path),text)}));
         write(resolve(source,'starsector.exe'),'Generated marker, not executable');
@@ -35,9 +35,9 @@ test('actual generation preparation writes the closed private recipe and preserv
         assert.match(result.stderr,/XmlDocument|Cannot convert value/);
         const installation=resolve(f.root,'installation');
         assert.deepEqual(JSON.parse(readFileSync(resolve(installation,'mods/enabled_mods.json'),'utf8')),{enabledMods:[]});
-        const settings=JSON.parse(readFileSync(resolve(installation,'starsector-core/data/config/settings.json'),'utf8'));
-        assert.equal(settings.compressSaveGameData,false);assert.equal(settings.autosaveFeatureEnabled,false);
-        assert.equal(settings.autosaveEnabledByDefault,false);assert.equal(settings.maxAutosaveSlots,3);
+        assert.equal(readFileSync(resolve(installation,'starsector-core/data/config/settings.json'),'utf8'),
+            '{"maxAutosaveSlots":3,"autosaveFeatureEnabled":false,"autosaveEnabledByDefault":false,"scale":.5f;"compressSaveGameData":false}',
+            'preparation preserves game numeric syntax and changes only private autosave settings');
         assert.deepEqual(readdirSync(resolve(installation,'saves')),[]);
         for(const row of baseline) {
             assert.deepEqual(filePin(resolve(source,row.path)),{bytes:row.bytes,sha256:row.sha256});

@@ -368,6 +368,9 @@ runtime pins and private vault initialization. Preparation enables zero mods
 and requires the source compression setting already false; it never rewrites
 compression or original files. Protection rechecks the exact empty enabled-mods
 recipe and literal uncompressed setting even if receipt digests are refreshed.
+Validation accepts the game's float suffixes such as `1f`, leading decimal
+points and semicolon separators in its parser view only; preparation preserves
+those bytes and strings.
 Legacy fixture bindings and input profiles cannot select this recipe.
 
 B1 uses the existing inspected main-menu receipt with `newGameCoordinate`. E1

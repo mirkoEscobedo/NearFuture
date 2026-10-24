@@ -97,6 +97,22 @@ test('generation configuration accepts uncompressed data and refuses compressed 
     } finally {fixture.close();}
 });
 
+test('game float-suffixed numbers and separators retain strict uncompressed generation validation',()=>{
+    const fixture=generationBindingFixture();
+    const quote=(/** @type {string} */ value)=>"'"+value.replaceAll("'","''")+"'";
+    try {
+        const settings='{"scale":1f;"offset":-.5f,"samples":[.25,0F,2.5e2f],"note":".5f; // # literal","compressSaveGameData":false}';
+        const valid=readGenerationBinding(fixture,'Assert-NativeFixtureSettings $binding '+quote(settings));
+        assert.equal(valid.status,0,valid.stderr);
+        for(const value of ['true','"false"','0f']) {
+            const result=readGenerationBinding(fixture,'Assert-NativeFixtureSettings $binding '+
+                quote(settings.replace('"compressSaveGameData":false','"compressSaveGameData":'+value)));
+            assert.notEqual(result.status,0,value);
+            assert.match(result.stderr,/Generation requires uncompressed save data/);
+        }
+    } finally {fixture.close();}
+});
+
 test('generation settings preserve commented game syntax but require exactly one literal false compression flag',()=>{
     const fixture=generationBindingFixture();
     const quote=(/** @type {string} */ value)=>"'"+value.replaceAll("'","''")+"'";
