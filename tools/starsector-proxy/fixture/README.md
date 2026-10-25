@@ -516,3 +516,16 @@ protected empty private saves. Actual attempt counters advance once while
 reserved/sent counters retain every historical unsent reservation. A failure
 does not acquire the completed-seed closeout kind; the seed consumer rejects it.
 
+`ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY` is a distinct closed branch
+with the same twenty evidence descriptors. It requires one acknowledged strict
+Play, fourteen fixed calls and three original PNGs, no later phase claim, known
+pending Play, no uncertainty, and an exact one-action reserved/sent increment.
+The initial owned Java PID, birth, parent, kernel identity, executable, session
+and Job must match the current owner across a launcher-to-game HWND replacement.
+Each original remains bound to its actual source call, arguments and chronology;
+complete PNG parsing is shared, while both history readers enforce their own
+action, process and terminal checks. The historical failed cap remains unchanged.
+Only a new explicit grant may admit the next bounded allowance, retaining the
+spent Play and every older unsent reservation. This kind also refuses as seed
+provenance. It does not resolve Play, grant input, activate a window or renew time.
+

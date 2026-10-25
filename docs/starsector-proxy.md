@@ -499,3 +499,19 @@ authority, provider/caller termination and save protection. The next grant
 carries the real attempt context and unchanged reserved/sent counts. This
 neither creates seed provenance nor permits activation or a blind replay;
 the next run still requires a supported foreground setup.
+
+A separately closed known-Play failure uses
+`ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY`. It retains the acknowledged
+Play reservation as pending and carries its spent reserved/sent action into the
+next explicit grant. Both readers verify the fourteen-call sequence, three
+complete original PNGs, the strict Play acknowledgement, and the original Java
+PID/birth/session/parent/kernel/Job identity across the window replacement.
+Provider/caller closure and protected empty private saves remain mandatory.
+The zero-input kind keeps its existing five-call, zero-action contract.
+
+Neither failure kind is completed seed provenance. A new grant must retain all
+counts and explicitly admit its bounded allowance; an old cap is never rewritten
+or replenished. Future input must include `target_app: "java.exe"` alongside the
+current owned HWND and strict focus, as required by the completed-seed consumer.
+The private B1 frame helper must permit only the qualified known-Play window
+handoff, and callers must stop metadata construction after any nonzero result.

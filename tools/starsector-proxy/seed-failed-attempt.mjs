@@ -4,8 +4,10 @@ import {resolve,dirname,basename,isAbsolute} from 'node:path';
 import {readdirSync} from 'node:fs';
 import {isDeepStrictEqual as same} from 'node:util';
 import {file,read,closed,requireThat} from './campaign-proof.mjs';
+import {assertKnownPlayFailure} from './seed-known-play-attempt.mjs';
 
 export const failedSeedAttemptKind='ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY';
+export const knownPlayFailedSeedAttemptKind='ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY';
 const driver='/root/recovery_game_driver';
 const names={result:'driver-flow-result.private.json',ledger:'guard-launch-history.private.json',plan:'plan.json',
  lease:'native-lane-lease.private.json',controller:'controller-start.private.json',owned:'owned-processes-current.private.json',
@@ -30,9 +32,20 @@ const returnedLaunchStep=step=>({status:step?.status,timedOut:step?.timedOut,pro
  * @param {any} receipt @param {any} previousLedger @param {any} ledgerPin
  * @param {(plan:any,lease:any,scenario:string)=>any} readPreference */
 export function readFailedSeedAttempt(receipt,previousLedger,ledgerPin,readPreference){
+ return readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,failedSeedAttemptKind);
+}
+/** @param {any} receipt @param {any} previousLedger @param {any} ledgerPin
+ * @param {(plan:any,lease:any,scenario:string)=>any} readPreference */
+export function readKnownPlayFailedSeedAttempt(receipt,previousLedger,ledgerPin,readPreference){
+ return readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,knownPlayFailedSeedAttemptKind);
+}
+/** @param {any} receipt @param {any} previousLedger @param {any} ledgerPin
+ * @param {(plan:any,lease:any,scenario:string)=>any} readPreference @param {string} kind */
+function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kind){
  const v=receipt;
+ const known=kind===knownPlayFailedSeedAttemptKind;
  fail(closed(v,['schemaVersion','kind','issuer','driver','scenario','sourceWorkspace','sourceHead','allOwnedHandlesTerminalReaped','actions','evidence'])&&
-  v.schemaVersion===1&&v.kind===failedSeedAttemptKind&&v.issuer==='/root'&&v.driver===driver&&v.allOwnedHandlesTerminalReaped===true&&
+  v.schemaVersion===1&&v.kind===kind&&v.issuer==='/root'&&v.driver===driver&&v.allOwnedHandlesTerminalReaped===true&&
   typeof v.scenario==='string'&&isAbsolute(v.scenario)&&resolve(v.scenario)===v.scenario&&typeof v.sourceWorkspace==='string'&&
   isAbsolute(v.sourceWorkspace)&&resolve(v.sourceWorkspace)===v.sourceWorkspace&&dirname(v.scenario)===resolve(v.sourceWorkspace,'.tmp/starsector-proxy/scenarios')&&
   /^[a-f0-9]{40}$/.test(v.sourceHead)&&closed(v.actions,['actualGuard','currentRunContext','absoluteMaxReservedActions'])&&
@@ -42,7 +55,7 @@ export function readFailedSeedAttempt(receipt,previousLedger,ledgerPin,readPrefe
  for(const [key,name] of Object.entries(names))a[key]=pinned(e[key],resolve(scenario,name));
  const {result:r,ledger:l,plan:p,lease,controller:c,owned,rootCall,caller,launch,protection,preference,source,claim,observation:o}=a;
  fail(same(e.ledger,ledgerPin)&&same(l,previousLedger)&&l.schemaVersion===2&&l.kind==='STARSECTOR_FINITE_LAUNCH_HISTORY'&&
-  l.pending===null&&l.uncertain===false&&same(l.history,v.actions.actualGuard)&&same(l.history,p.historyBaseline)&&
+  (known||l.pending===null)&&l.uncertain===false&&same(l.history,v.actions.actualGuard)&&(known||same(l.history,p.historyBaseline))&&
   p.scenarioId===basename(scenario)&&p.paths?.scenario===scenario&&p.source?.qualifiedHead===v.sourceHead&&
   p.campaignControl?.profile==='DISPOSABLE_SEED_CREATION'&&p.campaignControl.schemaVersion===4&&
   p.ownership?.driver===driver&&p.ownership.onlyGameInputDriver===true&&lease.planSha256?.toLowerCase()===e.plan.sha256&&
@@ -51,11 +64,11 @@ export function readFailedSeedAttempt(receipt,previousLedger,ledgerPin,readPrefe
   c.rootLeaseSha256?.toLowerCase()===e.lease.sha256&&l.controllerSha256===e.controller.sha256&&
   rootCall.key===l.rootRecordKey&&rootCall.value?.args?.workdir===v.sourceWorkspace&&
   Number.isSafeInteger(rootCall.value.raw?.session_id)&&rootCall.value.raw.session_id>0&&
-  same(r.actualGuardHistory,l.history)&&same(r.inheritedGuardBaseline,l.history)&&same(r.actualRunContext,v.actions.currentRunContext)&&
+  same(r.actualGuardHistory,l.history)&&same(r.inheritedGuardBaseline,known?p.historyBaseline:l.history)&&same(r.actualRunContext,v.actions.currentRunContext)&&
   r.schemaVersion===1&&r.kind==='ACTUAL_FINITE_DRIVER_FLOW_RESULT'&&r.status==='CLOSED_FAIL'&&r.verdict==='FAIL'&&
-  r.failureCategory==='FOCUS_BLOCKED'&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
-  same(r.actions,{reservedThisRun:0,sentThisRun:0,clicks:0,activations:0})&&
-  same(r.providers,{started:1,B1:'TERMINAL_PASS_REAPED',E1:'NOT_STARTED',E2:'NOT_STARTED',calls:5})&&
+  r.failureCategory===(known?'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY':'FOCUS_BLOCKED')&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
+  (known||(same(r.actions,{reservedThisRun:0,sentThisRun:0,clicks:0,activations:0})&&
+  same(r.providers,{started:1,B1:'TERMINAL_PASS_REAPED',E1:'NOT_STARTED',E2:'NOT_STARTED',calls:5})))&&
   r.absoluteMaxReservedActions===p.absoluteMaxReservedActions&&r.absoluteMaxReservedActions===lease.absoluteMaxReservedActions&&
   r.absoluteMaxReservedActions===v.actions.absoluteMaxReservedActions&&Number.isSafeInteger(r.absoluteMaxReservedActions)&&
   r.absoluteMaxReservedActions>l.history.reservedActions&&r.absoluteMaxReservedActions<=l.history.reservedActions+8&&
@@ -121,7 +134,9 @@ export function readFailedSeedAttempt(receipt,previousLedger,ledgerPin,readPrefe
   ...claim.binding.ownedPids,t.verifierPid,ready.node.pid,ready.helper.pid,...ready.supervisorJobPids];
  fail(absence.allAbsent===true&&same(absence.liveRows,[])&&Array.isArray(absence.queriedExactRecordedPids)&&
   expected.every(pid=>Number.isSafeInteger(pid)&&pid>0&&absence.queriedExactRecordedPids.includes(pid))&&Date.parse(absence.atUtc)>=Date.parse(t.at)&&
-  Date.parse(protection.at)>=Date.parse(t.at)&&Array.isArray(o.calls)&&o.calls.length===5&&o.schemaVersion===1&&
+  Date.parse(protection.at)>=Date.parse(t.at));
+ if(known){assertKnownPlayFailure({v,a,e,output,pinned,fail});return v.actions;}
+ fail(Array.isArray(o.calls)&&o.calls.length===5&&o.schemaVersion===1&&
   o.kind==='ACTUAL_DRIVER_NO_INPUT_FOCUS_STOP'&&o.category==='FOCUS_BLOCKED'&&o.verdict==='FAIL'&&o.driver===driver&&
   o.scenarioId===p.scenarioId&&o.sourceHead===v.sourceHead&&o.inputActions===0&&o.activations===0&&o.providersStarted===1&&
   o.providersClosedKnown===1&&same(o.currentRunContext,r.actualRunContext)&&same(o.actualGuardHistory,l.history));

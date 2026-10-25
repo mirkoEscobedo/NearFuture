@@ -2,7 +2,7 @@
 import {resolve,isAbsolute} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
 import {requireThat,read,closed} from './campaign-proof.mjs';
-import {failedSeedAttemptKind,readFailedSeedAttempt} from './seed-failed-attempt.mjs';
+import {failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,readFailedSeedAttempt,readKnownPlayFailedSeedAttempt} from './seed-failed-attempt.mjs';
 
 export const seedCreationFlow='DISPOSABLE_SEED_CREATION';
 
@@ -60,10 +60,10 @@ export function seedCreationActionLimit(plan,lease,scenario) {
         closed(result.actions,['inheritedBaseline','actualGuard','currentRunContext','absoluteMaxReservedActions','clicks','activations','providers'])&&
         result.actions.clicks===8&&result.actions.activations===0&&result.actions.providers===3,
     'completed seed history must retain its distinct successful provenance shape');
-    const failed=result.kind===failedSeedAttemptKind;
-    const actions=failed?readFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):result.actions;
+    const failed=result.kind===failedSeedAttemptKind,known=result.kind===knownPlayFailedSeedAttemptKind;
+    const actions=failed||known?(known?readKnownPlayFailedSeedAttempt:readFailedSeedAttempt)(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):result.actions;
     requireThat(result.schemaVersion===1&&['ACTUAL_SCHEMA5_COMMON_PREFERENCE_PREFIX_DRIVER_CLOSEOUT',
-        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',failedSeedAttemptKind].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
+        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',failedSeedAttemptKind,knownPlayFailedSeedAttemptKind].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
         ledger.schemaVersion===2&&ledger.kind==='STARSECTOR_FINITE_LAUNCH_HISTORY'&&
         isDeepStrictEqual(actions?.actualGuard,ledger.history)&&
         actions.currentRunContext?.overallAttempts===baseline.overallAttempts&&
