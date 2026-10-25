@@ -18,17 +18,17 @@ const png=Buffer.concat([Buffer.from('89504e470d0a1a0a','hex'),
 const category='PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY';
 
 /** Existing no-input fixture remains untouched; override only generated prior-attempt data. */
-/** @param {{targetApp?:string,originX?:number,originY?:number,sessionId?:unknown}} [options] */
+/** @param {{targetApp?:string,originX?:number,originY?:number,sessionId?:unknown,historyBaseline?:{overallAttempts:number,uiAttempts:number,reservedActions:number,sentActions:number}}} [options] */
 export function knownPlayHistoryFixture(options={}){
  const f=/** @type {any} */(failedSeedHistoryFixture()),paths=f.evidencePaths,scenario=f.priorScenario;
- const before={overallAttempts:40,uiAttempts:37,reservedActions:72,sentActions:70};
- const guard={overallAttempts:40,uiAttempts:37,reservedActions:73,sentActions:71};
- const context={overallAttempts:41,uiAttempts:38};
- const future={overallAttempts:41,uiAttempts:38,reservedActions:73,sentActions:71};
+ const before=options.historyBaseline??{overallAttempts:40,uiAttempts:37,reservedActions:72,sentActions:70};
+ const guard={...before,reservedActions:before.reservedActions+1,sentActions:before.sentActions+1};
+ const context={overallAttempts:before.overallAttempts+1,uiAttempts:before.uiAttempts+1};
+ const future={...guard,...context},previousCap=before.reservedActions+8,nextCap=guard.reservedActions+8;
  const runID=value(paths.ledger).provider.runID,output=resolve(f.root,'.tmp/starsector-proxy',runID);
  const anchor=Date.now()-5000,iso=(/** @type {number} */ offset)=>new Date(anchor+offset).toISOString();
- const priorPlan=value(paths.plan);priorPlan.historyBaseline={...before};json(paths.plan,priorPlan);
- const priorLease=value(paths.lease);priorLease.planSha256=ref(paths.plan).sha256;json(paths.lease,priorLease);
+ const priorPlan=value(paths.plan);priorPlan.historyBaseline={...before};priorPlan.absoluteMaxReservedActions=previousCap;json(paths.plan,priorPlan);
+ const priorLease=value(paths.lease);priorLease.planSha256=ref(paths.plan).sha256;priorLease.absoluteMaxReservedActions=previousCap;json(paths.lease,priorLease);
  const c=value(paths.controller);
  Object.assign(c,{at:iso(100),controllerCreationTime:iso(100),sessionId:options.sessionId??1,rootLeaseSha256:ref(paths.lease).sha256,
   conservativeOuterDeadlineUtc:iso(480000),controllerDeadlineUtc:iso(480000)});
@@ -48,7 +48,7 @@ export function knownPlayHistoryFixture(options={}){
  const terminal=value(paths.providerTerminal);terminal.at=iso(3000);json(paths.providerTerminal,terminal);
  const protection=value(paths.protection);protection.at=iso(4000);json(paths.protection,protection);
  const absence=value(paths.pidAbsence);absence.atUtc=iso(4001);json(paths.pidAbsence,absence);
- const campaign={...structuredClone(f.campaign),windowId:19,historyBaseline:{...before},maxReservedActions:80,
+ const campaign={...structuredClone(f.campaign),windowId:19,historyBaseline:{...before},maxReservedActions:previousCap,
   rootCallRecord:call,rootClock:{...f.campaign.rootClock,recordKey:call.key,startMs:anchor,
    deadlineMs:anchor+480000,effectiveDeadlineMs:anchor+420000,callerAdmissionDeadlineMs:anchor+420000,
    originalCallerAdmissionDeadlineMs:anchor+420000},
@@ -109,7 +109,7 @@ export function knownPlayHistoryFixture(options={}){
   }
  }
  const pending={batch:'B1',runID,sourceSha256:ref(paths.source).sha256,
-  reservationID:ref(paths.controller).sha256+':73',tool:'left_click',args:clickArgs,status:'AWAITING_AFTER',
+  reservationID:ref(paths.controller).sha256+':'+guard.reservedActions,tool:'left_click',args:clickArgs,status:'AWAITING_AFTER',
   wizardStep:{ordinal:1,stage:'PLAY'},sentAtMs:Date.parse(posts[6].callStarted)+1,
   knownResultAtMs:Date.parse(posts[6].callCompleted)-1};
  const ledger=value(paths.ledger);Object.assign(ledger,{controllerSha256:ref(paths.controller).sha256,
@@ -128,13 +128,13 @@ export function knownPlayHistoryFixture(options={}){
   E1:'NOT_STARTED',E2:'NOT_STARTED',seedClaim:false,cleanup:'ROOT_OWNS_PENDING_ACTUAL_TERMINAL_PROTECTION',allHistoryRetained:true};
  json(paths.observation,observation);
  const result=value(paths.result);Object.assign(result,{failureCategory:category,inheritedGuardBaseline:before,
-  actualGuardHistory:guard,actualRunContext:context,absoluteMaxReservedActions:80,historicalUnsentReservations:2,
+  actualGuardHistory:guard,actualRunContext:context,absoluteMaxReservedActions:previousCap,historicalUnsentReservations:guard.reservedActions-guard.sentActions,
   actions:{reservedThisRun:1,sentThisRun:1,clicks:1,activations:0,stage:'PLAY',coordinate:clickArgs.coordinate,
    originalWindow:19,replacementWindow:20,ownedPid:101,status:'AWAITING_AFTER',uncertain:false},
   providers:{started:1,B1:'TERMINAL_PASS_REAPED',E1:'NOT_STARTED',E2:'NOT_STARTED',calls:14}});
  json(paths.result,result);
  const closeout=f.closeout;closeout.kind='ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY';
- closeout.actions={actualGuard:guard,currentRunContext:context,absoluteMaxReservedActions:80};
+ closeout.actions={actualGuard:guard,currentRunContext:context,absoluteMaxReservedActions:previousCap};
  function refresh(){
   const r=value(paths.result);
   r.evidence=Object.fromEntries(Object.entries({observation:paths.observation,callerTerminal:paths.caller,
@@ -143,13 +143,13 @@ export function knownPlayHistoryFixture(options={}){
   closeout.evidence=Object.fromEntries(Object.entries(paths).map(([k,p])=>[k,ref(/** @type {string} */(p))]));
   json(f.closeoutPath,closeout);
   json(f.grantPath,{schemaVersion:2,kind:'ROOT_ADMITTED_SEED_CREATION_HISTORY',issuer:'/root',
-   driver:'/root/recovery_game_driver',historyBaseline:{...future},maxReservedActions:81,
+   driver:'/root/recovery_game_driver',historyBaseline:{...future},maxReservedActions:nextCap,
    previous:{result:ref(f.closeoutPath),ledger:ref(paths.ledger)}});
   for(const v of [f.plan,f.launchLease,f.phasePlan,f.phaseLease]){
-   v.historyBaseline={...future};v.historyAdmission=ref(f.grantPath);v.absoluteMaxReservedActions=81;
+   v.historyBaseline={...future};v.historyAdmission=ref(f.grantPath);v.absoluteMaxReservedActions=nextCap;
   }
-  f.campaign.historyBaseline={...future};f.campaign.maxReservedActions=81;
-  f.predecessor.historyBaseline={...future};f.predecessor.maxReservedActions=81;f.refreshLaunch();
+  f.campaign.historyBaseline={...future};f.campaign.maxReservedActions=nextCap;
+  f.predecessor.historyBaseline={...future};f.predecessor.maxReservedActions=nextCap;f.refreshLaunch();
  }
  refresh();
  return {...f,closeout,refresh,knownPlay:{before,guard,context,future,pending,original,replacement,posts,calls,originals}};

@@ -8,6 +8,7 @@ import {assertKnownPlayFailure} from './seed-known-play-attempt.mjs';
 
 export const failedSeedAttemptKind='ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY';
 export const knownPlayFailedSeedAttemptKind='ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY';
+export const captureStopFailedSeedAttemptKind='ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY';
 const driver='/root/recovery_game_driver';
 const names={result:'driver-flow-result.private.json',ledger:'guard-launch-history.private.json',plan:'plan.json',
  lease:'native-lane-lease.private.json',controller:'controller-start.private.json',owned:'owned-processes-current.private.json',
@@ -40,10 +41,15 @@ export function readKnownPlayFailedSeedAttempt(receipt,previousLedger,ledgerPin,
  return readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,knownPlayFailedSeedAttemptKind);
 }
 /** @param {any} receipt @param {any} previousLedger @param {any} ledgerPin
+ * @param {(plan:any,lease:any,scenario:string)=>any} readPreference */
+export function readCaptureStopFailedSeedAttempt(receipt,previousLedger,ledgerPin,readPreference){
+ return readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,captureStopFailedSeedAttemptKind);
+}
+/** @param {any} receipt @param {any} previousLedger @param {any} ledgerPin
  * @param {(plan:any,lease:any,scenario:string)=>any} readPreference @param {string} kind */
 function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kind){
  const v=receipt;
- const known=kind===knownPlayFailedSeedAttemptKind;
+ const captureStop=kind===captureStopFailedSeedAttemptKind,known=kind===knownPlayFailedSeedAttemptKind||captureStop;
  fail(closed(v,['schemaVersion','kind','issuer','driver','scenario','sourceWorkspace','sourceHead','allOwnedHandlesTerminalReaped','actions','evidence'])&&
   v.schemaVersion===1&&v.kind===kind&&v.issuer==='/root'&&v.driver===driver&&v.allOwnedHandlesTerminalReaped===true&&
   typeof v.scenario==='string'&&isAbsolute(v.scenario)&&resolve(v.scenario)===v.scenario&&typeof v.sourceWorkspace==='string'&&
@@ -66,7 +72,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   Number.isSafeInteger(rootCall.value.raw?.session_id)&&rootCall.value.raw.session_id>0&&
   same(r.actualGuardHistory,l.history)&&same(r.inheritedGuardBaseline,known?p.historyBaseline:l.history)&&same(r.actualRunContext,v.actions.currentRunContext)&&
   r.schemaVersion===1&&r.kind==='ACTUAL_FINITE_DRIVER_FLOW_RESULT'&&r.status==='CLOSED_FAIL'&&r.verdict==='FAIL'&&
-  r.failureCategory===(known?'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY':'FOCUS_BLOCKED')&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
+  r.failureCategory===(captureStop?'CAPTURE_UNCERTAIN':known?'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY':'FOCUS_BLOCKED')&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
   (known||(same(r.actions,{reservedThisRun:0,sentThisRun:0,clicks:0,activations:0})&&
   same(r.providers,{started:1,B1:'TERMINAL_PASS_REAPED',E1:'NOT_STARTED',E2:'NOT_STARTED',calls:5})))&&
   r.absoluteMaxReservedActions===p.absoluteMaxReservedActions&&r.absoluteMaxReservedActions===lease.absoluteMaxReservedActions&&
@@ -135,7 +141,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
  fail(absence.allAbsent===true&&same(absence.liveRows,[])&&Array.isArray(absence.queriedExactRecordedPids)&&
   expected.every(pid=>Number.isSafeInteger(pid)&&pid>0&&absence.queriedExactRecordedPids.includes(pid))&&Date.parse(absence.atUtc)>=Date.parse(t.at)&&
   Date.parse(protection.at)>=Date.parse(t.at));
- if(known){assertKnownPlayFailure({v,a,e,output,pinned,fail});return v.actions;}
+ if(known){assertKnownPlayFailure({v,a,e,output,pinned,fail,captureStop});return v.actions;}
  fail(Array.isArray(o.calls)&&o.calls.length===5&&o.schemaVersion===1&&
   o.kind==='ACTUAL_DRIVER_NO_INPUT_FOCUS_STOP'&&o.category==='FOCUS_BLOCKED'&&o.verdict==='FAIL'&&o.driver===driver&&
   o.scenarioId===p.scenarioId&&o.sourceHead===v.sourceHead&&o.inputActions===0&&o.activations===0&&o.providersStarted===1&&

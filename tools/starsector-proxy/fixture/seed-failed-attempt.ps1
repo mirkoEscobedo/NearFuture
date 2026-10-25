@@ -6,6 +6,9 @@ function Read-NativeFailedSeedAttempt($Receipt,$PreviousLedger,$LedgerPin) {
 function Read-NativeKnownPlayFailedSeedAttempt($Receipt,$PreviousLedger,$LedgerPin) {
  return Read-NativeSeedFailedAttemptCore $Receipt $PreviousLedger $LedgerPin 'ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY'
 }
+function Read-NativeCaptureStopFailedSeedAttempt($Receipt,$PreviousLedger,$LedgerPin) {
+ return Read-NativeSeedFailedAttemptCore $Receipt $PreviousLedger $LedgerPin 'ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY'
+}
 function Read-NativeSeedFailedAttemptCore($Receipt,$PreviousLedger,$LedgerPin,[string]$ExpectedKind) {
  function Need($Ok){if(!$Ok){throw 'Closed no-input failed seed attempt custody required'}}
  function Exact-Integer($Value,[long]$Expected){Assert-NativeSeedInteger $Value $Expected $Expected}
@@ -24,10 +27,10 @@ function Read-NativeSeedFailedAttemptCore($Receipt,$PreviousLedger,$LedgerPin,[s
   return (Read-NativeModernSeedJson $Expected $Pin.sha256 $Maximum)
  }
  function Critical($Step){return [pscustomobject]@{command=$Step.command;args=$Step.args;cwd=$Step.cwd;processOwnership=$Step.processOwnership;status=$Step.status;timedOut=$Step.timedOut}}
- $v=$Receipt;$driver='/root/recovery_game_driver';$known=$ExpectedKind-ceq'ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY'
+ $v=$Receipt;$driver='/root/recovery_game_driver';$captureStop=$ExpectedKind-ceq'ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY';$known=($ExpectedKind-ceq'ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY'-or$captureStop)
  Assert-NativeSeedFields $v @('schemaVersion','kind','issuer','driver','scenario','sourceWorkspace','sourceHead','allOwnedHandlesTerminalReaped','actions','evidence')
  Assert-NativeSeedInteger $v.schemaVersion 1 1
- Need ($ExpectedKind-cin@('ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY')-and$v.kind-ceq$ExpectedKind-and$v.issuer-ceq'/root'-and$v.driver-ceq$driver-and$v.allOwnedHandlesTerminalReaped-is[bool]-and$v.allOwnedHandlesTerminalReaped)
+ Need ($ExpectedKind-cin@('ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY')-and$v.kind-ceq$ExpectedKind-and$v.issuer-ceq'/root'-and$v.driver-ceq$driver-and$v.allOwnedHandlesTerminalReaped-is[bool]-and$v.allOwnedHandlesTerminalReaped)
  foreach($path in @($v.scenario,$v.sourceWorkspace)){Need ($path-is[string]-and[IO.Path]::IsPathFullyQualified($path)-and[IO.Path]::GetFullPath($path)-ceq$path)}
  $scenario=$v.scenario;Need ([IO.Path]::GetDirectoryName($scenario)-ceq(Join-Path $v.sourceWorkspace '.tmp/starsector-proxy/scenarios')-and$v.sourceHead-is[string]-and$v.sourceHead-cmatch'^[a-f0-9]{40}$')
  Assert-NativeSeedFields $v.actions @('actualGuard','currentRunContext','absoluteMaxReservedActions')
@@ -44,7 +47,7 @@ function Read-NativeSeedFailedAttemptCore($Receipt,$PreviousLedger,$LedgerPin,[s
  Need ($p.scenarioId-ceq[IO.Path]::GetFileName($scenario)-and$p.paths.scenario-ceq$scenario-and$p.source.qualifiedHead-ceq$v.sourceHead-and$p.campaignControl.profile-ceq'DISPOSABLE_SEED_CREATION'-and$p.campaignControl.schemaVersion-eq4-and$p.ownership.driver-ceq$driver-and$p.ownership.onlyGameInputDriver-is[bool]-and$p.ownership.onlyGameInputDriver)
  Need ($lease.planSha256.ToLowerInvariant()-ceq$e.plan.sha256-and$lease.scenarioId-ceq$p.scenarioId-and$lease.driver-ceq$driver-and$lease.authorized-is[bool]-and$lease.authorized-and$lease.issuer-ceq'/root'-and$lease.campaignControl.profile-ceq$p.campaignControl.profile-and$lease.campaignControl.schemaVersion-eq4-and$c.rootLeaseSha256.ToLowerInvariant()-ceq$e.lease.sha256-and$l.controllerSha256-ceq$e.controller.sha256)
  Need ($rootCall.key-ceq$l.rootRecordKey-and$rootCall.value.args.workdir-ceq$v.sourceWorkspace);Assert-NativeSeedInteger $rootCall.value.raw.session_id 1 9007199254740991
- $inherited=if($known){$p.historyBaseline}else{$l.history};$category=if($known){'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY'}else{'FOCUS_BLOCKED'}
+ $inherited=if($known){$p.historyBaseline}else{$l.history};$category=if($captureStop){'CAPTURE_UNCERTAIN'}elseif($known){'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY'}else{'FOCUS_BLOCKED'}
  Need ((Same $r.actualGuardHistory $l.history)-and(Same $r.inheritedGuardBaseline $inherited)-and(Same $r.actualRunContext $v.actions.currentRunContext)-and$r.schemaVersion-eq1-and$r.kind-ceq'ACTUAL_FINITE_DRIVER_FLOW_RESULT'-and$r.status-ceq'CLOSED_FAIL'-and$r.verdict-ceq'FAIL'-and$r.failureCategory-ceq$category-and$r.scenarioId-ceq$p.scenarioId-and$r.driver-ceq$driver-and$r.sourceHead-ceq$v.sourceHead)
  Need ($known-or((Same $r.actions ([pscustomobject]@{reservedThisRun=0;sentThisRun=0;clicks=0;activations=0}))-and(Same $r.providers ([pscustomobject]@{started=1;B1='TERMINAL_PASS_REAPED';E1='NOT_STARTED';E2='NOT_STARTED';calls=5}))))
  Assert-NativeSeedInteger $r.absoluteMaxReservedActions ($l.history.reservedActions+1) ($l.history.reservedActions+8)
@@ -102,7 +105,7 @@ function Read-NativeSeedFailedAttemptCore($Receipt,$PreviousLedger,$LedgerPin,[s
  Need ($absence.allAbsent-is[bool]-and$absence.allAbsent-and$absence.liveRows-is[array]-and$absence.liveRows.Count-eq0-and$absence.queriedExactRecordedPids-is[array])
  foreach($id in $expected){Assert-NativeSeedInteger $id 1 9007199254740991;Need ($absence.queriedExactRecordedPids-contains$id)}
  Need ([DateTimeOffset]::Parse($absence.atUtc)-ge[DateTimeOffset]::Parse($t.at)-and[DateTimeOffset]::Parse($protection.at)-ge[DateTimeOffset]::Parse($t.at))
- if($known){Assert-NativeKnownPlayFailureCustody $v $a $e $output $returned;return $v.actions}
+ if($known){Assert-NativeKnownPlayFailureCustody $v $a $e $output $returned $captureStop;return $v.actions}
  Exact-Integer $o.schemaVersion 1;Exact-Integer $o.inputActions 0;Exact-Integer $o.activations 0;Exact-Integer $o.providersStarted 1;Exact-Integer $o.providersClosedKnown 1
  Need ($o.calls-is[array]-and$o.calls.Count-eq5-and$o.schemaVersion-eq1-and$o.kind-ceq'ACTUAL_DRIVER_NO_INPUT_FOCUS_STOP'-and$o.category-ceq'FOCUS_BLOCKED'-and$o.verdict-ceq'FAIL'-and$o.driver-ceq$driver-and$o.scenarioId-ceq$p.scenarioId-and$o.sourceHead-ceq$v.sourceHead-and$o.inputActions-eq0-and$o.activations-eq0-and$o.providersStarted-eq1-and$o.providersClosedKnown-eq1-and(Same $o.currentRunContext $r.actualRunContext)-and(Same $o.actualGuardHistory $l.history))
  $tools=@('doctor','policy_status','get_window','get_frontmost_app','screenshot');$attempts=@(Get-ChildItem -LiteralPath $output -File|Where-Object{$_.Name-cmatch'^call-\d+\.attempt\.private\.json$'}|Sort-Object Name|ForEach-Object{$_.Name})

@@ -1,5 +1,17 @@
 # Protected Starsector fixture tooling
 
+The separate `ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY` receipt
+preserves a one-Play run whose last permitted original did not establish a
+readable main menu. It references the unchanged actual `CAPTURE_UNCERTAIN`
+result and `ACTUAL_DRIVER_KNOWN_PLAY_CAPTURE_STOP` observation, including its
+explicit four-field Java arguments and unknown freshness. It requires the
+same fourteen-call/three-original one-Play custody, immutable process lineage,
+known provider/caller closure, protected empty private saves, one recapture,
+zero helper modes and no E1/E2 or seed claim. It does not reinterpret this stop
+as the historical helper refusal, qualify seed provenance or clear pending
+Play. A next root grant carries the spent counts and explicitly admits at most
+eight further reservations; its new cap cannot rewrite the historical cap.
+
 The maintained fixture code lives here. Private bindings, plans, leases,
 runtime manifests, source pins, licensed game copies, backups, saves, images,
 logs, recordings and receipts belong under ignored

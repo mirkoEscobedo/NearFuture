@@ -6,8 +6,8 @@ import {isDeepStrictEqual as same} from 'node:util';
 import {file,closed} from './campaign-proof.mjs';
 import {completePng} from './direct-frames.mjs';
 
-/** @param {{v:any,a:any,e:any,output:string,pinned:(pin:any,path:string,limit?:number)=>any,fail:(ok:any)=>void}} context */
-export function assertKnownPlayFailure({v,a,e,output,pinned,fail}){
+/** @param {{v:any,a:any,e:any,output:string,pinned:(pin:any,path:string,limit?:number)=>any,fail:(ok:any)=>void,captureStop?:boolean}} context */
+export function assertKnownPlayFailure({v,a,e,output,pinned,fail,captureStop=false}){
  const {result:r,ledger:l,plan:p,controller:c,owned,source,claim,observation:o,providerReady:ready,providerTerminal:terminal}=a;
  fail(Number.isSafeInteger(c.sessionId)&&c.sessionId>=0);
  const typedWindow=(/** @type {any} */ window)=>window&&Number.isSafeInteger(window.windowId)&&window.windowId>0&&
@@ -31,15 +31,26 @@ export function assertKnownPlayFailure({v,a,e,output,pinned,fail}){
   Number.isSafeInteger(action.sentAtMs)&&Number.isSafeInteger(action.knownResultAtMs)&&action.knownResultAtMs>=action.sentAtMs&&
   !['resolvedB1','resolvedE1','resolvedE2'].some(key=>Object.hasOwn(l,key)));
  fail(same(r.providers,{started:1,B1:'TERMINAL_PASS_REAPED',E1:'NOT_STARTED',E2:'NOT_STARTED',calls:14})&&
-  o.schemaVersion===1&&o.kind==='ACTUAL_DRIVER_HANDOFF_CUSTODY_STOP'&&o.category===r.failureCategory&&o.verdict==='FAIL'&&
+  o.schemaVersion===1&&o.kind===(captureStop?'ACTUAL_DRIVER_KNOWN_PLAY_CAPTURE_STOP':'ACTUAL_DRIVER_HANDOFF_CUSTODY_STOP')&&
+  o.category===(captureStop?'POSTCONDITION_UNKNOWN_CAPTURE_UNCERTAIN':r.failureCategory)&&o.verdict==='FAIL'&&
   o.driver===v.driver&&o.scenarioId===p.scenarioId&&o.sourceHead===v.sourceHead&&
-  same(o.actualRunContext,r.actualRunContext)&&same(o.guardHistory,l.history)&&o.E1==='NOT_STARTED'&&o.E2==='NOT_STARTED'&&
+  same(o.actualRunContext,r.actualRunContext)&&same(captureStop?o.actualGuardHistory:o.guardHistory,l.history)&&o.E1==='NOT_STARTED'&&o.E2==='NOT_STARTED'&&
   o.seedClaim===false&&o.allHistoryRetained===true&&same(o.providerTerminal,e.providerTerminal)&&same(o.ledger,e.ledger)&&same(o.rootCall,e.rootCall));
  const tools=['doctor','policy_status','get_window','screenshot','get_frontmost_app','get_window','left_click',
   'get_frontmost_app','list_windows','get_window','screenshot','get_frontmost_app','get_window','screenshot'];
  fail(Array.isArray(o.calls)&&o.calls.length===14&&Array.isArray(o.originals)&&o.originals.length===3&&
   same(readdirSync(output).filter(n=>/^call-\d+\.attempt\.private\.json$/.test(n)).sort(),tools.map((_,i)=>'call-'+String(i+1).padStart(3,'0')+'.attempt.private.json'))&&
   !readdirSync(v.scenario).some(n=>/^guard-E[12]-consumed\.private\.json$/.test(n)));
+ if(captureStop){
+  fail(closed(o,['schemaVersion','kind','scenarioId','driver','atUtc','sourceHead','verdict','category','reason',
+   'actualRunContext','actualGuardHistory','actions','calls','originals','permittedLoadingRecapturesUsed',
+   'helperModesExecuted','providerTerminal','ledger','rootCall','E1','E2','seedClaim','cleanup','allHistoryRetained'])&&
+   r.assertionResult==='UNKNOWN'&&r.helperModesExecuted===0&&o.helperModesExecuted===0&&o.permittedLoadingRecapturesUsed===1&&
+   typeof o.reason==='string'&&o.reason.length>0&&o.reason.length<=2048&&typeof o.atUtc==='string'&&
+   Number.isSafeInteger(Date.parse(o.atUtc))&&Date.parse(o.atUtc)>=Date.parse(terminal.at)&&Date.parse(o.atUtc)<=Date.parse(a.protection.at)&&
+   o.cleanup==='ROOT_OWNS_PENDING_ACTUAL_TERMINAL_PROTECTION'&&
+   action.args.target_app==='java.exe'&&same(r.seed,{created:false,modernCloseoutCreated:false,stabilityModeExecuted:false,semanticAcceptance:'NOT_RUN'}));
+ }
  /** @type {any[]} */const posts=[],raws=[];
  let previous=Date.parse(ready.at);
  for(const [i,tool] of tools.entries()){
@@ -64,6 +75,15 @@ export function assertKnownPlayFailure({v,a,e,output,pinned,fail}){
   raws[1].structuredContent.approval_token_configured===false);
  const old=raws[2].structuredContent,current=raws[12].structuredContent;
  fail(typedWindow(old)&&typedWindow(current));
+ if(captureStop){
+  const summary=r.originals;
+  fail(closed(summary,['count','allInspected','launcherNativeWidth','gameNativeWidth','capture001','capture002','capture003',
+   'capture003PngSha256','freshness','captureReceiptDistinctFromSuccess','completeMainmenuVerified','permittedLoadingRecapturesUsed'])&&
+   summary.count===3&&summary.allInspected===true&&summary.launcherNativeWidth===old.bounds.width&&summary.gameNativeWidth===current.bounds.width&&
+   ['capture001','capture002','capture003'].every(key=>typeof summary[key]==='string'&&summary[key].length>0&&summary[key].length<=256)&&
+   summary.capture003PngSha256===o.originals[2].png?.sha256&&summary.freshness==='UNKNOWN'&&summary.captureReceiptDistinctFromSuccess===true&&
+   summary.completeMainmenuVerified===false&&summary.permittedLoadingRecapturesUsed===1);
+ }
  fail(old?.windowId===claim.binding.campaign?.windowId&&action.args.target_window_id===old.windowId&&
   Number.isSafeInteger(current?.windowId)&&current.windowId>0&&current.pid===old.pid&&
   old.bundleId==='java.exe'&&current.bundleId==='java.exe'&&old.isFocused===true&&current.isFocused===true);
@@ -88,15 +108,21 @@ export function assertKnownPlayFailure({v,a,e,output,pinned,fail}){
   ['pid','parentPid','creationTime','kernelCreationFileTime','executable','sessionId'].every(key=>same(first[key],last[key])));
  for(const row of [first,last])fail(row.inSupervisorJob===true&&Array.isArray(row.supervisorJobPids)&&
   [c.controllerPid,old.pid,...c.supervisorJobPids].every(pid=>row.supervisorJobPids.includes(pid)));
- fail(a.pidAbsence.queriedExactRecordedPids.includes(old.pid)&&same(r.actions,{reservedThisRun:1,sentThisRun:1,clicks:1,activations:0,
-  stage:'PLAY',coordinate:action.args.coordinate,originalWindow:old.windowId,replacementWindow:current.windowId,ownedPid:old.pid,status:'AWAITING_AFTER',uncertain:false})&&
-  same(o.actions,{clicks:1,activations:0,coordinate:action.args.coordinate,targetWindow:old.windowId,pid:old.pid,
-   replacementWindow:current.windowId,knownInput:true,ledgerStatus:'AWAITING_AFTER',uncertain:false}));
+ const expectedActions=captureStop?{reservedThisRun:1,sentThisRun:1,clicks:1,activations:0,stage:'PLAY',args:action.args,
+  replacementWindow:current.windowId,ownedPid:old.pid,status:'AWAITING_AFTER',uncertain:false}:
+  {reservedThisRun:1,sentThisRun:1,clicks:1,activations:0,stage:'PLAY',coordinate:action.args.coordinate,
+   originalWindow:old.windowId,replacementWindow:current.windowId,ownedPid:old.pid,status:'AWAITING_AFTER',uncertain:false};
+ const expectedObservation=captureStop?{clicks:1,activations:0,args:action.args,pid:old.pid,replacementWindow:current.windowId,
+  knownInput:true,ledgerStatus:'AWAITING_AFTER',uncertain:false}:
+  {clicks:1,activations:0,coordinate:action.args.coordinate,targetWindow:old.windowId,pid:old.pid,
+   replacementWindow:current.windowId,knownInput:true,ledgerStatus:'AWAITING_AFTER',uncertain:false};
+ fail(a.pidAbsence.queriedExactRecordedPids.includes(old.pid)&&same(r.actions,expectedActions)&&same(o.actions,expectedObservation));
  fail(action.args.coordinate[0]>=old.bounds.x&&action.args.coordinate[0]<old.bounds.x+old.bounds.width&&
   action.args.coordinate[1]>=old.bounds.y&&action.args.coordinate[1]<old.bounds.y+old.bounds.height);
  for(const [index,callIndex] of [3,10,13].entries()){
   const row=o.originals[index],prefix=resolve(output,'capture-'+String(index+1).padStart(3,'0'));
-  fail(closed(row,['png','metadata','raw','originalInspected','freshness'])&&row.originalInspected===true&&row.freshness==='UNKNOWN');
+  fail(closed(row,['png','metadata','raw','originalInspected','freshness',...(captureStop?['assertion']:[])])&&
+   (!captureStop||(typeof row.assertion==='string'&&row.assertion.length>0&&row.assertion.length<=256))&&row.originalInspected===true&&row.freshness==='UNKNOWN');
   const metadata=pinned(row.metadata,prefix+'.metadata.private.json'),raw=pinned(row.raw,prefix+'.raw.private.json',32*1024*1024);
   fail(closed(row.png,['path','sha256'])&&row.png.path===prefix+'.png');
   const png=file(row.png.path,32*1024*1024),dimensions=completePng(png.bytes),post=posts[callIndex],window=index===0?old:current;

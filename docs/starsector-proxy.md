@@ -515,3 +515,14 @@ or replenished. Future input must include `target_app: "java.exe"` alongside the
 current owned HWND and strict focus, as required by the completed-seed consumer.
 The private B1 frame helper must permit only the qualified known-Play window
 handoff, and callers must stop metadata construction after any nonzero result.
+
+`ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY` is a separate closed
+case for an acknowledged Play followed by an unreadable final permitted
+capture. It retains the original `CAPTURE_UNCERTAIN` result, the capture-stop
+observation and explicit Java click arguments. Both readers require fourteen
+calls, three complete inspected originals, unknown freshness, one loading
+recapture, no helper modes, no E1/E2 claim and no seed or stability claim. The
+observation follows known provider closure and precedes final protection.
+Original image receipts do not prove a readable main menu or identify a cause.
+The older zero-input and helper-refusal cases keep their existing contracts;
+none is completed seed provenance or replenishes an old allowance.

@@ -1,5 +1,5 @@
 # Historical known Play custody. Caller supplies the already-verified terminal graph.
-function Assert-NativeKnownPlayFailureCustody($Receipt,$Values,$Evidence,[string]$Output,$Returned) {
+function Assert-NativeKnownPlayFailureCustody($Receipt,$Values,$Evidence,[string]$Output,$Returned,[bool]$CaptureStop=$false) {
  $v=$Receipt;$a=$Values;$e=$Evidence;$r=$a.result;$l=$a.ledger;$p=$a.plan;$c=$a.controller
  $o=$a.observation;$ready=$a.providerReady;$terminal=$a.providerTerminal;$action=$l.pending;$before=$p.historyBaseline
  function Millis($Value){Need ($Value-is[string]);return [DateTimeOffset]::Parse($Value).ToUnixTimeMilliseconds()}
@@ -52,10 +52,22 @@ function Assert-NativeKnownPlayFailureCustody($Receipt,$Values,$Evidence,[string
  Need ((Same $r.providers ([pscustomobject]@{started=1;B1='TERMINAL_PASS_REAPED';E1='NOT_STARTED';E2='NOT_STARTED';calls=14})))
  Exact-Integer $o.schemaVersion 1
  Strings $o @('kind','category','verdict','driver','scenarioId','sourceHead','E1','E2')
- Need ($o.kind-ceq'ACTUAL_DRIVER_HANDOFF_CUSTODY_STOP'-and$o.category-ceq$r.failureCategory-and$o.verdict-ceq'FAIL'-and$o.driver-ceq$v.driver-and$o.scenarioId-ceq$p.scenarioId-and$o.sourceHead-ceq$v.sourceHead-and(Same $o.actualRunContext $r.actualRunContext)-and(Same $o.guardHistory $l.history)-and$o.E1-ceq'NOT_STARTED'-and$o.E2-ceq'NOT_STARTED')
+ $observationKind=if($CaptureStop){'ACTUAL_DRIVER_KNOWN_PLAY_CAPTURE_STOP'}else{'ACTUAL_DRIVER_HANDOFF_CUSTODY_STOP'}
+ $observationCategory=if($CaptureStop){'POSTCONDITION_UNKNOWN_CAPTURE_UNCERTAIN'}else{$r.failureCategory}
+ $observationHistory=if($CaptureStop){$o.actualGuardHistory}else{$o.guardHistory}
+ Need ($o.kind-ceq$observationKind-and$o.category-ceq$observationCategory-and$o.verdict-ceq'FAIL'-and$o.driver-ceq$v.driver-and$o.scenarioId-ceq$p.scenarioId-and$o.sourceHead-ceq$v.sourceHead-and(Same $o.actualRunContext $r.actualRunContext)-and(Same $observationHistory $l.history)-and$o.E1-ceq'NOT_STARTED'-and$o.E2-ceq'NOT_STARTED')
  Need ($o.seedClaim-is[bool]-and!$o.seedClaim-and$o.allHistoryRetained-is[bool]-and$o.allHistoryRetained-and(Same $o.providerTerminal $e.providerTerminal)-and(Same $o.ledger $e.ledger)-and(Same $o.rootCall $e.rootCall))
  $tools=@('doctor','policy_status','get_window','screenshot','get_frontmost_app','get_window','left_click','get_frontmost_app','list_windows','get_window','screenshot','get_frontmost_app','get_window','screenshot')
  Need ($o.calls-is[array]-and$o.calls.Count-eq14-and$o.originals-is[array]-and$o.originals.Count-eq3)
+ if($CaptureStop){
+  Assert-NativeSeedFields $o @('schemaVersion','kind','scenarioId','driver','atUtc','sourceHead','verdict','category','reason','actualRunContext','actualGuardHistory','actions','calls','originals','permittedLoadingRecapturesUsed','helperModesExecuted','providerTerminal','ledger','rootCall','E1','E2','seedClaim','cleanup','allHistoryRetained')
+  Strings $r @('assertionResult');Strings $o @('reason','atUtc','cleanup')
+  Need ($r.assertionResult-ceq'UNKNOWN'-and$o.reason.Length-gt0-and$o.reason.Length-le2048-and$o.cleanup-ceq'ROOT_OWNS_PENDING_ACTUAL_TERMINAL_PROTECTION')
+  $observed=Millis $o.atUtc;Need ($observed-ge(Millis $terminal.at)-and$observed-le(Millis $a.protection.at))
+  Exact-Integer $r.helperModesExecuted 0;Exact-Integer $o.helperModesExecuted 0;Exact-Integer $o.permittedLoadingRecapturesUsed 1
+  Assert-NativeSeedFields $action.args @('coordinate','target_window_id','focus_strategy','target_app');Need ($action.args.target_app-ceq'java.exe')
+  Need (Same $r.seed ([pscustomobject]@{created=$false;modernCloseoutCreated=$false;stabilityModeExecuted=$false;semanticAcceptance='NOT_RUN'}))
+ }
  $attempts=@(Get-ChildItem -LiteralPath $Output -File|Where-Object{$_.Name-cmatch'^call-\d+\.attempt\.private\.json$'}|Sort-Object Name|ForEach-Object{$_.Name})
  Need (Same $attempts @(1..14|ForEach-Object{'call-'+$_.ToString('000')+'.attempt.private.json'}))
  foreach($batch in @('E1','E2')){Need (!(Test-Path -LiteralPath (Join-Path $v.scenario ('guard-'+$batch+'-consumed.private.json'))))}
@@ -77,6 +89,14 @@ function Assert-NativeKnownPlayFailureCustody($Receipt,$Values,$Evidence,[string
  Need ($raws[0].structuredContent.ok-is[bool]-and$raws[0].structuredContent.ok-and$raws[1].structuredContent.approval_required_for_all-is[bool]-and$raws[1].structuredContent.approval_required_for_all-and$raws[1].structuredContent.approval_token_configured-is[bool]-and!$raws[1].structuredContent.approval_token_configured)
  $old=$raws[2].structuredContent;$current=$raws[12].structuredContent
  Known-Window $old;Known-Window $current;Exact-Integer $action.args.target_window_id $old.windowId
+ if($CaptureStop){
+  $summary=$r.originals
+  Assert-NativeSeedFields $summary @('count','allInspected','launcherNativeWidth','gameNativeWidth','capture001','capture002','capture003','capture003PngSha256','freshness','captureReceiptDistinctFromSuccess','completeMainmenuVerified','permittedLoadingRecapturesUsed')
+  Exact-Integer $summary.count 3;Exact-Integer $summary.launcherNativeWidth $old.bounds.width;Exact-Integer $summary.gameNativeWidth $current.bounds.width;Exact-Integer $summary.permittedLoadingRecapturesUsed 1
+  Strings $summary @('capture001','capture002','capture003','capture003PngSha256','freshness')
+  foreach($key in @('capture001','capture002','capture003')){Need ($summary.$key.Length-gt0-and$summary.$key.Length-le256)}
+  Need ($summary.allInspected-is[bool]-and$summary.allInspected-and$summary.capture003PngSha256-ceq$o.originals[2].png.sha256-and$summary.freshness-ceq'UNKNOWN'-and$summary.captureReceiptDistinctFromSuccess-is[bool]-and$summary.captureReceiptDistinctFromSuccess-and$summary.completeMainmenuVerified-is[bool]-and!$summary.completeMainmenuVerified)
+ }
  Assert-NativeSeedInteger $current.windowId 1 9007199254740991
  Need ($old.windowId-eq$a.claim.binding.campaign.windowId-and$action.args.target_window_id-eq$old.windowId-and$current.pid-eq$old.pid-and$old.bundleId-ceq'java.exe'-and$current.bundleId-ceq'java.exe'-and$old.isFocused-is[bool]-and$old.isFocused-and$current.isFocused-is[bool]-and$current.isFocused)
  foreach($i in @(4,7,11)){Exact-Integer $raws[$i].structuredContent.app.pid $old.pid;Strings $raws[$i].structuredContent.app @('bundleId');Need ($raws[$i].structuredContent.app.bundleId-ceq'java.exe')}
@@ -104,11 +124,15 @@ function Assert-NativeKnownPlayFailureCustody($Receipt,$Values,$Evidence,[string
  Need ($a.pidAbsence.queriedExactRecordedPids-contains$old.pid)
  $expectedActions=[pscustomobject]@{reservedThisRun=1;sentThisRun=1;clicks=1;activations=0;stage='PLAY';coordinate=$action.args.coordinate;originalWindow=$old.windowId;replacementWindow=$current.windowId;ownedPid=$old.pid;status='AWAITING_AFTER';uncertain=$false}
  $expectedObservation=[pscustomobject]@{clicks=1;activations=0;coordinate=$action.args.coordinate;targetWindow=$old.windowId;pid=$old.pid;replacementWindow=$current.windowId;knownInput=$true;ledgerStatus='AWAITING_AFTER';uncertain=$false}
+ if($CaptureStop){
+  $expectedActions=[pscustomobject]@{reservedThisRun=1;sentThisRun=1;clicks=1;activations=0;stage='PLAY';args=$action.args;replacementWindow=$current.windowId;ownedPid=$old.pid;status='AWAITING_AFTER';uncertain=$false}
+  $expectedObservation=[pscustomobject]@{clicks=1;activations=0;args=$action.args;pid=$old.pid;replacementWindow=$current.windowId;knownInput=$true;ledgerStatus='AWAITING_AFTER';uncertain=$false}
+ }
  Need ((Same $r.actions $expectedActions)-and(Same $o.actions $expectedObservation))
  Need ($action.args.coordinate[0]-ge$old.bounds.x-and$action.args.coordinate[0]-lt($old.bounds.x+$old.bounds.width)-and$action.args.coordinate[1]-ge$old.bounds.y-and$action.args.coordinate[1]-lt($old.bounds.y+$old.bounds.height))
  $pngPaths=@();$callIndexes=@(3,10,13)
  for($i=0;$i-lt3;$i++){
-  $row=$o.originals[$i];Assert-NativeSeedFields $row @('png','metadata','raw','originalInspected','freshness')
+  $row=$o.originals[$i];$fields=@('png','metadata','raw','originalInspected','freshness');if($CaptureStop){$fields+=,'assertion';Strings $row @('assertion');Need ($row.assertion.Length-gt0-and$row.assertion.Length-le256)};Assert-NativeSeedFields $row $fields
   Strings $row @('freshness');foreach($key in @('png','metadata','raw')){Strings $row.$key @('path','sha256')}
   Need ($row.originalInspected-is[bool]-and$row.originalInspected-and$row.freshness-ceq'UNKNOWN')
   $prefix=Join-Path $Output ('capture-'+($i+1).ToString('000'));$metadata=Read-Ref $row.metadata ($prefix+'.metadata.private.json');$raw=Read-Ref $row.raw ($prefix+'.raw.private.json') 33554432
