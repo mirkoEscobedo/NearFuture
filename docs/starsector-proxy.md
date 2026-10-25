@@ -491,3 +491,11 @@ provider closures, carried history, original-save protection and complete curren
 tooling inventory. Partial output and forced cleanup remain separate outcomes;
 neither synthetic wizard tests nor a seed establish lifecycle or alpha acceptance.
 See the fixture README for the closed authority and provenance contract.
+
+A known closed seed-creation run that stopped before input on a foreground
+mismatch can preserve its attempt through the separate root failed-attempt
+history receipt. Both validators reread the actual observations, original
+authority, provider/caller termination and save protection. The next grant
+carries the real attempt context and unchanged reserved/sent counts. This
+neither creates seed provenance nor permits activation or a blind replay;
+the next run still requires a supported foreground setup.

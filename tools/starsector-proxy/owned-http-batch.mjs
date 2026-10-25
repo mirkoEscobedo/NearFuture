@@ -23,7 +23,7 @@ export const ownedHttpSources = Object.freeze(['.agentic/project.json', 'tools/s
     'tools/starsector-proxy/guarded-http.mjs', 'tools/starsector-proxy/guarded-mcp.mjs', 'tools/starsector-proxy/finite-consent.mjs',
     'tools/starsector-proxy/batch-authorization.mjs', 'tools/starsector-proxy/menu-launch-grant.mjs', 'tools/starsector-proxy/batch-session.mjs', 'tools/starsector-proxy/campaign-authority.mjs',
     'tools/starsector-proxy/fixture-binding.mjs', 'tools/starsector-proxy/campaign-proof.mjs',
-    'tools/starsector-proxy/generation-proof.mjs', 'tools/starsector-proxy/seed-creation-history.mjs',
+    'tools/starsector-proxy/generation-proof.mjs', 'tools/starsector-proxy/seed-creation-history.mjs', 'tools/starsector-proxy/seed-failed-attempt.mjs',
     'tools/starsector-proxy/seed-wizard-proof.mjs', 'tools/starsector-proxy/seed-creation-output.mjs',
     'tools/starsector-proxy/seed-creation-custody.mjs', ...fixtureProbeSources]);
 /** Explicit complete installed runtime inventory, without an import resolver.

@@ -2,6 +2,7 @@
 import {resolve,isAbsolute} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
 import {requireThat,read,closed} from './campaign-proof.mjs';
+import {failedSeedAttemptKind,readFailedSeedAttempt} from './seed-failed-attempt.mjs';
 
 export const seedCreationFlow='DISPOSABLE_SEED_CREATION';
 
@@ -52,9 +53,17 @@ export function seedCreationActionLimit(plan,lease,scenario) {
             /^[a-f0-9]{64}$/.test(pin.sha256),'closed previous seed history reference required');
         const found=read(pin.path);requireThat(found.sha256===pin.sha256,'previous seed history changed');return found.value;
     }
-    const result=previous(v.previous.result),ledger=previous(v.previous.ledger),actions=result.actions;
+    const result=previous(v.previous.result),ledger=previous(v.previous.ledger);
+    if(result.kind==='ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT')requireThat(
+        closed(result,['schemaVersion','kind','scenarioId','toolingHead','rootSessionId','allOwnedHandlesTerminalReaped',
+            'actions','cleanup','protection','files','evidence'])&&
+        closed(result.actions,['inheritedBaseline','actualGuard','currentRunContext','absoluteMaxReservedActions','clicks','activations','providers'])&&
+        result.actions.clicks===8&&result.actions.activations===0&&result.actions.providers===3,
+    'completed seed history must retain its distinct successful provenance shape');
+    const failed=result.kind===failedSeedAttemptKind;
+    const actions=failed?readFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):result.actions;
     requireThat(result.schemaVersion===1&&['ACTUAL_SCHEMA5_COMMON_PREFERENCE_PREFIX_DRIVER_CLOSEOUT',
-        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT'].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
+        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',failedSeedAttemptKind].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
         ledger.schemaVersion===2&&ledger.kind==='STARSECTOR_FINITE_LAUNCH_HISTORY'&&
         isDeepStrictEqual(actions?.actualGuard,ledger.history)&&
         actions.currentRunContext?.overallAttempts===baseline.overallAttempts&&

@@ -496,3 +496,23 @@ the existing immutable seeded-entry launch validators; it grants no new input.
 Tests generate OS, visual and cleanup boundaries. Their real transport/validator
 coverage is source evidence, never a loaded-frontend or native campaign pass.
 
+A seed-creation attempt stopped before input on a foreground mismatch has a
+separate terminal history receipt, `ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY`.
+Its closed fields are `schemaVersion:1`, `kind`, `issuer:"/root"`, canonical
+`driver`, `scenario`, `sourceWorkspace`, original `sourceHead`,
+`allOwnedHandlesTerminalReaped:true`, `actions` and `evidence`. `actions` contains
+the unchanged actual guard, actual attempt context and original absolute cap.
+This receipt can carry history into a fresh explicit grant. It supplies no seed,
+process launch, input, focus activation or new clock.
+
+The twenty evidence descriptors bind the original generic failed result, ledger,
+plan, lease, controller, owned snapshot, root call, caller terminal, launch
+supervisor, protection, PID absence, preference, support pins, B1 authorization,
+claim, observation stop and B1 provider readiness, terminal, stdout and stderr.
+Both history readers require exactly five observation calls, zero input or
+reservations, only B1 started, no pending/uncertain action, original binary and
+target ownership, unchanged eligible preference, known terminal handles and
+protected empty private saves. Actual attempt counters advance once while
+reserved/sent counters retain every historical unsent reservation. A failure
+does not acquire the completed-seed closeout kind; the seed consumer rejects it.
+
