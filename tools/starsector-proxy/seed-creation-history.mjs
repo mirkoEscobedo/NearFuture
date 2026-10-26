@@ -2,8 +2,8 @@
 import {resolve,isAbsolute} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
 import {requireThat,read,closed} from './campaign-proof.mjs';
-import {failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind,
- readFailedSeedAttempt,readKnownPlayFailedSeedAttempt,readCaptureStopFailedSeedAttempt,readWrongSceneFailedSeedAttempt} from './seed-failed-attempt.mjs';
+import {failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind,captureLinkageFailedSeedAttemptKind,
+ readFailedSeedAttempt,readKnownPlayFailedSeedAttempt,readCaptureStopFailedSeedAttempt,readWrongSceneFailedSeedAttempt,readCaptureLinkageFailedSeedAttempt} from './seed-failed-attempt.mjs';
 
 export const seedCreationFlow='DISPOSABLE_SEED_CREATION';
 
@@ -62,11 +62,11 @@ export function seedCreationActionLimit(plan,lease,scenario) {
         result.actions.clicks===8&&result.actions.activations===0&&result.actions.providers===3,
     'completed seed history must retain its distinct successful provenance shape');
     const failed=result.kind===failedSeedAttemptKind,known=result.kind===knownPlayFailedSeedAttemptKind,
-        capture=result.kind===captureStopFailedSeedAttemptKind,wrong=result.kind===wrongSceneFailedSeedAttemptKind;
-    const reader=wrong?readWrongSceneFailedSeedAttempt:capture?readCaptureStopFailedSeedAttempt:known?readKnownPlayFailedSeedAttempt:readFailedSeedAttempt;
-    const actions=failed||known||capture||wrong?reader(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):result.actions;
+        capture=result.kind===captureStopFailedSeedAttemptKind,wrong=result.kind===wrongSceneFailedSeedAttemptKind,linkage=result.kind===captureLinkageFailedSeedAttemptKind;
+    const reader=linkage?readCaptureLinkageFailedSeedAttempt:wrong?readWrongSceneFailedSeedAttempt:capture?readCaptureStopFailedSeedAttempt:known?readKnownPlayFailedSeedAttempt:readFailedSeedAttempt;
+    const actions=failed||known||capture||wrong||linkage?reader(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):result.actions;
     requireThat(result.schemaVersion===1&&['ACTUAL_SCHEMA5_COMMON_PREFERENCE_PREFIX_DRIVER_CLOSEOUT',
-        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
+        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind,captureLinkageFailedSeedAttemptKind].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
         ledger.schemaVersion===2&&ledger.kind==='STARSECTOR_FINITE_LAUNCH_HISTORY'&&
         isDeepStrictEqual(actions?.actualGuard,ledger.history)&&
         actions.currentRunContext?.overallAttempts===baseline.overallAttempts&&

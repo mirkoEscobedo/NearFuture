@@ -6,11 +6,13 @@ import {isDeepStrictEqual as same} from 'node:util';
 import {file,read,closed,requireThat} from './campaign-proof.mjs';
 import {assertKnownPlayFailure} from './seed-known-play-attempt.mjs';
 import {assertWrongSceneFailure} from './seed-wrong-scene-attempt.mjs';
+import {assertCaptureLinkageFailure} from './seed-capture-linkage-attempt.mjs';
 
 export const failedSeedAttemptKind='ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY';
 export const knownPlayFailedSeedAttemptKind='ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY';
 export const captureStopFailedSeedAttemptKind='ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY';
 export const wrongSceneFailedSeedAttemptKind='ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY';
+export const captureLinkageFailedSeedAttemptKind='ROOT_CLOSED_PRE_INPUT_CAPTURE_LINKAGE_FAILED_SEED_ATTEMPT_HISTORY';
 const driver='/root/recovery_game_driver';
 const names={result:'driver-flow-result.private.json',ledger:'guard-launch-history.private.json',plan:'plan.json',
  lease:'native-lane-lease.private.json',controller:'controller-start.private.json',owned:'owned-processes-current.private.json',
@@ -51,15 +53,19 @@ export function readCaptureStopFailedSeedAttempt(receipt,previousLedger,ledgerPi
 export function readWrongSceneFailedSeedAttempt(receipt,ledger,pin,preference){
  return readTerminalFailure(receipt,ledger,pin,preference,wrongSceneFailedSeedAttemptKind);
 }
+/** @param {any} receipt @param {any} ledger @param {any} pin @param {(p:any,l:any,s:string)=>any} preference */
+export function readCaptureLinkageFailedSeedAttempt(receipt,ledger,pin,preference){
+ return readTerminalFailure(receipt,ledger,pin,preference,captureLinkageFailedSeedAttemptKind);
+}
 /** @param {any} receipt @param {any} previousLedger @param {any} ledgerPin
  * @param {(plan:any,lease:any,scenario:string)=>any} readPreference @param {string} kind */
 function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kind){
  const v=receipt;
- const wrongScene=kind===wrongSceneFailedSeedAttemptKind,captureStop=kind===captureStopFailedSeedAttemptKind,
+ const linkage=kind===captureLinkageFailedSeedAttemptKind,wrongScene=kind===wrongSceneFailedSeedAttemptKind,captureStop=kind===captureStopFailedSeedAttemptKind,
   known=kind===knownPlayFailedSeedAttemptKind||captureStop||wrongScene;
  const extra=wrongScene?{e1Source:'E1-authorization.private.json',e1Claim:'guard-E1-consumed.private.json',
   e1Plan:'E1-plan.private.json',e1Lease:'E1-lease.private.json',e1Owned:'driver-E1-owned.private.json',b1Menu:'B1-menu-inspected.private.json'}:{};
- const secondProvider=wrongScene?['e1ProviderReady','e1ProviderTerminal','e1ProviderSpool','e1ProviderStderr']:[];
+ const secondProvider=wrongScene?['e1ProviderReady','e1ProviderTerminal','e1ProviderSpool','e1ProviderStderr']:linkage?['helper','metadataCaller']:[];
  fail(closed(v,['schemaVersion','kind','issuer','driver','scenario','sourceWorkspace','sourceHead','allOwnedHandlesTerminalReaped','actions','evidence'])&&
   v.schemaVersion===1&&v.kind===kind&&v.issuer==='/root'&&v.driver===driver&&v.allOwnedHandlesTerminalReaped===true&&
   typeof v.scenario==='string'&&isAbsolute(v.scenario)&&resolve(v.scenario)===v.scenario&&typeof v.sourceWorkspace==='string'&&
@@ -69,6 +75,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
  const e=v.evidence,scenario=v.scenario;
  /** @type {any} */const a={};
  for(const [key,name] of Object.entries({...names,...extra}))a[key]=pinned(e[key],resolve(scenario,name));
+ if(linkage)a.metadataCaller=pinned(e.metadataCaller,resolve(scenario,'driver-metadata-calls.actual.private.json'));
  const {result:r,ledger:l,plan:p,lease,controller:c,owned,rootCall,caller,launch,protection,preference,source,claim,observation:o}=a;
  fail(same(e.ledger,ledgerPin)&&same(l,previousLedger)&&l.schemaVersion===2&&l.kind==='STARSECTOR_FINITE_LAUNCH_HISTORY'&&
   (known||l.pending===null)&&l.uncertain===false&&same(l.history,v.actions.actualGuard)&&(known||same(l.history,p.historyBaseline))&&
@@ -82,8 +89,8 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   Number.isSafeInteger(rootCall.value.raw?.session_id)&&rootCall.value.raw.session_id>0&&
   same(r.actualGuardHistory,l.history)&&same(r.inheritedGuardBaseline,known?p.historyBaseline:l.history)&&same(r.actualRunContext,v.actions.currentRunContext)&&
   r.schemaVersion===1&&r.kind==='ACTUAL_FINITE_DRIVER_FLOW_RESULT'&&r.status==='CLOSED_FAIL'&&r.verdict==='FAIL'&&
-  r.failureCategory===(wrongScene?'POSTCONDITION_FAILED':captureStop?'CAPTURE_UNCERTAIN':known?'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY':'FOCUS_BLOCKED')&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
-  (known||(same(r.actions,{reservedThisRun:0,sentThisRun:0,clicks:0,activations:0})&&
+  r.failureCategory===(linkage?'PRIVATE_CAPTURE_LINKAGE_REFUSAL_BEFORE_INPUT':wrongScene?'POSTCONDITION_FAILED':captureStop?'CAPTURE_UNCERTAIN':known?'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY':'FOCUS_BLOCKED')&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
+  (known||linkage||(same(r.actions,{reservedThisRun:0,sentThisRun:0,clicks:0,activations:0})&&
   same(r.providers,{started:1,B1:'TERMINAL_PASS_REAPED',E1:'NOT_STARTED',E2:'NOT_STARTED',calls:5})))&&
   r.absoluteMaxReservedActions===p.absoluteMaxReservedActions&&r.absoluteMaxReservedActions===lease.absoluteMaxReservedActions&&
   r.absoluteMaxReservedActions===v.actions.absoluteMaxReservedActions&&Number.isSafeInteger(r.absoluteMaxReservedActions)&&
@@ -152,6 +159,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
  fail(absence.allAbsent===true&&same(absence.liveRows,[])&&Array.isArray(absence.queriedExactRecordedPids)&&
   expected.every(pid=>Number.isSafeInteger(pid)&&pid>0&&absence.queriedExactRecordedPids.includes(pid))&&Date.parse(absence.atUtc)>=Date.parse(t.at)&&
   Date.parse(protection.at)>=Date.parse(t.at));
+ if(linkage){assertCaptureLinkageFailure({v,a,e,output,pinned,fail,node,powershell});return v.actions;}
  if(wrongScene){assertWrongSceneFailure({v,a,e,output,pinned,fail,node,powershell});return v.actions;}
  if(known){assertKnownPlayFailure({v,a,e,output,pinned,fail,captureStop});return v.actions;}
  fail(Array.isArray(o.calls)&&o.calls.length===5&&o.schemaVersion===1&&

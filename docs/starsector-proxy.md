@@ -546,3 +546,14 @@ New Game reservation stays pending; no E2, Generate, Continue or seed is inferre
 All thirty evidence references, protected empty private saves, PID absence and the
 two-action increment remain required. Any next explicit bounded grant carries
 the real context and counts; the historical cap and failure are never rewritten.
+
+`ROOT_CLOSED_PRE_INPUT_CAPTURE_LINKAGE_FAILED_SEED_ATTEMPT_HISTORY` retains the
+separate four-call launcher capture-path refusal before any reservation or input.
+Its 22 references bind the original helper and terminal failfast caller as well as
+the common ownership, provider, caller, clock and save-protection evidence. The
+automatic `capture-001.raw.private.json` and selected `call-004.raw.private.json`
+are distinct fixed paths with identical complete response bytes. Both readers
+require their original PNG, focused owned launcher, exact failure boundary and
+absence of geometry or later-phase artifacts. This custody grants no input or
+seed provenance; the next explicit grant carries the spent context and unchanged
+action count. Historical deadlines, failures and ceilings remain recorded.
