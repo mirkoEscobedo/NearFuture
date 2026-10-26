@@ -14,7 +14,7 @@ import { assertSeedCreationOutput } from './seed-creation-output.mjs';
 export const campaignLaunchSources = Object.freeze([...fixtureProbeSources,
     ...['campaign-authority.mjs', 'batch-authorization.mjs', 'batch-session.mjs', 'finite-consent.mjs',
         'fixture-binding.mjs', 'direct-frames.mjs', 'campaign-proof.mjs', 'generation-proof.mjs',
-        'seed-creation-history.mjs', 'seed-failed-attempt.mjs', 'seed-known-play-attempt.mjs', 'seed-wizard-proof.mjs', 'seed-creation-output.mjs', 'seed-creation-custody.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
+        'seed-creation-history.mjs', 'seed-failed-attempt.mjs', 'seed-known-play-attempt.mjs', 'seed-wrong-scene-attempt.mjs', 'client-coordinate.mjs', 'seed-wizard-proof.mjs', 'seed-creation-output.mjs', 'seed-creation-custody.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
 
 const flow = 'PAUSED_CAMPAIGN_EXIT_NO_SAVE';
 const seedFlow = 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE';

@@ -5,10 +5,12 @@ import {readdirSync} from 'node:fs';
 import {isDeepStrictEqual as same} from 'node:util';
 import {file,read,closed,requireThat} from './campaign-proof.mjs';
 import {assertKnownPlayFailure} from './seed-known-play-attempt.mjs';
+import {assertWrongSceneFailure} from './seed-wrong-scene-attempt.mjs';
 
 export const failedSeedAttemptKind='ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY';
 export const knownPlayFailedSeedAttemptKind='ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY';
 export const captureStopFailedSeedAttemptKind='ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY';
+export const wrongSceneFailedSeedAttemptKind='ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY';
 const driver='/root/recovery_game_driver';
 const names={result:'driver-flow-result.private.json',ledger:'guard-launch-history.private.json',plan:'plan.json',
  lease:'native-lane-lease.private.json',controller:'controller-start.private.json',owned:'owned-processes-current.private.json',
@@ -45,20 +47,28 @@ export function readKnownPlayFailedSeedAttempt(receipt,previousLedger,ledgerPin,
 export function readCaptureStopFailedSeedAttempt(receipt,previousLedger,ledgerPin,readPreference){
  return readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,captureStopFailedSeedAttemptKind);
 }
+/** @param {any} receipt @param {any} ledger @param {any} pin @param {(p:any,l:any,s:string)=>any} preference */
+export function readWrongSceneFailedSeedAttempt(receipt,ledger,pin,preference){
+ return readTerminalFailure(receipt,ledger,pin,preference,wrongSceneFailedSeedAttemptKind);
+}
 /** @param {any} receipt @param {any} previousLedger @param {any} ledgerPin
  * @param {(plan:any,lease:any,scenario:string)=>any} readPreference @param {string} kind */
 function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kind){
  const v=receipt;
- const captureStop=kind===captureStopFailedSeedAttemptKind,known=kind===knownPlayFailedSeedAttemptKind||captureStop;
+ const wrongScene=kind===wrongSceneFailedSeedAttemptKind,captureStop=kind===captureStopFailedSeedAttemptKind,
+  known=kind===knownPlayFailedSeedAttemptKind||captureStop||wrongScene;
+ const extra=wrongScene?{e1Source:'E1-authorization.private.json',e1Claim:'guard-E1-consumed.private.json',
+  e1Plan:'E1-plan.private.json',e1Lease:'E1-lease.private.json',e1Owned:'driver-E1-owned.private.json',b1Menu:'B1-menu-inspected.private.json'}:{};
+ const secondProvider=wrongScene?['e1ProviderReady','e1ProviderTerminal','e1ProviderSpool','e1ProviderStderr']:[];
  fail(closed(v,['schemaVersion','kind','issuer','driver','scenario','sourceWorkspace','sourceHead','allOwnedHandlesTerminalReaped','actions','evidence'])&&
   v.schemaVersion===1&&v.kind===kind&&v.issuer==='/root'&&v.driver===driver&&v.allOwnedHandlesTerminalReaped===true&&
   typeof v.scenario==='string'&&isAbsolute(v.scenario)&&resolve(v.scenario)===v.scenario&&typeof v.sourceWorkspace==='string'&&
   isAbsolute(v.sourceWorkspace)&&resolve(v.sourceWorkspace)===v.sourceWorkspace&&dirname(v.scenario)===resolve(v.sourceWorkspace,'.tmp/starsector-proxy/scenarios')&&
   /^[a-f0-9]{40}$/.test(v.sourceHead)&&closed(v.actions,['actualGuard','currentRunContext','absoluteMaxReservedActions'])&&
-  closed(v.actions.currentRunContext,['overallAttempts','uiAttempts'])&&closed(v.evidence,[...Object.keys(names),...Object.keys(providerNames)]));
+  closed(v.actions.currentRunContext,['overallAttempts','uiAttempts'])&&closed(v.evidence,[...Object.keys(names),...Object.keys(providerNames),...Object.keys(extra),...secondProvider]));
  const e=v.evidence,scenario=v.scenario;
  /** @type {any} */const a={};
- for(const [key,name] of Object.entries(names))a[key]=pinned(e[key],resolve(scenario,name));
+ for(const [key,name] of Object.entries({...names,...extra}))a[key]=pinned(e[key],resolve(scenario,name));
  const {result:r,ledger:l,plan:p,lease,controller:c,owned,rootCall,caller,launch,protection,preference,source,claim,observation:o}=a;
  fail(same(e.ledger,ledgerPin)&&same(l,previousLedger)&&l.schemaVersion===2&&l.kind==='STARSECTOR_FINITE_LAUNCH_HISTORY'&&
   (known||l.pending===null)&&l.uncertain===false&&same(l.history,v.actions.actualGuard)&&(known||same(l.history,p.historyBaseline))&&
@@ -72,7 +82,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   Number.isSafeInteger(rootCall.value.raw?.session_id)&&rootCall.value.raw.session_id>0&&
   same(r.actualGuardHistory,l.history)&&same(r.inheritedGuardBaseline,known?p.historyBaseline:l.history)&&same(r.actualRunContext,v.actions.currentRunContext)&&
   r.schemaVersion===1&&r.kind==='ACTUAL_FINITE_DRIVER_FLOW_RESULT'&&r.status==='CLOSED_FAIL'&&r.verdict==='FAIL'&&
-  r.failureCategory===(captureStop?'CAPTURE_UNCERTAIN':known?'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY':'FOCUS_BLOCKED')&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
+  r.failureCategory===(wrongScene?'POSTCONDITION_FAILED':captureStop?'CAPTURE_UNCERTAIN':known?'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY':'FOCUS_BLOCKED')&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
   (known||(same(r.actions,{reservedThisRun:0,sentThisRun:0,clicks:0,activations:0})&&
   same(r.providers,{started:1,B1:'TERMINAL_PASS_REAPED',E1:'NOT_STARTED',E2:'NOT_STARTED',calls:5})))&&
   r.absoluteMaxReservedActions===p.absoluteMaxReservedActions&&r.absoluteMaxReservedActions===lease.absoluteMaxReservedActions&&
@@ -80,12 +90,13 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   r.absoluteMaxReservedActions>l.history.reservedActions&&r.absoluteMaxReservedActions<=l.history.reservedActions+8&&
   r.historicalUnsentReservations===l.history.reservedActions-l.history.sentActions);
  for(const [key,alias] of Object.entries({observation:'observation',callerTerminal:'caller',launchSupervisor:'launch',protection:'protection',pidAbsence:'pidAbsence',ledger:'ledger',plan:'plan',lease:'lease'}))fail(same(r.evidence?.[key],e[alias]));
- fail(l.provider?.batch==='B1'&&/^[A-Za-z0-9_-]+$/.test(l.provider.runID)&&source.schemaVersion===6&&source.scenario===scenario&&source.batch==='B1'&&
-  l.provider.sourceSha256===e.source.sha256&&l.b1ClaimSha256===e.claim.sha256&&claim.sourcePath===e.source.path&&
+ const provider=wrongScene?{batch:'B1',runID:claim.binding?.runID,sourceSha256:claim.sourceSha256}:l.provider;
+ fail(provider?.batch==='B1'&&/^[A-Za-z0-9_-]+$/.test(provider.runID)&&source.schemaVersion===6&&source.scenario===scenario&&source.batch==='B1'&&
+  provider.sourceSha256===e.source.sha256&&l.b1ClaimSha256===e.claim.sha256&&claim.sourcePath===e.source.path&&
   claim.sourceSha256===e.source.sha256&&claim.binding?.schemaVersion===6&&claim.binding.batch==='B1'&&
-  claim.binding.scenario===scenario&&claim.binding.workspaceRoot===v.sourceWorkspace&&claim.binding.runID===l.provider.runID&&
+  claim.binding.scenario===scenario&&claim.binding.workspaceRoot===v.sourceWorkspace&&claim.binding.runID===provider.runID&&
   claim.binding.sourceSha256===e.source.sha256&&claim.binding.originalPlanSha256===e.plan.sha256&&claim.binding.controllerSha256===e.controller.sha256);
- const output=resolve(v.sourceWorkspace,'.tmp/starsector-proxy',l.provider.runID);
+ const output=resolve(v.sourceWorkspace,'.tmp/starsector-proxy',provider.runID);
  for(const [key,name] of Object.entries(providerNames)){
   if(key==='providerStderr'){fail(e[key].path===resolve(output,name)&&closed(e[key],['path','sha256']));const f=file(e[key].path);fail(f.sha256===e[key].sha256&&f.bytes.length===0);}
   else a[key]=pinned(e[key],resolve(output,name));
@@ -107,7 +118,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   t.steps?.length===1&&step.command===node&&step.status===0&&step.timedOut===false&&step.processOwnership==='windows-job-object'&&
   same(step.args,[resolve(v.sourceWorkspace,'tools/starsector-proxy/guarded-http-child.mjs')])&&step.cwd==='.'&&
   spool.schemaVersion===1&&spool.command==='verify'&&spool.ok===true&&spool.result?.verdict==='PASS'&&spool.result.steps?.length===1&&
-  same(critical(spool.result.steps[0]),critical(step))&&ready.schemaVersion===1&&ready.runID===l.provider.runID&&ready.batch==='B1'&&
+  same(critical(spool.result.steps[0]),critical(step))&&ready.schemaVersion===1&&ready.runID===provider.runID&&ready.batch==='B1'&&
   ready.sourceSha256===e.source.sha256&&ready.startupTimeoutMs===20000&&ready.consentMode==='finite-explicit-consent'&&
   Number.isSafeInteger(t.verifierPid)&&ready.node?.executable===node&&ready.helper?.executable===powershell&&
   ready.node.parentPid===t.verifierPid&&ready.helper.parentPid===ready.node.pid&&
@@ -141,6 +152,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
  fail(absence.allAbsent===true&&same(absence.liveRows,[])&&Array.isArray(absence.queriedExactRecordedPids)&&
   expected.every(pid=>Number.isSafeInteger(pid)&&pid>0&&absence.queriedExactRecordedPids.includes(pid))&&Date.parse(absence.atUtc)>=Date.parse(t.at)&&
   Date.parse(protection.at)>=Date.parse(t.at));
+ if(wrongScene){assertWrongSceneFailure({v,a,e,output,pinned,fail,node,powershell});return v.actions;}
  if(known){assertKnownPlayFailure({v,a,e,output,pinned,fail,captureStop});return v.actions;}
  fail(Array.isArray(o.calls)&&o.calls.length===5&&o.schemaVersion===1&&
   o.kind==='ACTUAL_DRIVER_NO_INPUT_FOCUS_STOP'&&o.category==='FOCUS_BLOCKED'&&o.verdict==='FAIL'&&o.driver===driver&&

@@ -400,6 +400,15 @@ result stops the batch. Never blindly repeat a toggle, save, command or click.
 
 Derive screen-absolute coordinates from current bounds and verified image/client
 offsets. Rediscover after launcher handoff, window replacement or invalid handle.
+For pinned Windows vendor 7.1.0, the native-width bitmap is allocated from outer
+bounds but starts at the client DC. Use the existing owned-window
+`fixture/read-owned-client-geometry.ps1` and `clientImagePoint` to add the measured
+`ClientToScreen(hwnd,0,0)` origin to an inspected local image point. Outer bounds
+alone do not supply that origin. Require matching HWND, PID/birth/controller,
+current focus, unchanged outer bounds, native image dimensions and fresh geometry.
+Reject bitmap padding outside the actual client size. Apply this to every click,
+including launcher Play; retain the geometry and local point beside the unchanged
+closed screen-coordinate receipt. These reads grant no input or extra deadline.
 Do not reuse historical AutoColonyManager coordinates. The pinned `zoom` tool
 captures the full desktop and remains denied.
 
@@ -526,3 +535,14 @@ observation follows known provider closure and precedes final protection.
 Original image receipts do not prove a readable main menu or identify a cause.
 The older zero-input and helper-refusal cases keep their existing contracts;
 none is completed seed provenance or replenishes an old allowance.
+
+`ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY` retains a distinct
+two-click failure: known Play and closed B1 menu handoff, followed by acknowledged
+New Game with a failed scene assertion. Both readers require the actual B1/E1
+authority and claims, original process lineage, eleven plus ten calls, four
+complete inspected original PNGs, both known provider closures and caller cleanup.
+The original caller clock remains immutable across copied phase clocks. The known
+New Game reservation stays pending; no E2, Generate, Continue or seed is inferred.
+All thirty evidence references, protected empty private saves, PID absence and the
+two-action increment remain required. Any next explicit bounded grant carries
+the real context and counts; the historical cap and failure are never rewritten.

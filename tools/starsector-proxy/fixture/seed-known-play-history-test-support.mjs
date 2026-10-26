@@ -18,7 +18,7 @@ const png=Buffer.concat([Buffer.from('89504e470d0a1a0a','hex'),
 const category='PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY';
 
 /** Existing no-input fixture remains untouched; override only generated prior-attempt data. */
-/** @param {{targetApp?:string,originX?:number,originY?:number,sessionId?:unknown,historyBaseline?:{overallAttempts:number,uiAttempts:number,reservedActions:number,sentActions:number}}} [options] */
+/** @param {{targetApp?:string,originX?:number,originY?:number,sessionId?:unknown,anchorMs?:number,historyBaseline?:{overallAttempts:number,uiAttempts:number,reservedActions:number,sentActions:number}}} [options] */
 export function knownPlayHistoryFixture(options={}){
  const f=/** @type {any} */(failedSeedHistoryFixture()),paths=f.evidencePaths,scenario=f.priorScenario;
  const before=options.historyBaseline??{overallAttempts:40,uiAttempts:37,reservedActions:72,sentActions:70};
@@ -26,7 +26,7 @@ export function knownPlayHistoryFixture(options={}){
  const context={overallAttempts:before.overallAttempts+1,uiAttempts:before.uiAttempts+1};
  const future={...guard,...context},previousCap=before.reservedActions+8,nextCap=guard.reservedActions+8;
  const runID=value(paths.ledger).provider.runID,output=resolve(f.root,'.tmp/starsector-proxy',runID);
- const anchor=Date.now()-5000,iso=(/** @type {number} */ offset)=>new Date(anchor+offset).toISOString();
+ const anchor=options.anchorMs??Date.now()-5000,iso=(/** @type {number} */ offset)=>new Date(anchor+offset).toISOString();
  const priorPlan=value(paths.plan);priorPlan.historyBaseline={...before};priorPlan.absoluteMaxReservedActions=previousCap;json(paths.plan,priorPlan);
  const priorLease=value(paths.lease);priorLease.planSha256=ref(paths.plan).sha256;priorLease.absoluteMaxReservedActions=previousCap;json(paths.lease,priorLease);
  const c=value(paths.controller);

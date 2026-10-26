@@ -541,3 +541,25 @@ Only a new explicit grant may admit the next bounded allowance, retaining the
 spent Play and every older unsent reservation. This kind also refuses as seed
 provenance. It does not resolve Play, grant input, activate a window or renew time.
 
+The separate capture-stop kind retains `CAPTURE_UNCERTAIN`, one known Play,
+fourteen calls, three originals and the final permitted unreadable capture.
+The older helper-refusal and zero-input shapes remain unchanged.
+
+`ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY` uses thirty fixed
+evidence descriptors: the existing twenty plus E1 authorization, claim, plan,
+lease and owned snapshot, the B1 menu proof and E1 provider readiness, terminal,
+stdout and stderr. Both readers require two known strict Java clicks, B1 eleven
+calls followed by E1 ten calls, four complete native-width originals, a known
+closed B1 handoff and a failed New Game scene assertion. Root/phase clocks and
+full original process identity remain bound. Generate, Continue, E2 and seed
+provenance refuse. Reserved/sent counts advance by two, and context advances by
+one; earlier failures, unsent reservations and the historical cap stay intact.
+
+For future pointer coordinates, native Windows captures start at client `(0,0)`
+inside an outer-sized bitmap. Read the existing owned client-geometry helper
+after inspection, then use `clientImagePoint` with the actual native image point.
+It checks identity, focus, outer dimensions, client size and fresh stable origin,
+and rejects nonclient padding or scaled images. Keep private derivation evidence
+beside the closed public screen-coordinate receipts. No guessed border/titlebar
+offset, new native input surface, extra provider call or longer deadline follows.
+
