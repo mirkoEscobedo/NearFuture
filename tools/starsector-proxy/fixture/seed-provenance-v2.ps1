@@ -22,10 +22,10 @@ function Assert-NativeModernSeedPins($Pins,$Binding) {
   Assert-NativeSeedOrdinary $row.path
   if((Get-Item -LiteralPath $row.path).PSIsContainer-or(Get-FileHash -LiteralPath $row.path -Algorithm SHA256).Hash-ine$row.sha256){throw 'Modern seed source pin changed'}
  }
- foreach($name in @('fixture-inputs.ps1','seed-fixture.ps1','seed-provenance-v2.ps1','seed-creation-history.ps1','seed-failed-attempt.ps1','seed-known-play-attempt.ps1','seed-wrong-scene-attempt.ps1', 'seed-capture-linkage-attempt.ps1','seed-preference.ps1','prepare-fixture.ps1','protection-check.ps1')){
+ foreach($name in @('fixture-inputs.ps1','seed-fixture.ps1','seed-provenance-v2.ps1','seed-creation-history.ps1','seed-failed-attempt.ps1','seed-known-play-attempt.ps1','seed-wrong-scene-attempt.ps1', 'seed-capture-linkage-attempt.ps1', 'seed-zero-provider-attempt.ps1', 'seed-zero-provider-terminal.ps1','seed-preference.ps1','prepare-fixture.ps1','protection-check.ps1')){
   if(!$seen.Contains([IO.Path]::GetFullPath((Join-Path $PSScriptRoot $name)))){throw 'Complete modern seed tooling closure required'}
  }
- foreach($name in @('seed-creation-custody.mjs','seed-creation-history.mjs','seed-failed-attempt.mjs','seed-known-play-attempt.mjs','seed-wrong-scene-attempt.mjs', 'seed-capture-linkage-attempt.mjs','client-coordinate.mjs','seed-wizard-proof.mjs','seed-creation-output.mjs','campaign-proof.mjs','campaign-authority.mjs')){
+ foreach($name in @('seed-creation-custody.mjs','seed-creation-history.mjs','seed-failed-attempt.mjs','seed-known-play-attempt.mjs','seed-wrong-scene-attempt.mjs', 'seed-capture-linkage-attempt.mjs', 'seed-zero-provider-attempt.mjs', 'seed-zero-provider-terminal.mjs','client-coordinate.mjs','seed-wizard-proof.mjs','seed-creation-output.mjs','campaign-proof.mjs','campaign-authority.mjs')){
   if(!$seen.Contains([IO.Path]::GetFullPath((Join-Path $PSScriptRoot ('../'+$name))))){throw 'Complete modern seed proof closure required'}
  }
 }

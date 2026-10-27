@@ -557,3 +557,13 @@ require their original PNG, focused owned launcher, exact failure boundary and
 absence of geometry or later-phase artifacts. This custody grants no input or
 seed provenance; the next explicit grant carries the spent context and unchanged
 action count. Historical deadlines, failures and ceilings remain recorded.
+
+`ROOT_CLOSED_ZERO_PROVIDER_CONTROLLER_CLOCK_FAILED_SEED_ATTEMPT_HISTORY` records
+an unclaimed B1 stopped at launch admission because the original controller
+deadline exceeded its supervisor deadline. Its separate closed custody binds the
+actual freeze command and pinned procedure, unclaimed phase files, terminal
+stager and original caller, process ancestry and save protection. The exact B1
+output directory and all consumed claims must be absent. Both readers preserve
+the spent launch context without claiming provider, input, seed or ordinary-exit
+success. The producer clips its inner deadline to the earlier unchanged outer
+deadline; neither clock nor the consumer's ordering rule is extended.

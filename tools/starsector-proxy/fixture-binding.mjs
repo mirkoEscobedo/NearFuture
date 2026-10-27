@@ -6,7 +6,7 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 export const fixtureProbeSources = Object.freeze([
     'tools/starsector-proxy/guarded-http-ownership.ps1',
     ...['native-controller.ps1', 'protection-check.ps1', 'fixture-inputs.ps1',
-        'seed-fixture.ps1', 'seed-creation-history.ps1', 'seed-failed-attempt.ps1', 'seed-known-play-attempt.ps1', 'seed-wrong-scene-attempt.ps1', 'seed-capture-linkage-attempt.ps1', 'seed-preference.ps1', 'seed-provenance-v2.ps1', 'publish-owned-snapshot.ps1', 'session-watchdog.ps1', 'menu-launch.ps1']
+        'seed-fixture.ps1', 'seed-creation-history.ps1', 'seed-failed-attempt.ps1', 'seed-known-play-attempt.ps1', 'seed-wrong-scene-attempt.ps1', 'seed-capture-linkage-attempt.ps1', 'seed-zero-provider-attempt.ps1', 'seed-zero-provider-terminal.ps1', 'seed-preference.ps1', 'seed-provenance-v2.ps1', 'publish-owned-snapshot.ps1', 'session-watchdog.ps1', 'menu-launch.ps1']
         .map(name => 'tools/starsector-proxy/fixture/' + name),
 ]);
 
