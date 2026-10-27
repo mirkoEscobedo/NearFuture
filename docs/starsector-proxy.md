@@ -567,3 +567,30 @@ output directory and all consumed claims must be absent. Both readers preserve
 the spent launch context without claiming provider, input, seed or ordinary-exit
 success. The producer clips its inner deadline to the earlier unchanged outer
 deadline; neither clock nor the consumer's ordering rule is extended.
+
+`ROOT_CLOSED_PRE_INPUT_CALLER_DATE_FAILED_SEED_ATTEMPT_HISTORY` retains a separate
+four-call stop after successful owned geometry, mapping and point checking. The
+original generic driver result and stop observation stay in their recorded
+formats. The closed root receipt pins the original root/phase authority, consumed
+B1 claim, all four post/attempt/raw call records, complete inspected PNG, source
+frame, process births, geometry Job terminal, point, fail-fast metadata caller,
+provider/caller closure and save protection. The doctor caller's empty arguments
+and normalized provider arguments remain distinct recorded representations.
+
+Both validators require the final caller's recorded date-parse error with zero
+input, reservations and activations. Historical geometry is checked at its
+recorded computation time within the original deadlines; it never supplies fresh
+geometry for another run. The original failure, spent context, unsent reservation
+count and action ceiling remain. This receipt grants neither input nor successful
+seed provenance, and does not attest unrecorded caller runtime or locale state.
+The original plan's `source-pins.private.json` and lease's
+`frozen-support-pins.private.json` remain distinct canonical aliases with identical
+bytes. The initial owned observation retains its three-field projection and
+recorded source digest even after that source alias is overwritten. Later full
+snapshots bind controller identity, claimed Java PID, Job parent and birth time.
+Phase authority must be the exact original plan/lease spread for B1. Recorded
+begin/finish MCP text packets use strict scalar, array and duplicate-field checks.
+The single-Java claim must contain exactly the observed PID. Recorded Job PID
+arrays are positive and unique; controller kernel birth remains a canonical
+positive decimal string. Consumed process and MCP records retain their object
+and array types rather than accepting collection-to-scalar conversions.
