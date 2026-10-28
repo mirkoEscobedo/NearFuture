@@ -18,8 +18,9 @@ function providerPins(){
  return runtimePins;
 }
 
-export function failedSeedHistoryFixture(){
- const f=seedCreationFixture(),scenario=mkdtempSync(resolve(dirname(f.scenario),'failed-history-prior-'));
+/** @param {{watchdogMs?:number}} [options] */
+export function failedSeedHistoryFixture(options={}){
+ const f=seedCreationFixture(options),scenario=mkdtempSync(resolve(dirname(f.scenario),'failed-history-prior-'));
  const runID=basename(scenario)+'-B1',output=resolve(f.root,'.tmp/starsector-proxy',runID);
  const guard={overallAttempts:40,uiAttempts:37,reservedActions:72,sentActions:70};
  const context={overallAttempts:41,uiAttempts:38},head='1'.repeat(40),session=777;
@@ -67,7 +68,7 @@ export function failedSeedHistoryFixture(){
  const closeout={schemaVersion:1,kind:'ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY',issuer:'/root',driver:'/root/recovery_game_driver',scenario,sourceWorkspace:f.root,sourceHead:head,allOwnedHandlesTerminalReaped:true,actions:{actualGuard:guard,currentRunContext:context,absoluteMaxReservedActions:80},evidence:{}};
  const closeoutPath=resolve(scenario,'failed-seed-attempt-history.private.json');
  function refresh(){
-  const r=value(result);r.evidence=Object.fromEntries(Object.entries({observation,callerTerminal:caller,launchSupervisor:launch,protection,pidAbsence,ledger,plan,lease}).map(([k,p])=>[k,ref(p)]));json(result,r);
+  const r=value(result);r.evidence=Object.fromEntries(Object.entries({observation:evidencePaths.observation,callerTerminal:caller,launchSupervisor:launch,protection,pidAbsence,ledger,plan,lease}).map(([k,p])=>[k,ref(p)]));json(result,r);
   closeout.evidence=Object.fromEntries(Object.entries(evidencePaths).map(([k,p])=>[k,ref(p)]));json(closeoutPath,closeout);
   const baseline={...guard,...context};json(f.grantPath,{schemaVersion:2,kind:'ROOT_ADMITTED_SEED_CREATION_HISTORY',issuer:'/root',driver:'/root/recovery_game_driver',historyBaseline:baseline,maxReservedActions:80,previous:{result:ref(closeoutPath),ledger:ref(ledger)}});
   for(const v of [f.plan,f.launchLease,f.phasePlan,f.phaseLease]){v.historyBaseline={...baseline};v.historyAdmission=ref(f.grantPath);}

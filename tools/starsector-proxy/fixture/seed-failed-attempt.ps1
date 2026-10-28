@@ -37,11 +37,12 @@ function Read-NativeSeedFailedAttemptCore($Receipt,$PreviousLedger,$LedgerPin,[s
  }
  function Read-Ref($Pin,[string]$Expected,[long]$Maximum=262144){
   Assert-NativeSeedFields $Pin @('path','sha256');Need ($Pin.path-is[string]-and$Pin.path-ceq$Expected-and$Pin.sha256-is[string]-and$Pin.sha256-cmatch'^[a-f0-9]{64}$')
-  if($callerDate){Assert-NativeSeedOrdinary $Expected;$bytes=[IO.File]::ReadAllBytes($Expected);Need ($bytes.Length-ge2-and$bytes.Length-le$Maximum-and[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()-ceq$Pin.sha256);return ConvertFrom-ZeroProviderObject ([Text.UTF8Encoding]::new($false,$true).GetString($bytes))}
+  if($callerDate-or$observedFocus){Assert-NativeSeedOrdinary $Expected;$bytes=[IO.File]::ReadAllBytes($Expected);Need ($bytes.Length-ge2-and$bytes.Length-le$Maximum-and[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()-ceq$Pin.sha256);return ConvertFrom-ZeroProviderObject ([Text.UTF8Encoding]::new($false,$true).GetString($bytes))}
   return (Read-NativeModernSeedJson $Expected $Pin.sha256 $Maximum)
  }
  function Critical($Step){return [pscustomobject]@{command=$Step.command;args=$Step.args;cwd=$Step.cwd;processOwnership=$Step.processOwnership;status=$Step.status;timedOut=$Step.timedOut}}
  $callerDate=$ExpectedKind-ceq'ROOT_CLOSED_PRE_INPUT_CALLER_DATE_FAILED_SEED_ATTEMPT_HISTORY'
+ $observedFocus=($ExpectedKind-ceq'ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY'-and$Receipt.scenario-is[string]-and$Receipt.evidence.observation.path-ceq(Join-Path $Receipt.scenario 'driver-stop-observation.private.json'))
  $linkage=$ExpectedKind-ceq'ROOT_CLOSED_PRE_INPUT_CAPTURE_LINKAGE_FAILED_SEED_ATTEMPT_HISTORY';$v=$Receipt;$driver='/root/recovery_game_driver';$captureStop=$ExpectedKind-ceq'ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY';$wrongScene=$ExpectedKind-ceq'ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY';$known=($ExpectedKind-ceq'ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY'-or$captureStop-or$wrongScene)
  Assert-NativeSeedFields $v @('schemaVersion','kind','issuer','driver','scenario','sourceWorkspace','sourceHead','allOwnedHandlesTerminalReaped','actions','evidence')
  Assert-NativeSeedInteger $v.schemaVersion 1 1
@@ -52,6 +53,7 @@ function Read-NativeSeedFailedAttemptCore($Receipt,$PreviousLedger,$LedgerPin,[s
  Assert-NativeSeedFields $v.actions.currentRunContext @('overallAttempts','uiAttempts')
  $names=@{result='driver-flow-result.private.json';ledger='guard-launch-history.private.json';plan='plan.json';lease='native-lane-lease.private.json';controller='controller-start.private.json';owned='owned-processes-current.private.json';rootCall='root-call.actual.private.json';caller='launch-caller-terminal.actual.private.json';launch='launch-supervisor.private.json';protection='after-smoke-protection.private.json';pidAbsence='owned-terminal-pid-absence.actual.private.json';preference='seed-creation-preference.private.json';source='B1-authorization.private.json';claim='guard-B1-consumed.private.json';observation='driver-observation-stop.private.json'}
  $names.supportPins='frozen-support-pins.private.json'
+ if($observedFocus){$names.observation='driver-stop-observation.private.json'}
  $providerNames=@{providerReady='guarded-http-ready.private.json';providerTerminal='owned-provider-terminal.private.json';providerSpool='owned-provider.stdout.private.txt';providerStderr='owned-provider.stderr.private.txt'}
  $secondProvider=@()
  if($wrongScene){$names.e1Source='E1-authorization.private.json';$names.e1Claim='guard-E1-consumed.private.json';$names.e1Plan='E1-plan.private.json';$names.e1Lease='E1-lease.private.json';$names.e1Owned='driver-E1-owned.private.json';$names.b1Menu='B1-menu-inspected.private.json';$secondProvider=@('e1ProviderReady','e1ProviderTerminal','e1ProviderSpool','e1ProviderStderr')}
@@ -64,6 +66,7 @@ function Read-NativeSeedFailedAttemptCore($Receipt,$PreviousLedger,$LedgerPin,[s
   $a.metadataCaller=[Text.UTF8Encoding]::new($false,$true).GetString($packetBytes)|ConvertFrom-Json -Depth 100 -DateKind String -NoEnumerate
  }
  $r=$a.result;$l=$a.ledger;$p=$a.plan;$lease=$a.lease;$c=$a.controller;$owned=$a.owned;$rootCall=$a.rootCall;$caller=$a.caller;$launch=$a.launch;$protection=$a.protection;$preference=$a.preference;$source=$a.source;$claim=$a.claim;$o=$a.observation
+ if($observedFocus){$o=Get-NativeObservedFocusView $v $a}
  Exact-Integer $r.schemaVersion 1;Exact-Integer $l.schemaVersion 2;Exact-Integer $p.campaignControl.schemaVersion 4;Exact-Integer $lease.campaignControl.schemaVersion 4
  Exact-Integer $source.schemaVersion 6;Exact-Integer $claim.binding.schemaVersion 6
  Need ((Same $e.ledger $LedgerPin)-and(Same $l $PreviousLedger)-and$l.schemaVersion-eq2-and$l.kind-ceq'STARSECTOR_FINITE_LAUNCH_HISTORY'-and($known-or$null-eq$l.pending)-and$l.uncertain-is[bool]-and!$l.uncertain-and(Same $l.history $v.actions.actualGuard)-and($known-or(Same $l.history $p.historyBaseline)))
@@ -141,21 +144,97 @@ function Read-NativeSeedFailedAttemptCore($Receipt,$PreviousLedger,$LedgerPin,[s
  if($wrongScene){Assert-NativeWrongSceneFailureCustody $v $a $e $output $node $powershell;return $v.actions}
  if($known){Assert-NativeKnownPlayFailureCustody $v $a $e $output $returned $captureStop;return $v.actions}
  Exact-Integer $o.schemaVersion 1;Exact-Integer $o.inputActions 0;Exact-Integer $o.activations 0;Exact-Integer $o.providersStarted 1;Exact-Integer $o.providersClosedKnown 1
- Need ($o.calls-is[array]-and$o.calls.Count-eq5-and$o.schemaVersion-eq1-and$o.kind-ceq'ACTUAL_DRIVER_NO_INPUT_FOCUS_STOP'-and$o.category-ceq'FOCUS_BLOCKED'-and$o.verdict-ceq'FAIL'-and$o.driver-ceq$driver-and$o.scenarioId-ceq$p.scenarioId-and$o.sourceHead-ceq$v.sourceHead-and$o.inputActions-eq0-and$o.activations-eq0-and$o.providersStarted-eq1-and$o.providersClosedKnown-eq1-and(Same $o.currentRunContext $r.actualRunContext)-and(Same $o.actualGuardHistory $l.history))
- $tools=@('doctor','policy_status','get_window','get_frontmost_app','screenshot');$attempts=@(Get-ChildItem -LiteralPath $output -File|Where-Object{$_.Name-cmatch'^call-\d+\.attempt\.private\.json$'}|Sort-Object Name|ForEach-Object{$_.Name})
+ $observationKind=if($observedFocus){'ACTUAL_S11_DRIVER_FOCUS_BLOCKED_STOP'}else{'ACTUAL_DRIVER_NO_INPUT_FOCUS_STOP'}
+ Need ($o.calls-is[array]-and$o.calls.Count-eq5-and$o.schemaVersion-eq1-and$o.kind-ceq$observationKind-and$o.category-ceq'FOCUS_BLOCKED'-and$o.verdict-ceq'FAIL'-and$o.driver-ceq$driver-and$o.scenarioId-ceq$p.scenarioId-and$o.sourceHead-ceq$v.sourceHead-and$o.inputActions-eq0-and$o.activations-eq0-and$o.providersStarted-eq1-and$o.providersClosedKnown-eq1-and(Same $o.currentRunContext $r.actualRunContext)-and(Same $o.actualGuardHistory $l.history))
+ $tools=if($observedFocus){@('doctor','policy_status','get_window','screenshot','get_frontmost_app')}else{@('doctor','policy_status','get_window','get_frontmost_app','screenshot')};$attempts=@(Get-ChildItem -LiteralPath $output -File|Where-Object{$_.Name-cmatch'^call-\d+\.attempt\.private\.json$'}|Sort-Object Name|ForEach-Object{$_.Name})
  Need (Same $attempts @(1..5|ForEach-Object{'call-'+$_.ToString('000')+'.attempt.private.json'}))
  foreach($batch in @('E1','E2')){Need (!(Test-Path -LiteralPath (Join-Path $scenario ('guard-'+$batch+'-consumed.private.json'))))}
- $rawCalls=@()
+ $rawCalls=@();$posts=@()
  for($i=0;$i-lt5;$i++){
   $row=$o.calls[$i];Assert-NativeSeedFields $row @('completed','attempt','raw');$prefix=Join-Path $output ('call-'+($i+1).ToString('000'))
-  $post=Read-Ref $row.completed ($prefix+'.private.json');$attempt=Read-Ref $row.attempt ($prefix+'.attempt.private.json');$raw=Read-Ref $row.raw ($prefix+'.raw.private.json') 8388608;$rawCalls+=,$raw
+  $post=Read-Ref $row.completed ($prefix+'.private.json');$attempt=Read-Ref $row.attempt ($prefix+'.attempt.private.json');$raw=Read-Ref $row.raw ($prefix+'.raw.private.json') 8388608;$rawCalls+=,$raw;$posts+=,$post
   Need ($post.tool-ceq$tools[$i]-and$attempt.tool-ceq$tools[$i]-and$post.runID-ceq$ready.runID-and$attempt.runID-ceq$ready.runID-and$post.batch-ceq'B1'-and$attempt.batch-ceq'B1'-and$attempt.sourceSha256-ceq$e.source.sha256-and(Same $post.args $attempt.args)-and$post.precedingActions-is[array]-and$post.precedingActions.Count-eq0-and$post.isError-is[bool]-and!$post.isError-and$raw.isError-ne$true)
   Need ([DateTimeOffset]::Parse($post.callStarted)-ge[DateTimeOffset]::Parse($ready.at)-and[DateTimeOffset]::Parse($post.callCompleted)-ge[DateTimeOffset]::Parse($post.callStarted)-and[DateTimeOffset]::Parse($post.callCompleted)-le[DateTimeOffset]::Parse($t.at))
  }
- $window=$rawCalls[2].structuredContent;$front=$rawCalls[3].structuredContent.app
+ if($observedFocus){Assert-NativeObservedFocusCustody $v $a $rawCalls $posts $output}
+ $frontIndex=if($observedFocus){4}else{3};$window=$rawCalls[2].structuredContent;$front=$rawCalls[$frontIndex].structuredContent.app
  $targets=@($owned.processes|Where-Object{$_.pid-eq$window.pid});Need ($targets.Count-eq1);$target=$targets[0]
  Need ($target.inSupervisorJob-is[bool]-and$target.inSupervisorJob-and$target.sessionId-eq$c.sessionId-and$target.executable-ceq(Join-Path $c.installation 'jre/bin/java.exe')-and$target.supervisorJobPids-contains$window.pid-and$claim.binding.ownedPids-contains$window.pid-and$claim.binding.campaign.windowId-eq$window.windowId-and$absence.queriedExactRecordedPids-contains$window.pid)
  foreach($id in $c.supervisorJobPids){Need ($target.supervisorJobPids-contains$id)}
  Need ($window.isFocused-is[bool]-and!$window.isFocused-and$window.windowId-eq$o.capture.windowId-and$window.pid-eq$o.capture.pid-and$front.pid-ne$window.pid-and$front.pid-eq$o.frontmost.pid)
  return $v.actions
+}
+
+# A local view of one immutable raw record. No source artifact is rewritten.
+function Get-NativeObservedFocusView($v,$a) {
+ $o=$a.observation;$r=$a.result;$w=$o.window;$front=$o.foreground.raw.structuredContent.app
+ Exact-Integer $a.plan.sessionWatchdogMs 1800000;Exact-Integer $a.lease.sessionWatchdogMs 1800000
+ $cap=$a.plan.callerAdmissionDeadlineMs;$start=$a.rootCall.value.startMs
+ Assert-NativeSeedInteger $cap 1 9007199254740991;Exact-Integer $a.lease.callerAdmissionDeadlineMs $cap;Assert-NativeSeedInteger $start 1 9007199254740991
+ Need ($start-lt$cap-and$cap-$start-le1800000)
+ foreach($name in @('kind','driver','scenario','failureCategory','assertion','rootProtection')){Need ($o.$name-is[string])}
+ foreach($name in @('kind','scenarioId','driver','sourceHead','status','verdict','failureCategory')){Need ($r.$name-is[string])}
+ foreach($stamp in @($o.atUtc,$r.atUtc)){Need ($stamp-is[string]);$null=[DateTimeOffset]::Parse($stamp)}
+ Assert-NativeSeedFields $o @('schemaVersion','kind','driver','scenario','atUtc','failureCategory','assertion','window','foreground','callCount','originalImages','inputCount','reservationsAdded','activations','geometryModes','metadataModes','actualVendorCalls','begin','providerFinish','historyBaseline','actualContext','absoluteMaxReservedActions','originalCallerSession','originalCallerDeadlineMs','retry','ordinaryExit','campaign','seed','rootProtection')
+ Assert-NativeSeedFields $r @('schemaVersion','kind','scenarioId','driver','sourceHead','status','verdict','failureCategory','inheritedGuardBaseline','actualGuardHistory','actualRunContext','absoluteMaxReservedActions','historicalUnsentReservations','actions','providers','counts','actualCallOrder','focus','visibleAssertion','steps','timing','closure','protection','readerCompatibility','claims','evidence','calls','atUtc')
+ Exact-Integer $o.schemaVersion 1;foreach($pair in @(@('callCount',5),@('originalImages',1),@('inputCount',0),@('reservationsAdded',0),@('activations',0),@('geometryModes',0),@('metadataModes',0))){Exact-Integer $o.($pair[0]) $pair[1]}
+ Need ($o.kind-ceq'ACTUAL_S11_DRIVER_FOCUS_BLOCKED_STOP'-and$o.driver-ceq'/root/recovery_game_driver'-and$o.scenario-is[string]-and[IO.Path]::IsPathFullyQualified($o.scenario)-and[IO.Path]::GetFullPath($o.scenario)-ceq$v.scenario-and$o.failureCategory-ceq'FOCUS_BLOCKED'-and$o.rootProtection-ceq'PENDING')
+ Need ((Same @($o.retry,$o.ordinaryExit,$o.campaign,$o.seed) @($false,$false,$false,$false))-and$r.calls-is[array]-and$r.calls.Count-eq5-and$o.actualVendorCalls-is[array]-and$o.actualVendorCalls.Count-eq5-and(Same $o.historyBaseline $r.inheritedGuardBaseline)-and(Same $o.actualContext $r.actualRunContext))
+ Exact-Integer $o.absoluteMaxReservedActions $r.absoluteMaxReservedActions;Exact-Integer $o.originalCallerSession $a.caller.session;Exact-Integer $o.originalCallerDeadlineMs $a.plan.callerAdmissionDeadlineMs
+ Need ($o.assertion-is[string]-and$o.assertion.Length-gt0-and$o.assertion.Length-le4096)
+ Assert-NativeSeedFields $o.foreground @('raw','at','reason');Need ($o.foreground.reason-is[string]-and$o.foreground.reason.Length-le4096)
+ Assert-NativeSeedFields $o.begin @('args','raw','at');Assert-NativeSeedFields $o.begin.args @('consentMode','runID','source');Assert-NativeSeedFields $o.providerFinish @('raw','at')
+ Need ((Same $r.counts ([pscustomobject]@{originalPngs=1;metadataModes=0;geometryModes=0}))-and(Same $r.steps ([pscustomobject]@{B1='FOCUS_BLOCKED_BEFORE_INPUT';E1='NOT_STARTED';E2='NOT_STARTED'})))
+ Need (Same $r.claims ([pscustomobject]@{campaign=$false;seed=$false;stability=$false;ordinaryExit=$false;native99Acceptance=$false;alphaAcceptance=$false;newTypedHistoryKind=$false}))
+ Need (Same $r.timing ([pscustomobject]@{rootWatchdogMs=$a.plan.sessionWatchdogMs;inputMarginMs=20000;cleanupReserveMs=30000;originalCallerDeadlineMs=$a.plan.callerAdmissionDeadlineMs;clockRenewal=$false;retry=$false}))
+ Assert-NativeSeedInteger $w.pid 1 9007199254740991;Assert-NativeSeedInteger $w.windowId 1 9007199254740991;Assert-NativeSeedInteger $front.pid 1 9007199254740991
+ Need ($front.bundleId-is[string])
+ Assert-NativeSeedInteger $w.bounds.width 1 32768;Assert-NativeSeedInteger $w.bounds.height 1 32768
+ Need ($w.isFocused-is[bool]-and!$w.isFocused-and(Same $r.focus ([pscustomobject]@{ownedPid=$w.pid;ownedHwnd=$w.windowId;isFocused=$false;foregroundApp=$front.bundleId;foregroundPid=$front.pid})))
+ Need (Same $r.visibleAssertion ([pscustomobject]@{launcherPlayVisible=$true;inputPrecondition=$false;originalNativeDimensions=[pscustomobject]@{width=$w.bounds.width;height=$w.bounds.height};captureReceipt=$true;freshness='UNKNOWN';activationAllowed=$false}))
+ $compatibility=$r.readerCompatibility
+ Assert-NativeSeedFields $compatibility @('currentNoInputFocusReader','expectedCallOrder','actualOrderPreserved','currentReaderSource','observationActualKind','canonicalObservationAliasCreated','reason')
+ foreach($name in @('currentNoInputFocusReader','observationActualKind')){Need ($compatibility.$name-is[string])}
+ Need ($compatibility.currentNoInputFocusReader-ceq'NOT_COMPATIBLE_WITH_ACTUAL_ORDER_OR_OBSERVATION_SHAPE'-and(Same $compatibility.expectedCallOrder @('doctor','policy_status','get_window','get_frontmost_app','screenshot'))-and$compatibility.actualOrderPreserved-is[bool]-and$compatibility.actualOrderPreserved-and$compatibility.observationActualKind-ceq$o.kind-and$compatibility.canonicalObservationAliasCreated-is[bool]-and!$compatibility.canonicalObservationAliasCreated)
+ foreach($name in @('currentReaderSource','reason')){Need ($compatibility.$name-is[string]-and$compatibility.$name.Length-le4096)}
+ Assert-NativeSeedFields $r.closure @('provider','rootCaller','maintainedStopToolChunk','forcedOwnedCleanup','ordinaryExit','allOwnedHandlesTerminalReaped','knownPidsAbsent')
+ Need ((Same @($r.closure.forcedOwnedCleanup,$r.closure.ordinaryExit,$r.closure.allOwnedHandlesTerminalReaped) @($true,$false,$true))-and$r.closure.maintainedStopToolChunk-is[string]-and$r.closure.maintainedStopToolChunk.Length-gt0-and$r.closure.maintainedStopToolChunk.Length-le128)
+ return [pscustomobject]@{schemaVersion=$o.schemaVersion;kind=$o.kind;scenarioId=$r.scenarioId;category=$o.failureCategory;verdict=$r.verdict;driver=$o.driver;sourceHead=$r.sourceHead;currentRunContext=$o.actualContext;actualGuardHistory=$o.historyBaseline;inputActions=$o.inputCount;activations=$o.activations;providersStarted=$r.providers.started;providersClosedKnown=$(if($r.closure.provider.terminalReaped-is[bool]-and$r.closure.provider.terminalReaped){1}else{0});calls=$r.calls;capture=$w;frontmost=$front}
+}
+
+function Assert-NativeObservedFocusCustody($v,$a,$raw,$posts,[string]$output) {
+ $o=$a.observation;$r=$a.result;$t=$a.providerTerminal;$caller=$a.caller;$tools=@('doctor','policy_status','get_window','screenshot','get_frontmost_app')
+ foreach($post in $posts){Need ($post.callStarted-is[string]-and$post.callCompleted-is[string]);$null=[DateTimeOffset]::Parse($post.callStarted);$null=[DateTimeOffset]::Parse($post.callCompleted)}
+ foreach($stamp in @($a.providerReady.at,$t.at,$t.deadline,$a.protection.at,$a.pidAbsence.atUtc)){
+  Need ($stamp-is[string]);$null=[DateTimeOffset]::Parse($stamp)
+ }
+ $readyMs=[DateTimeOffset]::Parse($a.providerReady.at).ToUnixTimeMilliseconds();$closedMs=[DateTimeOffset]::Parse($t.at).ToUnixTimeMilliseconds();$deadlineMs=[DateTimeOffset]::Parse($t.deadline).ToUnixTimeMilliseconds()
+ Need ($a.rootCall.value.startMs-le$readyMs-and$closedMs-le$deadlineMs-and$deadlineMs-le$a.plan.callerAdmissionDeadlineMs-30000-and$deadlineMs-$readyMs-le180000)
+ Need ((Same $o.window $raw[2].structuredContent)-and(Same $o.foreground.raw $raw[4])-and(Same $r.actualCallOrder $tools))
+ Need (Same @($posts[0].args,$posts[1].args,$posts[2].args,$posts[3].args,$posts[4].args) @([pscustomobject]@{include_remediation=$true},[pscustomobject]@{},[pscustomobject]@{window_id=$o.window.windowId},[pscustomobject]@{target_window_id=$o.window.windowId;width=$o.window.bounds.width;quality=0},[pscustomobject]@{}))
+ $previous=[long]0
+ for($i=0;$i-lt5;$i++){
+  $row=$o.actualVendorCalls[$i];Assert-NativeSeedFields $row @('ordinal','name','args','atMs');Exact-Integer $row.ordinal ($i+1);Assert-NativeSeedInteger $row.atMs 0 9007199254740991
+  Need ($row.name-is[string])
+  # The pinned doctor schema supplies true for the caller's omitted option.
+  $auditArgs=if($i-eq0){[pscustomobject]@{}}else{$posts[$i].args}
+  Need ($row.name-ceq$tools[$i]-and(Same $row.args $auditArgs)-and$row.atMs-ge[DateTimeOffset]::Parse($posts[$i].callCompleted).ToUnixTimeMilliseconds()-and$row.atMs-gt$previous-and$row.atMs-le[DateTimeOffset]::Parse($t.at).ToUnixTimeMilliseconds());$previous=$row.atMs
+ }
+ function Packet($packet){
+  Assert-NativeSeedFields $packet @('content');Need ($packet.content-is[array]-and$packet.content.Count-eq1);Assert-NativeSeedFields $packet.content[0] @('type','text')
+  Need ($packet.content[0].type-is[string]-and$packet.content[0].type-ceq'text'-and$packet.content[0].text-is[string]-and[Text.Encoding]::UTF8.GetByteCount($packet.content[0].text)-le262144)
+  return ConvertFrom-ZeroProviderObject $packet.content[0].text
+ }
+ $begin=Packet $o.begin.raw;Assert-NativeSeedFields $begin @('runID','output','deadline')
+ Need ($begin.runID-is[string]-and$begin.deadline-is[string]-and$o.begin.args.consentMode-is[string]-and$o.begin.args.runID-is[string])
+ Need ($begin.runID-ceq$a.providerReady.runID-and$begin.output-is[string]-and[IO.Path]::IsPathFullyQualified($begin.output)-and[IO.Path]::GetFullPath($begin.output)-ceq$output-and$begin.deadline-ceq$t.deadline-and(Same (Packet $o.providerFinish.raw) $t))
+ $null=[DateTimeOffset]::Parse($begin.deadline)
+ Need ($o.begin.args.consentMode-ceq'finite-explicit-consent'-and$o.begin.args.runID-ceq$begin.runID-and$o.begin.args.source-is[string]-and[IO.Path]::IsPathFullyQualified($o.begin.args.source)-and[IO.Path]::GetFullPath($o.begin.args.source)-ceq$v.evidence.source.path)
+ foreach($stamp in @($o.begin.at,$o.foreground.at,$o.providerFinish.at)){Assert-NativeSeedInteger $stamp 0 9007199254740991}
+ Need ($o.begin.at-ge[DateTimeOffset]::Parse($a.providerReady.at).ToUnixTimeMilliseconds()-and$o.begin.at-le[DateTimeOffset]::Parse($posts[0].callStarted).ToUnixTimeMilliseconds()-and$o.foreground.at-ge$o.actualVendorCalls[4].atMs-and$o.foreground.at-le[DateTimeOffset]::Parse($t.at).ToUnixTimeMilliseconds()-and$o.providerFinish.at-ge[DateTimeOffset]::Parse($t.at).ToUnixTimeMilliseconds()-and[DateTimeOffset]::Parse($o.atUtc).ToUnixTimeMilliseconds()-ge$o.providerFinish.at-and[DateTimeOffset]::Parse($r.atUtc)-ge[DateTimeOffset]::Parse($o.atUtc))
+ Need (Same $r.closure.provider ([pscustomobject]@{verifierPid=$t.verifierPid;status=0;timedOut=$false;verdict='PASS';terminalReaped=$true;at=$t.at}))
+ Need (Same $r.closure.rootCaller ([pscustomobject]@{session=$caller.session;originalRawChunk=$caller.launchRaw.chunk_id;terminalRawChunk=$caller.actual.chunk_id;status=1;timedOut=$false;verdict='FAIL';terminalReaped=$true;kind=$caller.kind;pollCount=$caller.launchPolls.Count}))
+ Need (Same $r.closure.knownPidsAbsent $a.pidAbsence.queriedExactRecordedPids)
+ $p=$a.protection
+ Need (Same $r.protection ([pscustomobject]@{protectedOriginalFiles=$p.protectedOriginalFiles;protectedSaveFiles=$p.protectedSaveFiles;allOriginalAndBackupHashesMatch=$p.allOriginalAndBackupHashesMatch;saveCensusUnchanged=$p.saveCensusUnchanged;originalWrites=$p.originalWrites;originalAutosave=$p.originalAutosave;privateAutosaveEnabled=$p.privateAutosaveEnabled;privateSaveEntries=$p.privateSaveEntries;liveGameProcesses=$p.liveGameProcesses;sharedPreference='Registry64/String/true unchanged';restoration=$p.restoration}))
 }

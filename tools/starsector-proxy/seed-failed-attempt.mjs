@@ -69,9 +69,11 @@ export function readCallerDateFailedSeedAttempt(receipt,ledger,pin,preference){
 function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kind){
  const v=receipt;
  const callerDate=kind===callerDateFailedSeedAttemptKind;
+ const observedFocus=kind===failedSeedAttemptKind&&typeof v.scenario==='string'&&
+  v.evidence?.observation?.path===resolve(v.scenario,'driver-stop-observation.private.json');
  /** New-case byte reader preserves scalar/array distinctions and rejects duplicate keys. */
  const pinRead=(/** @type {any} */ pin,/** @type {string} */ path,limit=262144)=>{
-  if(!callerDate)return pinned(pin,path,limit);
+  if(!callerDate&&!observedFocus)return pinned(pin,path,limit);
   fail(closed(pin,['path','sha256'])&&typeof pin.path==='string'&&pin.path===path&&typeof pin.sha256==='string'&&/^[a-f0-9]{64}$/.test(pin.sha256));
   const bytes=file(path,limit);fail(bytes.sha256===pin.sha256);
   return zeroProviderObject(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes.bytes),fail);
@@ -89,9 +91,10 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   closed(v.actions.currentRunContext,['overallAttempts','uiAttempts'])&&closed(v.evidence,[...Object.keys(names),...Object.keys(providerNames),...Object.keys(extra).filter(k=>!Object.hasOwn(names,k)),...secondProvider,...(callerDate?['helper','geometryRunner',...Object.keys(callerDateProviderNames)]:[])]));
  const e=v.evidence,scenario=v.scenario;
  /** @type {any} */const a={};
- for(const [key,name] of Object.entries({...names,...extra}))a[key]=pinRead(e[key],resolve(scenario,name));
+ for(const [key,name] of Object.entries({...names,...extra,...(observedFocus?{observation:'driver-stop-observation.private.json'}:{})}))a[key]=pinRead(e[key],resolve(scenario,name));
  if(linkage)a.metadataCaller=pinned(e.metadataCaller,resolve(scenario,'driver-metadata-calls.actual.private.json'));
- const {result:r,ledger:l,plan:p,lease,controller:c,owned,rootCall,caller,launch,protection,preference,source,claim,observation:o}=a;
+ const {result:r,ledger:l,plan:p,lease,controller:c,owned,rootCall,caller,launch,protection,preference,source,claim}=a;
+ const o=observedFocus?observedFocusView(v,a):a.observation;
  fail(same(e.ledger,ledgerPin)&&same(l,previousLedger)&&l.schemaVersion===2&&l.kind==='STARSECTOR_FINITE_LAUNCH_HISTORY'&&
   (known||l.pending===null)&&l.uncertain===false&&same(l.history,v.actions.actualGuard)&&(known||same(l.history,p.historyBaseline))&&
   p.scenarioId===basename(scenario)&&p.paths?.scenario===scenario&&p.source?.qualifiedHead===v.sourceHead&&
@@ -122,7 +125,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
  const output=resolve(v.sourceWorkspace,'.tmp/starsector-proxy',provider.runID);
  if(callerDate)for(const [key,name]of Object.entries(callerDateProviderNames))a[key]=pinRead(e[key],resolve(output,name),32*1024*1024);
  for(const [key,name] of Object.entries(providerNames)){
-  if(key==='providerStderr'){fail(e[key].path===resolve(output,name)&&closed(e[key],['path','sha256']));const f=file(e[key].path);fail(f.sha256===e[key].sha256&&f.bytes.length===0);}
+   if(key==='providerStderr'){fail(e[key].path===resolve(output,name)&&closed(e[key],['path','sha256']));const f=file(e[key].path);fail(f.sha256===e[key].sha256&&f.bytes.length===0);}
   else a[key]=pinRead(e[key],resolve(output,name));
  }
  const ready=a.providerReady,t=a.providerTerminal,spool=a.providerSpool;
@@ -185,23 +188,26 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
  if(wrongScene){assertWrongSceneFailure({v,a,e,output,pinned,fail,node,powershell});return v.actions;}
  if(known){assertKnownPlayFailure({v,a,e,output,pinned,fail,captureStop});return v.actions;}
  fail(Array.isArray(o.calls)&&o.calls.length===5&&o.schemaVersion===1&&
-  o.kind==='ACTUAL_DRIVER_NO_INPUT_FOCUS_STOP'&&o.category==='FOCUS_BLOCKED'&&o.verdict==='FAIL'&&o.driver===driver&&
+  o.kind===(observedFocus?'ACTUAL_S11_DRIVER_FOCUS_BLOCKED_STOP':'ACTUAL_DRIVER_NO_INPUT_FOCUS_STOP')&&o.category==='FOCUS_BLOCKED'&&o.verdict==='FAIL'&&o.driver===driver&&
   o.scenarioId===p.scenarioId&&o.sourceHead===v.sourceHead&&o.inputActions===0&&o.activations===0&&o.providersStarted===1&&
   o.providersClosedKnown===1&&same(o.currentRunContext,r.actualRunContext)&&same(o.actualGuardHistory,l.history));
- const tools=['doctor','policy_status','get_window','get_frontmost_app','screenshot'];
+ const tools=observedFocus?['doctor','policy_status','get_window','screenshot','get_frontmost_app']:
+  ['doctor','policy_status','get_window','get_frontmost_app','screenshot'];
  const attempts=readdirSync(output).filter(n=>/^call-\d+\.attempt\.private\.json$/.test(n)).sort();
  fail(same(attempts,tools.map((_,i)=>'call-'+String(i+1).padStart(3,'0')+'.attempt.private.json'))&&!readdirSync(scenario).some(n=>/^guard-E[12]-consumed\.private\.json$/.test(n)));
  /** @type {any[]} */const rawCalls=[];
+ /** @type {any[]} */const posts=[];
  for(const [i,tool] of tools.entries()){
   const row=o.calls[i],prefix=resolve(output,'call-'+String(i+1).padStart(3,'0'));
   fail(closed(row,['completed','attempt','raw']));
-  const post=pinned(row.completed,prefix+'.private.json'),attempt=pinned(row.attempt,prefix+'.attempt.private.json');
-  const raw=pinned(row.raw,prefix+'.raw.private.json',8*1024*1024);rawCalls.push(raw);
+  const post=pinRead(row.completed,prefix+'.private.json'),attempt=pinRead(row.attempt,prefix+'.attempt.private.json');
+  const raw=pinRead(row.raw,prefix+'.raw.private.json',8*1024*1024);rawCalls.push(raw);posts.push(post);
   fail(post.tool===tool&&attempt.tool===tool&&post.runID===ready.runID&&attempt.runID===ready.runID&&post.batch==='B1'&&attempt.batch==='B1'&&
    attempt.sourceSha256===e.source.sha256&&same(post.args,attempt.args)&&same(post.precedingActions,[])&&post.isError===false&&raw.isError!==true&&
    Date.parse(post.callStarted)>=Date.parse(ready.at)&&Date.parse(post.callCompleted)>=Date.parse(post.callStarted)&&Date.parse(post.callCompleted)<=Date.parse(t.at));
  }
- const window=rawCalls[2].structuredContent,front=rawCalls[3].structuredContent?.app;
+ if(observedFocus)assertObservedFocusCustody(v,a,rawCalls,posts,output);
+ const window=rawCalls[2].structuredContent,front=rawCalls[observedFocus?4:3].structuredContent?.app;
  const targets=owned.processes.filter((/** @type {any} */ proc)=>proc.pid===window?.pid);
  fail(targets.length===1&&targets[0].inSupervisorJob===true&&targets[0].sessionId===c.sessionId&&
   targets[0].executable===resolve(c.installation,'jre/bin/java.exe')&&targets[0].supervisorJobPids.includes(window.pid)&&
@@ -211,4 +217,100 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
  fail(window?.isFocused===false&&window.windowId===o.capture?.windowId&&window.pid===o.capture.pid&&
   Number.isSafeInteger(front?.pid)&&front.pid!==window.pid&&front.pid===o.frontmost?.pid);
  return v.actions;
+}
+
+/** A local view of one immutable observed representation; never rewrites its files.
+ * @param {any} v @param {any} a */
+function observedFocusView(v,a){
+ const o=a.observation,r=a.result,w=o.window,front=o.foreground?.raw?.structuredContent?.app;
+ const cap=a.plan.callerAdmissionDeadlineMs,start=a.rootCall.value?.startMs;
+ fail(a.plan.sessionWatchdogMs===1800000&&a.lease.sessionWatchdogMs===1800000&&
+  Number.isSafeInteger(cap)&&cap>0&&a.lease.callerAdmissionDeadlineMs===cap&&
+  Number.isSafeInteger(start)&&start>0&&start<cap&&cap-start<=1800000);
+ fail(['kind','driver','scenario','failureCategory','assertion','rootProtection'].every(key=>typeof o[key]==='string')&&
+  ['kind','scenarioId','driver','sourceHead','status','verdict','failureCategory'].every(key=>typeof r[key]==='string'));
+ for(const stamp of [o.atUtc,r.atUtc])fail(typeof stamp==='string'&&Number.isFinite(Date.parse(stamp)));
+ fail(closed(o,['schemaVersion','kind','driver','scenario','atUtc','failureCategory','assertion','window','foreground','callCount','originalImages',
+  'inputCount','reservationsAdded','activations','geometryModes','metadataModes','actualVendorCalls','begin','providerFinish','historyBaseline',
+  'actualContext','absoluteMaxReservedActions','originalCallerSession','originalCallerDeadlineMs','retry','ordinaryExit','campaign','seed','rootProtection'])&&
+  closed(r,['schemaVersion','kind','scenarioId','driver','sourceHead','status','verdict','failureCategory','inheritedGuardBaseline','actualGuardHistory',
+  'actualRunContext','absoluteMaxReservedActions','historicalUnsentReservations','actions','providers','counts','actualCallOrder','focus','visibleAssertion',
+  'steps','timing','closure','protection','readerCompatibility','claims','evidence','calls','atUtc']));
+ fail(o.schemaVersion===1&&o.kind==='ACTUAL_S11_DRIVER_FOCUS_BLOCKED_STOP'&&o.driver===driver&&typeof o.scenario==='string'&&
+  isAbsolute(o.scenario)&&resolve(o.scenario)===v.scenario&&o.failureCategory==='FOCUS_BLOCKED'&&o.rootProtection==='PENDING'&&
+  same([o.callCount,o.originalImages,o.inputCount,o.reservationsAdded,o.activations,o.geometryModes,o.metadataModes],[5,1,0,0,0,0,0])&&
+  same([o.retry,o.ordinaryExit,o.campaign,o.seed],[false,false,false,false])&&Array.isArray(r.calls)&&r.calls.length===5&&
+  Array.isArray(o.actualVendorCalls)&&o.actualVendorCalls.length===5&&same(o.historyBaseline,r.inheritedGuardBaseline)&&
+  same(o.actualContext,r.actualRunContext)&&o.absoluteMaxReservedActions===r.absoluteMaxReservedActions&&
+  o.originalCallerSession===a.caller.session&&o.originalCallerDeadlineMs===a.plan.callerAdmissionDeadlineMs);
+ fail(typeof o.assertion==='string'&&o.assertion.length>0&&o.assertion.length<=4096&&
+  closed(o.foreground,['raw','at','reason'])&&typeof o.foreground.reason==='string'&&o.foreground.reason.length<=4096&&
+  closed(o.begin,['args','raw','at'])&&closed(o.begin.args,['consentMode','runID','source'])&&closed(o.providerFinish,['raw','at']));
+ fail(same(r.counts,{originalPngs:1,metadataModes:0,geometryModes:0})&&
+  same(r.steps,{B1:'FOCUS_BLOCKED_BEFORE_INPUT',E1:'NOT_STARTED',E2:'NOT_STARTED'})&&
+  same(r.claims,{campaign:false,seed:false,stability:false,ordinaryExit:false,native99Acceptance:false,alphaAcceptance:false,newTypedHistoryKind:false})&&
+  same(r.timing,{rootWatchdogMs:a.plan.sessionWatchdogMs,inputMarginMs:20000,cleanupReserveMs:30000,
+   originalCallerDeadlineMs:a.plan.callerAdmissionDeadlineMs,clockRenewal:false,retry:false}));
+ fail(w?.isFocused===false&&Number.isSafeInteger(w.pid)&&w.pid>0&&Number.isSafeInteger(w.windowId)&&w.windowId>0&&
+  Number.isSafeInteger(front?.pid)&&front.pid>0&&typeof front.bundleId==='string'&&
+  Number.isSafeInteger(w.bounds?.width)&&w.bounds.width>=1&&w.bounds.width<=32768&&
+  Number.isSafeInteger(w.bounds?.height)&&w.bounds.height>=1&&w.bounds.height<=32768&&
+  same(r.focus,{ownedPid:w.pid,ownedHwnd:w.windowId,isFocused:false,foregroundApp:front.bundleId,foregroundPid:front.pid})&&
+  same(r.visibleAssertion,{launcherPlayVisible:true,inputPrecondition:false,originalNativeDimensions:{width:w.bounds?.width,height:w.bounds?.height},
+   captureReceipt:true,freshness:'UNKNOWN',activationAllowed:false}));
+ const compatibility=r.readerCompatibility;
+ fail(closed(compatibility,['currentNoInputFocusReader','expectedCallOrder','actualOrderPreserved','currentReaderSource','observationActualKind','canonicalObservationAliasCreated','reason'])&&
+  compatibility.currentNoInputFocusReader==='NOT_COMPATIBLE_WITH_ACTUAL_ORDER_OR_OBSERVATION_SHAPE'&&
+  same(compatibility.expectedCallOrder,['doctor','policy_status','get_window','get_frontmost_app','screenshot'])&&compatibility.actualOrderPreserved===true&&
+  compatibility.observationActualKind===o.kind&&compatibility.canonicalObservationAliasCreated===false&&
+  typeof compatibility.currentReaderSource==='string'&&compatibility.currentReaderSource.length<=4096&&
+  typeof compatibility.reason==='string'&&compatibility.reason.length<=4096);
+ fail(closed(r.closure,['provider','rootCaller','maintainedStopToolChunk','forcedOwnedCleanup','ordinaryExit','allOwnedHandlesTerminalReaped','knownPidsAbsent'])&&
+  r.closure.forcedOwnedCleanup===true&&r.closure.ordinaryExit===false&&r.closure.allOwnedHandlesTerminalReaped===true&&
+  typeof r.closure.maintainedStopToolChunk==='string'&&r.closure.maintainedStopToolChunk.length>0&&r.closure.maintainedStopToolChunk.length<=128);
+ return {...o,scenarioId:r.scenarioId,category:o.failureCategory,verdict:r.verdict,sourceHead:r.sourceHead,currentRunContext:o.actualContext,
+  actualGuardHistory:o.historyBaseline,inputActions:o.inputCount,providersStarted:r.providers?.started,
+  providersClosedKnown:r.closure.provider?.terminalReaped===true?1:0,calls:r.calls,capture:w,frontmost:front};
+}
+
+/** @param {any} v @param {any} a @param {any[]} raw @param {any[]} posts @param {string} output */
+function assertObservedFocusCustody(v,a,raw,posts,output){
+ const o=a.observation,r=a.result,t=a.providerTerminal,caller=a.caller;
+ for(const stamp of [a.providerReady.at,t.at,t.deadline,a.protection.at,a.pidAbsence.atUtc,
+  ...posts.flatMap(post=>[post.callStarted,post.callCompleted])])fail(typeof stamp==='string'&&Number.isFinite(Date.parse(stamp)));
+ fail(a.rootCall.value.startMs<=Date.parse(a.providerReady.at)&&Date.parse(t.at)<=Date.parse(t.deadline)&&
+  Date.parse(t.deadline)<=a.plan.callerAdmissionDeadlineMs-30000&&Date.parse(t.deadline)-Date.parse(a.providerReady.at)<=180000);
+ const tools=['doctor','policy_status','get_window','screenshot','get_frontmost_app'];
+ fail(same(o.window,raw[2].structuredContent)&&same(o.foreground.raw,raw[4])&&same(r.actualCallOrder,tools));
+ fail(same(posts.map(post=>post.args),[{include_remediation:true},{},{window_id:o.window.windowId},
+  {target_window_id:o.window.windowId,width:o.window.bounds.width,quality:0},{}]));
+ let previous=0;
+ for(const [i,row]of o.actualVendorCalls.entries()){
+  // The pinned doctor schema supplies true for the caller's omitted option.
+  fail(closed(row,['ordinal','name','args','atMs'])&&row.ordinal===i+1&&row.name===tools[i]&&same(row.args,i===0?{}:posts[i].args)&&
+   Number.isSafeInteger(row.atMs)&&row.atMs>=Date.parse(posts[i].callCompleted)&&row.atMs>previous&&row.atMs<=Date.parse(t.at));previous=row.atMs;
+ }
+ /** @param {any} packet */
+ function packet(packet){
+  fail(closed(packet,['content'])&&Array.isArray(packet.content)&&packet.content.length===1&&
+   closed(packet.content[0],['type','text'])&&packet.content[0].type==='text'&&typeof packet.content[0].text==='string'&&
+   Buffer.byteLength(packet.content[0].text)<=262144);
+  return zeroProviderObject(packet.content[0].text,fail);
+ }
+ const begin=packet(o.begin.raw);
+ fail(closed(begin,['runID','output','deadline'])&&begin.runID===a.providerReady.runID&&typeof begin.output==='string'&&
+  isAbsolute(begin.output)&&resolve(begin.output)===output&&typeof begin.deadline==='string'&&begin.deadline===t.deadline&&Number.isFinite(Date.parse(begin.deadline))&&
+  same(packet(o.providerFinish.raw),t)&&o.begin.args.consentMode==='finite-explicit-consent'&&o.begin.args.runID===begin.runID&&
+  typeof o.begin.args.source==='string'&&isAbsolute(o.begin.args.source)&&resolve(o.begin.args.source)===v.evidence.source.path);
+ fail(Number.isSafeInteger(o.begin.at)&&o.begin.at>=Date.parse(a.providerReady.at)&&o.begin.at<=Date.parse(posts[0].callStarted)&&
+  Number.isSafeInteger(o.foreground.at)&&o.foreground.at>=o.actualVendorCalls[4].atMs&&o.foreground.at<=Date.parse(t.at)&&
+  Number.isSafeInteger(o.providerFinish.at)&&o.providerFinish.at>=Date.parse(t.at)&&Date.parse(o.atUtc)>=o.providerFinish.at&&Date.parse(r.atUtc)>=Date.parse(o.atUtc));
+ fail(same(r.closure.provider,{verifierPid:t.verifierPid,status:0,timedOut:false,verdict:'PASS',terminalReaped:true,at:t.at})&&
+  same(r.closure.rootCaller,{session:caller.session,originalRawChunk:caller.launchRaw.chunk_id,terminalRawChunk:caller.actual.chunk_id,status:1,
+   timedOut:false,verdict:'FAIL',terminalReaped:true,kind:caller.kind,pollCount:caller.launchPolls.length})&&same(r.closure.knownPidsAbsent,a.pidAbsence.queriedExactRecordedPids));
+ const p=a.protection;
+ fail(same(r.protection,{protectedOriginalFiles:p.protectedOriginalFiles,protectedSaveFiles:p.protectedSaveFiles,
+  allOriginalAndBackupHashesMatch:p.allOriginalAndBackupHashesMatch,saveCensusUnchanged:p.saveCensusUnchanged,originalWrites:p.originalWrites,
+  originalAutosave:p.originalAutosave,privateAutosaveEnabled:p.privateAutosaveEnabled,privateSaveEntries:p.privateSaveEntries,liveGameProcesses:p.liveGameProcesses,
+  sharedPreference:'Registry64/String/true unchanged',restoration:p.restoration}));
 }

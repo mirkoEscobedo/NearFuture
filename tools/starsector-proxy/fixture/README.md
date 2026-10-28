@@ -1,5 +1,16 @@
 # Protected Starsector fixture tooling
 
+The existing closed no-input focus-failure history also accepts the separately
+recorded capture-first observation shape. Its five calls must remain in their
+original order: doctor, policy status, owned-window lookup, targeted original
+screenshot, then foreground lookup. The readers bind the raw observation and
+result to the actual call triples, provider and original-caller terminal records,
+owned PID absence and protected saves. They recognize only the pinned doctor's
+default `include_remediation: true` for an omitted caller option; other request
+arguments must match the owned window and native-width PNG request. The legacy
+shape and its foreground-before-capture order are unchanged. Neither shape
+qualifies a seed, native acceptance, another action or a renewed clock.
+
 The separate `ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY` receipt
 preserves a one-Play run whose last permitted original did not establish a
 readable main menu. It references the unchanged actual `CAPTURE_UNCERTAIN`
