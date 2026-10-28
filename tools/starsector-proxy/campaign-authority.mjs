@@ -322,7 +322,7 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
     const controllerFile = pinned(predecessor.controller, 'controller-start.private.json');
     const plan = planFile.value, lease = leaseFile.value, controller = controllerFile.value;
     // Only an explicitly paired seed-creation launch may select the longer original budget.
-    const watchdog = creation && plan.sessionWatchdogMs === 720000 ? 720000 : 480000;
+    const watchdog = creation && [720000, 1800000].includes(plan.sessionWatchdogMs) ? plan.sessionWatchdogMs : 480000;
     requireThat(controllerFile.sha256 === controllerSha256 && controller.rootLeaseSha256?.toLowerCase() === leaseFile.sha256 &&
         lease.planSha256?.toLowerCase() === planFile.sha256, 'original launch authority changed');
     requireThat(plan.scenarioId === basename(scenario) && resolve(plan.paths?.scenario ?? '') === scenario &&
@@ -496,7 +496,8 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
         read(lease.supportPinsPath).sha256 === lease.supportPinsSha256?.toLowerCase() &&
         read(resolve(scenario, 'protected-fixture-receipt.private.json')).sha256 === lease.fixtureReceiptSha256?.toLowerCase() &&
         controller.fixtureReceiptSha256?.toLowerCase() === lease.fixtureReceiptSha256?.toLowerCase(), 'original support/fixture custody changed');
-    clock(campaign, controller, now, input ? 120000 : 20000);
+    const minimumClockMs = input && !(creation && campaign.rootClock.sessionWatchdogMs === 1800000) ? 120000 : 20000;
+    clock(campaign, controller, now, minimumClockMs);
     const admitted = handoff ? 'loadCoordinate' in handoff
         ? { ...binding, b1MenuReceipt: { path: plan.b1MenuReceipt.path, sha256: handoff.receiptSha256,
             ...(inspection || generation || creation ? { newGameCoordinate: handoff.loadCoordinate } : { loadCoordinate: handoff.loadCoordinate }) } }

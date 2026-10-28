@@ -466,9 +466,19 @@ insignificant whitespace; duplicate fields refuse. Legacy grants are unchanged.
 
 The only route is eight left clicks: B1 Play; E1 New Game, Generate, first
 Continue; E2 Explorer/Apogee faster start, Normal, Skip it, Start game. No
-activation, key, typing, manual Save or extra provider is available. All original
-root/provider/startup/call/action/cleanup limits remain. An unavailable preferred
+activation, key, typing, manual Save or extra provider is available. Provider,
+startup/call/action/cleanup limits and the selected original root clock remain. An unavailable preferred
 choice stops the route instead of selecting another branch.
+
+The original seed-creation plan and lease may explicitly select the paired
+`sessionWatchdogMs:1800000` emergency policy with matching owned-game/controller
+bounds. This finite 30-minute watchdog replaces the separate 120000ms input
+reserve with the existing 20000ms per-call check, retaining 30000ms for cleanup.
+Its seed prelaunch caller floor is 50000ms; generic controller startup freshness
+and its owned Job tail remain unchanged. Legacy 480000ms/720000ms policies retain
+their 120000ms input reserve and 150000ms caller floor. Other profiles cannot use
+the new value. No policy renews original caller/outer deadlines, adds a provider,
+extends the 180000ms provider lifetime, refunds actions or rewrites old failures.
 
 Each E1 control after New Game and every E2 control uses
 `<batch>-wizard-<ordinal>-inspected.private.json`, kind

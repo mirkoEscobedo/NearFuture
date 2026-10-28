@@ -488,10 +488,24 @@ write its initial save after Start game. Unknown or disabled controls stop input
 
 An explicit root-issued history2 grant carries the preceding actual result and
 ledger hashes and permits at most eight additional reservations. No old failure
-or reserved action is refunded. The eight-minute root clock, eight actions,
-three providers, 32 calls per provider and cleanup reserve remain unchanged.
+or reserved action is refunded. Eight actions, three providers, 32 calls per
+provider and the cleanup reserve remain unchanged.
 The one existing Java tutorial-skip preference must already be true; its exact
 read-only witness is checked before launch and after cleanup. It is never written.
+
+Seed creation may explicitly pair `sessionWatchdogMs:1800000` in the original
+plan and lease with the same owned-game/controller bounds. This selects a finite
+30-minute emergency watchdog. Only this policy uses the existing 20-second
+per-call input check instead of the separate two-minute input reserve; its
+30-second cleanup reserve remains. Prelaunch seed admission consequently needs
+50 seconds of original caller time. Generic controller startup freshness still
+applies. The legacy eight- and twelve-minute seed policies retain their original
+two-minute input reserve and 150-second prelaunch floor.
+
+The emergency watchdog does not renew the original clock, extend a provider's
+180-second lifetime, refill calls/actions or admit an unknown control. Its expiry
+is an incomplete run with owned cleanup, not a performance result. Earlier failed
+attempts keep their original deadlines and outcomes.
 
 After owned cleanup, a separately versioned V2 seed manifest may qualify exactly
 two uncompressed save XML files, at most 16 MiB together, with zero enabled mods.

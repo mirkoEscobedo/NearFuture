@@ -18,9 +18,9 @@ const sha=p=>filePin(p).sha256.toLowerCase();
 /** @param {any} r */
 const textJson=r=>JSON.parse(r.content.find((/** @type {any} */ c)=>c.type==='text').text);
 
-/** @param {{retain?:boolean}} [options] */
+/** @param {{retain?:boolean,watchdogMs?:number,callerBudgetMs?:number}} [options] */
 export async function exerciseSeedCreationTransport(options={}) {
-    const f=seedCreationFixture(),input=new PassThrough(),output=new PassThrough();
+    const f=seedCreationFixture({watchdogMs:options.watchdogMs,callerBudgetMs:options.callerBudgetMs}),input=new PassThrough(),output=new PassThrough();
     const names=['COMPUTER_USE_REQUIRE_APPROVAL','COMPUTER_USE_APPROVAL_TOKEN','COMPUTER_USE_AUDIT_LOG'];
     const prior=names.map(n=>process.env[n]);
     process.env.COMPUTER_USE_REQUIRE_APPROVAL='true';delete process.env.COMPUTER_USE_APPROVAL_TOKEN;
@@ -114,8 +114,8 @@ export async function exerciseSeedCreationTransport(options={}) {
         const pinsPath=resolve(f.scenario,'frozen-support-pins.private.json');
         json(pinsPath,{pins:[...new Set(requiredOwnedHttpFiles(f.root,powershell,supervisor))].map(p=>({path:p,sha256:sha(p)}))});
         f.phaseLease.supportPinsSha256=f.launchLease.supportPinsSha256=sha(pinsPath);
-        const cap=Date.now()+170000;
-        f.plan.callerAdmissionDeadlineMs=f.launchLease.callerAdmissionDeadlineMs=cap;
+        const cap=Date.now()+(options.callerBudgetMs??170000);
+        for(const value of [f.plan,f.launchLease,f.phasePlan,f.phaseLease])value.callerAdmissionDeadlineMs=cap;
         Object.assign(f.campaign.rootClock,{callerAdmissionDeadlineMs:cap,originalCallerAdmissionDeadlineMs:cap,effectiveDeadlineMs:cap});
         f.campaign.producerWitness.effectiveDeadlineMs=cap;f.refreshLaunch();
         const authority=f.launcher(runID),originalAuthority=[f.planPath,f.leasePath].map(p=>readFileSync(p));

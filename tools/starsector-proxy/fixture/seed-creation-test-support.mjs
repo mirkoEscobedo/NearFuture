@@ -9,7 +9,8 @@ export const creationFlow='DISPOSABLE_SEED_CREATION';
 /** @param {string} path */
 const reference=path=>({path,sha256:filePin(path).sha256.toLowerCase()});
 
-export function seedCreationFixture() {
+/** @param {{watchdogMs?:number,callerBudgetMs?:number}} [options] */
+export function seedCreationFixture(options={}) {
     const historyBaseline={overallAttempts:40,uiAttempts:37,reservedActions:72,sentActions:70};
     const f=/** @type {any} */ (campaignLaunchFixture({generation:true,absoluteMaxReservedActions:80,historyBaseline}));
     const priorGuard={overallAttempts:39,uiAttempts:36,reservedActions:72,sentActions:70};
@@ -36,6 +37,20 @@ export function seedCreationFixture() {
     const seedCreation={mode:'CREATE_ONE_PRIVATE_DISPOSABLE_SEED',preference:reference(preferencePath)};
     for(const value of [f.plan,f.launchLease,f.phasePlan,f.phaseLease])value.seedCreation=seedCreation;
     f.campaign.flow=creationFlow;f.phaseLease.schemaVersion=6;f.phaseLease.phase=creationFlow;
+    if(options.watchdogMs!==undefined){
+        const watchdog=options.watchdogMs,start=f.campaign.rootClock.startMs;
+        const cap=Date.now()+(options.callerBudgetMs??watchdog-60000),outer=new Date(start+watchdog).toISOString();
+        f.plan.bounds.ownedGameHardTimeoutMs=watchdog;
+        for(const value of [f.plan,f.phasePlan])Object.assign(value,{sessionWatchdogMs:watchdog,callerAdmissionDeadlineMs:cap});
+        for(const value of [f.launchLease,f.phaseLease])Object.assign(value,{sessionWatchdogMs:watchdog,
+            ownedGameHardTimeoutMs:watchdog,callerAdmissionDeadlineMs:cap});
+        Object.assign(f.controller,{sessionWatchdogMs:watchdog,hardTimeoutMs:watchdog,
+            conservativeOuterDeadlineUtc:outer,controllerDeadlineUtc:outer});
+        Object.assign(f.campaign.rootClock,{sessionWatchdogMs:watchdog,deadlineMs:start+watchdog,
+            callerAdmissionDeadlineMs:cap,originalCallerAdmissionDeadlineMs:cap,effectiveDeadlineMs:cap});
+        Object.assign(f.campaign.producerWitness,{sessionWatchdogMs:watchdog,conservativeOuterDeadlineUtc:outer,
+            controllerDeadlineUtc:outer,effectiveDeadlineMs:cap});
+    }
     f.refreshLaunch();
     function launcher(runID='seed-creation-B1') {
         const planPath=resolve(f.scenario,'B1-plan.private.json'),leasePath=resolve(f.scenario,'B1-lease.private.json');

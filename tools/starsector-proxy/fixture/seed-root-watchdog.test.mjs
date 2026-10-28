@@ -89,8 +89,8 @@ for(const [label,change] of postlaunchChanges)test('postlaunch admission refuses
 /** These phase schemas and flow declarations are coherent before the unsupported budget.
  * @type {[string,Parameters<typeof campaignLaunchFixture>[0]][]} */
 const otherProfiles=[['copied disposable seed',{}],['first-page inspection',{inspection:true}],['generated-name inspection',{generation:true}]];
-for(const [label,options] of otherProfiles)test('both gates keep the original budget for '+label,()=>{
-    const f=withWatchdog(campaignLaunchFixture(options),720000);
+for(const watchdog of [720000,1800000])for(const [label,options] of otherProfiles)test('both gates keep the original budget for '+label+' at '+watchdog,()=>{
+    const f=withWatchdog(campaignLaunchFixture(options),watchdog);
     try {
         const next=claimSeededLauncher(f,'unsupported-watchdog',false);
         assert.throws(()=>readBatchAuthorization(next.source,{root:f.root,runID:next.runID}));
