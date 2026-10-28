@@ -285,8 +285,9 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  }
  if($Plan.scenarioId-cne$Binding.fixtureId-or$Lease.scenarioId-cne$Binding.fixtureId-or$Lease.phase-cne'CAMPAIGN_BINDING_ONLY'-or$Lease.schemaVersion-ne1-or$Lease.authorized-isnot[bool]-or!$Lease.authorized-or$Lease.issuer-cne'/root'-or$Lease.driver-cne'/root/recovery_game_driver'-or$Binding.driverRole-cne$Lease.driver){throw 'Closed campaign control launch authority required'}
  if($Plan.ownership.driver-cne$Lease.driver-or$Plan.ownership.onlyGameInputDriver-isnot[bool]-or!$Plan.ownership.onlyGameInputDriver-or[IO.Path]::GetFullPath($Plan.paths.scenario)-cne[IO.Path]::GetFullPath($Binding.fixtureRoot)){throw 'Campaign control driver and scenario required'}
- foreach($pair in @(@('maxScenarioActionsIncludingActivations',8),@('maxProxyInvocations',3),@('proxyTimeoutMs',180000),@('ownedGameHardTimeoutMs',480000))){Assert-NativeSeedInteger $Plan.bounds.($pair[0]) $pair[1] $pair[1]}
- foreach($pair in @(@('maxActions',8),@('maxProxyInvocations',3),@('ownedGameHardTimeoutMs',480000))){Assert-NativeSeedInteger $Lease.($pair[0]) $pair[1] $pair[1]}
+ $watchdog=if($creation-and($Plan.sessionWatchdogMs-is[int]-or$Plan.sessionWatchdogMs-is[long])-and$Plan.sessionWatchdogMs-eq720000){720000}else{480000}
+ foreach($pair in @(@('maxScenarioActionsIncludingActivations',8),@('maxProxyInvocations',3),@('proxyTimeoutMs',180000),@('ownedGameHardTimeoutMs',$watchdog))){Assert-NativeSeedInteger $Plan.bounds.($pair[0]) $pair[1] $pair[1]}
+ foreach($pair in @(@('maxActions',8),@('maxProxyInvocations',3),@('ownedGameHardTimeoutMs',$watchdog))){Assert-NativeSeedInteger $Lease.($pair[0]) $pair[1] $pair[1]}
  if($Lease.campaignLoadSaveAllowed-isnot[bool]-or$Lease.campaignLoadSaveAllowed){throw 'Campaign control refuses general save and load authority'}
  $batches=@($Plan.batches)
  $batchCount=if($inspection){2}else{3};$batchNames=if($inspection){'B1,E1'}else{'B1,E1,E2'}
@@ -297,11 +298,11 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  Assert-NativeSeedInteger $Plan.callerAdmissionDeadlineMs 1 9007199254740991
  Assert-NativeSeedInteger $Lease.callerAdmissionDeadlineMs $Plan.callerAdmissionDeadlineMs $Plan.callerAdmissionDeadlineMs
  $remaining=$Plan.callerAdmissionDeadlineMs-[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
- if($remaining-lt150000-or$remaining-gt480000){throw 'Campaign control original caller admission deadline required'}
+ if($remaining-lt150000-or$remaining-gt$watchdog){throw 'Campaign control original caller admission deadline required'}
  $planWatchdog=@($Plan.PSObject.Properties.Name)-ccontains'sessionWatchdogMs'
  $leaseWatchdog=@($Lease.PSObject.Properties.Name)-ccontains'sessionWatchdogMs'
  if($planWatchdog-ne$leaseWatchdog){throw 'Campaign control watchdog must be paired'}
- if($planWatchdog){Assert-NativeSeedInteger $Plan.sessionWatchdogMs 480000 480000;Assert-NativeSeedInteger $Lease.sessionWatchdogMs 480000 480000}
+ if($planWatchdog){Assert-NativeSeedInteger $Plan.sessionWatchdogMs $watchdog $watchdog;Assert-NativeSeedInteger $Lease.sessionWatchdogMs $watchdog $watchdog}
  foreach($authority in @($Plan,$Lease)){
   foreach($key in @('ownedNodeKill','campaign','e1MenuReceipt')){if(@($authority.PSObject.Properties.Name)-ccontains$key){throw 'Campaign control refuses unrelated phase authority'}}
   $hasSeed=@($authority.PSObject.Properties.Name)-ccontains'seed'
@@ -317,7 +318,7 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  $support=Read-NativeSeedJson $supportPath $Lease.supportPinsSha256 262144
  Assert-NativeSeedFields $support @('pins')
  if($creation){Assert-NativeSeedCreationHistory $Plan $Lease $Binding.fixtureRoot}
- $sources=@('guarded-http-ownership.ps1','campaign-authority.mjs','batch-authorization.mjs','batch-session.mjs','finite-consent.mjs','fixture-binding.mjs','direct-frames.mjs','campaign-proof.mjs','generation-proof.mjs','seed-creation-history.mjs','seed-failed-attempt.mjs','seed-known-play-attempt.mjs','seed-wrong-scene-attempt.mjs','seed-capture-linkage-attempt.mjs','seed-caller-date-attempt.mjs','seed-caller-date-geometry.mjs','client-coordinate.mjs','seed-zero-provider-attempt.mjs','seed-zero-provider-terminal.mjs','seed-wizard-proof.mjs','seed-creation-output.mjs','seed-creation-custody.mjs')+@('native-controller.ps1','protection-check.ps1','fixture-inputs.ps1','seed-fixture.ps1','seed-creation-history.ps1','seed-failed-attempt.ps1','seed-known-play-attempt.ps1','seed-wrong-scene-attempt.ps1','seed-capture-linkage-attempt.ps1','seed-caller-date-attempt.ps1','seed-caller-date-geometry.ps1','read-owned-client-geometry.ps1','seed-zero-provider-attempt.ps1','seed-zero-provider-terminal.ps1','seed-preference.ps1','seed-provenance-v2.ps1','publish-owned-snapshot.ps1','session-watchdog.ps1','menu-launch.ps1'|ForEach-Object {'fixture/'+$_})
+ $sources=@('guarded-http-ownership.ps1','campaign-authority.mjs','batch-authorization.mjs','batch-session.mjs','finite-consent.mjs','fixture-binding.mjs','direct-frames.mjs','campaign-proof.mjs','generation-proof.mjs','seed-creation-history.mjs','seed-failed-attempt.mjs','seed-known-play-attempt.mjs','seed-wrong-scene-attempt.mjs','seed-capture-linkage-attempt.mjs','seed-caller-date-attempt.mjs','seed-caller-date-geometry.mjs', 'seed-pre-start-margin-attempt.mjs', 'seed-pre-start-margin-records.mjs', 'seed-pre-start-margin-geometry.mjs','client-coordinate.mjs','seed-zero-provider-attempt.mjs','seed-zero-provider-terminal.mjs','seed-wizard-proof.mjs','seed-creation-output.mjs','seed-creation-custody.mjs')+@('native-controller.ps1','protection-check.ps1','fixture-inputs.ps1','seed-fixture.ps1','seed-creation-history.ps1','seed-failed-attempt.ps1','seed-known-play-attempt.ps1','seed-wrong-scene-attempt.ps1','seed-capture-linkage-attempt.ps1','seed-caller-date-attempt.ps1','seed-caller-date-geometry.ps1', 'seed-pre-start-margin-attempt.ps1','read-owned-client-geometry.ps1','seed-zero-provider-attempt.ps1','seed-zero-provider-terminal.ps1','seed-preference.ps1','seed-provenance-v2.ps1','publish-owned-snapshot.ps1','session-watchdog.ps1','menu-launch.ps1'|ForEach-Object {'fixture/'+$_})
  foreach($relative in $sources){
   $path=[IO.Path]::GetFullPath((Join-Path $Binding.repositoryRoot ('tools/starsector-proxy/'+$relative)))
   $pins=@($support.pins|Where-Object {$_.path-is[string]-and[IO.Path]::GetFullPath($_.path)-ceq$path})

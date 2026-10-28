@@ -14,7 +14,7 @@ import { assertSeedCreationOutput } from './seed-creation-output.mjs';
 export const campaignLaunchSources = Object.freeze([...fixtureProbeSources,
     ...['campaign-authority.mjs', 'batch-authorization.mjs', 'batch-session.mjs', 'finite-consent.mjs',
         'fixture-binding.mjs', 'direct-frames.mjs', 'campaign-proof.mjs', 'generation-proof.mjs',
-        'seed-creation-history.mjs', 'seed-failed-attempt.mjs', 'seed-known-play-attempt.mjs', 'seed-wrong-scene-attempt.mjs', 'seed-capture-linkage-attempt.mjs', 'seed-caller-date-attempt.mjs', 'seed-caller-date-geometry.mjs', 'seed-zero-provider-attempt.mjs', 'seed-zero-provider-terminal.mjs', 'client-coordinate.mjs', 'seed-wizard-proof.mjs', 'seed-creation-output.mjs', 'seed-creation-custody.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
+        'seed-creation-history.mjs', 'seed-failed-attempt.mjs', 'seed-known-play-attempt.mjs', 'seed-wrong-scene-attempt.mjs', 'seed-capture-linkage-attempt.mjs', 'seed-caller-date-attempt.mjs', 'seed-caller-date-geometry.mjs', 'seed-pre-start-margin-attempt.mjs', 'seed-pre-start-margin-records.mjs', 'seed-pre-start-margin-geometry.mjs', 'seed-zero-provider-attempt.mjs', 'seed-zero-provider-terminal.mjs', 'client-coordinate.mjs', 'seed-wizard-proof.mjs', 'seed-creation-output.mjs', 'seed-creation-custody.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
 
 const flow = 'PAUSED_CAMPAIGN_EXIT_NO_SAVE';
 const seedFlow = 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE';
@@ -321,17 +321,19 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
     const planFile = pinned(predecessor.plan, 'plan.json'), leaseFile = pinned(predecessor.lease, 'native-lane-lease.private.json');
     const controllerFile = pinned(predecessor.controller, 'controller-start.private.json');
     const plan = planFile.value, lease = leaseFile.value, controller = controllerFile.value;
+    // Only an explicitly paired seed-creation launch may select the longer original budget.
+    const watchdog = creation && plan.sessionWatchdogMs === 720000 ? 720000 : 480000;
     requireThat(controllerFile.sha256 === controllerSha256 && controller.rootLeaseSha256?.toLowerCase() === leaseFile.sha256 &&
         lease.planSha256?.toLowerCase() === planFile.sha256, 'original launch authority changed');
     requireThat(plan.scenarioId === basename(scenario) && resolve(plan.paths?.scenario ?? '') === scenario &&
         plan.ownership?.driver === '/root/recovery_game_driver' && plan.ownership.onlyGameInputDriver === true &&
         plan.bounds?.maxScenarioActionsIncludingActivations === 8 && plan.bounds.maxProxyInvocations === 3 &&
-        plan.bounds.proxyTimeoutMs === 180000 && plan.bounds.ownedGameHardTimeoutMs === 480000 &&
+        plan.bounds.proxyTimeoutMs === 180000 && plan.bounds.ownedGameHardTimeoutMs === watchdog &&
         Array.isArray(plan.batches) && plan.batches.length === (inspection ? 2 : 3) &&
         [...new Set(plan.batches.map((/** @type {any} */ batch) => batch.id))].sort().join() === (inspection ? 'B1,E1' : 'B1,E1,E2') &&
         lease.schemaVersion === 1 && lease.scenarioId === basename(scenario) && lease.authorized === true &&
         lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' && lease.phase === 'CAMPAIGN_BINDING_ONLY' &&
-        lease.ownedGameHardTimeoutMs === 480000 && lease.maxActions === 8 && lease.maxProxyInvocations === 3 &&
+        lease.ownedGameHardTimeoutMs === watchdog && lease.maxActions === 8 && lease.maxProxyInvocations === 3 &&
         lease.campaignLoadSaveAllowed === false, 'closed original campaign launch scope required');
     requireThat(closed(plan.campaignControl, ['schemaVersion', 'profile']) && plan.campaignControl.schemaVersion === (creation ? 4 : generation ? 3 : inspection ? 2 : 1) &&
         plan.campaignControl.profile === (creation ? seedCreationFlow : generation ? generationFlow : inspection ? inspectionFlow : seedFlow) &&
@@ -340,8 +342,8 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
         'unrelated launch phase authority refused');
     const watchdogDeclared = Object.hasOwn(plan, 'sessionWatchdogMs');
     requireThat(watchdogDeclared === Object.hasOwn(lease, 'sessionWatchdogMs') &&
-        (!watchdogDeclared || (plan.sessionWatchdogMs === 480000 && lease.sessionWatchdogMs === 480000)) &&
-        campaign.rootClock.sessionWatchdogMs === 480000, 'paired original campaign watchdog required');
+        (!watchdogDeclared || (plan.sessionWatchdogMs === watchdog && lease.sessionWatchdogMs === watchdog)) &&
+        campaign.rootClock.sessionWatchdogMs === watchdog, 'paired original campaign watchdog required');
     for (const key of ['rootClock', 'producerWitness', 'rootCallRecord', 'historyBaseline', 'maxReservedActions']) {
         requireThat(isDeepStrictEqual(campaign[key], predecessor[key]), 'immutable postlaunch clock or history changed');
     }
@@ -358,8 +360,8 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
     const producer = campaign.producerWitness;
     requireThat([birthMs, publishedMs, outerMs, controllerMs].every(Number.isSafeInteger) &&
         campaign.rootClock.startMs <= birthMs && birthMs <= publishedMs && publishedMs < controllerMs &&
-        controllerMs <= outerMs && outerMs <= birthMs + 480000 &&
-        controller.sessionWatchdogMs === 480000 && producer.sessionWatchdogMs === controller.sessionWatchdogMs &&
+        controllerMs <= outerMs && outerMs <= birthMs + watchdog &&
+        controller.sessionWatchdogMs === watchdog && producer.sessionWatchdogMs === controller.sessionWatchdogMs &&
         producer.controllerCreationTime === controller.controllerCreationTime &&
         typeof controller.controllerKernelCreationFileTime === 'string' &&
         /^[1-9][0-9]*$/.test(controller.controllerKernelCreationFileTime) &&
