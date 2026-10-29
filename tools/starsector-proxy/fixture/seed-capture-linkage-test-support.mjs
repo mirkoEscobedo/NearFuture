@@ -19,11 +19,12 @@ const category='PRIVATE_CAPTURE_LINKAGE_REFUSAL_BEFORE_INPUT';
 const message='Actual automatic/raw/source linkage required';
 
 /** Extend the generated zero-input fixture, preserving its real public PS/JS entry points. */
-/** @param {{initialJobPids?:number[],changePhaseLease?:(v:any)=>void,changeRootCommand?:(v:string)=>string}} [options] */
+/** @param {{initialJobPids?:number[],changePhaseLease?:(v:any)=>void,changeRootCommand?:(v:string)=>string,watchdogMs?:number}} [options] */
 export function captureLinkageHistoryFixture(options={}){
- const f=/** @type {any} */(failedSeedHistoryFixture()),e=f.evidencePaths,scenario=f.priorScenario;
+ const f=/** @type {any} */(failedSeedHistoryFixture({watchdogMs:options.watchdogMs})),e=f.evidencePaths,scenario=f.priorScenario;
  const guard={overallAttempts:45,uiAttempts:42,reservedActions:76,sentActions:74};
  const context={overallAttempts:46,uiAttempts:43},future={...guard,...context},cap=84;
+ const watchdog=options.watchdogMs??480000,deadline=watchdog-60000;
  const anchor=Date.now()-10000,iso=(/** @type {number} */ offset)=>new Date(anchor+offset).toISOString();
  const runID=value(e.ledger).provider.runID,output=resolve(f.root,'.tmp/starsector-proxy',runID);
  const helper=resolve(scenario,'construct-actual-phase-inputs.private.mjs');
@@ -36,19 +37,19 @@ export function captureLinkageHistoryFixture(options={}){
  const history=resolve(scenario,'root-history-baseline.admitted.private.json'),binding=resolve(scenario,'fixture-binding.private.json');
  json(history,{kind:'GENERATED_PRIOR_HISTORY_DATA_ONLY'});json(binding,{kind:'GENERATED_PRIOR_BINDING_DATA_ONLY'});
  const p=value(e.plan);Object.assign(p,{historyBaseline:{...guard},absoluteMaxReservedActions:cap,
-  callerAdmissionDeadlineMs:anchor+420000,sessionWatchdogMs:480000,
+  callerAdmissionDeadlineMs:anchor+deadline,sessionWatchdogMs:watchdog,
   historyAdmission:ref(history),fixtureBinding:ref(binding),rootCallContract:{key:value(e.rootCall).key,path:e.rootCall},
   preclockHelpers:privatePins,driverMechanicalScope:{metadataHelper:ref(helper)}});json(e.plan,p);
  const lease=value(e.lease);Object.assign(lease,{planSha256:ref(e.plan).sha256,
-  absoluteMaxReservedActions:cap,callerAdmissionDeadlineMs:anchor+420000,sessionWatchdogMs:480000,historyAdmission:p.historyAdmission});json(e.lease,lease);
+  absoluteMaxReservedActions:cap,callerAdmissionDeadlineMs:anchor+deadline,sessionWatchdogMs:watchdog,historyAdmission:p.historyAdmission});json(e.lease,lease);
  const c=value(e.controller);Object.assign(c,{at:iso(100),controllerCreationTime:iso(100),sessionId:1,
-  rootLeaseSha256:ref(e.lease).sha256,conservativeOuterDeadlineUtc:iso(480000),controllerDeadlineUtc:iso(480000)});json(e.controller,c);
+  rootLeaseSha256:ref(e.lease).sha256,conservativeOuterDeadlineUtc:iso(watchdog),controllerDeadlineUtc:iso(watchdog)});json(e.controller,c);
  const delegation=resolve(scenario,'root-postlaunch-mechanical-delegation.private.json');
  json(delegation,{schemaVersion:1,kind:'ROOT_BOUNDED_POSTLAUNCH_MECHANICAL_DELEGATION',issuer:'/root',driver:'/root/recovery_game_driver',planSha256:ref(e.plan).sha256,leaseSha256:ref(e.lease).sha256,helperSha256:ref(helper).sha256,callerSha256:privatePins['launch-owned-caller.private.ps1'].sha256,stagerSha256:privatePins['record-root-call-and-stage-B1.private.ps1'].sha256,orchestrationSha256:privatePins['launch-and-stage.orchestration.proposed.private.js'].sha256,historyAdmissionSha256:p.historyAdmission.sha256,allowedModes:['init','phase B1']});
  const rootCall=value(e.rootCall),ps=value(e.providerReady).helper.executable,q=(/** @type {string} */ s)=>"'"+s.replaceAll("'","''")+"'";
  rootCall.value.startMs=anchor;rootCall.value.args.cmd='& '+q(ps)+' -NoProfile -NonInteractive -File '+q(privatePins['launch-owned-caller.private.ps1'].path)+' -PlanSha256 '+q(ref(e.plan).sha256)+' -LeaseSha256 '+q(ref(e.lease).sha256)+' -DelegationSha256 '+q(ref(delegation).sha256)+' -HelperSha256 '+q(ref(helper).sha256)+' -HistoryAdmissionSha256 '+q(p.historyAdmission.sha256);
  if(options.changeRootCommand)rootCall.value.args.cmd=options.changeRootCommand(rootCall.value.args.cmd);json(e.rootCall,rootCall);
- const launch=value(e.launch);Object.assign(launch.result.steps[0],{command:ps,cwd:'.',args:['-NoProfile','-NonInteractive','-File',resolve(f.root,'tools/starsector-proxy/fixture/native-controller.ps1'),'-EvidenceRoot',scenario,'-BindingPath',binding,'-BindingSha256',p.fixtureBinding.sha256,'-OuterDeadlineUtc',c.conservativeOuterDeadlineUtc,'-SessionWatchdogMs','480000']});json(e.launch,launch);
+ const launch=value(e.launch);Object.assign(launch.result.steps[0],{command:ps,cwd:'.',args:['-NoProfile','-NonInteractive','-File',resolve(f.root,'tools/starsector-proxy/fixture/native-controller.ps1'),'-EvidenceRoot',scenario,'-BindingPath',binding,'-BindingSha256',p.fixtureBinding.sha256,'-OuterDeadlineUtc',c.conservativeOuterDeadlineUtc,'-SessionWatchdogMs',String(watchdog)]});json(e.launch,launch);
  const owner={pid:101,parentPid:105,creationTime:iso(500),kernelCreationFileTime:'134371266963297183',
   inSupervisorJob:true,sessionId:1,executable:resolve(scenario,'installation/jre/bin/java.exe'),
   supervisorJobPids:[100,105,101],mainWindowHandle:19};
@@ -59,12 +60,12 @@ export function captureLinkageHistoryFixture(options={}){
  const producerRecordKey='controller-start:'+ref(e.controller).sha256;
  const campaign={...structuredClone(f.campaign),windowId:19,historyBaseline:{...guard},maxReservedActions:cap,
   rootCallRecord:rootCall,rootClock:{...f.campaign.rootClock,recordKey:rootCall.key,producerRecordKey,
-   startMs:anchor,deadlineMs:anchor+480000,effectiveDeadlineMs:anchor+420000,
-   callerAdmissionDeadlineMs:anchor+420000,originalCallerAdmissionDeadlineMs:anchor+420000},
+   startMs:anchor,deadlineMs:anchor+watchdog,effectiveDeadlineMs:anchor+deadline,
+   callerAdmissionDeadlineMs:anchor+deadline,originalCallerAdmissionDeadlineMs:anchor+deadline},
   producerWitness:{...f.campaign.producerWitness,producerRecordKey,controllerPid:c.controllerPid,
    controllerCreationTime:c.controllerCreationTime,controllerKernelCreationFileTime:c.controllerKernelCreationFileTime,
    conservativeOuterDeadlineUtc:c.conservativeOuterDeadlineUtc,controllerDeadlineUtc:c.controllerDeadlineUtc,
-   effectiveDeadlineMs:anchor+420000,sessionWatchdogMs:480000}};
+   effectiveDeadlineMs:anchor+deadline,sessionWatchdogMs:watchdog}};
  const predecessor=resolve(scenario,'campaign-postlaunch.private.json');
  json(predecessor,{...structuredClone(f.predecessor),plan:ref(e.plan),lease:ref(e.lease),controller:ref(e.controller),
   rootClock:campaign.rootClock,producerWitness:campaign.producerWitness,rootCallRecord:rootCall,

@@ -9,6 +9,7 @@ import {assertWrongSceneFailure} from './seed-wrong-scene-attempt.mjs';
 import {assertCaptureLinkageFailure} from './seed-capture-linkage-attempt.mjs';
 import {assertCallerDateFailure,assertCallerDateIdentityShapes,callerDateNames,callerDateProviderNames} from './seed-caller-date-attempt.mjs';
 import {zeroProviderObject} from './seed-zero-provider-terminal.mjs';
+import {assertSnapshotBusyFailure,snapshotBusyNames,snapshotBusyProviderNames} from './seed-snapshot-busy-attempt.mjs';
 
 export const failedSeedAttemptKind='ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY';
 export const knownPlayFailedSeedAttemptKind='ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY';
@@ -69,18 +70,20 @@ export function readCallerDateFailedSeedAttempt(receipt,ledger,pin,preference){
 function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kind){
  const v=receipt;
  const callerDate=kind===callerDateFailedSeedAttemptKind;
- const observedFocus=kind===failedSeedAttemptKind&&typeof v.scenario==='string'&&
+ const observedStop=kind===failedSeedAttemptKind&&typeof v.scenario==='string'&&
   v.evidence?.observation?.path===resolve(v.scenario,'driver-stop-observation.private.json');
  /** New-case byte reader preserves scalar/array distinctions and rejects duplicate keys. */
  const pinRead=(/** @type {any} */ pin,/** @type {string} */ path,limit=262144)=>{
-  if(!callerDate&&!observedFocus)return pinned(pin,path,limit);
+  if(!callerDate&&!observedStop)return pinned(pin,path,limit);
   fail(closed(pin,['path','sha256'])&&typeof pin.path==='string'&&pin.path===path&&typeof pin.sha256==='string'&&/^[a-f0-9]{64}$/.test(pin.sha256));
   const bytes=file(path,limit);fail(bytes.sha256===pin.sha256);
   return zeroProviderObject(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes.bytes),fail);
  };
+ const snapshotBusy=observedStop&&pinRead(v.evidence.observation,resolve(v.scenario,'driver-stop-observation.private.json')).kind==='ACTUAL_S12_DRIVER_PRE_INPUT_POINTCHECK_EBUSY_STOP';
+ const observedFocus=observedStop&&!snapshotBusy;
  const linkage=kind===captureLinkageFailedSeedAttemptKind,wrongScene=kind===wrongSceneFailedSeedAttemptKind,captureStop=kind===captureStopFailedSeedAttemptKind,
   known=kind===knownPlayFailedSeedAttemptKind||captureStop||wrongScene;
- const extra=callerDate?callerDateNames:wrongScene?{e1Source:'E1-authorization.private.json',e1Claim:'guard-E1-consumed.private.json',
+ const extra=snapshotBusy?snapshotBusyNames:callerDate?callerDateNames:wrongScene?{e1Source:'E1-authorization.private.json',e1Claim:'guard-E1-consumed.private.json',
   e1Plan:'E1-plan.private.json',e1Lease:'E1-lease.private.json',e1Owned:'driver-E1-owned.private.json',b1Menu:'B1-menu-inspected.private.json'}:{};
  const secondProvider=wrongScene?['e1ProviderReady','e1ProviderTerminal','e1ProviderSpool','e1ProviderStderr']:linkage?['helper','metadataCaller']:[];
  fail(closed(v,['schemaVersion','kind','issuer','driver','scenario','sourceWorkspace','sourceHead','allOwnedHandlesTerminalReaped','actions','evidence'])&&
@@ -88,7 +91,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   typeof v.scenario==='string'&&isAbsolute(v.scenario)&&resolve(v.scenario)===v.scenario&&typeof v.sourceWorkspace==='string'&&
   isAbsolute(v.sourceWorkspace)&&resolve(v.sourceWorkspace)===v.sourceWorkspace&&dirname(v.scenario)===resolve(v.sourceWorkspace,'.tmp/starsector-proxy/scenarios')&&
   /^[a-f0-9]{40}$/.test(v.sourceHead)&&closed(v.actions,['actualGuard','currentRunContext','absoluteMaxReservedActions'])&&
-  closed(v.actions.currentRunContext,['overallAttempts','uiAttempts'])&&closed(v.evidence,[...Object.keys(names),...Object.keys(providerNames),...Object.keys(extra).filter(k=>!Object.hasOwn(names,k)),...secondProvider,...(callerDate?['helper','geometryRunner',...Object.keys(callerDateProviderNames)]:[])]));
+  closed(v.actions.currentRunContext,['overallAttempts','uiAttempts'])&&closed(v.evidence,[...Object.keys(names),...Object.keys(providerNames),...Object.keys(extra).filter(k=>!Object.hasOwn(names,k)),...secondProvider,...(callerDate||snapshotBusy?['helper','geometryRunner',...Object.keys(callerDateProviderNames)]:[])]));
  const e=v.evidence,scenario=v.scenario;
  /** @type {any} */const a={};
  for(const [key,name] of Object.entries({...names,...extra,...(observedFocus?{observation:'driver-stop-observation.private.json'}:{})}))a[key]=pinRead(e[key],resolve(scenario,name));
@@ -107,9 +110,9 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   Number.isSafeInteger(rootCall.value.raw?.session_id)&&rootCall.value.raw.session_id>0&&
   (callerDate||(same(r.actualGuardHistory,l.history)&&same(r.inheritedGuardBaseline,known?p.historyBaseline:l.history)&&same(r.actualRunContext,v.actions.currentRunContext)))&&
   r.schemaVersion===1&&r.kind==='ACTUAL_FINITE_DRIVER_FLOW_RESULT'&&r.status==='CLOSED_FAIL'&&r.verdict==='FAIL'&&
-  r.failureCategory===(callerDate?'CALLER_METADATA_SERIALIZATION_FAILED':linkage?'PRIVATE_CAPTURE_LINKAGE_REFUSAL_BEFORE_INPUT':wrongScene?'POSTCONDITION_FAILED':captureStop?'CAPTURE_UNCERTAIN':known?'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY':'FOCUS_BLOCKED')&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
+  r.failureCategory===(snapshotBusy?'PRIVATE_POINT_CHECK_LIVE_SNAPSHOT_READ_EBUSY':callerDate?'CALLER_METADATA_SERIALIZATION_FAILED':linkage?'PRIVATE_CAPTURE_LINKAGE_REFUSAL_BEFORE_INPUT':wrongScene?'POSTCONDITION_FAILED':captureStop?'CAPTURE_UNCERTAIN':known?'PRIVATE_FRAME_CUSTODY_REFUSAL_AFTER_KNOWN_PLAY':'FOCUS_BLOCKED')&&r.scenarioId===p.scenarioId&&r.driver===driver&&r.sourceHead===v.sourceHead&&
   (callerDate||known||linkage||(same(r.actions,{reservedThisRun:0,sentThisRun:0,clicks:0,activations:0})&&
-  same(r.providers,{started:1,B1:'TERMINAL_PASS_REAPED',E1:'NOT_STARTED',E2:'NOT_STARTED',calls:5})))&&
+  same(r.providers,{started:1,B1:'TERMINAL_PASS_REAPED',E1:'NOT_STARTED',E2:'NOT_STARTED',calls:snapshotBusy?4:5})))&&
   (callerDate||(
   r.absoluteMaxReservedActions===p.absoluteMaxReservedActions&&r.absoluteMaxReservedActions===lease.absoluteMaxReservedActions&&
   r.absoluteMaxReservedActions===v.actions.absoluteMaxReservedActions&&Number.isSafeInteger(r.absoluteMaxReservedActions)&&
@@ -123,13 +126,13 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   claim.binding.scenario===scenario&&claim.binding.workspaceRoot===v.sourceWorkspace&&claim.binding.runID===provider.runID&&
   claim.binding.sourceSha256===e.source.sha256&&claim.binding.originalPlanSha256===e.plan.sha256&&claim.binding.controllerSha256===e.controller.sha256);
  const output=resolve(v.sourceWorkspace,'.tmp/starsector-proxy',provider.runID);
- if(callerDate)for(const [key,name]of Object.entries(callerDateProviderNames))a[key]=pinRead(e[key],resolve(output,name),32*1024*1024);
+ if(callerDate||snapshotBusy)for(const [key,name]of Object.entries(snapshotBusy?snapshotBusyProviderNames:callerDateProviderNames))a[key]=pinRead(e[key],resolve(output,name),32*1024*1024);
  for(const [key,name] of Object.entries(providerNames)){
    if(key==='providerStderr'){fail(e[key].path===resolve(output,name)&&closed(e[key],['path','sha256']));const f=file(e[key].path);fail(f.sha256===e[key].sha256&&f.bytes.length===0);}
   else a[key]=pinRead(e[key],resolve(output,name));
  }
  const ready=a.providerReady,t=a.providerTerminal,spool=a.providerSpool;
- if(callerDate)assertCallerDateIdentityShapes(c,ready,fail);
+ if(callerDate||snapshotBusy)assertCallerDateIdentityShapes(c,ready,fail);
  const step=t.steps?.[0];
  const supportSame=callerDate?
   same(pinRead(p.source?.supportPins,resolve(scenario,'source-pins.private.json')),a.supportPins)&&
@@ -165,7 +168,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
   const n=Buffer.byteLength(raw.output);bytes+=n;fail(n<=65536&&bytes<=131072);
   fail(i<chain.length-1?raw.session_id===caller.session&&(raw.exit_code===undefined||raw.exit_code===null):raw.exit_code===1&&!Object.hasOwn(raw,'session_id')&&same(raw,caller.actual));
  }
- const returned=callerDate?zeroProviderObject(chain.map(x=>x.output).join(''),fail):JSON.parse(chain.map(x=>x.output).join('')),ls=launch.result?.steps?.[0];
+ const returned=callerDate||snapshotBusy?zeroProviderObject(chain.map(x=>x.output).join(''),fail):JSON.parse(chain.map(x=>x.output).join('')),ls=launch.result?.steps?.[0];
  fail(launch.schemaVersion===1&&launch.command==='verify'&&launch.ok===true&&launch.result.verdict==='FAIL'&&launch.result.steps.length===1&&
   ls.status===1&&ls.timedOut===false&&ls.processOwnership==='windows-job-object'&&typeof ls.stderr==='string'&&
   ls.stderr.includes('Driver requested owned cleanup; native success not established')&&returned.verdict==='FAIL'&&
@@ -187,6 +190,7 @@ function readTerminalFailure(receipt,previousLedger,ledgerPin,readPreference,kin
  if(linkage){assertCaptureLinkageFailure({v,a,e,output,pinned,fail,node,powershell});return v.actions;}
  if(wrongScene){assertWrongSceneFailure({v,a,e,output,pinned,fail,node,powershell});return v.actions;}
  if(known){assertKnownPlayFailure({v,a,e,output,pinned,fail,captureStop});return v.actions;}
+ if(snapshotBusy){assertSnapshotBusyFailure({v,a,e,output,pinned:pinRead,fail,node,powershell});return v.actions;}
  fail(Array.isArray(o.calls)&&o.calls.length===5&&o.schemaVersion===1&&
   o.kind===(observedFocus?'ACTUAL_S11_DRIVER_FOCUS_BLOCKED_STOP':'ACTUAL_DRIVER_NO_INPUT_FOCUS_STOP')&&o.category==='FOCUS_BLOCKED'&&o.verdict==='FAIL'&&o.driver===driver&&
   o.scenarioId===p.scenarioId&&o.sourceHead===v.sourceHead&&o.inputActions===0&&o.activations===0&&o.providersStarted===1&&

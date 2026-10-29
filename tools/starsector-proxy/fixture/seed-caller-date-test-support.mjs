@@ -1,16 +1,16 @@
 // @ts-check
 // Generated terminal, OS and image boundary data; no game or native qualification.
-import {resolve,basename} from 'node:path';
+import {resolve,basename,dirname} from 'node:path';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {captureLinkageHistoryFixture} from './seed-capture-linkage-test-support.mjs';
 import {ref,value} from './seed-failed-history-test-support.mjs';
 import {json as writeJson,write,quote} from './seed-test-support.mjs';
 
 export const callerDateKind='ROOT_CLOSED_PRE_INPUT_CALLER_DATE_FAILED_SEED_ATTEMPT_HISTORY';
-/** @param {{change?:(name:string,value:any)=>void,campaign?:(value:any)=>void,capture?:(value:any)=>void,metadata?:(value:any)=>void,provider?:(value:any)=>void,spool?:(value:any)=>void,aliasBytes?:(bytes:Buffer)=>Buffer|string,controller?:(value:any)=>void,window?:(value:any)=>any}} [options] */
+/** @param {{change?:(name:string,value:any)=>void,campaign?:(value:any)=>void,capture?:(value:any)=>void,metadata?:(value:any)=>void,provider?:(value:any)=>void,spool?:(value:any)=>void,aliasBytes?:(bytes:Buffer)=>Buffer|string,controller?:(value:any)=>void,window?:(value:any)=>any,watchdogMs?:number,supportAlias?:boolean,canonicalEnvironment?:boolean}} [options] */
 export function callerDateHistoryFixture(options={}){
  const json=(/** @type {string} */ path,/** @type {any} */ object)=>{options.change?.(basename(path),object);writeJson(path,object);};
- const f=/** @type {any} */(captureLinkageHistoryFixture()),e=f.evidencePaths,s=f.priorScenario;
+ const f=/** @type {any} */(captureLinkageHistoryFixture({watchdogMs:options.watchdogMs})),e=f.evidencePaths,s=f.priorScenario;
  const iso=(/** @type {number} */ n)=>new Date(f.anchor+n).toISOString(),run=value(e.providerReady).runID;
  const output=resolve(f.root,'.tmp/starsector-proxy',run),oldObservation=e.observation;
  const put=(/** @type {string} */ name,/** @type {any} */ object)=>{const p=resolve(s,name);json(p,object);return p;};
@@ -86,11 +86,12 @@ export function callerDateHistoryFixture(options={}){
   // Refresh the generated acyclic original root/predecessor/claim after adding the runner inventory.
   const p=value(e.plan),lease=value(e.lease),c=value(e.controller),root=value(e.rootCall),claim=value(e.claim);
   const sourcePins=resolve(s,'source-pins.private.json'),supportBytes=readFileSync(e.supportPins);writeFileSync(sourcePins,options.aliasBytes?.(supportBytes)??supportBytes);
-  p.source.supportPins=ref(sourcePins);json(e.plan,p);lease.planSha256=ref(e.plan).sha256;lease.supportPinsSha256=ref(e.supportPins).sha256;json(e.lease,lease);
+  p.source.supportPins=options.supportAlias===false?ref(e.supportPins):ref(sourcePins);json(e.plan,p);lease.planSha256=ref(e.plan).sha256;lease.supportPinsSha256=ref(e.supportPins).sha256;json(e.lease,lease);
   c.rootLeaseSha256=ref(e.lease).sha256;json(e.controller,c);
   const delegation=resolve(s,'root-postlaunch-mechanical-delegation.private.json'),deleg=value(delegation);
   Object.assign(deleg,{planSha256:ref(e.plan).sha256,leaseSha256:ref(e.lease).sha256});json(delegation,deleg);
   root.value.args.cmd='& '+quote(ps)+' -NoProfile -NonInteractive -File '+quote(p.preclockHelpers['launch-owned-caller.private.ps1'].path)+' -PlanSha256 '+quote(ref(e.plan).sha256)+' -LeaseSha256 '+quote(ref(e.lease).sha256)+' -DelegationSha256 '+quote(ref(delegation).sha256)+' -HelperSha256 '+quote(ref(e.helper).sha256)+' -HistoryAdmissionSha256 '+quote(p.historyAdmission.sha256);json(e.rootCall,root);
+  if(options.canonicalEnvironment){root.value.args.cmd="$env:PATH='"+dirname(node).replaceAll('\\','/')+';'+dirname(ps).replaceAll('\\','/')+";'+$env:PATH; "+root.value.args.cmd;root.value.args.shell=ps.replaceAll('\\','/');json(e.rootCall,root);}
   const campaign=claim.binding.campaign,key='controller-start:'+ref(e.controller).sha256;
   options.campaign?.(campaign);
   campaign.rootCallRecord=root;campaign.rootClock.producerRecordKey=key;campaign.producerWitness.producerRecordKey=key;campaign.producerWitness.controllerKernelCreationFileTime=c.controllerKernelCreationFileTime;

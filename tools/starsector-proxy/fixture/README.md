@@ -542,12 +542,22 @@ The twenty evidence descriptors bind the original generic failed result, ledger,
 plan, lease, controller, owned snapshot, root call, caller terminal, launch
 supervisor, protection, PID absence, preference, support pins, B1 authorization,
 claim, observation stop and B1 provider readiness, terminal, stdout and stderr.
-Both history readers require exactly five observation calls, zero input or
+The original focus-stop branch requires exactly five observation calls, zero input or
 reservations, only B1 started, no pending/uncertain action, original binary and
 target ownership, unchanged eligible preference, known terminal handles and
 protected empty private saves. Actual attempt counters advance once while
 reserved/sent counters retain every historical unsent reservation. A failure
 does not acquire the completed-seed closeout kind; the seed consumer rejects it.
+
+The same no-input kind has a separate closed snapshot-read failure case. It
+requires the original four calls (`doctor`, `policy_status`, `get_window`,
+`screenshot`), a focused owned launcher, complete original PNG and recorded
+geometry and mapping, followed by an `EBUSY` open of the current owned snapshot
+inside the pre-input point check. Both readers bind the exact helper command,
+original clock, source and phase receipts, process lineage, terminal caller and
+provider, complete PID absence and unchanged save protection. No fresh focus
+pair, input, reservation, later provider or successful seed may be claimed.
+The reader validates closed custody only; it grants no retry or current input.
 
 `ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY` is a distinct closed branch
 with the same twenty evidence descriptors. It requires one acknowledged strict
