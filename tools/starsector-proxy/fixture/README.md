@@ -594,3 +594,12 @@ and rejects nonclient padding or scaled images. Keep private derivation evidence
 beside the closed public screen-coordinate receipts. No guessed border/titlebar
 offset, new native input surface, extra provider call or longer deadline follows.
 
+The separate `ROOT_CLOSED_POST_START_VERIFICATION_INCOMPLETE_HISTORY` receipt
+means “Campaign reached and saved; automated verification incomplete.” It binds
+all eight ACKs, sixty-one calls, eleven original PNGs, nine geometry checks and
+the closed original root and provider records. The late stability margin refusal
+and E2 UNKNOWN terminal remain unresolved. Both history gates preserve the spent
+context and fourteen-PID cleanup evidence; the two retained XML hashes are only
+`UNQUALIFIED_OUTPUT`. This kind always refuses as successful seed provenance and
+does not issue another run's authority or clock.
+

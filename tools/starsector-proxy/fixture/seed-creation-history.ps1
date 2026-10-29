@@ -2,6 +2,7 @@
 . (Join-Path $PSScriptRoot 'seed-failed-attempt.ps1')
 . (Join-Path $PSScriptRoot 'seed-zero-provider-attempt.ps1')
 . (Join-Path $PSScriptRoot 'seed-pre-start-margin-attempt.ps1')
+. (Join-Path $PSScriptRoot 'seed-post-start-verification.ps1')
 function Assert-NativeSeedCreationHistory($Plan,$Lease,[string]$Scenario) {
  $null=Get-NativeSeedPreferenceWitness $Plan $Lease $Scenario
  Assert-NativeSeedFields $Plan.historyAdmission @('path','sha256')
@@ -27,6 +28,18 @@ function Assert-NativeSeedCreationHistory($Plan,$Lease,[string]$Scenario) {
   $prior[$key]=Read-NativeSeedJson $pin.path $pin.sha256 262144
  }
  $r=$prior.result;$l=$prior.ledger
+ if($r.kind-ceq'ROOT_CLOSED_POST_START_VERIFICATION_INCOMPLETE_HISTORY'){
+  foreach($pin in @($Plan.historyAdmission,$Lease.historyAdmission,$grant.previous.result,$grant.previous.ledger)){
+   Assert-NativeSeedFields $pin @('path','sha256')
+   if($pin.path-isnot[string]-or$pin.sha256-isnot[string]-or$pin.sha256-cnotmatch'^[a-f0-9]{64}$'){throw 'Scalar post-Start history descriptor required'}
+  }
+  foreach($key in @('kind','issuer','driver')){if($grant.$key-isnot[string]){throw 'Scalar post-Start grant authority required'}}
+  $null=Read-NativeZeroProviderJson $path $reference.sha256
+  $r=Read-NativeZeroProviderJson $grant.previous.result.path $grant.previous.result.sha256
+  $l=Read-NativeZeroProviderJson $grant.previous.ledger.path $grant.previous.ledger.sha256
+  $actions=Read-NativePostStartVerificationIncomplete $r $l $grant.previous.ledger $grant.previous.result $Plan $Lease
+  $r=[pscustomobject]@{schemaVersion=1;kind=$r.kind;allOwnedHandlesTerminalReaped=$true;actions=$actions}
+ }
  if($r.kind-ceq'ROOT_CLOSED_PRE_START_INPUT_MARGIN_FAILED_SEED_ATTEMPT_HISTORY'){
   foreach($pin in @($Plan.historyAdmission,$Lease.historyAdmission,$grant.previous.result,$grant.previous.ledger)){
    Assert-NativeSeedFields $pin @('path','sha256')
@@ -71,7 +84,7 @@ function Assert-NativeSeedCreationHistory($Plan,$Lease,[string]$Scenario) {
   $actions=if($r.kind-ceq'ROOT_CLOSED_PRE_INPUT_CAPTURE_LINKAGE_FAILED_SEED_ATTEMPT_HISTORY'){Read-NativeCaptureLinkageFailedSeedAttempt $r $l $grant.previous.ledger}elseif($r.kind-ceq'ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY'){Read-NativeFailedSeedAttempt $r $l $grant.previous.ledger}elseif($r.kind-ceq'ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY'){Read-NativeWrongSceneFailedSeedAttempt $r $l $grant.previous.ledger}elseif($r.kind-ceq'ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY'){Read-NativeCaptureStopFailedSeedAttempt $r $l $grant.previous.ledger}else{Read-NativeKnownPlayFailedSeedAttempt $r $l $grant.previous.ledger}
   $r=[pscustomobject]@{schemaVersion=1;kind=$r.kind;allOwnedHandlesTerminalReaped=$true;actions=$actions}
  }
- if($r.schemaVersion-ne1-or$r.kind-cnotin@('ACTUAL_SCHEMA5_COMMON_PREFERENCE_PREFIX_DRIVER_CLOSEOUT','ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT','ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_PRE_INPUT_CAPTURE_LINKAGE_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_ZERO_PROVIDER_CONTROLLER_CLOCK_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_PRE_INPUT_CALLER_DATE_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_PRE_START_INPUT_MARGIN_FAILED_SEED_ATTEMPT_HISTORY')-or$r.allOwnedHandlesTerminalReaped-isnot[bool]-or!$r.allOwnedHandlesTerminalReaped-or$l.schemaVersion-ne2-or$l.kind-cne'STARSECTOR_FINITE_LAUNCH_HISTORY'){throw 'Completed previous seed history required'}
+ if($r.schemaVersion-ne1-or$r.kind-cnotin@('ACTUAL_SCHEMA5_COMMON_PREFERENCE_PREFIX_DRIVER_CLOSEOUT','ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT','ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_PRE_INPUT_CAPTURE_LINKAGE_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_ZERO_PROVIDER_CONTROLLER_CLOCK_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_PRE_INPUT_CALLER_DATE_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_PRE_START_INPUT_MARGIN_FAILED_SEED_ATTEMPT_HISTORY','ROOT_CLOSED_POST_START_VERIFICATION_INCOMPLETE_HISTORY')-or$r.allOwnedHandlesTerminalReaped-isnot[bool]-or!$r.allOwnedHandlesTerminalReaped-or$l.schemaVersion-ne2-or$l.kind-cne'STARSECTOR_FINITE_LAUNCH_HISTORY'){throw 'Completed previous seed history required'}
  foreach($key in @('overallAttempts','uiAttempts','reservedActions','sentActions')){Assert-NativeSeedInteger $r.actions.actualGuard.$key $l.history.$key $l.history.$key}
  foreach($key in @('overallAttempts','uiAttempts')){Assert-NativeSeedInteger $r.actions.currentRunContext.$key $Plan.historyBaseline.$key $Plan.historyBaseline.$key;Assert-NativeSeedInteger ($l.history.$key+1) $Plan.historyBaseline.$key $Plan.historyBaseline.$key}
  foreach($key in @('reservedActions','sentActions')){Assert-NativeSeedInteger $l.history.$key $Plan.historyBaseline.$key $Plan.historyBaseline.$key}

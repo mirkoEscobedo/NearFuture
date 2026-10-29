@@ -11,25 +11,30 @@ import {generatedPreStartProvider,generatedPreStartAction,generatedPreStartCopy,
 import {generatedPreStartGeometry} from './seed-pre-start-geometry-test-support.mjs';
 
 /** @param {{copiedFrameTimeOffsetMs?:number,e2Helper?:string,e2Query?:string,e2DeadlineOffsetMs?:number,
- * omitOwnedGame?:boolean,lastClickDelayMs?:number,rootCommand?:string,finalSnapshotExtraPid?:number}} [options] */
+ * omitOwnedGame?:boolean,lastClickDelayMs?:number,rootCommand?:string,finalSnapshotExtraPid?:number,watchdogMs?:number,e2ActionCount?:number,
+ * historicalBaseline?:{overallAttempts:number,uiAttempts:number,reservedActions:number,sentActions:number},supervisorJobPids?:number[],canonicalRootEnvironment?:boolean,phasePlanExtra?:Record<string,any>,
+ * prepareHistoricalCase?:(context:any)=>void,finishHistoricalCase?:(context:any)=>any}} [options] */
 export function preStartHistoryFixture(options={}) {
     const old=/** @type {any} */(seedCreationFixture()),future=/** @type {any} */(seedCreationFixture());
+    const watchdog=options.watchdogMs??480000,callerBudget=watchdog-60000;
     const s=old.scenario,root=old.root,anchor=Date.now()-400000,iso=(/** @type {number} */ n)=>new Date(anchor+n).toISOString();
-    const baseline={overallAttempts:48,uiAttempts:45,reservedActions:76,sentActions:74};
+    const baseline=options.historicalBaseline??{overallAttempts:48,uiAttempts:45,reservedActions:76,sentActions:74},maximum=baseline.reservedActions+8;
     const powershell=realpathSync.native(process.env.NF_TEST_POWERSHELL??runPowerShell(['-Command','(Get-Process -Id $PID).Path']).stdout.trim());
     const supervisor=resolve(root,'node_modules/workspace-template-win32-x64/bin/workspace-template.exe');
     const pins=()=>({pins:[...new Set([...requiredOwnedHttpFiles(root,powershell,supervisor),
         ...['prepare-fixture.ps1','run-native.ps1','read-owned-client-geometry.ps1'].map(n=>resolve(root,'tools/starsector-proxy/fixture',n))])].map(ref)});
-    const priorGuard={overallAttempts:47,uiAttempts:44,reservedActions:76,sentActions:74};
+    const priorGuard={...baseline,overallAttempts:baseline.overallAttempts-1,uiAttempts:baseline.uiAttempts-1};
     json(old.priorLedgerPath,{schemaVersion:2,kind:'STARSECTOR_FINITE_LAUNCH_HISTORY',history:priorGuard,uncertain:false});
     json(old.priorResultPath,{schemaVersion:1,kind:'ACTUAL_SCHEMA5_COMMON_PREFERENCE_PREFIX_DRIVER_CLOSEOUT',allOwnedHandlesTerminalReaped:true,
-        actions:{actualGuard:priorGuard,currentRunContext:{overallAttempts:48,uiAttempts:45},absoluteMaxReservedActions:76}});
+        actions:{actualGuard:priorGuard,currentRunContext:{overallAttempts:baseline.overallAttempts,uiAttempts:baseline.uiAttempts},absoluteMaxReservedActions:baseline.reservedActions}});
     json(old.grantPath,{schemaVersion:2,kind:'ROOT_ADMITTED_SEED_CREATION_HISTORY',issuer:'/root',driver:'/root/recovery_game_driver',
-        historyBaseline:baseline,maxReservedActions:84,previous:{result:ref(old.priorResultPath),ledger:ref(old.priorLedgerPath)}});
+        historyBaseline:baseline,maxReservedActions:maximum,previous:{result:ref(old.priorResultPath),ledger:ref(old.priorLedgerPath)}});
     const pinsPath=resolve(s,'frozen-support-pins.private.json');json(pinsPath,pins());
     writeFileSync(resolve(s,'source-pins.private.json'),readFileSync(pinsPath));
     for(const v of [old.plan,old.launchLease,old.phasePlan,old.phaseLease])Object.assign(v,{historyBaseline:baseline,
-        absoluteMaxReservedActions:84,historyAdmission:ref(old.grantPath),sessionWatchdogMs:480000,callerAdmissionDeadlineMs:anchor+420000});
+        absoluteMaxReservedActions:maximum,historyAdmission:ref(old.grantPath),sessionWatchdogMs:watchdog,callerAdmissionDeadlineMs:anchor+callerBudget});
+    for(const v of [old.plan,old.phasePlan])v.bounds.ownedGameHardTimeoutMs=watchdog;
+    for(const v of [old.launchLease,old.phaseLease])v.ownedGameHardTimeoutMs=watchdog;
     old.plan.source={qualifiedHead:'1'.repeat(40),supportPins:ref(pinsPath)};old.plan.preclockHelpers={};
     old.plan.fixtureBinding=ref(old.bindingPath);
     for(const name of ['launch-owned-caller.private.ps1','record-root-call-and-stage-B1.private.ps1','launch-and-stage.orchestration.proposed.private.js',
@@ -39,19 +44,23 @@ export function preStartHistoryFixture(options={}) {
     }
     old.plan.directHostConsent={schemaVersion:1,mode:'finite-explicit-consent',maxCallsPerBatch:32};
     old.launchLease.supportPinsSha256=old.phaseLease.supportPinsSha256=ref(pinsPath).sha256;
-    Object.assign(old.controller,{at:iso(200),controllerCreationTime:iso(100),conservativeOuterDeadlineUtc:iso(480000),
-        controllerDeadlineUtc:iso(470000),supervisorJobPids:[100,105]});
+    Object.assign(old.controller,{at:iso(200),controllerCreationTime:iso(100),conservativeOuterDeadlineUtc:iso(watchdog),
+        controllerDeadlineUtc:iso(watchdog-10000),supervisorJobPids:options.supervisorJobPids??[100,105]});
     const clock=old.campaign.rootClock;
-    Object.assign(clock,{startMs:anchor,deadlineMs:anchor+480000,callerAdmissionDeadlineMs:anchor+420000,
-        originalCallerAdmissionDeadlineMs:anchor+420000,effectiveDeadlineMs:anchor+420000});
-    Object.assign(old.campaign.producerWitness,{controllerCreationTime:iso(100),conservativeOuterDeadlineUtc:iso(480000),
-        controllerDeadlineUtc:iso(470000),effectiveDeadlineMs:anchor+420000});
-    Object.assign(old.campaign,{historyBaseline:baseline,maxReservedActions:84});
+    Object.assign(clock,{startMs:anchor,deadlineMs:anchor+watchdog,callerAdmissionDeadlineMs:anchor+callerBudget,
+        originalCallerAdmissionDeadlineMs:anchor+callerBudget,effectiveDeadlineMs:anchor+callerBudget});
+    Object.assign(old.campaign.producerWitness,{controllerCreationTime:iso(100),conservativeOuterDeadlineUtc:iso(watchdog),
+        controllerDeadlineUtc:iso(watchdog-10000),effectiveDeadlineMs:anchor+callerBudget});
+    if(options.watchdogMs!==undefined){
+        old.controller.sessionWatchdogMs=watchdog;old.controller.hardTimeoutMs=watchdog;
+        clock.sessionWatchdogMs=watchdog;old.campaign.producerWitness.sessionWatchdogMs=watchdog;
+    }
+    Object.assign(old.campaign,{historyBaseline:baseline,maxReservedActions:maximum});
     old.campaign.rootCallRecord.value.startMs=anchor;
     old.refreshLaunch();
     const cp=ref(old.controllerPath),producerRecordKey='controller-start:'+cp.sha256;
     clock.producerRecordKey=producerRecordKey;old.campaign.producerWitness.producerRecordKey=producerRecordKey;
-    old.predecessor.historyBaseline=baseline;old.predecessor.maxReservedActions=84;
+    old.predecessor.historyBaseline=baseline;old.predecessor.maxReservedActions=maximum;
     old.refreshLaunch();
     Object.assign(old.predecessor,{plan:ref(old.planPath),lease:ref(old.leasePath),controller:ref(old.controllerPath)});
     const h=old.plan.preclockHelpers,delegationPath=resolve(s,'root-postlaunch-mechanical-delegation.private.json');
@@ -66,17 +75,21 @@ export function preStartHistoryFixture(options={}) {
         ' -PlanSha256 '+q(ref(old.planPath).sha256)+' -LeaseSha256 '+q(ref(old.leasePath).sha256)+' -DelegationSha256 '+q(ref(delegationPath).sha256)+
         ' -HelperSha256 '+q(h['construct-actual-phase-inputs.private.mjs'].sha256)+' -HistoryAdmissionSha256 '+q(ref(old.grantPath).sha256),
         workdir:root,shell:powershell.replaceAll('\\','/'),sandbox_permissions:'require_escalated',yield_time_ms:1000,max_output_tokens:1500};
+    if(options.canonicalRootEnvironment)old.campaign.rootCallRecord.value.args.cmd="$env:PATH='"+resolve(realpathSync.native(process.execPath),'..').replaceAll('\\','/')+';'+
+        resolve(powershell,'..').replaceAll('\\','/')+";'+$env:PATH;"+old.campaign.rootCallRecord.value.args.cmd;
     json(old.originalLaunchPath,old.predecessor);old.campaign.launchPredecessor=ref(old.originalLaunchPath);
     json(resolve(s,'root-call.actual.private.json'),old.campaign.rootCallRecord);
     const game={pid:101,parentPid:105,creationTime:iso(500),kernelCreationFileTime:'134371266963297183',executable:resolve(s,'installation/jre/bin/java.exe'),
-        sessionId:1,inSupervisorJob:true,supervisorJobPids:[100,105,101],mainWindowHandle:20};
-    const ctx={s,root,anchor,iso,powershell,supervisor,clock,old,options,controllerPin:ref(old.controllerPath),game,outer:1,outputs:/** @type {string[]} */([])};
+        sessionId:1,inSupervisorJob:true,supervisorJobPids:[...old.controller.supervisorJobPids,101],mainWindowHandle:20};
+    const ctx={s,root,anchor,iso,powershell,supervisor,clock,old,options,controllerPin:ref(old.controllerPath),game,outer:1,
+        reservationShift:baseline.reservedActions-76,outputs:/** @type {string[]} */([])};
     /** @type {Record<string,any>} */const phases={};
     /** @param {string} batch @param {any} extra */
     function phase(batch,extra) {
         const campaign={...old.campaign,windowId:batch==='B1'?19:20};
         const planPath=resolve(s,batch+'-plan.private.json'),leasePath=resolve(s,batch+'-lease.private.json');
-        json(planPath,{...old.plan,campaign,batches:old.plan.batches.filter((/** @type {any} */ row)=>row.id===batch),...extra});
+        json(planPath,{...old.plan,campaign,batches:old.plan.batches.filter((/** @type {any} */ row)=>row.id===batch),...extra,
+            ...(batch==='E2'?options.phasePlanExtra??{}:{})});
         json(leasePath,{...old.launchLease,schemaVersion:6,phase:'DISPOSABLE_SEED_CREATION',campaign,planSha256:ref(planPath).sha256,...extra});
         const ownedReceiptPath=resolve(s,'driver-'+batch+'-owned.private.json');json(ownedReceiptPath,{at:iso(600),processes:[game]});
         const sourcePath=resolve(s,batch+'-authorization.private.json');json(sourcePath,{schemaVersion:6,scenario:s,batch,planPath,
@@ -129,13 +142,15 @@ export function preStartHistoryFixture(options={}) {
     control(e2,1,4,next,explorer,'OCCUPATION_SELECTION','An explorer, leading a salvage expedition from aboard an Apogee-class cruiser (faster start)','Seed Captain');
     control(e2,2,10,explorer,normal,'CAMPAIGN_DIFFICULTY','Normal','Seed Captain');
     control(e2,3,16,normal,skip,'TUTORIAL_CHOICE','Skip it','Seed Captain');
-    const actions=[play,entry,generate,next,explorer,normal,skip],guard={...baseline,reservedActions:83,sentActions:81};
+    const actions=[play,entry,generate,next,explorer,normal,skip],guard={...baseline,reservedActions:baseline.reservedActions+7,sentActions:baseline.sentActions+7};
     const ledgerPath=resolve(s,'guard-launch-history.private.json');
     json(ledgerPath,{schemaVersion:2,kind:'STARSECTOR_FINITE_LAUNCH_HISTORY',rootRecordKey:clock.recordKey,controllerSha256:ctx.controllerPin.sha256,
         history:guard,uncertain:false,b1ClaimSha256:b1.claim.sha256,resolvedB1:play,resolvedE1:next,resolvedActions:[entry,generate,explorer,normal],
         pending:skip,provider:{batch:'E2',runID:e2.runID,sourceSha256:e2.source.sha256},providerClock:e2.providerClock});
-    const generated=generatedPreStartGeometry({...ctx,phases,actions});
-    return finishPreStartFixture({...ctx,phases,actions,guard,baseline,ledgerPath,generated,future,pins});
+    const complete={...ctx,phases,actions,guard,baseline,ledgerPath,future,pins,control};
+    options.prepareHistoricalCase?.(complete);
+    const generated=generatedPreStartGeometry(complete);
+    return options.finishHistoricalCase?options.finishHistoricalCase({...complete,generated}):finishPreStartFixture({...complete,generated});
 }
 
 /** @param {any} ctx */

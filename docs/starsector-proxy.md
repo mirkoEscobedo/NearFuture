@@ -608,3 +608,20 @@ The single-Java claim must contain exactly the observed PID. Recorded Job PID
 arrays are positive and unique; controller kernel birth remains a canonical
 positive decimal string. Consumed process and MCP records retain their object
 and array types rather than accepting collection-to-scalar conversions.
+
+`ROOT_CLOSED_POST_START_VERIFICATION_INCOMPLETE_HISTORY` records a campaign
+reached and saved with automated verification incomplete. The two real history
+gates reread eight acknowledged wizard clicks, sixty-one vendor calls, eleven
+original PNGs and the original three provider lifecycles. B1 and E1 retain bound
+PASS terminals; E2 retains UNKNOWN, SIGTERM, null status and absent child linkage.
+The final original, measured 55,775 ms inspection gap and original stability
+margin refusal remain separate from campaign and save-generation success.
+
+This historical case requires the original root caller, all measured geometry,
+finite authority and deadlines, maintained cleanup, the complete fourteen-PID
+absence observation and unchanged original-save protection. Its two XML files
+are `UNQUALIFIED_OUTPUT`; their hashes establish custody only. Stability, created
+seed and closeout receipts must remain absent. Neither cleanup nor the historical
+reader converts E2 UNKNOWN into PASS, grants input, issues a clock, qualifies a
+seed or replenishes spent allowances. A later run needs its own explicit grant,
+fresh observations and supported frontend refresh.

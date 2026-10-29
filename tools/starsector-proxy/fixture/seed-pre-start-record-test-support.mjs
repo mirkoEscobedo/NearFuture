@@ -22,7 +22,7 @@ export function generatedPreStartProvider(ctx,phase,start,terminalAt) {
     const packet=(/** @type {any} */ v)=>({content:[{type:'text',text:JSON.stringify(v)}],structuredContent:v});
     const names=batch==='B1'?['doctor','policy_status','get_window','screenshot','get_frontmost_app','get_window','left_click',
         'get_frontmost_app','list_windows','get_window','screenshot']:
-        ['doctor','policy_status','get_window','screenshot',...Array.from({length:3},()=>[
+        ['doctor','policy_status','get_window','screenshot',...Array.from({length:batch==='E2'?(ctx.options.e2ActionCount??3):3},()=>[
             'get_frontmost_app','get_window','left_click','get_frontmost_app','get_window','screenshot']).flat()];
     /** @type {any[]} */const calls=[];
     /** @type {any[]} */const originals=[];
@@ -87,6 +87,6 @@ export function generatedPreStartCopy(ctx,phase,callIndex,prefix,action) {
 export function generatedPreStartAction(ctx,phase,index,stage,ordinal,reservation) {
     const post=phase.calls[index-1].post;
     return {status:'AWAITING_AFTER',tool:'left_click',batch:phase.batch,runID:phase.runID,sourceSha256:phase.source.sha256,
-        reservationID:ctx.controllerPin.sha256+':'+reservation,args:post.args,wizardStep:{ordinal,stage},
+        reservationID:ctx.controllerPin.sha256+':'+(reservation+(ctx.reservationShift??0)),args:post.args,wizardStep:{ordinal,stage},
         sentAtMs:Date.parse(post.callStarted)+1,knownResultAtMs:Date.parse(post.callCompleted)-1};
 }

@@ -9,7 +9,8 @@ import {ref,value} from './seed-failed-history-test-support.mjs';
 export function generatedPreStartGeometry(ctx) {
     const {s,root,phases,actions,clock,controllerPin,old,anchor,iso,game,powershell,supervisor}=ctx;
     const rows=[['B1-PLAY','B1',4,0],['B1-NEW_GAME','B1',11,-1],['E1-NEW_GAME','E1',4,1],
-        ['E1-GENERATE','E1',10,2],['E1-CONTINUE','E1',16,3],['E2-EXPLORER','E2',4,4],['E2-NORMAL','E2',10,5],['E2-SKIP','E2',16,6]];
+        ['E1-GENERATE','E1',10,2],['E1-CONTINUE','E1',16,3],['E2-EXPLORER','E2',4,4],['E2-NORMAL','E2',10,5],['E2-SKIP','E2',16,6],
+        ...(ctx.additionalGeometryStages??[])];
     /** @type {any[]} */const successfulGeometry=[];
     /** @param {string} label @param {string} batch @param {number} index @param {number} inspectedAtMs */
     function source(label,batch,index,inspectedAtMs) {
@@ -19,9 +20,10 @@ export function generatedPreStartGeometry(ctx) {
             metadataSha256:automatic.metadata.sha256,capturedAtMs:Date.parse(call.post.callCompleted)};
         const framePath=resolve(s,label+'-before-frame.private.json');json(framePath,frame);
         const snapshot=resolve(s,label+'-owned-snapshot.private.json');
-        const sampledGame={...game,mainWindowHandle:call.window.windowId};
+        const sampledGame={...game,mainWindowHandle:ctx.postStartGeometryReview?.handle?.(call.window.windowId)??call.window.windowId};
         if(label==='E2-START_GAME'&&ctx.options.finalSnapshotExtraPid)sampledGame.supervisorJobPids=[...game.supervisorJobPids,ctx.options.finalSnapshotExtraPid];
-        json(snapshot,{at:new Date(inspectedAtMs).toISOString(),controllerPid:100,controllerCreationTime:old.controller.controllerCreationTime,
+        const snapshotOffset=ctx.postStartGeometryReview?.snapshotLabel===label?ctx.postStartGeometryReview.snapshotOffsetMs:0;
+        json(snapshot,{at:new Date(inspectedAtMs+snapshotOffset).toISOString(),controllerPid:100,controllerCreationTime:old.controller.controllerCreationTime,
             controllerKernelCreationFileTime:old.controller.controllerKernelCreationFileTime,processes:[sampledGame]});
         const path=resolve(s,label+'-source-before.private.json');
         json(path,{schemaVersion:1,kind:'PRIVATE_FIXED_LATEST_SOURCE_CAPTURE',scenario:s,sourceHead:'1'.repeat(40),label,runID:p.runID,
@@ -33,8 +35,11 @@ export function generatedPreStartGeometry(ctx) {
     }
     for(const [labelValue,batchValue,indexValue,actionValue] of rows) {
         const label=String(labelValue),batch=String(batchValue),index=Number(indexValue),actionIndex=Number(actionValue),p=phases[batch];
-        const capture=Date.parse(p.calls[index-1].post.callCompleted),inspected=label==='B1-NEW_GAME'?anchor+16000:capture+50;
-        const src=source(label,batch,index,inspected),started=inspected+10,observed=inspected+30,completed=inspected+110,computed=inspected+130;
+        const capture=Date.parse(p.calls[index-1].post.callCompleted),ordinaryInspection=ctx.completedTerminalInput&&actionIndex>=0?
+            actions[actionIndex].sentAtMs-200:label==='B1-NEW_GAME'?anchor+16000:capture+50;
+        const inspected=ordinaryInspection+(ctx.postStartGeometryReview?.timingLabel===label?ctx.postStartGeometryReview.inspectionOffsetMs:0);
+        const delay=ctx.postStartGeometryReview?.timingLabel===label?ctx.postStartGeometryReview.geometryDelayMs??0:0;
+        const src=source(label,batch,index,inspected),started=inspected+10+delay,observed=inspected+30+delay,completed=inspected+110+delay,computed=inspected+130+delay;
         const project=resolve(s,'geometry-owned-'+label);mkdirSync(resolve(project,'.agentic'),{recursive:true});
         const w=src.window;
         const childCommand={program:powershell,args:['-NoProfile','-NonInteractive','-File',resolve(root,'tools/starsector-proxy/fixture/read-owned-client-geometry.ps1'),
@@ -69,6 +74,7 @@ export function generatedPreStartGeometry(ctx) {
         json(resolve(s,label+'-coordinate-proof.private.json'),{schemaVersion:1,kind:'PRIVATE_FIXED_SEED_POINT_CANONICAL_BINDING',point:ref(pointPath),canonical,frame:src.frame,inputGranted:false});
         successfulGeometry.push({terminal:ref(terminalPath),geometry:ref(geometryPath),point:ref(pointPath),stage:label});
     }
+    if(ctx.completedTerminalInput)return {successfulGeometry};
     const inspected=anchor+273000+(ctx.options.lastClickDelayMs??0),final=source('E2-START_GAME','E2',22,inspected),helper=resolve(s,'construct-actual-phase-inputs.private.mjs');
     const q=(/** @type {string} */ x)=>"'"+x.replaceAll("'","''")+"'",run=phases.E2.runID,node=realNode();
     const command="$ErrorActionPreference='Stop';$h="+q(helper.replaceAll('\\','/'))+";$n="+q(node.replaceAll('\\','/'))+

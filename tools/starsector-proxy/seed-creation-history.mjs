@@ -3,6 +3,7 @@ import {resolve,isAbsolute} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
 import {zeroProviderFailedSeedAttemptKind,readZeroProviderFailedSeedAttempt} from './seed-zero-provider-attempt.mjs';
 import {preStartMarginFailedSeedAttemptKind,readPreStartMarginFailedSeedAttempt} from './seed-pre-start-margin-attempt.mjs';
+import {postStartVerificationIncompleteKind,readPostStartVerificationIncomplete} from './seed-post-start-verification.mjs';
 import {requireThat,read,closed} from './campaign-proof.mjs';
 import {failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind,captureLinkageFailedSeedAttemptKind,callerDateFailedSeedAttemptKind,readCallerDateFailedSeedAttempt,
  readFailedSeedAttempt,readKnownPlayFailedSeedAttempt,readCaptureStopFailedSeedAttempt,readWrongSceneFailedSeedAttempt,readCaptureLinkageFailedSeedAttempt} from './seed-failed-attempt.mjs';
@@ -64,14 +65,14 @@ export function seedCreationActionLimit(plan,lease,scenario) {
         result.actions.clicks===8&&result.actions.activations===0&&result.actions.providers===3,
     'completed seed history must retain its distinct successful provenance shape');
     const zero=result.kind===zeroProviderFailedSeedAttemptKind,date=result.kind===callerDateFailedSeedAttemptKind,
-        preStart=result.kind===preStartMarginFailedSeedAttemptKind;
+        preStart=result.kind===preStartMarginFailedSeedAttemptKind,postStart=result.kind===postStartVerificationIncompleteKind;
     const failed=result.kind===failedSeedAttemptKind,known=result.kind===knownPlayFailedSeedAttemptKind,
         capture=result.kind===captureStopFailedSeedAttemptKind,wrong=result.kind===wrongSceneFailedSeedAttemptKind,linkage=result.kind===captureLinkageFailedSeedAttemptKind;
     const reader=linkage?readCaptureLinkageFailedSeedAttempt:wrong?readWrongSceneFailedSeedAttempt:capture?readCaptureStopFailedSeedAttempt:known?readKnownPlayFailedSeedAttempt:readFailedSeedAttempt;
-    const actions=preStart?readPreStartMarginFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger):date?readCallerDateFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):zero?readZeroProviderFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference)
+    const actions=postStart?readPostStartVerificationIncomplete(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger):preStart?readPreStartMarginFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger):date?readCallerDateFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):zero?readZeroProviderFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference)
         :failed||known||capture||wrong||linkage?reader(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):result.actions;
     requireThat(result.schemaVersion===1&&['ACTUAL_SCHEMA5_COMMON_PREFERENCE_PREFIX_DRIVER_CLOSEOUT',
-        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind,captureLinkageFailedSeedAttemptKind,zeroProviderFailedSeedAttemptKind,callerDateFailedSeedAttemptKind,preStartMarginFailedSeedAttemptKind].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
+        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind,captureLinkageFailedSeedAttemptKind,zeroProviderFailedSeedAttemptKind,callerDateFailedSeedAttemptKind,preStartMarginFailedSeedAttemptKind,postStartVerificationIncompleteKind].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
         ledger.schemaVersion===2&&ledger.kind==='STARSECTOR_FINITE_LAUNCH_HISTORY'&&
         isDeepStrictEqual(actions?.actualGuard,ledger.history)&&
         actions.currentRunContext?.overallAttempts===baseline.overallAttempts&&
