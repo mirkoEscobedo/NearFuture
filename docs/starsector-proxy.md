@@ -625,3 +625,45 @@ seed and closeout receipts must remain absent. Neither cleanup nor the historica
 reader converts E2 UNKNOWN into PASS, grants input, issues a clock, qualifies a
 seed or replenishes spent allowances. A later run needs its own explicit grant,
 fresh observations and supported frontend refresh.
+
+`ROOT_CLOSED_EARLY_WINDOW_FOCUS_STOP_HISTORY` is a distinct historical-only
+three-call stop: doctor, policy and an owned unfocused window, with no saved
+original PNG or input. It binds the original generic result and observation,
+unchanged source/authority, known provider closure, actual caller terminal,
+eight-PID absence and original-save protection. The earlier doctor diagnostic
+does not substitute for a contemporaneous foreground observation. This receipt
+carries spent context and unsent reservations; it supplies no focus recovery,
+clock, input grant or successful seed provenance.
+
+The separate control5 `DISPOSABLE_SEED_CREATION_INITIAL_FOCUS` profile uses auth7
+and a closed v3 `ROOT_ADMITTED_INITIAL_FOCUS_SEED_CREATION_HISTORY` grant. It
+reserves nine requests: eight unchanged wizard clicks and at most one initial B1
+activation. Control4/auth6 retains its v2 eight-request, zero-activation contract.
+The root watchdog remains thirty minutes, each of three providers remains bounded
+to 180 seconds and 32 calls, and the existing input/observation/cleanup margins
+and nine geometry observations remain unchanged.
+
+For an initially unfocused owned target, inspect the original BEFORE, then obtain
+a fresh foreground/window pair before the sole activation. A known activation
+ACK, fresh owned foreground/window pair and complete original AFTER are required.
+After the AFTER call, raw packet, PNG, metadata and completed post record are
+persisted, the public adapter atomically archives `resolvedInitialActivation`
+and clears its pending reservation. This proves pre-capture focus and capture
+custody only; it never claims post-capture focus, frame freshness or visible Play.
+The driver inspects that original, maps through the existing geometry guard and
+obtains another fresh foreground/window pair immediately before Play. If focus
+arrives naturally, skip activation and capture a fresh focused original. Unknown
+activation or any later focus loss stops the flow; no second activation is allowed.
+The normal known-Play owned launcher-to-main-window handoff remains supported.
+
+The activation archive stays separate from all eight wizard click ordinals.
+Reservations and sent requests are never refunded. The distinct
+`ACTUAL_DISPOSABLE_SEED_CREATION_INITIAL_FOCUS_CLOSEOUT` consumer replays actual
+transport/PNG/claim custody and requires exactly eight plus zero or one requests,
+with the same XML, stability, provider closure, cleanup and protection checks.
+Both creation profiles retain the unchanged read-only shared-preference check
+before launch and after cleanup. Source tests with generated boundaries do not
+establish native completion or qualify a disposable seed.
+The new grant and completed kind reject duplicate JSON fields and collection to
+scalar coercion, including documentary schema, root session, cleanup and
+protection values. Legacy v2 authority and completed-kind parsing remain separate.

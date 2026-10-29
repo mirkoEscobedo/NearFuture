@@ -13,7 +13,7 @@ const batches = {
 /** Validate the closed in-memory binding; file/lease custody is checked by the caller too.
  * @param {any} authorization */
 export function validateBatchBinding(authorization) {
-    if ([2, 3, 4, 5, 6].includes(authorization?.schemaVersion)) { validateCampaignBinding(authorization); return; }
+    if ([2, 3, 4, 5, 6, 7].includes(authorization?.schemaVersion)) { validateCampaignBinding(authorization); return; }
     const keys = ['batch', 'ownedPids', 'planSha256', 'runID', 'scenario', 'schemaVersion'];
     if (!authorization || typeof authorization !== 'object' || Array.isArray(authorization) ||
         Object.keys(authorization).sort().join() !== keys.join() || authorization.schemaVersion !== 1 ||
@@ -42,17 +42,18 @@ function textJson(result) {
 export function createBatchSession(session, authorization, record = () => {}) {
     validateBatchBinding(authorization);
     const binding = structuredClone(authorization);
-    const campaign = [2, 3, 4, 5, 6].includes(binding.schemaVersion);
-    const creation = binding.schemaVersion === 6;
-    const seededLauncher = [3, 4, 5, 6].includes(binding.schemaVersion) && binding.batch === 'B1';
+    const campaign = [2, 3, 4, 5, 6, 7].includes(binding.schemaVersion);
+    const initialFocus = binding.schemaVersion === 7;
+    const creation = binding.schemaVersion === 6 || initialFocus;
+    const seededLauncher = [3, 4, 5, 6, 7].includes(binding.schemaVersion) && binding.batch === 'B1';
     const seededEntry = binding.schemaVersion === 3 && binding.batch === 'E1';
-    const firstPageEntry = [4, 5, 6].includes(binding.schemaVersion) && binding.batch === 'E1';
+    const firstPageEntry = [4, 5, 6, 7].includes(binding.schemaVersion) && binding.batch === 'E1';
     const generationEntry = binding.schemaVersion === 5 && binding.batch === 'E1';
     const seededExitConfirmation = binding.schemaVersion === 3 && binding.batch === 'E2' && binding.exitConfirmation !== undefined;
     const generationContinue = binding.schemaVersion === 5 && binding.batch === 'E2';
     const escapeBatch = campaign && binding.batch === 'E1';
     /** @type {Array<{tool:string,optional?:boolean}>} */
-    const sequence = creation ? Array.from({length:binding.batch==='B1'?1:binding.batch==='E1'?3:4},()=>({tool:'left_click'})) : seededLauncher ? batches.B1 : seededEntry ?
+    const sequence = initialFocus && binding.batch === 'B1' ? batches.B1 : creation ? Array.from({length:binding.batch==='B1'?1:binding.batch==='E1'?3:4},()=>({tool:'left_click'})) : seededLauncher ? batches.B1 : seededEntry ?
         [{ tool: 'left_click' }, { tool: 'left_click' }, { tool: 'left_click' }, { tool: 'key' }] :
         generationEntry ? [{ tool: 'left_click' }, { tool: 'left_click' }] :
         firstPageEntry ? [{ tool: 'left_click' }] : seededExitConfirmation ? [{ tool: 'left_click' }, { tool: 'left_click', optional: true }] :
@@ -62,6 +63,7 @@ export function createBatchSession(session, authorization, record = () => {}) {
     let position = 0;
     let inputLatched = false;
     let knownSeedPlay = false;
+    let initialFocused = false;
     let doctor = false, core = false, index = 0;
     const requestContext = new AsyncLocalStorage();
     /** @type {{number: number, tool: string} | undefined} */ let activeRequest;
@@ -69,7 +71,7 @@ export function createBatchSession(session, authorization, record = () => {}) {
     /** @type {Map<number, {value: any, index: number}>} */
     const windows = new Map();
     /** @type {{value: any, index: number} | undefined} */ let foreground;
-    /** @type {{id: number, index: number, bounds: string, pngBytes?: Buffer, capturedAtMs: number} | undefined} */ let capture;
+    /** @type {{id: number, index: number, bounds: string, pngBytes?: Buffer, capturedAtMs: number, focusedAtCapture:boolean} | undefined} */ let capture;
     /** @param {any} value */
     const owned = value => value && binding.ownedPids.includes(value.pid) &&
         (!campaign || value.windowId === binding.campaign.windowId ||
@@ -129,6 +131,8 @@ export function createBatchSession(session, authorization, record = () => {}) {
                 const target = windows.get(id);
                 if (!doctor || !core || !target || !capture || capture.id !== id ||
                     capture.bounds !== JSON.stringify(target.value.bounds)) refuse('missing current diagnostics, owned target or original BEFORE receipt');
+                if(initialFocus && tool === 'activate_window' && (binding.batch !== 'B1' || initialFocused || target.value.isFocused !== false || args.timeout_ms !== 2000 || !foreground || foreground.index <= capture.index || target.index <= capture.index)) refuse('one initial activation requires a fresh unfocused BEFORE pair');
+                if(initialFocus && tool==='left_click' && !capture.focusedAtCapture)refuse('fresh focused original required before Play or wizard click');
                 if (args.target_app !== undefined && args.target_app !== target.value.bundleId) refuse('conflicting target application');
                 if (tool !== 'activate_window' && (args.focus_strategy !== 'strict' ||
                     target.value.isFocused !== true || foreground?.value?.pid !== target.value.pid ||
@@ -162,11 +166,14 @@ export function createBatchSession(session, authorization, record = () => {}) {
                 if (tool === 'activate_window' && (value?.activated !== true || value?.windowId !== args.window_id)) inputLatched = true;
                 if (tool === 'get_frontmost_app') {
                     const app = value?.app;
+                    if(initialFocus && initialFocused && !binding.ownedPids.includes(app?.pid)) refuse('foreground changed after initial acquisition');
                     foreground = app && typeof app === 'object' && !Array.isArray(app) &&
                         Number.isSafeInteger(app.pid) && typeof app.bundleId === 'string' && typeof app.displayName === 'string'
                         ? { value: app, index: callIndex } : undefined;
                 }
                 if (tool === 'get_window') {
+                    if(initialFocus && initialFocused && (!owned(value) || value.isFocused !== true)) refuse('focus changed after initial acquisition');
+                    if(initialFocus && owned(value) && value.isFocused === true)initialFocused=true;
                     if (owned(value) && value.windowId === args.window_id) windows.set(value.windowId, { value, index: callIndex });
                     else windows.delete(args.window_id);
                 }
@@ -176,7 +183,7 @@ export function createBatchSession(session, authorization, record = () => {}) {
                         refuse('original PNG receipt missing');
                     }
                     let pngBytes;
-                    if ([3, 4, 5, 6].includes(binding.schemaVersion)) {
+                    if ([3, 4, 5, 6, 7].includes(binding.schemaVersion)) {
                         const encoded = images[0].data;
                         if (typeof encoded !== 'string' || encoded.length > 44 * 1024 * 1024 ||
                             !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) refuse('bounded canonical original PNG required');
@@ -186,6 +193,7 @@ export function createBatchSession(session, authorization, record = () => {}) {
                         if (dimensions.width !== window?.bounds.width || dimensions.height !== window?.bounds.height) refuse('original PNG dimensions changed');
                     }
                     capture = { id: args.target_window_id, index: callIndex, pngBytes, capturedAtMs: Date.now(),
+                        focusedAtCapture:windows.get(args.target_window_id)?.value.isFocused===true,
                         bounds: JSON.stringify(windows.get(args.target_window_id)?.value.bounds) };
                 }
             }

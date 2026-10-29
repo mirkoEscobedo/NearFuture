@@ -206,7 +206,7 @@ Assert-FrozenProvenance $receipt $prepared
 $record=Read-ProtectionState $prepared $source ($Phase-ne'after-smoke') $seed
 if($Phase-eq'after-smoke'-and(Test-Path -LiteralPath "$EvidenceRoot/plan.json")){
  $closedPlan=Get-Content -LiteralPath "$EvidenceRoot/plan.json" -Raw|ConvertFrom-Json -DateKind String
- if($closedPlan.campaignControl.profile-ceq'DISPOSABLE_SEED_CREATION'){$record.sharedPreference=Assert-NativeSeedPreferenceUnchanged $closedPlan $EvidenceRoot}
+ if($closedPlan.campaignControl.profile-cin@('DISPOSABLE_SEED_CREATION','DISPOSABLE_SEED_CREATION_INITIAL_FOCUS')){$record.sharedPreference=Assert-NativeSeedPreferenceUnchanged $closedPlan $EvidenceRoot}
 }
 if($Phase-eq'admit-launch'){
  if($lease.phase-ceq'MENU_SMOKE_ONLY'){return [pscustomobject]@{launchGrant=$lease.launchGrant;rootLeaseSha256=(Get-FileHash -LiteralPath "$EvidenceRoot/native-lane-lease.private.json" -Algorithm SHA256).Hash}}

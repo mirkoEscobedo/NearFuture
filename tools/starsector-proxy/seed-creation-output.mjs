@@ -2,6 +2,7 @@
 import {resolve,dirname} from 'node:path';
 import {lstatSync,readdirSync} from 'node:fs';
 import {isDeepStrictEqual} from 'node:util';
+import {isInitialFocusCreation} from './seed-creation-profile.mjs';
 import {requireThat,file} from './campaign-proof.mjs';
 
 /** Only fixed preference output after Continue, then one initial-save operation.
@@ -19,7 +20,7 @@ export function assertSeedCreationOutput(binding,state,input) {
     const continued=state.pending?.batch==='E1'&&state.pending.wizardStep?.stage==='CONTINUE'&&
         state.pending.status==='AWAITING_AFTER'||state.resolvedE1?.wizardStep?.stage==='CONTINUE'&&
         state.resolvedE1.status==='AWAITING_AFTER';
-    requireThat(binding.schemaVersion===6&&state.uncertain===false&&continued,'known seed Continue required before output');
+    requireThat((binding.schemaVersion===6||isInitialFocusCreation(binding))&&state.uncertain===false&&continued,'known seed Continue required before output');
     const common=resolve(saves,'common'),settings=resolve(common,'core_shared_settings.json.data');
     requireThat(entries.includes('common')&&lstatSync(common).isDirectory()&&!lstatSync(common).isSymbolicLink()&&
         isDeepStrictEqual(readdirSync(common),['core_shared_settings.json.data'])&&lstatSync(settings).nlink===1&&

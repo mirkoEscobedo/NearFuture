@@ -13,7 +13,7 @@ import {generatedPreStartGeometry} from './seed-pre-start-geometry-test-support.
 /** @param {{copiedFrameTimeOffsetMs?:number,e2Helper?:string,e2Query?:string,e2DeadlineOffsetMs?:number,
  * omitOwnedGame?:boolean,lastClickDelayMs?:number,rootCommand?:string,finalSnapshotExtraPid?:number,watchdogMs?:number,e2ActionCount?:number,
  * historicalBaseline?:{overallAttempts:number,uiAttempts:number,reservedActions:number,sentActions:number},supervisorJobPids?:number[],canonicalRootEnvironment?:boolean,phasePlanExtra?:Record<string,any>,
- * prepareHistoricalCase?:(context:any)=>void,finishHistoricalCase?:(context:any)=>any}} [options] */
+ * prepareHistoricalCase?:(context:any)=>void,finishHistoricalCase?:(context:any)=>any,earlyWindowCase?:(context:any)=>any,originalCallerRaw?:any}} [options] */
 export function preStartHistoryFixture(options={}) {
     const old=/** @type {any} */(seedCreationFixture()),future=/** @type {any} */(seedCreationFixture());
     const watchdog=options.watchdogMs??480000,callerBudget=watchdog-60000;
@@ -57,6 +57,7 @@ export function preStartHistoryFixture(options={}) {
     }
     Object.assign(old.campaign,{historyBaseline:baseline,maxReservedActions:maximum});
     old.campaign.rootCallRecord.value.startMs=anchor;
+    if(options.originalCallerRaw)old.campaign.rootCallRecord.value.raw=options.originalCallerRaw;
     old.refreshLaunch();
     const cp=ref(old.controllerPath),producerRecordKey='controller-start:'+cp.sha256;
     clock.producerRecordKey=producerRecordKey;old.campaign.producerWitness.producerRecordKey=producerRecordKey;
@@ -102,6 +103,7 @@ export function preStartHistoryFixture(options={}) {
         const claimPath=resolve(s,'guard-'+batch+'-consumed.private.json');json(claimPath,{sourcePath,sourceSha256:ref(sourcePath).sha256,binding});
         return {batch,runID,binding,source:ref(sourcePath),claim:ref(claimPath)};
     }
+    if(options.earlyWindowCase)return options.earlyWindowCase({...ctx,future,pins,phase});
     const b1=phases.B1=generatedPreStartProvider(ctx,phase('B1',{}),1000,15000);
     const play=generatedPreStartAction(ctx,b1,7,'PLAY',1,77);
     const menuFrame=generatedPreStartCopy(ctx,b1,11,'B1-after',play),menuPath=resolve(s,'B1-menu-inspected.private.json');

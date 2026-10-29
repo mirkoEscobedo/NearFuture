@@ -333,7 +333,7 @@ if($null-ne$launchAdmission){
 $controllerStart|ConvertTo-Json -Depth 6|Set-Content "$EvidenceRoot/controller-start.private.json"
 # Visible interactive launcher is the authorized native test surface.
 $seedCreationPlan=Get-Content -LiteralPath "$EvidenceRoot/plan.json" -Raw|ConvertFrom-Json -DateKind String
-if($seedCreationPlan.campaignControl.profile-ceq'DISPOSABLE_SEED_CREATION'){$null=Assert-NativeSeedPreferenceUnchanged $seedCreationPlan $EvidenceRoot}
+if($seedCreationPlan.campaignControl.profile-cin@('DISPOSABLE_SEED_CREATION','DISPOSABLE_SEED_CREATION_INITIAL_FOCUS')){$null=Assert-NativeSeedPreferenceUnchanged $seedCreationPlan $EvidenceRoot}
 $launcher=Start-Process -FilePath "$installation/starsector.exe" -WorkingDirectory $installation -WindowStyle Normal -PassThru
 $samples=[Collections.Generic.List[object]]::new()
 $seen=$false

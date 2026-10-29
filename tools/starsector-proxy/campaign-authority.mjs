@@ -1,4 +1,6 @@
 // @ts-check
+import {initialFocusCreationFlow,isInitialFocusCreation} from './seed-creation-profile.mjs';
+import {inspectInitialFocusResolution,assertInitialFocusArchive} from './seed-initial-focus-proof.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, openSync, closeSync, fsyncSync, renameSync, unlinkSync, existsSync } from 'node:fs';
 import { resolve, basename, isAbsolute } from 'node:path';
@@ -14,7 +16,7 @@ import { assertSeedCreationOutput } from './seed-creation-output.mjs';
 export const campaignLaunchSources = Object.freeze([...fixtureProbeSources,
     ...['campaign-authority.mjs', 'batch-authorization.mjs', 'batch-session.mjs', 'finite-consent.mjs',
         'fixture-binding.mjs', 'direct-frames.mjs', 'campaign-proof.mjs', 'generation-proof.mjs',
-        'seed-creation-history.mjs', 'seed-failed-attempt.mjs', 'seed-known-play-attempt.mjs', 'seed-wrong-scene-attempt.mjs', 'seed-capture-linkage-attempt.mjs', 'seed-caller-date-attempt.mjs', 'seed-caller-date-geometry.mjs', 'seed-pre-start-margin-attempt.mjs', 'seed-pre-start-margin-records.mjs', 'seed-pre-start-margin-geometry.mjs', 'seed-post-start-verification.mjs', 'seed-post-start-records.mjs', 'seed-post-start-custody.mjs', 'seed-post-start-geometry.mjs', 'seed-zero-provider-attempt.mjs', 'seed-zero-provider-terminal.mjs', 'client-coordinate.mjs', 'seed-wizard-proof.mjs', 'seed-creation-output.mjs', 'seed-creation-custody.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
+        'seed-initial-focus-proof.mjs', 'seed-creation-profile.mjs', 'seed-creation-history.mjs', 'seed-failed-attempt.mjs', 'seed-known-play-attempt.mjs', 'seed-wrong-scene-attempt.mjs', 'seed-capture-linkage-attempt.mjs', 'seed-caller-date-attempt.mjs', 'seed-caller-date-geometry.mjs', 'seed-pre-start-margin-attempt.mjs', 'seed-pre-start-margin-records.mjs', 'seed-pre-start-margin-geometry.mjs', 'seed-early-window-focus.mjs', 'seed-early-window-custody.mjs', 'seed-post-start-verification.mjs', 'seed-post-start-records.mjs', 'seed-post-start-custody.mjs', 'seed-post-start-geometry.mjs', 'seed-zero-provider-attempt.mjs', 'seed-zero-provider-terminal.mjs', 'client-coordinate.mjs', 'seed-wizard-proof.mjs', 'seed-creation-output.mjs', 'seed-creation-custody.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
 
 const flow = 'PAUSED_CAMPAIGN_EXIT_NO_SAVE';
 const seedFlow = 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE';
@@ -64,13 +66,13 @@ function history(binding, now = Date.now()) {
 /** One new-profile-only, known-closed launcher-to-game window transfer.
  * @param {any} binding @param {any} reference @param {number} now @param {boolean} [historical] */
 function seedLauncherHandoff(binding, reference, now, historical = false) {
-    const firstPage = [4, 5, 6].includes(binding.schemaVersion);
+    const firstPage = [4, 5, 6, 7].includes(binding.schemaVersion);
     const state = originalHistory(binding).value;
     const sourcePath = resolve(binding.scenario, 'B1-authorization.private.json');
     const source = read(sourcePath), claim = read(resolve(binding.scenario, 'guard-B1-consumed.private.json'));
     const initial = claim.value.binding;
     requireThat(state.b1ClaimSha256 === claim.sha256 && claim.value.sourcePath === sourcePath &&
-        claim.value.sourceSha256 === source.sha256 && initial?.schemaVersion === binding.schemaVersion && [3, 4, 5, 6].includes(initial.schemaVersion) && initial.batch === 'B1' &&
+        claim.value.sourceSha256 === source.sha256 && initial?.schemaVersion === binding.schemaVersion && [3, 4, 5, 6, 7].includes(initial.schemaVersion) && initial.batch === 'B1' &&
         initial.sourcePath === sourcePath && initial.sourceSha256 === source.sha256 &&
         initial.planSha256 === source.value.planSha256?.toLowerCase() && initial.controllerSha256 === binding.controllerSha256 &&
         initial.scenario === binding.scenario && initial.workspaceRoot === binding.workspaceRoot &&
@@ -100,7 +102,7 @@ function seedLauncherHandoff(binding, reference, now, historical = false) {
                 row.supervisorJobPids.includes(current.pid) && row.supervisorJobPids.includes(controller.controllerPid)),
         'seeded owned process lineage changed');
     }
-    requireThat(!historical || ([3, 5, 6].includes(binding.schemaVersion) && binding.batch === 'E1'), 'historical seeded entry binding required');
+    requireThat(!historical || ([3, 5, 6, 7].includes(binding.schemaVersion) && binding.batch === 'E1'), 'historical seeded entry binding required');
     const alreadyTransferred = historical || isDeepStrictEqual(state.provider, owner(binding));
     const action = alreadyTransferred ? state.resolvedB1 : state.pending;
     const providerClock = alreadyTransferred ? state.resolvedB1?.providerClock : state.providerClock;
@@ -154,7 +156,7 @@ function seedLauncherHandoff(binding, reference, now, historical = false) {
 /** Read-only historical source custody for the modern seed consumer, no live authority.
  * @param {any} binding */
 export function inspectSeedCreationLauncher(binding) {
-    requireThat(binding.schemaVersion===6&&binding.batch==='E1','historical seed creation entry required');
+    requireThat((binding.schemaVersion===6||isInitialFocusCreation(binding))&&binding.batch==='E1','historical seed creation entry required');
     return seedLauncherHandoff(binding,{path:binding.b1MenuReceipt.path,sha256:binding.b1MenuReceipt.sha256},Date.now(),true);
 }
 
@@ -202,7 +204,7 @@ function campaignHandoff(binding, reference, now) {
     const state = originalHistory(binding).value, alreadyTransferred = isDeepStrictEqual(state.provider, owner(binding));
     const action = alreadyTransferred ? state.resolvedE1 : state.pending;
     const providerClock = alreadyTransferred ? state.resolvedE1?.providerClock : state.providerClock;
-    if ([5, 6].includes(binding.schemaVersion)) {
+    if ([5, 6, 7].includes(binding.schemaVersion)) {
         for (const [key, name] of [['planPath', 'E1-plan.private.json'], ['leasePath', 'E1-lease.private.json']]) {
             requireThat(initialSource.value[key] === resolve(binding.scenario, name) &&
                 read(initialSource.value[key]).sha256 === initialSource.value[key.replace('Path', 'Sha256')]?.toLowerCase(),
@@ -230,7 +232,7 @@ function campaignHandoff(binding, reference, now) {
     const expectedOwner = owner(initial);
     requireThat(action?.status === 'AWAITING_AFTER' && isDeepStrictEqual(owner(action), expectedOwner) &&
         (alreadyTransferred || isDeepStrictEqual(state.provider, expectedOwner)), 'menu reservation proof is unresolved');
-    if (binding.schemaVersion === 6) return seedWizardHandoff({binding, reference, now, initial, initialSource,
+    if (binding.schemaVersion === 6 || isInitialFocusCreation(binding)) return seedWizardHandoff({binding, reference, now, initial, initialSource,
         claim, state, action, providerClock, alreadyTransferred});
     if (binding.schemaVersion === 5) return generatedNameHandoff({binding, reference, now, initial, initialSource,
         claim, state, action, providerClock, alreadyTransferred});
@@ -304,7 +306,7 @@ function clock(campaign, controller, now, minimumRemainingMs = 20000) {
  * @returns {string} */
 function launchPredecessor(campaign, scenario, root, controllerSha256) {
     const inspection = campaign.flow === inspectionFlow, generation = campaign.flow === generationFlow,
-        creation = campaign.flow === seedCreationFlow;
+        initialFocus = campaign.flow === initialFocusCreationFlow, creation = campaign.flow === seedCreationFlow || initialFocus;
     /** @param {any} descriptor @param {string} name */
     function pinned(descriptor, name) {
         requireThat(closed(descriptor, ['path', 'sha256']) && typeof descriptor.path === 'string' &&
@@ -327,16 +329,16 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
         lease.planSha256?.toLowerCase() === planFile.sha256, 'original launch authority changed');
     requireThat(plan.scenarioId === basename(scenario) && resolve(plan.paths?.scenario ?? '') === scenario &&
         plan.ownership?.driver === '/root/recovery_game_driver' && plan.ownership.onlyGameInputDriver === true &&
-        plan.bounds?.maxScenarioActionsIncludingActivations === 8 && plan.bounds.maxProxyInvocations === 3 &&
+        plan.bounds?.maxScenarioActionsIncludingActivations === (initialFocus ? 9 : 8) && plan.bounds.maxProxyInvocations === 3 &&
         plan.bounds.proxyTimeoutMs === 180000 && plan.bounds.ownedGameHardTimeoutMs === watchdog &&
         Array.isArray(plan.batches) && plan.batches.length === (inspection ? 2 : 3) &&
         [...new Set(plan.batches.map((/** @type {any} */ batch) => batch.id))].sort().join() === (inspection ? 'B1,E1' : 'B1,E1,E2') &&
         lease.schemaVersion === 1 && lease.scenarioId === basename(scenario) && lease.authorized === true &&
         lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' && lease.phase === 'CAMPAIGN_BINDING_ONLY' &&
-        lease.ownedGameHardTimeoutMs === watchdog && lease.maxActions === 8 && lease.maxProxyInvocations === 3 &&
+        lease.ownedGameHardTimeoutMs === watchdog && lease.maxActions === (initialFocus ? 9 : 8) && lease.maxProxyInvocations === 3 &&
         lease.campaignLoadSaveAllowed === false, 'closed original campaign launch scope required');
-    requireThat(closed(plan.campaignControl, ['schemaVersion', 'profile']) && plan.campaignControl.schemaVersion === (creation ? 4 : generation ? 3 : inspection ? 2 : 1) &&
-        plan.campaignControl.profile === (creation ? seedCreationFlow : generation ? generationFlow : inspection ? inspectionFlow : seedFlow) &&
+    requireThat(closed(plan.campaignControl, ['schemaVersion', 'profile']) && plan.campaignControl.schemaVersion === (creation ? (initialFocus ? 5 : 4) : generation ? 3 : inspection ? 2 : 1) &&
+        plan.campaignControl.profile === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seedFlow) &&
         isDeepStrictEqual(plan.campaignControl, lease.campaignControl), 'closed seed entry launch profile required');
     requireThat(![plan, lease].some(value => ['ownedNodeKill', 'campaign', 'e1MenuReceipt'].some(key => Object.hasOwn(value, key))),
         'unrelated launch phase authority refused');
@@ -417,10 +419,10 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
  * @param {string} path @param {{root: string, runID: string, now?: number, input?: boolean}} options */
 export function readCampaignAuthorization(path, { root, runID, now = Date.now(), input = false }) {
     const sourcePath = resolve(path), source = read(sourcePath), auth = source.value;
-    const inspection = auth.schemaVersion === 4, generation = auth.schemaVersion === 5, creation = auth.schemaVersion === 6,
-        seeded = [3, 4, 5, 6].includes(auth.schemaVersion);
+    const inspection = auth.schemaVersion === 4, generation = auth.schemaVersion === 5, initialFocus = auth.schemaVersion === 7, creation = auth.schemaVersion === 6 || initialFocus,
+        seeded = [3, 4, 5, 6, 7].includes(auth.schemaVersion);
     requireThat(closed(auth, ['batch', 'leasePath', 'leaseSha256', 'ownedReceiptPath', 'ownedReceiptSha256',
-        'planPath', 'planSha256', 'scenario', 'schemaVersion']) && [2, 3, 4, 5, 6].includes(auth.schemaVersion) &&
+        'planPath', 'planSha256', 'scenario', 'schemaVersion']) && [2, 3, 4, 5, 6, 7].includes(auth.schemaVersion) &&
         typeof auth.scenario === 'string' && isAbsolute(auth.scenario) && (generation ? ['B1', 'E1', 'E2'].includes(auth.batch) : inspection ? ['B1', 'E1'].includes(auth.batch) : seeded ? ['B1', 'E1', 'E2'].includes(auth.batch) : ['E1', 'E2'].includes(auth.batch)) &&
         typeof runID === 'string' && /^[A-Za-z0-9_-]+$/.test(runID), 'closed V2 authorization required');
     const scenario = resolve(auth.scenario);
@@ -441,7 +443,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
     requireThat(!(generation || creation) || ![plan, lease].some(value => ['seed', 'exitConfirmation', 'e1MenuReceipt'].some(key => Object.hasOwn(value, key))),
         'generation refuses unrelated phase authority');
     requireThat(closed(campaign, ['flow', 'windowId', 'rootClock', 'producerWitness', 'rootCallRecord',
-        'historyBaseline', 'maxReservedActions', ...(phaseLocal ? ['launchPredecessor'] : [])]) && campaign.flow === (creation ? seedCreationFlow : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) &&
+        'historyBaseline', 'maxReservedActions', ...(phaseLocal ? ['launchPredecessor'] : [])]) && campaign.flow === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) &&
         Number.isSafeInteger(campaign.windowId) && campaign.windowId > 0 &&
         closed(campaign.historyBaseline, ['overallAttempts', 'uiAttempts', 'reservedActions', 'sentActions']) &&
         isDeepStrictEqual(campaign, lease.campaign),
@@ -482,12 +484,12 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
         if (handoff.alreadyTransferred) history(binding, now);
     } else history(binding, now);
     requireThat(plan.scenarioId === basename(scenario) && resolve(plan.paths?.scenario ?? '') === scenario &&
-        plan.bounds?.maxScenarioActionsIncludingActivations === 8 && plan.bounds?.maxProxyInvocations === 3 &&
+        plan.bounds?.maxScenarioActionsIncludingActivations === (initialFocus ? 9 : 8) && plan.bounds?.maxProxyInvocations === 3 &&
         plan.bounds?.proxyTimeoutMs === 180000 && plan.bounds?.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs &&
         plan.batches?.some((/** @type {any} */ batch) => batch.id === auth.batch) && lease.schemaVersion === auth.schemaVersion &&
-        lease.authorized === true && lease.phase === (creation ? seedCreationFlow : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' &&
+        lease.authorized === true && lease.phase === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' &&
         lease.planSha256?.toLowerCase() === files.planPath.sha256 && lease.campaignLoadSaveAllowed === false &&
-        lease.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs && lease.maxActions === 8 && lease.maxProxyInvocations === 3 &&
+        lease.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs && lease.maxActions === (initialFocus ? 9 : 8) && lease.maxProxyInvocations === 3 &&
         Number.isSafeInteger(campaign.maxReservedActions) &&
         campaign.maxReservedActions === (creation ? seedCreationActionLimit(plan, lease, scenario) : generation ? generationActionLimit(plan, lease, scenario)
             : campaign.historyBaseline.reservedActions + lease.maxActions),
@@ -515,7 +517,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
 /** @param {any} binding */
 export function validateCampaignBinding(binding) {
     const inspection = binding?.schemaVersion === 4, generation = binding?.schemaVersion === 5,
-        creation = binding?.schemaVersion === 6, seeded = [3, 4, 5, 6].includes(binding?.schemaVersion);
+        initialFocus = binding?.schemaVersion === 7, creation = binding?.schemaVersion === 6 || initialFocus, seeded = [3, 4, 5, 6, 7].includes(binding?.schemaVersion);
     requireThat(seeded || (!binding?.campaign?.launchPredecessor && binding?.originalPlanSha256 === undefined),
         'legacy campaign cannot use launch predecessor');
     const fields = ['schemaVersion', 'batch', 'runID', 'scenario', 'workspaceRoot', 'planSha256', 'ownedPids',
@@ -524,9 +526,9 @@ export function validateCampaignBinding(binding) {
     if (seeded && binding?.batch === 'E1') fields.push('b1MenuReceipt');
     if (binding?.campaign?.launchPredecessor) fields.push('originalPlanSha256');
     if (binding?.exitConfirmation !== undefined) fields.push('exitConfirmation');
-    requireThat(closed(binding, fields) && [2, 3, 4, 5, 6].includes(binding.schemaVersion) &&
+    requireThat(closed(binding, fields) && [2, 3, 4, 5, 6, 7].includes(binding.schemaVersion) &&
         (generation ? ['B1', 'E1', 'E2'].includes(binding.batch) : inspection ? ['B1', 'E1'].includes(binding.batch) : seeded ? ['B1', 'E1', 'E2'].includes(binding.batch) : ['E1', 'E2'].includes(binding.batch)) &&
-        binding.campaign?.flow === (creation ? seedCreationFlow : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && (!seeded || binding.campaign.launchPredecessor) && Number.isSafeInteger(binding.campaign.windowId) &&
+        binding.campaign?.flow === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && (!seeded || binding.campaign.launchPredecessor) && Number.isSafeInteger(binding.campaign.windowId) &&
         typeof binding.workspaceRoot === 'string' && isAbsolute(binding.workspaceRoot) &&
         typeof binding.scenario === 'string' && inside(resolve(binding.workspaceRoot, '.tmp/starsector-proxy/scenarios'), binding.scenario) &&
         binding.sourcePath === resolve(binding.scenario, binding.batch + '-authorization.private.json') &&
@@ -561,9 +563,23 @@ function update(binding, change, mode = 'current') {
     } finally { closeSync(fd); unlinkSync(lock); }
 }
 
+/** Resolve only persisted initial activation capture custody, before geometry.
+ * No counter changes and no claim of a post-capture focus check or visible control.
+ * @param {any} binding @param {string} output @param {string} label */
+export function resolveInitialFocusCapture(binding,output,label){
+    if(!isInitialFocusCreation(binding)||binding.batch!=='B1')return;
+    const admitted=readCampaignAuthorization(binding.sourcePath,{root:binding.workspaceRoot,runID:binding.runID});
+    requireThat(isDeepStrictEqual(admitted.binding,binding),'initial activation resolution owner changed');
+    update(binding,state=>{
+        if(state.pending?.tool!=='activate_window')return;
+        const proof=inspectInitialFocusResolution(binding,state,output,label,Date.now());
+        state.resolvedInitialActivation=proof;state.pending=null;
+    });
+}
+
 /** @param {any} binding */
 export function claimCampaignOwner(binding) {
-    if ([3, 4, 5, 6].includes(binding.schemaVersion) && binding.batch === 'E1') {
+    if ([3, 4, 5, 6, 7].includes(binding.schemaVersion) && binding.batch === 'E1') {
         update(binding, state => {
             const proof = seedLauncherHandoff(binding, { path: binding.b1MenuReceipt.path,
                 sha256: binding.b1MenuReceipt.sha256 }, Date.now());
@@ -579,7 +595,7 @@ export function claimCampaignOwner(binding) {
     }
     if (binding.batch === 'E2') {
         update(binding, state => {
-            const reference = binding.schemaVersion === 6 ? binding.e1WizardReceipt : binding.schemaVersion === 5 ? binding.e1GeneratedNameReceipt : binding.e1MenuReceipt;
+            const reference = (binding.schemaVersion === 6 || isInitialFocusCreation(binding)) ? binding.e1WizardReceipt : binding.schemaVersion === 5 ? binding.e1GeneratedNameReceipt : binding.e1MenuReceipt;
             const proof = campaignHandoff(binding, { path: reference.path, sha256: reference.sha256 }, Date.now());
             requireThat(!proof.alreadyTransferred, 'E2 provider already claimed');
             const startMs = Date.now(), root = binding.campaign.rootClock;
@@ -595,7 +611,7 @@ export function claimCampaignOwner(binding) {
         const startMs = Date.now(), root = binding.campaign.rootClock;
         state.provider = owner(binding);
         const claimSha256 = read(resolve(binding.scenario, 'guard-' + binding.batch + '-consumed.private.json')).sha256;
-        if ([3, 4, 5, 6].includes(binding.schemaVersion) && binding.batch === 'B1') state.b1ClaimSha256 = claimSha256;
+        if ([3, 4, 5, 6, 7].includes(binding.schemaVersion) && binding.batch === 'B1') state.b1ClaimSha256 = claimSha256;
         else state.initialClaimSha256 = claimSha256;
         state.providerClock = { startMs, deadlineMs: Math.min(startMs + 180000, root.effectiveDeadlineMs - root.cleanupReserveMs) };
     });
@@ -660,7 +676,10 @@ export function reserveCampaignAction(binding, args, tool = binding.batch === 'E
     const admitted = readCampaignAuthorization(binding.sourcePath, { root: binding.workspaceRoot, runID: binding.runID, input: true });
     requireThat(isDeepStrictEqual(admitted.binding, binding), 'mutation custody changed');
     update(binding, state => {
-        const wizardStep = binding.schemaVersion === 6 ? seedWizardInput(binding, state, args, after, Date.now()) : undefined;
+        if(isInitialFocusCreation(binding)&&binding.batch==='B1'&&tool==='left_click')assertInitialFocusArchive(binding,state);
+        const initialActivation = isInitialFocusCreation(binding) && tool === 'activate_window';
+        if(initialActivation)requireThat(binding.batch === 'B1' && !state.pending && !state.resolvedInitialActivation && !(state.resolvedActions??[]).length && closed(args,['window_id','timeout_ms']) && args.window_id===binding.campaign.windowId && args.timeout_ms===2000, 'one initial bounded activation required');
+        const wizardStep = (binding.schemaVersion === 6 || isInitialFocusCreation(binding)) && !initialActivation ? seedWizardInput(binding, state, args, after, Date.now()) : undefined;
         if (state.pending) {
             const previous = state.pending, now = Date.now();
             const resolved = state.resolvedActions ?? [];

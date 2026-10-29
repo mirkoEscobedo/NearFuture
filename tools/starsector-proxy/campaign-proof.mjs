@@ -40,7 +40,8 @@ export function knownProviderClosure(context) {
 /** Terminal-only schema6 E2 evidence, never a transfer or fresh authority.
  * @param {any} context */
 export function knownSeedTerminalClosure(context) {
-    requireThat(context.binding?.schemaVersion===6&&context.binding.batch==='E2'&&context.initial===context.binding,
+    requireThat((context.binding?.schemaVersion===6||context.binding?.schemaVersion===7&&
+        context.binding.campaign?.flow==='DISPOSABLE_SEED_CREATION_INITIAL_FOCUS')&&context.binding.batch==='E2'&&context.initial===context.binding,
         'terminal seed provider evidence required');
     return ownedProviderClosure(context,['E2']);
 }

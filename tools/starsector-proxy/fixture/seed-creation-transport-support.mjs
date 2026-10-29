@@ -2,25 +2,27 @@
 // Real stdio/HTTP/claims/consent with only native OS effects and visual interpretation generated.
 import assert from 'node:assert/strict';
 import {PassThrough} from 'node:stream';
-import {mkdirSync,writeFileSync,readFileSync,existsSync,rmSync} from 'node:fs';
+import {mkdirSync,writeFileSync,readFileSync,existsSync,rmSync,realpathSync} from 'node:fs';
 import {resolve,basename,relative,isAbsolute} from 'node:path';
 import {Client} from '../../computer-use-mcp/node_modules/@modelcontextprotocol/client/dist/index.mjs';
 import {StdioServerTransport} from '../../computer-use-mcp/node_modules/@modelcontextprotocol/server/dist/stdio.mjs';
 import {serveDirectMcp} from '../direct-mcp.mjs';
+import {readBatchAuthorization} from '../batch-authorization.mjs';
 import {directFixture} from '../direct-test-fixture.mjs';
 import {requiredOwnedHttpFiles} from '../owned-http-batch.mjs';
 import {persistDirectFrame} from '../direct-frames.mjs';
 import {seedNativeSessionFactory,seedTarget} from './campaign-input-test-support.mjs';
-import {seedCreationFixture,creationFlow} from './seed-creation-test-support.mjs';
+import {seedCreationFixture,creationFlow as originalCreationFlow} from './seed-creation-test-support.mjs';
 import {json,filePin} from './seed-test-support.mjs';
 /** @param {string} p */
 const sha=p=>filePin(p).sha256.toLowerCase();
 /** @param {any} r */
 const textJson=r=>JSON.parse(r.content.find((/** @type {any} */ c)=>c.type==='text').text);
 
-/** @param {{retain?:boolean,watchdogMs?:number,callerBudgetMs?:number}} [options] */
+/** @param {{retain?:boolean,watchdogMs?:number,callerBudgetMs?:number,fixture?:()=>any,initialActivation?:boolean}} [options] */
 export async function exerciseSeedCreationTransport(options={}) {
-    const f=seedCreationFixture({watchdogMs:options.watchdogMs,callerBudgetMs:options.callerBudgetMs}),input=new PassThrough(),output=new PassThrough();
+    const f=options.fixture?.()??seedCreationFixture({watchdogMs:options.watchdogMs,callerBudgetMs:options.callerBudgetMs}),input=new PassThrough(),output=new PassThrough();
+    const creationFlow=f.plan.campaignControl.profile,version=creationFlow===originalCreationFlow?6:7;
     const names=['COMPUTER_USE_REQUIRE_APPROVAL','COMPUTER_USE_APPROVAL_TOKEN','COMPUTER_USE_AUDIT_LOG'];
     const prior=names.map(n=>process.env[n]);
     process.env.COMPUTER_USE_REQUIRE_APPROVAL='true';delete process.env.COMPUTER_USE_APPROVAL_TOKEN;
@@ -33,7 +35,7 @@ export async function exerciseSeedCreationTransport(options={}) {
     /** @type {Record<string,number>} */const callCounts={};
     /** @type {ReturnType<typeof directFixture>|undefined} */let provider;
     /** @type {ReturnType<typeof serveDirectMcp>|undefined} */let frontend;
-    let batch='B1',runID=prefix+'-B1',source='',calls=0,window={...seedTarget};
+    let batch='B1',runID=prefix+'-B1',source='',calls=0,window={...seedTarget,isFocused:!options.initialActivation};
     let retained=false;
     function cleanup() {
         for(const p of outputs)if(existsSync(p)){const suffix=relative(parent,p);assert.ok(suffix&&!suffix.startsWith('..')&&!isAbsolute(suffix));rmSync(p,{recursive:true});}
@@ -78,18 +80,20 @@ export async function exerciseSeedCreationTransport(options={}) {
         const campaign={...f.campaign,windowId:window.windowId};
         const planPath=resolve(f.scenario,phase+'-plan.private.json'),leasePath=resolve(f.scenario,phase+'-lease.private.json');
         json(planPath,{...f.phasePlan,campaign,batches:[{id:phase}],...extra});
-        json(leasePath,{...f.phaseLease,schemaVersion:6,campaign,phase:creationFlow,planSha256:sha(planPath),...extra});
+        json(leasePath,{...f.phaseLease,schemaVersion:version,campaign,phase:creationFlow,planSha256:sha(planPath),...extra});
         const ownedReceiptPath=resolve(f.scenario,'driver-'+phase+'-owned.private.json');
         if(phase!=='E1')json(ownedReceiptPath,JSON.parse(readFileSync(resolve(f.scenario,'driver-E1-owned.private.json'),'utf8')));
         const path=resolve(f.scenario,phase+'-authorization.private.json');
-        json(path,{schemaVersion:6,scenario:f.scenario,batch:phase,planPath,planSha256:sha(planPath),leasePath,
+        json(path,{schemaVersion:version,scenario:f.scenario,batch:phase,planPath,planSha256:sha(planPath),leasePath,
             leaseSha256:sha(leasePath),ownedReceiptPath,ownedReceiptSha256:sha(ownedReceiptPath)});return path;
     }
     /** @param {string} phase @param {string} path */
     async function begin(phase,path) {
         batch=phase;source=path;runID=prefix+'-'+phase;calls=0;outputs.push(resolve(parent,runID));
+        assert.equal(readBatchAuthorization(source,{root:f.root,runID}).binding.batch,phase);
         const ready=textJson(await call('begin_batch',{source,runID,consentMode:'finite-explicit-consent'}));
-        assert.equal(Date.parse(ready.deadline),f.campaign.rootClock.callerAdmissionDeadlineMs-30000);
+        if(version===6)assert.equal(Date.parse(ready.deadline),f.campaign.rootClock.callerAdmissionDeadlineMs-30000);
+        else assert.ok(Date.parse(ready.deadline)<=Date.now()+180000&&Date.parse(ready.deadline)>Date.now()+150000);
     }
     async function finish() {
         const t=textJson(await call('finish_batch',{})),dir=resolve(parent,runID);callCounts[batch]=calls;
@@ -109,28 +113,37 @@ export async function exerciseSeedCreationTransport(options={}) {
         await click(coordinate);
     }
     try {
-        const powershell=resolve(f.scenario,'synthetic-creation-helper.exe'),supervisor=resolve(f.scenario,'synthetic-creation-verifier.exe');
-        for(const p of [powershell,supervisor])writeFileSync(p,'Synthetic external process identity; never executed.');
+        const powershell=version===7?realpathSync.native(process.env.NF_TEST_POWERSHELL??'pwsh'):resolve(f.scenario,'synthetic-creation-helper.exe'),
+            supervisor=version===7?resolve(f.root,'node_modules/workspace-template-win32-x64/bin/workspace-template.exe'):resolve(f.scenario,'synthetic-creation-verifier.exe');
+        if(version===6)for(const p of [powershell,supervisor])writeFileSync(p,'Synthetic external process identity; never executed.');
         const pinsPath=resolve(f.scenario,'frozen-support-pins.private.json');
-        json(pinsPath,{pins:[...new Set(requiredOwnedHttpFiles(f.root,powershell,supervisor))].map(p=>({path:p,sha256:sha(p)}))});
+        json(pinsPath,{pins:[...new Set([...requiredOwnedHttpFiles(f.root,powershell,supervisor),...(version===7?['prepare-fixture.ps1','run-native.ps1','read-owned-client-geometry.ps1'].map(n=>resolve(f.root,'tools/starsector-proxy/fixture',n)):[])])].map(p=>({path:p,sha256:sha(p)}))});
         f.phaseLease.supportPinsSha256=f.launchLease.supportPinsSha256=sha(pinsPath);
-        const cap=Date.now()+(options.callerBudgetMs??170000);
+        const cap=Date.now()+(options.callerBudgetMs??(version===7?500000:170000));
         for(const value of [f.plan,f.launchLease,f.phasePlan,f.phaseLease])value.callerAdmissionDeadlineMs=cap;
         Object.assign(f.campaign.rootClock,{callerAdmissionDeadlineMs:cap,originalCallerAdmissionDeadlineMs:cap,effectiveDeadlineMs:cap});
         f.campaign.producerWitness.effectiveDeadlineMs=cap;f.refreshLaunch();
         const authority=f.launcher(runID),originalAuthority=[f.planPath,f.leasePath].map(p=>readFileSync(p));
         provider=directFixture({authority:{root:f.root,source:authority.source,runID,powershell,supervisor,consentMode:'finite-explicit-consent'},
             sessionFactory:seedNativeSessionFactory(tool=>{
-                assert.equal(ledger().history.sentActions,71+effects.length);effects.push(tool);
-                if(effects.length===4){mkdirSync(resolve(f.installation,'saves/common'));
+                assert.equal(ledger().history.sentActions,f.plan.historyBaseline.sentActions+1+effects.length);effects.push(tool);if(tool==='activate_window')window={...window,isFocused:true};
+                if(effects.filter(n=>n==='left_click').length===4){mkdirSync(resolve(f.installation,'saves/common'));
                     writeFileSync(resolve(f.installation,'saves/common/core_shared_settings.json.data'),'{"campaignHelpPopupsOptionChecked": true}');}
-                if(effects.length===8){const dir=resolve(f.installation,'saves/save_created_fixture');mkdirSync(dir);
+                if(effects.filter(n=>n==='left_click').length===8){const dir=resolve(f.installation,'saves/save_created_fixture');mkdirSync(dir);
                     writeFileSync(resolve(dir,'campaign.xml'),'<CampaignEngine><saveDirName>save_created_fixture</saveDirName><playerFleet ref="7"/><characterData><level>1</level></characterData><saveDesc/><Flt z="7"/></CampaignEngine>');
                     writeFileSync(resolve(dir,'descriptor.xml'),'<SaveGameData><compressed>false</compressed><gameVersion>0.98a-RC8</gameVersion><enabledMods/></SaveGameData>');}
             },{window:()=>window})});
         frontend=serveDirectMcp({...provider.options,spawn:provider.spawn,stdin:input,stdout:output});
         await client.connect(new StdioServerTransport(output,input));
-        await begin('B1',authority.source);await before(true);await click([40,80]);window={...seedTarget,windowId:21};
+        await begin('B1',authority.source);await before(true);
+        if(options.initialActivation){
+            await focus();await call('activate_window',{window_id:window.windowId,timeout_ms:2000});
+            const reserved=ledger().history;await focus();await call('screenshot',{target_window_id:window.windowId,quality:0,width:480});
+            const resolved=ledger();assert.equal(resolved.pending,null,'initial activation resolved before geometry');
+            assert.equal(resolved.resolvedInitialActivation.tool,'activate_window');assert.deepEqual(resolved.history,reserved);
+            assert.equal(resolved.resolvedActions?.length??0,0,'activation is separate from wizard click ordinals');
+        }
+        await click([40,80]);window={...seedTarget,windowId:21};
         const main=await frame('B1-after'),play=ledger().pending,closedB1=await finish();
         const menu=resolve(f.scenario,'B1-menu-inspected.private.json');
         json(menu,{schemaVersion:1,kind:'STARSECTOR_B1_MAIN_MENU_INSPECTION',scenario:f.scenario,flow:creationFlow,
@@ -160,8 +173,8 @@ export async function exerciseSeedCreationTransport(options={}) {
             sourceSha256:sha(source),claimSha256:sha(resolve(f.scenario,'guard-E2-consumed.private.json')),runID,
             reservationID:ledger().pending.reservationID,frame:created,inspection:{issuer:'/root',driver:'/root/recovery_game_driver',
                 inspectedAtMs,state:'NEW_GAME_CAMPAIGN_VISIBLE',generatedName:'Seed Captain'},provider:closedE2});
-        assert.deepEqual(effects,Array(8).fill('left_click'));
-        assert.deepEqual(ledger().history,{overallAttempts:40,uiAttempts:37,reservedActions:80,sentActions:78});
+        assert.deepEqual(effects,[...(options.initialActivation?['activate_window']:[]),...Array(8).fill('left_click')]);
+        assert.deepEqual(ledger().history,{...f.plan.historyBaseline,reservedActions:f.plan.historyBaseline.reservedActions+effects.length,sentActions:f.plan.historyBaseline.sentActions+effects.length});
         assert.equal(ledger().uncertain,false);assert.equal(ledger().pending.wizardStep.stage,'START_GAME');
         assert.equal(provider.starts(),3);assert.ok(callCounts.E1<=32&&callCounts.E2<=32);
         assert.deepEqual([f.planPath,f.leasePath].map(p=>readFileSync(p)),originalAuthority);

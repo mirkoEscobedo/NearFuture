@@ -4,6 +4,8 @@ import {isDeepStrictEqual} from 'node:util';
 import {zeroProviderFailedSeedAttemptKind,readZeroProviderFailedSeedAttempt} from './seed-zero-provider-attempt.mjs';
 import {preStartMarginFailedSeedAttemptKind,readPreStartMarginFailedSeedAttempt} from './seed-pre-start-margin-attempt.mjs';
 import {postStartVerificationIncompleteKind,readPostStartVerificationIncomplete} from './seed-post-start-verification.mjs';
+import {earlyWindowFocusHistoryKind,readEarlyWindowFocusHistory} from './seed-early-window-focus.mjs';
+import {seedCreationRequestAllowance,initialFocusHistoryGrantKind} from './seed-creation-profile.mjs';
 import {requireThat,read,closed} from './campaign-proof.mjs';
 import {failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind,captureLinkageFailedSeedAttemptKind,callerDateFailedSeedAttemptKind,readCallerDateFailedSeedAttempt,
  readFailedSeedAttempt,readKnownPlayFailedSeedAttempt,readCaptureStopFailedSeedAttempt,readWrongSceneFailedSeedAttempt,readCaptureLinkageFailedSeedAttempt} from './seed-failed-attempt.mjs';
@@ -38,17 +40,20 @@ export function readSeedCreationPreference(plan,lease,scenario) {
  * @param {any} plan @param {any} lease @param {string} scenario */
 export function seedCreationActionLimit(plan,lease,scenario) {
     readSeedCreationPreference(plan,lease,scenario);
+    const allowance=seedCreationRequestAllowance(plan,lease);
     const reference=plan.historyAdmission,limit=plan.absoluteMaxReservedActions,baseline=plan.historyBaseline;
     requireThat(closed(reference,['path','sha256'])&&reference.path===resolve(scenario,'root-history-baseline.admitted.private.json')&&
         /^[a-f0-9]{64}$/.test(reference.sha256)&&isDeepStrictEqual(reference,lease.historyAdmission),
     'fixed seed-creation history admission required');
     const receipt=readCanonicalGrant(reference.path),v=receipt.value;
     requireThat(receipt.sha256===reference.sha256&&closed(v,['schemaVersion','kind','issuer','driver','historyBaseline',
-        'maxReservedActions','previous'])&&v.schemaVersion===2&&v.kind==='ROOT_ADMITTED_SEED_CREATION_HISTORY'&&
+        'maxReservedActions','previous'])&&v.schemaVersion===(allowance===9?3:2)&&
+        v.kind===(allowance===9?initialFocusHistoryGrantKind:'ROOT_ADMITTED_SEED_CREATION_HISTORY')&&
         v.issuer==='/root'&&v.driver==='/root/recovery_game_driver'&&isDeepStrictEqual(v.historyBaseline,baseline)&&
         closed(baseline,['overallAttempts','uiAttempts','reservedActions','sentActions'])&&
         Object.values(baseline).every(n=>Number.isSafeInteger(n)&&n>=0)&&baseline.sentActions<=baseline.reservedActions&&
-        Number.isSafeInteger(limit)&&limit>baseline.reservedActions&&limit<=baseline.reservedActions+8&&
+        Number.isSafeInteger(limit)&&limit>baseline.reservedActions&&limit<=baseline.reservedActions+allowance&&
+        (allowance!==9||limit===baseline.reservedActions+9)&&
         limit===lease.absoluteMaxReservedActions&&limit===v.maxReservedActions&&closed(v.previous,['result','ledger']),
     'explicit bounded seed-creation extension required');
     /** @param {any} pin */
@@ -65,14 +70,14 @@ export function seedCreationActionLimit(plan,lease,scenario) {
         result.actions.clicks===8&&result.actions.activations===0&&result.actions.providers===3,
     'completed seed history must retain its distinct successful provenance shape');
     const zero=result.kind===zeroProviderFailedSeedAttemptKind,date=result.kind===callerDateFailedSeedAttemptKind,
-        preStart=result.kind===preStartMarginFailedSeedAttemptKind,postStart=result.kind===postStartVerificationIncompleteKind;
+        preStart=result.kind===preStartMarginFailedSeedAttemptKind,postStart=result.kind===postStartVerificationIncompleteKind,earlyWindow=result.kind===earlyWindowFocusHistoryKind;
     const failed=result.kind===failedSeedAttemptKind,known=result.kind===knownPlayFailedSeedAttemptKind,
         capture=result.kind===captureStopFailedSeedAttemptKind,wrong=result.kind===wrongSceneFailedSeedAttemptKind,linkage=result.kind===captureLinkageFailedSeedAttemptKind;
     const reader=linkage?readCaptureLinkageFailedSeedAttempt:wrong?readWrongSceneFailedSeedAttempt:capture?readCaptureStopFailedSeedAttempt:known?readKnownPlayFailedSeedAttempt:readFailedSeedAttempt;
-    const actions=postStart?readPostStartVerificationIncomplete(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger):preStart?readPreStartMarginFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger):date?readCallerDateFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):zero?readZeroProviderFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference)
+    const actions=earlyWindow?readEarlyWindowFocusHistory(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger):postStart?readPostStartVerificationIncomplete(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger):preStart?readPreStartMarginFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger):date?readCallerDateFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):zero?readZeroProviderFailedSeedAttempt(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference)
         :failed||known||capture||wrong||linkage?reader(readCanonicalGrant(v.previous.result.path).value,ledger,v.previous.ledger,readSeedCreationPreference):result.actions;
     requireThat(result.schemaVersion===1&&['ACTUAL_SCHEMA5_COMMON_PREFERENCE_PREFIX_DRIVER_CLOSEOUT',
-        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind,captureLinkageFailedSeedAttemptKind,zeroProviderFailedSeedAttemptKind,callerDateFailedSeedAttemptKind,preStartMarginFailedSeedAttemptKind,postStartVerificationIncompleteKind].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
+        'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',failedSeedAttemptKind,knownPlayFailedSeedAttemptKind,captureStopFailedSeedAttemptKind,wrongSceneFailedSeedAttemptKind,captureLinkageFailedSeedAttemptKind,zeroProviderFailedSeedAttemptKind,callerDateFailedSeedAttemptKind,preStartMarginFailedSeedAttemptKind,postStartVerificationIncompleteKind,earlyWindowFocusHistoryKind].includes(result.kind)&&result.allOwnedHandlesTerminalReaped===true&&
         ledger.schemaVersion===2&&ledger.kind==='STARSECTOR_FINITE_LAUNCH_HISTORY'&&
         isDeepStrictEqual(actions?.actualGuard,ledger.history)&&
         actions.currentRunContext?.overallAttempts===baseline.overallAttempts&&

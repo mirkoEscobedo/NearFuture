@@ -8,6 +8,7 @@ import { readBatchAuthorization, claimBatchAuthorization, readClaimedBatchAuthor
 import { readFiniteConsentAuthority } from './finite-consent.mjs';
 import { persistDirectFrame } from './direct-frames.mjs';
 import { fixtureProbeSources, readFixtureBinding } from './fixture-binding.mjs';
+import {resolveInitialFocusCapture} from './campaign-authority.mjs';
 
 export const directToolNames = Object.freeze(['doctor', 'policy_status', 'list_windows', 'get_window', 'get_frontmost_app',
     'get_display_size', 'screenshot', 'wait', 'activate_window', 'left_click', 'mouse_move']);
@@ -23,7 +24,7 @@ export const ownedHttpSources = Object.freeze(['.agentic/project.json', 'tools/s
     'tools/starsector-proxy/guarded-http.mjs', 'tools/starsector-proxy/guarded-mcp.mjs', 'tools/starsector-proxy/finite-consent.mjs',
     'tools/starsector-proxy/batch-authorization.mjs', 'tools/starsector-proxy/menu-launch-grant.mjs', 'tools/starsector-proxy/batch-session.mjs', 'tools/starsector-proxy/campaign-authority.mjs',
     'tools/starsector-proxy/fixture-binding.mjs', 'tools/starsector-proxy/campaign-proof.mjs',
-    'tools/starsector-proxy/generation-proof.mjs', 'tools/starsector-proxy/seed-creation-history.mjs', 'tools/starsector-proxy/seed-failed-attempt.mjs', 'tools/starsector-proxy/seed-known-play-attempt.mjs', 'tools/starsector-proxy/seed-wrong-scene-attempt.mjs', 'tools/starsector-proxy/seed-capture-linkage-attempt.mjs', 'tools/starsector-proxy/seed-caller-date-attempt.mjs', 'tools/starsector-proxy/seed-caller-date-geometry.mjs', 'tools/starsector-proxy/seed-pre-start-margin-attempt.mjs', 'tools/starsector-proxy/seed-pre-start-margin-records.mjs', 'tools/starsector-proxy/seed-pre-start-margin-geometry.mjs', 'tools/starsector-proxy/seed-post-start-verification.mjs', 'tools/starsector-proxy/seed-post-start-records.mjs', 'tools/starsector-proxy/seed-post-start-custody.mjs', 'tools/starsector-proxy/seed-post-start-geometry.mjs', 'tools/starsector-proxy/client-coordinate.mjs',
+    'tools/starsector-proxy/generation-proof.mjs', 'tools/starsector-proxy/seed-initial-focus-proof.mjs', 'tools/starsector-proxy/seed-creation-profile.mjs', 'tools/starsector-proxy/seed-creation-history.mjs', 'tools/starsector-proxy/seed-failed-attempt.mjs', 'tools/starsector-proxy/seed-known-play-attempt.mjs', 'tools/starsector-proxy/seed-wrong-scene-attempt.mjs', 'tools/starsector-proxy/seed-capture-linkage-attempt.mjs', 'tools/starsector-proxy/seed-caller-date-attempt.mjs', 'tools/starsector-proxy/seed-caller-date-geometry.mjs', 'tools/starsector-proxy/seed-pre-start-margin-attempt.mjs', 'tools/starsector-proxy/seed-pre-start-margin-records.mjs', 'tools/starsector-proxy/seed-pre-start-margin-geometry.mjs', 'tools/starsector-proxy/seed-early-window-focus.mjs', 'tools/starsector-proxy/seed-early-window-custody.mjs', 'tools/starsector-proxy/seed-post-start-verification.mjs', 'tools/starsector-proxy/seed-post-start-records.mjs', 'tools/starsector-proxy/seed-post-start-custody.mjs', 'tools/starsector-proxy/seed-post-start-geometry.mjs', 'tools/starsector-proxy/client-coordinate.mjs',
     'tools/starsector-proxy/seed-zero-provider-attempt.mjs', 'tools/starsector-proxy/seed-zero-provider-terminal.mjs', 'tools/starsector-proxy/seed-snapshot-busy-attempt.mjs',
     'tools/starsector-proxy/seed-wizard-proof.mjs', 'tools/starsector-proxy/seed-creation-output.mjs',
     'tools/starsector-proxy/seed-creation-custody.mjs', ...fixtureProbeSources]);
@@ -100,10 +101,10 @@ export async function startOwnedHttpBatch({ root, source, runID, powershell,
     if (!isAbsolute(powershell) || !isAbsolute(supervisor) || (consentMode !== undefined && consentMode !== 'finite-explicit-consent')) throw new Error('Pinned finite provider configuration required');
     const admitted = readBatchAuthorization(source, { root, runID });
     readFixtureBinding(admitted);
-    const campaign = [2, 3, 4, 5, 6].includes(admitted.binding.schemaVersion) ? /** @type {any} */ (admitted.binding).campaign : null;
+    const campaign = [2, 3, 4, 5, 6, 7].includes(admitted.binding.schemaVersion) ? /** @type {any} */ (admitted.binding).campaign : null;
     const deadline = campaign ? Math.min(started + 180000, campaign.rootClock.effectiveDeadlineMs - campaign.rootClock.cleanupReserveMs) : started + 180000;
     const startupDeadline = Math.min(started + 20000, deadline);
-    const campaignMutations = admitted.binding.schemaVersion===6 ? ['left_click'] : [4, 5].includes(admitted.binding.schemaVersion) ? admitted.binding.batch === 'B1' ? ['activate_window', 'left_click'] : ['left_click']
+    const campaignMutations = admitted.binding.schemaVersion===7 ? (admitted.binding.batch==='B1'?['activate_window','left_click']:['left_click']) : admitted.binding.schemaVersion===6 ? ['left_click'] : [4, 5].includes(admitted.binding.schemaVersion) ? admitted.binding.batch === 'B1' ? ['activate_window', 'left_click'] : ['left_click']
         : admitted.binding.schemaVersion === 3 && admitted.binding.batch === 'B1' ? ['activate_window', 'left_click']
         : admitted.binding.batch === 'E1' ? admitted.binding.schemaVersion === 3 ? ['left_click', 'key'] : ['key'] : ['left_click'];
     const rawToolNames = campaign ? [...directToolNames.filter(name => !['activate_window', 'left_click', 'mouse_move'].includes(name)),
@@ -258,6 +259,7 @@ export async function startOwnedHttpBatch({ root, source, runID, powershell,
                 if (name === 'screenshot') persistDirectFrame({ output, label: 'capture-' + String(++captures).padStart(3, '0'), result, args,
                     window: windows.get(args.target_window_id), ownedPids: admitted.binding.ownedPids, provenance });
                 write(resolve(output, label + '.private.json'), { ...provenance, isError: result.isError === true });
+                if(name==='screenshot'&&!result.isError)resolveInitialFocusCapture(admitted.binding,output,label);
                 if (name === 'get_window') {
                     const texts = result.content.filter(item => item.type === 'text'); let window;
                     try { if (texts.length === 1) window = JSON.parse(texts[0].text); } catch { /* Invalid receipt is never current. */ }

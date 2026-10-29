@@ -8,8 +8,9 @@ import {seedFixture,json,filePin,powershell as invokePowershell} from './seed-te
 import {requiredOwnedHttpFiles} from '../owned-http-batch.mjs';
 /** @param {string} p */
 const reference=p=>({path:p,sha256:filePin(p).sha256.toLowerCase()});
-export async function modernSeedFixture() {
-    const transport=await exerciseSeedCreationTransport({retain:true});assert.ok(transport);
+/** @param {Parameters<typeof exerciseSeedCreationTransport>[0]} [options] */
+export async function modernSeedFixture(options={}) {
+    const transport=await exerciseSeedCreationTransport({...options,retain:true});assert.ok(transport);
     const source=transport.fixture,target=seedFixture({driverRole:'/root/recovery_game_driver'}),saveDirectory='save_created_fixture';
     const rootCallPath=resolve(source.scenario,'root-call.actual.private.json');json(rootCallPath,source.campaign.rootCallRecord);
     const afterPath=resolve(source.scenario,'after-smoke-protection.private.json');
@@ -25,14 +26,15 @@ export async function modernSeedFixture() {
         ledger:reference(ledgerPath),preference:reference(source.preferencePath),historyAdmission:reference(source.grantPath)};
     const files=['campaign.xml','descriptor.xml'].map(relative=>({relative,...filePin(resolve(source.installation,'saves',saveDirectory,relative))}));
     const closeoutPath=resolve(source.scenario,'seed-creation-closeout.private.json');
-    const closeout={schemaVersion:1,kind:'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',scenarioId:basename(source.scenario),
+    const initialFocus=source.plan.campaignControl.schemaVersion===5,baseline=source.plan.historyBaseline,activation=ledger.resolvedInitialActivation?1:0;
+    const closeout={schemaVersion:1,kind:initialFocus?'ACTUAL_DISPOSABLE_SEED_CREATION_INITIAL_FOCUS_CLOSEOUT':'ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT',scenarioId:basename(source.scenario),
         toolingHead:source.plan.source.qualifiedHead,rootSessionId:source.campaign.rootCallRecord.value.raw.session_id,allOwnedHandlesTerminalReaped:true,
-        actions:{inheritedBaseline:source.campaign.historyBaseline,actualGuard:ledger.history,currentRunContext:{overallAttempts:41,uiAttempts:38},
-            absoluteMaxReservedActions:80,clicks:8,activations:0,providers:3},
+        actions:{inheritedBaseline:source.campaign.historyBaseline,actualGuard:ledger.history,currentRunContext:{overallAttempts:baseline.overallAttempts+1,uiAttempts:baseline.uiAttempts+1},
+            absoluteMaxReservedActions:source.plan.absoluteMaxReservedActions,clicks:8,activations:activation,providers:3},
         cleanup:{verdict:'FAIL',status:1,timedOut:false,processOwnership:'windows-job-object',zeroLiveGameProcesses:true},
         protection,files,evidence};json(closeoutPath,closeout);
     const manifest={schemaVersion:2,kind:'NATIVE99_DISPOSABLE_SEED_MANIFEST_V2',sourceWorkspace:source.root,
-        sourceScenario:basename(source.scenario),sourceEvidenceScenario:basename(source.scenario),sourceRun:41,
+        sourceScenario:basename(source.scenario),sourceEvidenceScenario:basename(source.scenario),sourceRun:baseline.overallAttempts+1,
         saveDirectory,gameVersion:'0.98a-RC8',files,
         provenance:{fixtureReceipt:filePin(source.frozenPath),rootCall:filePin(rootCallPath),closeout:filePin(closeoutPath),
             protection:filePin(afterPath),launch:filePin(launchPath)}};

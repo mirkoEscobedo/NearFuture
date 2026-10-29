@@ -9,6 +9,8 @@ import {completePng} from './direct-frames.mjs';
 import {seedCreationActionLimit,seedCreationFlow} from './seed-creation-history.mjs';
 import {seedWizardInput,seedWizardHandoff} from './seed-wizard-proof.mjs';
 import {inspectSeedCreationLauncher} from './campaign-authority.mjs';
+import {initialFocusCreationFlow,initialFocusCreationCloseoutKind,isInitialFocusCreation} from './seed-creation-profile.mjs';
+import {assertInitialFocusArchive,assertInitialFocusCloseoutTypes} from './seed-initial-focus-proof.mjs';
 import {requiredOwnedHttpFiles} from './owned-http-batch.mjs';
 
 /** Exact complete inventory for the CURRENT consumer, including its native supervisor.
@@ -67,7 +69,7 @@ function knownInput(workspace,scenario,action) {
     const record=(offset,suffix)=>read(resolve(output,'call-'+String(index-offset).padStart(3,'0')+suffix),32*1024*1024).value;
     const meta=call.value,attempt=record(0,'.attempt.private.json'),raw=record(0,'.raw.private.json');
     const owner=read(resolve(scenario,'guard-'+action.batch+'-consumed.private.json')).value.binding;
-    requireThat(owner?.schemaVersion===6&&owner.batch===action.batch&&owner.sourceSha256===action.sourceSha256&&
+    requireThat((owner?.schemaVersion===6||isInitialFocusCreation(owner))&&owner.batch===action.batch&&owner.sourceSha256===action.sourceSha256&&
         read(resolve(scenario,action.batch+'-authorization.private.json')).sha256===action.sourceSha256,'source input owner changed');
     const fg=record(2,'.private.json'),win=record(1,'.private.json'),before=record(3,'.private.json');
     const window=jsonText(record(1,'.raw.private.json')),app=jsonText(record(2,'.raw.private.json')).app;
@@ -107,20 +109,31 @@ export function inspectSeedCreationCustody(scenarioPath,closeoutSha256) {
     requireThat(closeout.sha256===closeoutSha256,'modern seed closeout changed');
     const plan=read(resolve(scenario,'plan.json')),lease=read(resolve(scenario,'native-lane-lease.private.json'));
     const controller=read(resolve(scenario,'controller-start.private.json')),ledger=read(resolve(scenario,'guard-launch-history.private.json')).value;
-    requireThat(plan.value.campaignControl?.schemaVersion===4&&plan.value.campaignControl.profile===seedCreationFlow&&
+    const initialFocus=closeout.value.kind===initialFocusCreationCloseoutKind,version=initialFocus?7:6;
+    requireThat((initialFocus?plan.value.campaignControl?.schemaVersion===5&&plan.value.campaignControl.profile===initialFocusCreationFlow:
+        closeout.value.kind==='ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT'&&plan.value.campaignControl?.schemaVersion===4&&plan.value.campaignControl.profile===seedCreationFlow)&&
         lease.value.planSha256?.toLowerCase()===plan.sha256&&controller.value.rootLeaseSha256?.toLowerCase()===lease.sha256&&
         ledger.controllerSha256===controller.sha256&&ledger.uncertain===false,'completed seed authority changed');
     const limit=seedCreationActionLimit(plan.value,lease.value,scenario);
     const first=read(resolve(scenario,'E1-authorization.private.json')),last=read(resolve(scenario,'E2-authorization.private.json'));
     const claim1=read(resolve(scenario,'guard-E1-consumed.private.json')),claim2=read(resolve(scenario,'guard-E2-consumed.private.json'));
     const initial=claim1.value.binding,binding=claim2.value.binding;
-    requireThat(initial?.schemaVersion===6&&binding?.schemaVersion===6&&initial.batch==='E1'&&binding.batch==='E2'&&
+    requireThat(initial?.schemaVersion===version&&binding?.schemaVersion===version&&initial.batch==='E1'&&binding.batch==='E2'&&
         initial.workspaceRoot===actualWorkspace&&binding.workspaceRoot===actualWorkspace&&initial.scenario===scenario&&binding.scenario===scenario&&
         initial.sourceSha256===first.sha256&&binding.sourceSha256===last.sha256&&initial.originalPlanSha256===plan.sha256&&
         binding.originalPlanSha256===plan.sha256&&binding.controllerSha256===controller.sha256&&initial.controllerSha256===controller.sha256&&
         isDeepStrictEqual(ledger.history,closeout.value.actions?.actualGuard)&&ledger.history.reservedActions<=limit,
     'completed seed claim lineage changed');
+    if(initialFocus)assertInitialFocusCloseoutTypes({scenario,closeout:closeout.value,plan:plan.value,lease:lease.value,
+        controller:controller.value,ledger,binding,limit});
     inspectSeedCreationLauncher(initial);
+    const activations=initialFocus?assertInitialFocusArchive(binding,ledger,true):0;
+    if(initialFocus){
+        const actions=closeout.value.actions,baseline=plan.value.historyBaseline;
+        requireThat(actions.clicks===8&&actions.activations===activations&&actions.providers===3&&
+            ledger.history.reservedActions===baseline.reservedActions+8+activations&&
+            ledger.history.sentActions===baseline.sentActions+8+activations,'eight clicks plus exact optional activation required');
+    }else requireThat(!ledger.resolvedInitialActivation,'legacy seed refuses initial-focus provenance');
     seedWizardHandoff({binding,reference:{path:binding.e1WizardReceipt.path,sha256:binding.e1WizardReceipt.sha256},now:Date.now(),
         initial,initialSource:first,claim:claim1,state:ledger,action:ledger.resolvedE1,
         providerClock:ledger.resolvedE1.providerClock,alreadyTransferred:true});
@@ -191,7 +204,7 @@ export function inspectSeedCreationCustody(scenarioPath,closeoutSha256) {
     'final seed visible inspection required');
     knownSeedTerminalClosure({binding,initial:binding,initialSourceSha256:last.sha256,proof:final,
         providerClock:ledger.providerClock,action:ledger.pending,now:Date.now()});
-    return {schemaVersion:1,kind:'COMPLETED_SEED_WIZARD_CUSTODY',ok:true,inputs:8,scope:'HISTORICAL_CUSTODY_ONLY'};
+    return {schemaVersion:1,kind:'COMPLETED_SEED_WIZARD_CUSTODY',ok:true,inputs:8,...(initialFocus?{activations}:{}),scope:'HISTORICAL_CUSTODY_ONLY'};
 }
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
