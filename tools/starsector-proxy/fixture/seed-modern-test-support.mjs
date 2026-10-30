@@ -8,10 +8,11 @@ import {seedFixture,json,filePin,powershell as invokePowershell} from './seed-te
 import {requiredOwnedHttpFiles} from '../owned-http-batch.mjs';
 /** @param {string} p */
 const reference=p=>({path:p,sha256:filePin(p).sha256.toLowerCase()});
-/** @param {Parameters<typeof exerciseSeedCreationTransport>[0]} [options] */
+/** @param {Parameters<typeof exerciseSeedCreationTransport>[0] & {targetFixture?:()=>ReturnType<typeof seedFixture>}} [options] */
 export async function modernSeedFixture(options={}) {
     const transport=await exerciseSeedCreationTransport({...options,retain:true});assert.ok(transport);
-    const source=transport.fixture,target=seedFixture({driverRole:'/root/recovery_game_driver'}),saveDirectory='save_created_fixture';
+    const source=transport.fixture,target=options.targetFixture?.()??seedFixture({driverRole:'/root/recovery_game_driver'}),saveDirectory='save_created_fixture';
+    const consumerRoot=resolve(target.target,'../../../..');
     const rootCallPath=resolve(source.scenario,'root-call.actual.private.json');json(rootCallPath,source.campaign.rootCallRecord);
     const afterPath=resolve(source.scenario,'after-smoke-protection.private.json');
     const preference=JSON.parse(readFileSync(source.preferencePath,'utf8'));
@@ -41,9 +42,9 @@ export async function modernSeedFixture(options={}) {
     const discovery=invokePowershell(['-Command','(Get-Process -Id $PID).Path']);
     assert.equal(discovery.status,0,discovery.stderr);
     const powershell=discovery.stdout.trim();assert.ok(powershell);
-    const supervisor=resolve(source.root,'node_modules/workspace-template-win32-x64/bin/workspace-template.exe');
-    const extras=['prepare-fixture.ps1','run-native.ps1','read-owned-client-geometry.ps1'].map(n=>resolve(source.root,'tools/starsector-proxy/fixture',n));
-    const pins=[...new Set([...requiredOwnedHttpFiles(source.root,powershell,supervisor),...extras])].map(p=>({path:p,sha256:filePin(p).sha256}));
+    const supervisor=resolve(consumerRoot,'node_modules/workspace-template-win32-x64/bin/workspace-template.exe');
+    const extras=['prepare-fixture.ps1','run-native.ps1','read-owned-client-geometry.ps1'].map(n=>resolve(consumerRoot,'tools/starsector-proxy/fixture',n));
+    const pins=[...new Set([...requiredOwnedHttpFiles(consumerRoot,powershell,supervisor),...extras])].map(p=>({path:p,sha256:filePin(p).sha256}));
     const authority=JSON.parse(readFileSync(target.authorityPath,'utf8'));
     const planPath=resolve(target.target,'seed-stage-plan.private.json'),plan=JSON.parse(readFileSync(planPath,'utf8'));
     authority.sourcePinsSha256=json(resolve(target.target,'source-pins.private.json'),{pins}).sha256;

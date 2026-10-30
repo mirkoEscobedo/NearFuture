@@ -12,7 +12,7 @@ function Read-NativeModernSeedJson([string]$Path,[string]$Hash,[long]$Maximum=26
  try{Assert-UniqueSeedJson $document.RootElement}finally{$document.Dispose()}
  return $value
 }
-function Assert-NativeModernSeedPins($Pins,$Binding) {
+function Assert-NativeModernSeedPinRows($Pins) {
  Assert-NativeSeedFields $Pins @('pins')
  if($Pins.pins-isnot[array]-or$Pins.pins.Count-lt1-or$Pins.pins.Count-gt1024){throw 'Bounded complete modern seed pins required'}
  $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
@@ -22,6 +22,10 @@ function Assert-NativeModernSeedPins($Pins,$Binding) {
   Assert-NativeSeedOrdinary $row.path
   if((Get-Item -LiteralPath $row.path).PSIsContainer-or(Get-FileHash -LiteralPath $row.path -Algorithm SHA256).Hash-ine$row.sha256){throw 'Modern seed source pin changed'}
  }
+ return ,$seen
+}
+function Assert-NativeModernSeedPins($Pins,$Binding) {
+ $seen=Assert-NativeModernSeedPinRows $Pins
  foreach($name in @('fixture-inputs.ps1','seed-fixture.ps1','seed-provenance-v2.ps1','seed-creation-history.ps1','seed-provider-budget.ps1','seed-failed-attempt.ps1','seed-known-play-attempt.ps1','seed-wrong-scene-attempt.ps1', 'seed-capture-linkage-attempt.ps1', 'seed-caller-date-attempt.ps1', 'seed-caller-date-geometry.ps1', 'seed-pre-start-margin-attempt.ps1','seed-pre-continue-budget-history.ps1','seed-early-window-focus.ps1', 'seed-post-start-verification.ps1','read-owned-client-geometry.ps1', 'seed-zero-provider-attempt.ps1', 'seed-zero-provider-terminal.ps1','seed-preference.ps1','prepare-fixture.ps1','protection-check.ps1')){
   if(!$seen.Contains([IO.Path]::GetFullPath((Join-Path $PSScriptRoot $name)))){throw 'Complete modern seed tooling closure required'}
  }
@@ -74,7 +78,9 @@ function Read-NativeModernSeedSource($Binding,$Manifest,[string]$ManifestSha256,
  if($sourceBindingPin.path-cne(Join-Path $source 'fixture-binding.private.json')){throw 'Fixed modern source binding required'}
  $sourceBinding=Read-NativeModernSeedJson $sourceBindingPin.path $sourceBindingPin.sha256 16384
  if($sourceBinding.schemaVersion-ne3-or$sourceBinding.fixtureProfile-cne'VANILLA_UNCOMPRESSED_GENERATION'-or$sourceBinding.fixtureRoot-cne$source-or$sourceBinding.driverRole-cne'/root/recovery_game_driver'-or(Test-NativeSeedSamePath $sourceBinding.sourceInstallation $source)){throw 'Private generated source binding required'}
- Assert-NativeSeedCreationHistory $plan $lease $source
+ # Historical source evidence and this consumer's current tooling have distinct pinned roots.
+ $currentProofPins=[pscustomobject]@{path=Join-Path $Binding.fixtureRoot 'source-pins.private.json';sha256=$CurrentPinsSha256}
+ Assert-NativeSeedCreationHistory $plan $lease $source -CurrentProofPins $currentProofPins
  Assert-NativeSeedFields $r @('key','value');Assert-NativeSeedFields $r.value @('startMs','args','raw')
  Assert-NativeSeedInteger $r.value.raw.session_id 1 2147483647;Assert-NativeSeedInteger $r.value.startMs 1 9007199254740991
  if($r.value.args.workdir-cne$m.sourceWorkspace-or$r.key-cne$ledger.rootRecordKey-or$c.rootSessionId-ne$r.value.raw.session_id){throw 'Actual modern root wrapper required'}

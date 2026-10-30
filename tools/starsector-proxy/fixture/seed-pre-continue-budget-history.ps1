@@ -1,6 +1,6 @@
 # Typed PowerShell admission composed with the fixed current JavaScript custody reader.
 # Historical files only: recorded helpers are never executed and clocks are never issued.
-function Read-NativePreContinueBudgetHistory($Value,$Ledger,$LedgerPin,$ReceiptPin,$Plan,$Lease) {
+function Read-NativePreContinueBudgetHistory($Value,$Ledger,$LedgerPin,$ReceiptPin,$Plan,$Lease,$CurrentProofPins=$null) {
  Assert-NativeSeedFields $Value @('schemaVersion','kind','issuer','driver','scenario','sourceWorkspace','sourceHead','allOwnedHandlesTerminalReaped','actions','evidence')
  Assert-NativeSeedInteger $Value.schemaVersion 1 1
  foreach($key in @('kind','issuer','driver','scenario','sourceWorkspace','sourceHead')){if($Value.$key-isnot[string]){throw 'Scalar pre-Continue budget history authority required'}}
@@ -24,6 +24,18 @@ function Read-NativePreContinueBudgetHistory($Value,$Ledger,$LedgerPin,$ReceiptP
  $pinsPath=Join-Path ([IO.Path]::GetDirectoryName($Plan.historyAdmission.path)) 'frozen-support-pins.private.json'
  if($Lease.supportPinsPath-cne$pinsPath-or$Lease.supportPinsSha256-isnot[string]){throw 'Current fixed proof source manifest required'}
  $pins=Read-NativeZeroProviderJson $pinsPath $Lease.supportPinsSha256
+ # Historical custody stays independently verified even when the caller supplies current tooling.
+ $null=Assert-NativeModernSeedPinRows $pins
+ $pinsSha256=$Lease.supportPinsSha256
+ # Ordinary launch callers retain the original default; explicitly bound null cannot select it.
+ if($PSBoundParameters.ContainsKey('CurrentProofPins')){
+  Assert-NativeSeedFields $CurrentProofPins @('path','sha256')
+  if($CurrentProofPins.path-isnot[string]-or![IO.Path]::IsPathFullyQualified($CurrentProofPins.path)-or
+     ![StringComparer]::Ordinal.Equals([IO.Path]::GetFullPath($CurrentProofPins.path),$CurrentProofPins.path)-or
+     $CurrentProofPins.sha256-isnot[string]-or$CurrentProofPins.sha256-cnotmatch'^[a-fA-F0-9]{64}$'){throw 'Pinned scalar canonical current proof context required'}
+  $pinsPath=$CurrentProofPins.path;$pinsSha256=$CurrentProofPins.sha256.ToLowerInvariant()
+  $pins=Read-NativeZeroProviderJson $pinsPath $pinsSha256
+ }
  Assert-NativeSeedFields $pins @('pins')
  if($pins.pins-isnot[array]-or$pins.pins.Count-gt1024){throw 'Complete bounded current proof pins required'}
  $map=[Collections.Generic.Dictionary[string,string]]::new([StringComparer]::Ordinal)
@@ -57,7 +69,7 @@ function Read-NativePreContinueBudgetHistory($Value,$Ledger,$LedgerPin,$ReceiptP
  $powershell=(Get-Command pwsh -CommandType Application -TotalCount 1).Source
  $supervisor=Join-Path $currentRoot 'node_modules/workspace-template-win32-x64/bin/workspace-template.exe'
  foreach($path in @($node,$powershell,$supervisor)){if(!$map.ContainsKey([IO.Path]::GetFullPath($path))){throw 'Pinned current proof executable required'}}
- $output=@(& $node $script inspect $ReceiptPin.path $ReceiptPin.sha256 $LedgerPin.path $LedgerPin.sha256 $pinsPath $Lease.supportPinsSha256 $powershell $supervisor)
+ $output=@(& $node $script inspect $ReceiptPin.path $ReceiptPin.sha256 $LedgerPin.path $LedgerPin.sha256 $pinsPath $pinsSha256 $powershell $supervisor)
  if($LASTEXITCODE-ne0){throw 'Shared pre-Continue budget margin custody proof refused'}
  $text=$output-join([char]10);if([Text.Encoding]::UTF8.GetByteCount($text)-gt262144){throw 'Bounded pre-Continue budget proof response required'}
  $proof=ConvertFrom-ZeroProviderObject $text

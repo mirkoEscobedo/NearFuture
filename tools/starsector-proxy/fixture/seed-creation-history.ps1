@@ -28,7 +28,7 @@ function Get-NativeSeedCreationRequestAllowance($Plan,$Lease) {
  }
  return 8
 }
-function Assert-NativeSeedCreationHistory($Plan,$Lease,[string]$Scenario) {
+function Assert-NativeSeedCreationHistory($Plan,$Lease,[string]$Scenario,$CurrentProofPins=$null) {
  $null=Get-NativeSeedPreferenceWitness $Plan $Lease $Scenario
  $allowance=Get-NativeSeedCreationRequestAllowance $Plan $Lease
  if($allowance-eq9){
@@ -73,7 +73,11 @@ function Assert-NativeSeedCreationHistory($Plan,$Lease,[string]$Scenario) {
   $null=Read-NativeZeroProviderJson $path $reference.sha256
   $r=Read-NativeZeroProviderJson $grant.previous.result.path $grant.previous.result.sha256
   $l=Read-NativeZeroProviderJson $grant.previous.ledger.path $grant.previous.ledger.sha256
-  $actions=Read-NativePreContinueBudgetHistory $r $l $grant.previous.ledger $grant.previous.result $Plan $Lease
+  if($PSBoundParameters.ContainsKey('CurrentProofPins')){
+   $actions=Read-NativePreContinueBudgetHistory $r $l $grant.previous.ledger $grant.previous.result $Plan $Lease -CurrentProofPins $CurrentProofPins
+  }else{
+   $actions=Read-NativePreContinueBudgetHistory $r $l $grant.previous.ledger $grant.previous.result $Plan $Lease
+  }
   $r=[pscustomobject]@{schemaVersion=1;kind=$r.kind;allOwnedHandlesTerminalReaped=$true;actions=$actions}
  }
  if($r.kind-ceq'ROOT_CLOSED_EARLY_WINDOW_FOCUS_STOP_HISTORY'){
