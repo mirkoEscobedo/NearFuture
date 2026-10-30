@@ -19,7 +19,7 @@ const sha=p=>filePin(p).sha256.toLowerCase();
 /** @param {any} r */
 const textJson=r=>JSON.parse(r.content.find((/** @type {any} */ c)=>c.type==='text').text);
 
-/** @param {{retain?:boolean,watchdogMs?:number,callerBudgetMs?:number,fixture?:()=>any,initialActivation?:boolean}} [options] */
+/** @param {{retain?:boolean,watchdogMs?:number,callerBudgetMs?:number,fixture?:()=>any,initialActivation?:boolean,expectedProviderTimeoutMs?:480000}} [options] */
 export async function exerciseSeedCreationTransport(options={}) {
     const f=options.fixture?.()??seedCreationFixture({watchdogMs:options.watchdogMs,callerBudgetMs:options.callerBudgetMs}),input=new PassThrough(),output=new PassThrough();
     const creationFlow=f.plan.campaignControl.profile,version=creationFlow===originalCreationFlow?6:7;
@@ -93,7 +93,15 @@ export async function exerciseSeedCreationTransport(options={}) {
         assert.equal(readBatchAuthorization(source,{root:f.root,runID}).binding.batch,phase);
         const ready=textJson(await call('begin_batch',{source,runID,consentMode:'finite-explicit-consent'}));
         if(version===6)assert.equal(Date.parse(ready.deadline),f.campaign.rootClock.callerAdmissionDeadlineMs-30000);
-        else assert.ok(Date.parse(ready.deadline)<=Date.now()+180000&&Date.parse(ready.deadline)>Date.now()+150000);
+        else{const duration=options.expectedProviderTimeoutMs??180000;
+            assert.ok(Date.parse(ready.deadline)<=Date.now()+duration&&Date.parse(ready.deadline)>Date.now()+duration-30000);
+            if(options.expectedProviderTimeoutMs!==undefined){
+                assert.ok(provider);
+                const pc=ledger().providerClock,args=provider.args();
+                assert.equal(pc.deadlineMs-pc.startMs,480000);
+                assert.equal(args[args.indexOf('--timeout')+1],'480000');
+            }
+        }
     }
     async function finish() {
         const t=textJson(await call('finish_batch',{})),dir=resolve(parent,runID);callCounts[batch]=calls;

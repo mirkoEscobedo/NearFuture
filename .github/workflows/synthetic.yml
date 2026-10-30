@@ -44,7 +44,8 @@ jobs:
           $env:NF_CAPTURE_TEST_POWERSHELL = $env:NF_TEST_POWERSHELL
           node --input-type=module -e "import { buildCaptureRuntime } from './tools/starsector-proxy/capture/build-runtime.mjs'; buildCaptureRuntime();"
           $captureTests = @(Get-ChildItem tools/starsector-proxy/capture/*.test.mjs -File | Where-Object Name -ne 'capture-slot-projection.test.mjs' | ForEach-Object FullName)
-          $fixtureTests = @(Get-ChildItem tools/starsector-proxy/fixture/*.test.mjs -File | Where-Object Name -ne 'seed-initial-focus-provenance.test.mjs' | ForEach-Object FullName)
+          $isolatedFixtureTests = @('seed-initial-focus-provenance.test.mjs', 'seed-provider-budget-json.test.mjs', 'seed-provider-budget-launch.test.mjs', 'seed-provider-budget-provenance.test.mjs', 'seed-provider-budget-refusals.test.mjs', 'seed-provider-budget-runtime.test.mjs', 'seed-pre-continue-history.test.mjs', 'seed-pre-continue-history-refusals.test.mjs', 'seed-pre-continue-review-r1.test.mjs')
+          $fixtureTests = @(Get-ChildItem tools/starsector-proxy/fixture/*.test.mjs -File | Where-Object { $_.Name -notin $isolatedFixtureTests } | ForEach-Object FullName)
           node --test @fixtureTests
           node --test @captureTests
       - name: Observe Java and Rust mutual authentication on both local endpoints
@@ -313,7 +314,7 @@ jobs:
           $env:NF_TEST_POWERSHELL = (Get-Command pwsh -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
           $env:NF_CAPTURE_TEST_POWERSHELL = $env:NF_TEST_POWERSHELL
           node --input-type=module -e "import { buildCaptureRuntime } from './tools/starsector-proxy/capture/build-runtime.mjs'; buildCaptureRuntime();"
-          node --test --test-concurrency=1 tools/starsector-proxy/fixture/seed-initial-focus-provenance.test.mjs
+          node --test --test-concurrency=1 tools/starsector-proxy/fixture/seed-initial-focus-provenance.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-json.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-launch.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-provenance.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-refusals.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-runtime.test.mjs tools/starsector-proxy/fixture/seed-pre-continue-history.test.mjs tools/starsector-proxy/fixture/seed-pre-continue-history-refusals.test.mjs tools/starsector-proxy/fixture/seed-pre-continue-review-r1.test.mjs
   public-rust:
     strategy:
       fail-fast: false

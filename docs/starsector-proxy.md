@@ -639,9 +639,10 @@ The separate control5 `DISPOSABLE_SEED_CREATION_INITIAL_FOCUS` profile uses auth
 and a closed v3 `ROOT_ADMITTED_INITIAL_FOCUS_SEED_CREATION_HISTORY` grant. It
 reserves nine requests: eight unchanged wizard clicks and at most one initial B1
 activation. Control4/auth6 retains its v2 eight-request, zero-activation contract.
-The root watchdog remains thirty minutes, each of three providers remains bounded
-to 180 seconds and 32 calls, and the existing input/observation/cleanup margins
-and nine geometry observations remain unchanged.
+The root watchdog remains thirty minutes. Each of three providers defaults to
+180 seconds and 32 calls; the separate paired [provider timing selector](starsector-provider-timing.md)
+may admit a full original 480-second interval. Existing input/observation/cleanup
+margins and nine geometry observations remain unchanged.
 
 For an initially unfocused owned target, inspect the original BEFORE, then obtain
 a fresh foreground/window pair before the sole activation. A known activation

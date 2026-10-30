@@ -1,5 +1,6 @@
 // @ts-check
 import {initialFocusCreationFlow,isInitialFocusCreation} from './seed-creation-profile.mjs';
+import {seedProviderTimeoutMs,bindingProviderTimeoutMs,campaignProviderClock,assertSeedProviderTimingJson} from './seed-provider-budget.mjs';
 import {inspectInitialFocusResolution,assertInitialFocusArchive} from './seed-initial-focus-proof.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, openSync, closeSync, fsyncSync, renameSync, unlinkSync, existsSync } from 'node:fs';
@@ -16,7 +17,7 @@ import { assertSeedCreationOutput } from './seed-creation-output.mjs';
 export const campaignLaunchSources = Object.freeze([...fixtureProbeSources,
     ...['campaign-authority.mjs', 'batch-authorization.mjs', 'batch-session.mjs', 'finite-consent.mjs',
         'fixture-binding.mjs', 'direct-frames.mjs', 'campaign-proof.mjs', 'generation-proof.mjs',
-        'seed-initial-focus-proof.mjs', 'seed-creation-profile.mjs', 'seed-creation-history.mjs', 'seed-failed-attempt.mjs', 'seed-known-play-attempt.mjs', 'seed-wrong-scene-attempt.mjs', 'seed-capture-linkage-attempt.mjs', 'seed-caller-date-attempt.mjs', 'seed-caller-date-geometry.mjs', 'seed-pre-start-margin-attempt.mjs', 'seed-pre-start-margin-records.mjs', 'seed-pre-start-margin-geometry.mjs', 'seed-early-window-focus.mjs', 'seed-early-window-custody.mjs', 'seed-post-start-verification.mjs', 'seed-post-start-records.mjs', 'seed-post-start-custody.mjs', 'seed-post-start-geometry.mjs', 'seed-zero-provider-attempt.mjs', 'seed-zero-provider-terminal.mjs', 'client-coordinate.mjs', 'seed-wizard-proof.mjs', 'seed-creation-output.mjs', 'seed-creation-custody.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
+        'seed-initial-focus-proof.mjs', 'seed-creation-profile.mjs', 'seed-provider-budget.mjs', 'seed-creation-history.mjs', 'seed-failed-attempt.mjs', 'seed-known-play-attempt.mjs', 'seed-wrong-scene-attempt.mjs', 'seed-capture-linkage-attempt.mjs', 'seed-caller-date-attempt.mjs', 'seed-caller-date-geometry.mjs', 'seed-pre-start-margin-attempt.mjs', 'seed-pre-start-margin-records.mjs', 'seed-pre-start-margin-geometry.mjs', 'seed-pre-continue-budget-history.mjs', 'seed-pre-continue-budget-index.mjs', 'seed-pre-continue-budget-authority.mjs', 'seed-pre-continue-budget-records.mjs', 'seed-pre-continue-budget-geometry.mjs', 'seed-early-window-focus.mjs', 'seed-early-window-custody.mjs', 'seed-post-start-verification.mjs', 'seed-post-start-records.mjs', 'seed-post-start-custody.mjs', 'seed-post-start-geometry.mjs', 'seed-zero-provider-attempt.mjs', 'seed-zero-provider-terminal.mjs', 'client-coordinate.mjs', 'seed-wizard-proof.mjs', 'seed-creation-output.mjs', 'seed-creation-custody.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
 
 const flow = 'PAUSED_CAMPAIGN_EXIT_NO_SAVE';
 const seedFlow = 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE';
@@ -57,7 +58,7 @@ function history(binding, now = Date.now()) {
     if (state.provider) {
         const c = state.providerClock, root = binding.campaign.rootClock;
         requireThat(Number.isSafeInteger(c?.startMs) && c.startMs >= root.startMs && c.startMs <= now &&
-            c.deadlineMs === Math.min(c.startMs + 180000, root.effectiveDeadlineMs - root.cleanupReserveMs) &&
+            c.deadlineMs === campaignProviderClock(binding,c.startMs).deadlineMs &&
             c.deadlineMs - now >= 20000, 'original clipped provider deadline expired');
     }
     return receipt;
@@ -303,8 +304,9 @@ function clock(campaign, controller, now, minimumRemainingMs = 20000) {
 
 /** Resolve a phase without changing the plan/lease captured by the actual launcher.
  * @param {any} campaign @param {string} scenario @param {string} root @param {string} controllerSha256
+ * @param {any} phasePlan @param {any} phaseLease
  * @returns {string} */
-function launchPredecessor(campaign, scenario, root, controllerSha256) {
+function launchPredecessor(campaign, scenario, root, controllerSha256, phasePlan, phaseLease) {
     const inspection = campaign.flow === inspectionFlow, generation = campaign.flow === generationFlow,
         initialFocus = campaign.flow === initialFocusCreationFlow, creation = campaign.flow === seedCreationFlow || initialFocus;
     /** @param {any} descriptor @param {string} name */
@@ -323,6 +325,13 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
     const planFile = pinned(predecessor.plan, 'plan.json'), leaseFile = pinned(predecessor.lease, 'native-lane-lease.private.json');
     const controllerFile = pinned(predecessor.controller, 'controller-start.private.json');
     const plan = planFile.value, lease = leaseFile.value, controller = controllerFile.value;
+    assertSeedProviderTimingJson(plan,planFile.bytes);assertSeedProviderTimingJson(lease,leaseFile.bytes);
+    requireThat(isDeepStrictEqual(plan.providerTiming,phasePlan.providerTiming)&&
+        isDeepStrictEqual(lease.providerTiming,phaseLease.providerTiming)&&
+        Object.hasOwn(plan,'providerTiming')===Object.hasOwn(phasePlan,'providerTiming')&&
+        Object.hasOwn(lease,'providerTiming')===Object.hasOwn(phaseLease,'providerTiming'),
+    'immutable original provider timing required');
+    const providerTimeoutMs=seedProviderTimeoutMs(plan,lease);
     // Only an explicitly paired seed-creation launch may select the longer original budget.
     const watchdog = creation && [720000, 1800000].includes(plan.sessionWatchdogMs) ? plan.sessionWatchdogMs : 480000;
     requireThat(controllerFile.sha256 === controllerSha256 && controller.rootLeaseSha256?.toLowerCase() === leaseFile.sha256 &&
@@ -330,7 +339,7 @@ function launchPredecessor(campaign, scenario, root, controllerSha256) {
     requireThat(plan.scenarioId === basename(scenario) && resolve(plan.paths?.scenario ?? '') === scenario &&
         plan.ownership?.driver === '/root/recovery_game_driver' && plan.ownership.onlyGameInputDriver === true &&
         plan.bounds?.maxScenarioActionsIncludingActivations === (initialFocus ? 9 : 8) && plan.bounds.maxProxyInvocations === 3 &&
-        plan.bounds.proxyTimeoutMs === 180000 && plan.bounds.ownedGameHardTimeoutMs === watchdog &&
+        plan.bounds.proxyTimeoutMs === providerTimeoutMs && plan.bounds.ownedGameHardTimeoutMs === watchdog &&
         Array.isArray(plan.batches) && plan.batches.length === (inspection ? 2 : 3) &&
         [...new Set(plan.batches.map((/** @type {any} */ batch) => batch.id))].sort().join() === (inspection ? 'B1,E1' : 'B1,E1,E2') &&
         lease.schemaVersion === 1 && lease.scenarioId === basename(scenario) && lease.authorized === true &&
@@ -440,6 +449,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
         requireThat(files[key].sha256 === auth[key.replace('Path', 'Sha256')]?.toLowerCase(), 'campaign custody hash changed');
     }
     const plan = files.planPath.value, lease = files.leasePath.value, campaign = plan.campaign;
+    assertSeedProviderTimingJson(plan,files.planPath.bytes);assertSeedProviderTimingJson(lease,files.leasePath.bytes);
     requireThat(!(generation || creation) || ![plan, lease].some(value => ['seed', 'exitConfirmation', 'e1MenuReceipt'].some(key => Object.hasOwn(value, key))),
         'generation refuses unrelated phase authority');
     requireThat(closed(campaign, ['flow', 'windowId', 'rootClock', 'producerWitness', 'rootCallRecord',
@@ -449,7 +459,8 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
         isDeepStrictEqual(campaign, lease.campaign),
     'closed matching campaign flow required');
     const controllerFile = read(resolve(scenario, 'controller-start.private.json')), controller = controllerFile.value;
-    const originalPlanSha256 = phaseLocal ? launchPredecessor(campaign, scenario, root, controllerFile.sha256) : undefined;
+    const originalPlanSha256 = phaseLocal ? launchPredecessor(campaign, scenario, root, controllerFile.sha256,plan,lease) : undefined;
+    const providerTimeoutMs=seedProviderTimeoutMs(plan,lease);
     const owned = files.ownedReceiptPath.value;
     requireThat(Number.isSafeInteger(controller.controllerPid) && controller.controllerPid > 0 &&
         Number.isSafeInteger(controller.sessionId) && controller.sessionId > 0 &&
@@ -471,7 +482,8 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
     }
     const binding = { schemaVersion: auth.schemaVersion, batch: auth.batch, runID, scenario, workspaceRoot: resolve(root), planSha256: files.planPath.sha256,
         ownedPids, campaign, sourcePath, sourceSha256: source.sha256, controllerSha256: controllerFile.sha256,
-        ...(originalPlanSha256 ? { originalPlanSha256 } : {}), ...(exitConfirmation ? { exitConfirmation } : {}) };
+        ...(originalPlanSha256 ? { originalPlanSha256 } : {}), ...(exitConfirmation ? { exitConfirmation } : {}),
+        ...(providerTimeoutMs===480000?{providerTimeoutMs}: {}) };
     let handoff;
     if (seeded && auth.batch === 'E1') {
         requireThat(isDeepStrictEqual(plan.b1MenuReceipt, lease.b1MenuReceipt), 'seeded menu grant changed');
@@ -485,7 +497,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
     } else history(binding, now);
     requireThat(plan.scenarioId === basename(scenario) && resolve(plan.paths?.scenario ?? '') === scenario &&
         plan.bounds?.maxScenarioActionsIncludingActivations === (initialFocus ? 9 : 8) && plan.bounds?.maxProxyInvocations === 3 &&
-        plan.bounds?.proxyTimeoutMs === 180000 && plan.bounds?.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs &&
+        plan.bounds?.proxyTimeoutMs === providerTimeoutMs && plan.bounds?.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs &&
         plan.batches?.some((/** @type {any} */ batch) => batch.id === auth.batch) && lease.schemaVersion === auth.schemaVersion &&
         lease.authorized === true && lease.phase === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' &&
         lease.planSha256?.toLowerCase() === files.planPath.sha256 && lease.campaignLoadSaveAllowed === false &&
@@ -526,6 +538,7 @@ export function validateCampaignBinding(binding) {
     if (seeded && binding?.batch === 'E1') fields.push('b1MenuReceipt');
     if (binding?.campaign?.launchPredecessor) fields.push('originalPlanSha256');
     if (binding?.exitConfirmation !== undefined) fields.push('exitConfirmation');
+    if(Object.hasOwn(binding??{},'providerTimeoutMs')){bindingProviderTimeoutMs(binding);fields.push('providerTimeoutMs');}
     requireThat(closed(binding, fields) && [2, 3, 4, 5, 6, 7].includes(binding.schemaVersion) &&
         (generation ? ['B1', 'E1', 'E2'].includes(binding.batch) : inspection ? ['B1', 'E1'].includes(binding.batch) : seeded ? ['B1', 'E1', 'E2'].includes(binding.batch) : ['E1', 'E2'].includes(binding.batch)) &&
         binding.campaign?.flow === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && (!seeded || binding.campaign.launchPredecessor) && Number.isSafeInteger(binding.campaign.windowId) &&
@@ -589,7 +602,7 @@ export function claimCampaignOwner(binding) {
                 menuReceiptSha256: proof.receiptSha256, providerClosedAtMs: proof.closedAt, resolvedAtMs: startMs };
             state.initialClaimSha256 = read(resolve(binding.scenario, 'guard-E1-consumed.private.json')).sha256;
             state.provider = owner(binding); state.pending = null;
-            state.providerClock = { startMs, deadlineMs: Math.min(startMs + 180000, root.effectiveDeadlineMs - root.cleanupReserveMs) };
+            state.providerClock = campaignProviderClock(binding,startMs);
         }, 'handoff');
         return;
     }
@@ -602,7 +615,7 @@ export function claimCampaignOwner(binding) {
             state.resolvedE1 = { ...structuredClone(proof.action), providerClock: structuredClone(proof.providerClock),
                 menuReceiptSha256: proof.receiptSha256, providerClosedAtMs: proof.closedAt, resolvedAtMs: startMs };
             state.provider = owner(binding); state.pending = null;
-            state.providerClock = { startMs, deadlineMs: Math.min(startMs + 180000, root.effectiveDeadlineMs - root.cleanupReserveMs) };
+            state.providerClock = campaignProviderClock(binding,startMs);
         }, 'handoff');
         return;
     }
@@ -613,7 +626,7 @@ export function claimCampaignOwner(binding) {
         const claimSha256 = read(resolve(binding.scenario, 'guard-' + binding.batch + '-consumed.private.json')).sha256;
         if ([3, 4, 5, 6, 7].includes(binding.schemaVersion) && binding.batch === 'B1') state.b1ClaimSha256 = claimSha256;
         else state.initialClaimSha256 = claimSha256;
-        state.providerClock = { startMs, deadlineMs: Math.min(startMs + 180000, root.effectiveDeadlineMs - root.cleanupReserveMs) };
+        state.providerClock = campaignProviderClock(binding,startMs);
     });
 }
 

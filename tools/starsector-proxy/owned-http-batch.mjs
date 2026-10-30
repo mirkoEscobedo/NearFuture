@@ -9,6 +9,7 @@ import { readFiniteConsentAuthority } from './finite-consent.mjs';
 import { persistDirectFrame } from './direct-frames.mjs';
 import { fixtureProbeSources, readFixtureBinding } from './fixture-binding.mjs';
 import {resolveInitialFocusCapture} from './campaign-authority.mjs';
+import {bindingProviderTimeoutMs,campaignProviderClock} from './seed-provider-budget.mjs';
 
 export const directToolNames = Object.freeze(['doctor', 'policy_status', 'list_windows', 'get_window', 'get_frontmost_app',
     'get_display_size', 'screenshot', 'wait', 'activate_window', 'left_click', 'mouse_move']);
@@ -24,7 +25,7 @@ export const ownedHttpSources = Object.freeze(['.agentic/project.json', 'tools/s
     'tools/starsector-proxy/guarded-http.mjs', 'tools/starsector-proxy/guarded-mcp.mjs', 'tools/starsector-proxy/finite-consent.mjs',
     'tools/starsector-proxy/batch-authorization.mjs', 'tools/starsector-proxy/menu-launch-grant.mjs', 'tools/starsector-proxy/batch-session.mjs', 'tools/starsector-proxy/campaign-authority.mjs',
     'tools/starsector-proxy/fixture-binding.mjs', 'tools/starsector-proxy/campaign-proof.mjs',
-    'tools/starsector-proxy/generation-proof.mjs', 'tools/starsector-proxy/seed-initial-focus-proof.mjs', 'tools/starsector-proxy/seed-creation-profile.mjs', 'tools/starsector-proxy/seed-creation-history.mjs', 'tools/starsector-proxy/seed-failed-attempt.mjs', 'tools/starsector-proxy/seed-known-play-attempt.mjs', 'tools/starsector-proxy/seed-wrong-scene-attempt.mjs', 'tools/starsector-proxy/seed-capture-linkage-attempt.mjs', 'tools/starsector-proxy/seed-caller-date-attempt.mjs', 'tools/starsector-proxy/seed-caller-date-geometry.mjs', 'tools/starsector-proxy/seed-pre-start-margin-attempt.mjs', 'tools/starsector-proxy/seed-pre-start-margin-records.mjs', 'tools/starsector-proxy/seed-pre-start-margin-geometry.mjs', 'tools/starsector-proxy/seed-early-window-focus.mjs', 'tools/starsector-proxy/seed-early-window-custody.mjs', 'tools/starsector-proxy/seed-post-start-verification.mjs', 'tools/starsector-proxy/seed-post-start-records.mjs', 'tools/starsector-proxy/seed-post-start-custody.mjs', 'tools/starsector-proxy/seed-post-start-geometry.mjs', 'tools/starsector-proxy/client-coordinate.mjs',
+    'tools/starsector-proxy/generation-proof.mjs', 'tools/starsector-proxy/seed-initial-focus-proof.mjs', 'tools/starsector-proxy/seed-creation-profile.mjs', 'tools/starsector-proxy/seed-provider-budget.mjs', 'tools/starsector-proxy/seed-creation-history.mjs', 'tools/starsector-proxy/seed-failed-attempt.mjs', 'tools/starsector-proxy/seed-known-play-attempt.mjs', 'tools/starsector-proxy/seed-wrong-scene-attempt.mjs', 'tools/starsector-proxy/seed-capture-linkage-attempt.mjs', 'tools/starsector-proxy/seed-caller-date-attempt.mjs', 'tools/starsector-proxy/seed-caller-date-geometry.mjs', 'tools/starsector-proxy/seed-pre-start-margin-attempt.mjs', 'tools/starsector-proxy/seed-pre-start-margin-records.mjs', 'tools/starsector-proxy/seed-pre-start-margin-geometry.mjs', 'tools/starsector-proxy/seed-pre-continue-budget-history.mjs', 'tools/starsector-proxy/seed-pre-continue-budget-index.mjs', 'tools/starsector-proxy/seed-pre-continue-budget-authority.mjs', 'tools/starsector-proxy/seed-pre-continue-budget-records.mjs', 'tools/starsector-proxy/seed-pre-continue-budget-geometry.mjs', 'tools/starsector-proxy/seed-early-window-focus.mjs', 'tools/starsector-proxy/seed-early-window-custody.mjs', 'tools/starsector-proxy/seed-post-start-verification.mjs', 'tools/starsector-proxy/seed-post-start-records.mjs', 'tools/starsector-proxy/seed-post-start-custody.mjs', 'tools/starsector-proxy/seed-post-start-geometry.mjs', 'tools/starsector-proxy/client-coordinate.mjs',
     'tools/starsector-proxy/seed-zero-provider-attempt.mjs', 'tools/starsector-proxy/seed-zero-provider-terminal.mjs', 'tools/starsector-proxy/seed-snapshot-busy-attempt.mjs',
     'tools/starsector-proxy/seed-wizard-proof.mjs', 'tools/starsector-proxy/seed-creation-output.mjs',
     'tools/starsector-proxy/seed-creation-custody.mjs', ...fixtureProbeSources]);
@@ -102,7 +103,8 @@ export async function startOwnedHttpBatch({ root, source, runID, powershell,
     const admitted = readBatchAuthorization(source, { root, runID });
     readFixtureBinding(admitted);
     const campaign = [2, 3, 4, 5, 6, 7].includes(admitted.binding.schemaVersion) ? /** @type {any} */ (admitted.binding).campaign : null;
-    const deadline = campaign ? Math.min(started + 180000, campaign.rootClock.effectiveDeadlineMs - campaign.rootClock.cleanupReserveMs) : started + 180000;
+    const providerTimeoutMs=campaign?bindingProviderTimeoutMs(admitted.binding):180000;
+    const deadline = campaign ? campaignProviderClock(admitted.binding,started).deadlineMs : started + 180000;
     const startupDeadline = Math.min(started + 20000, deadline);
     const campaignMutations = admitted.binding.schemaVersion===7 ? (admitted.binding.batch==='B1'?['activate_window','left_click']:['left_click']) : admitted.binding.schemaVersion===6 ? ['left_click'] : [4, 5].includes(admitted.binding.schemaVersion) ? admitted.binding.batch === 'B1' ? ['activate_window', 'left_click'] : ['left_click']
         : admitted.binding.schemaVersion === 3 && admitted.binding.batch === 'B1' ? ['activate_window', 'left_click']
@@ -130,7 +132,7 @@ export async function startOwnedHttpBatch({ root, source, runID, powershell,
         COMPUTER_USE_AUDIT_LOG: resolve(output, 'native-audit.private.jsonl') };
     if (process.env.COMPUTER_USE_APPROVAL_TOKEN) throw new Error('Native token shortcuts are unsupported');
     if (consentMode) env.NF_PROXY_HTTP_CONSENT_MODE = consentMode; else delete env.NF_PROXY_HTTP_CONSENT_MODE;
-    const provider = spawn(supervisor, ['verify', project, '--scope', 'module', '--module', 'node:.', '--concurrency', '1', '--timeout', '180000', '--json'],
+    const provider = spawn(supervisor, ['verify', project, '--scope', 'module', '--module', 'node:.', '--concurrency', '1', '--timeout', String(providerTimeoutMs), '--json'],
         { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     let stopped = false, overflow = false, spawnFailed = false, killRequested = false;
     function killOwned() { if (!stopped && !killRequested) { killRequested = true; provider.kill(); } }

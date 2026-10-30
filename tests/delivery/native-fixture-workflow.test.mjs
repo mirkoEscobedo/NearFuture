@@ -5,7 +5,17 @@ import {basename} from 'node:path';
 import test from 'node:test';
 
 const workflow=readFileSync(new URL('../../.github/workflows/synthetic.yml',import.meta.url),'utf8');
-const provenance='seed-initial-focus-provenance.test.mjs';
+const isolatedFiles=[
+    'seed-initial-focus-provenance.test.mjs',
+    'seed-provider-budget-json.test.mjs',
+    'seed-provider-budget-launch.test.mjs',
+    'seed-provider-budget-provenance.test.mjs',
+    'seed-provider-budget-refusals.test.mjs',
+    'seed-provider-budget-runtime.test.mjs',
+    'seed-pre-continue-history.test.mjs',
+    'seed-pre-continue-history-refusals.test.mjs',
+    'seed-pre-continue-review-r1.test.mjs',
+];
 /** @param {string} name */
 function job(name){
     const marker='\n  '+name+':',start=workflow.indexOf(marker);
@@ -16,13 +26,20 @@ function job(name){
 
 test('the required Windows groups retain every fixture file exactly once',()=>{
     const main=job('public-build'),operator=job('operator-public');
-    const excluded=main.match(/\$fixtureTests = @\(Get-ChildItem tools\/starsector-proxy\/fixture\/\*\.test\.mjs -File \| Where-Object Name -ne '([^']+)'/);
-    assert.ok(excluded,'The main fixture partition must declare its one isolated file');
-    const isolated=[...operator.matchAll(/node --test --test-concurrency=1 (tools\/starsector-proxy\/fixture\/[^\s]+\.test\.mjs)/g)].map(m=>basename(m[1]));
-    assert.deepEqual(isolated,[provenance]);
-    assert.equal(excluded[1],provenance);
+    const declaration=main.match(/\$isolatedFixtureTests = @\(([^)]+)\)/);
+    assert.ok(declaration,'The main fixture partition must declare its closed isolated set');
+    const excluded=[...declaration[1].matchAll(/'([^']+)'/g)].map(m=>m[1]);
+    const command=operator.match(/node --test --test-concurrency=1 ([^\r\n]+)/);
+    assert.ok(command,'The operator must execute its isolated set serially');
+    const isolated=command[1].trim().split(/\s+/).map(path=>{
+        assert.match(path,/^tools\/starsector-proxy\/fixture\/[^/]+\.test\.mjs$/);
+        return basename(path);
+    });
+    assert.deepEqual(excluded,isolatedFiles);
+    assert.deepEqual(isolated,isolatedFiles);
+    assert.match(main,/\$fixtureTests = @\(Get-ChildItem tools\/starsector-proxy\/fixture\/\*\.test\.mjs -File \| Where-Object \{ \$_.Name -notin \$isolatedFixtureTests \}/);
     const all=readdirSync(new URL('../../tools/starsector-proxy/fixture/',import.meta.url)).filter(n=>n.endsWith('.test.mjs')).sort();
-    const selected=[...all.filter(n=>n!==excluded[1]),...isolated].sort();
+    const selected=[...all.filter(n=>!excluded.includes(n)),...isolated].sort();
     assert.deepEqual(selected,all,'No fixture may disappear or execute twice');
     assert.match(main,/node --test @fixtureTests/);
     assert.match(main,/node --test @captureTests/);

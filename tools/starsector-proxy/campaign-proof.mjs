@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, lstatSync, realpathSync } from 'node:fs';
 import { resolve, dirname, relative, isAbsolute } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import {campaignProviderClock} from './seed-provider-budget.mjs';
 
 /** @param {any} condition @param {string} message @returns {asserts condition} */
 export function requireThat(condition, message) { if (!condition) throw new Error('Campaign authority refused: ' + message); }
@@ -81,8 +82,7 @@ function ownedProviderClosure(context,allowedBatches) {
         helperPin.sha256?.toLowerCase() === file(r.helper.executable, 32 * 1024 * 1024).sha256,
     'known provider closure required');
     const safe = Number.isSafeInteger, closedAt = Date.parse(t.at), actualDeadline = Date.parse(t.deadline);
-    requireThat(safe(providerClock?.startMs) && providerClock.deadlineMs === Math.min(providerClock.startMs + 180000,
-        binding.campaign.rootClock.effectiveDeadlineMs - 30000) && safe(action.sentAtMs) && safe(action.knownResultAtMs) &&
+    requireThat(safe(providerClock?.startMs) && providerClock.deadlineMs === campaignProviderClock(initial,providerClock.startMs).deadlineMs && safe(action.sentAtMs) && safe(action.knownResultAtMs) &&
         safe(frame.capturedAtMs) && safe(inspection.inspectedAtMs) && safe(provider.observedClosedAtMs) &&
         action.sentAtMs >= providerClock.startMs && action.knownResultAtMs >= action.sentAtMs &&
         frame.capturedAtMs >= action.knownResultAtMs && closedAt >= frame.capturedAtMs && closedAt <= actualDeadline &&
