@@ -1,8 +1,8 @@
 repositories { mavenCentral() }
 dependencies {
     implementation project(':contract')
-    implementation project(':wire')
-    implementation 'com.google.protobuf:protobuf-java:4.31.1'
+    api project(':wire')
+    api 'com.google.protobuf:protobuf-java:4.31.1'
 }
 
 def testJavaExecutable = providers.gradleProperty('testJavaExecutable')
@@ -23,6 +23,54 @@ tasks.register('authClientTest', JavaExec) {
     if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
 }
 tasks.named('check') { dependsOn 'authClientTest' }
+
+tasks.register('parentHandoffTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.ParentHandoffTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+
+tasks.named('check') { dependsOn 'parentHandoffTest' }
+
+tasks.register('parentHandoffRejectionTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.ParentHandoffRejectionTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+
+tasks.named('check') { dependsOn 'parentHandoffRejectionTest' }
+
+tasks.register('lifecycleMailboxTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.LifecycleMailboxTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+
+tasks.named('check') { dependsOn 'lifecycleMailboxTest' }
+tasks.register('diagnosticFaultConfigurationTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.DiagnosticFaultConfigurationTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'diagnosticFaultConfigurationTest' }
+tasks.register('diagnosticHandoffDelayTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.DiagnosticHandoffDelayTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'diagnosticHandoffDelayTest' }
+tasks.register('diagnosticFaultBoundsTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.adapter.ipc.DiagnosticFaultBoundsTest'
+    if (testJavaExecutable.isPresent()) executable = testJavaExecutable.get()
+}
+tasks.named('check') { dependsOn 'diagnosticFaultBoundsTest' }
 tasks.register('authSocketClient', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath
