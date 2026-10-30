@@ -18,3 +18,25 @@ The million-offer driver measures its own Node CPU/RSS and reports them as synth
 Actual game execution remains unavailable because there is no qualified game UI/process-lifecycle harness or verified whole-frame/campaign instrumentation seam. Closure requires repeated exact-identity late-game reference/control/shadow recordings, a save-safe supported control, measured instrumentation overhead, thread/lock/I/O/GC correlation, and independently reviewed results. No Rust speedup or more-RAM diagnosis is inferred from the tooling.
 
 The trace queue bounds serialized retained payload and item count; whole-process RSS includes allocator/runtime overhead. IPC/JFR values in configuration remain experiment budgets. The JFR exporter permits only supported event fields, caps recording/scanned/exported counts and tells the caller to discard partial output on failure. Time alignment uncertainty and missing observations remain explicit. Runtime captures cannot certify full game content, mutation coverage, save durability or authority.
+
+## Opt-in observer delivery verification
+
+Observer source was composed on Main `d4bdc6a3ea47aafe8ed250142513e7191dd51cd2` (tree `9e2ca55fde6fab8b911a7f0e4e2218bf5eaedcec`). Exact delivery revision and hosted results must be recorded in the pull request before merge. This is local licensed API host evidence, not live campaign scheduling, save serialization or a measured game baseline.
+
+Pinned host compiler/runtime: JDK 21.0.8, emitting Java 17 classes with `--release 17 -Xlint:all -Werror`. The selected licensed installation was Starsector 0.98a-RC8 with pinned local API dependencies. Its installed Azul 17.0.10 game JVM did not run the observer. Libraries, private recordings and generated jars were kept outside the public source payload.
+
+| Command on the composed source | Actual result |
+| --- | --- |
+| `npm ci --offline --ignore-scripts --no-audit --no-fund` | Passed; four vendored packages installed. |
+| `npm run check:types` and `npm run check:boundaries` | Passed. |
+| `npm run test:tools` | All 87 passed, including real JFR exporter/callback and unavailable-adapter controls; zero skipped/cancelled. |
+| `java -classpath java/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p java gameAdapter --no-daemon` | Passed; actual licensed adapter compilation/jar/build, 6 executed tasks and 1 cached contract compile. All 3 plugin/observer classes inspected as major 61 (Java 17). |
+| `node --test --test-concurrency=1 tests/game/observer-lifecycle.test.mjs tests/game/observer-after-save.test.mjs tests/game/observer-controls.test.mjs tests/game/observer-save-failed.test.mjs` | All 6 passed in 4.398s; no skips/filtering/cancellations. |
+
+The six contracts cover [registration/event export/detachment](../../tests/game/observer-lifecycle.test.mjs), [successful-save reattachment](../../tests/game/observer-after-save.test.mjs), [invalid opt-in, repeated load and stale callbacks](../../tests/game/observer-controls.test.mjs), and [failed-save reattachment](../../tests/game/observer-save-failed.test.mjs). The failed-save contract first failed after actual compilation/JVM execution with resumedCount 0 versus 1, then the same unchanged whole contract passed after the five-line callback override. Previous first/load/save contracts and their helper sources remain unchanged.
+
+Every local phase used the qualified Windows Job supervisor, 240-second management limit, separate postguard, exact restoration of nullable JAVA_HOME/PATH/STARSECTOR_HOME and zero scoped surviving processes. Observer host JVM/compiler children retained 30-second/100000-byte bounds; actual JFR host recordings retained 8 MiB/five-second bounds. At execution all 3605 source pins, 81 artifacts and 9 installed-library pins passed. Later documentation-only edits are separately recorded; they do not reinterpret the older source cuts.
+
+Primary raw evidence SHA-256: setup `951cb43620e965a94030e327b5b7cf2b7b4a85e13df30cca0dd6ecacdebfb59d`; quality `3ac1d5db4904bad9b8818769e599d10ffe7cc48529e734a1c39bc34e013ee578`; adapter `10e0bd5b745fa38ffb20be695c2722229eed9c19088c42247305118a6ccc0985`; combined host `f54ea645ac734dc2f1f53e1b97198e2015e86b1d30898293cce2f35642a2acf7`. Distinct per-phase postguard captures each hash `a6eef63a8c02239302b3e4e389abb246f57bf550abc40d9a83c0936d46a96835`; equal content does not mean a reused invocation.
+
+The unchanged public workflow excludes `tests/game` from `test:tools`, and `syntheticCheck` excludes the licensed adapter. Exact-head hosted public checks/Java interop/release builds are still required before merge and do not replace these local licensed gates. The observer records only its own callback spans. Instrumentation overhead, frame percentiles, repeated late-game reference/control/shadow runs and economic-bridge p99 remain unmeasured. Issue #12 remains open; no authority/taint/save-durability certification is inferred.
