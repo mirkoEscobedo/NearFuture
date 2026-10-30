@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, lstatSync, realpathSync } from 'node:fs';
 import { resolve, dirname, relative, isAbsolute } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import {campaignProviderClock} from './seed-provider-budget.mjs';
 
 /** @param {any} condition @param {string} message @returns {asserts condition} */
 export function requireThat(condition, message) { if (!condition) throw new Error('Campaign authority refused: ' + message); }
@@ -35,9 +36,21 @@ export function inside(parent, child) {
 /** The same known-closed provider proof is shared by the two fixed transfers.
  * This neither changes ownership nor supplies a new deadline. @param {any} context */
 export function knownProviderClosure(context) {
+    return ownedProviderClosure(context,['B1','E1']);
+}
+/** Terminal-only schema6 E2 evidence, never a transfer or fresh authority.
+ * @param {any} context */
+export function knownSeedTerminalClosure(context) {
+    requireThat((context.binding?.schemaVersion===6||context.binding?.schemaVersion===7&&
+        context.binding.campaign?.flow==='DISPOSABLE_SEED_CREATION_INITIAL_FOCUS')&&context.binding.batch==='E2'&&context.initial===context.binding,
+        'terminal seed provider evidence required');
+    return ownedProviderClosure(context,['E2']);
+}
+/** @param {any} context @param {string[]} allowedBatches */
+function ownedProviderClosure(context,allowedBatches) {
     const { binding, initial, initialSourceSha256, proof, providerClock, action, now } = context;
     const { frame, inspection } = proof;
-    requireThat(['B1', 'E1'].includes(initial.batch), 'known provider batch required');
+    requireThat(allowedBatches.includes(initial.batch), 'known provider batch required');
     const provider = proof.provider, output = resolve(binding.workspaceRoot, '.tmp/starsector-proxy', initial.runID);
     const ready = read(resolve(output, 'guarded-http-ready.private.json'));
     const terminalPath = resolve(output, 'owned-provider-terminal.private.json'), terminal = read(terminalPath), t = terminal.value, r = ready.value;
@@ -69,8 +82,7 @@ export function knownProviderClosure(context) {
         helperPin.sha256?.toLowerCase() === file(r.helper.executable, 32 * 1024 * 1024).sha256,
     'known provider closure required');
     const safe = Number.isSafeInteger, closedAt = Date.parse(t.at), actualDeadline = Date.parse(t.deadline);
-    requireThat(safe(providerClock?.startMs) && providerClock.deadlineMs === Math.min(providerClock.startMs + 180000,
-        binding.campaign.rootClock.effectiveDeadlineMs - 30000) && safe(action.sentAtMs) && safe(action.knownResultAtMs) &&
+    requireThat(safe(providerClock?.startMs) && providerClock.deadlineMs === campaignProviderClock(initial,providerClock.startMs).deadlineMs && safe(action.sentAtMs) && safe(action.knownResultAtMs) &&
         safe(frame.capturedAtMs) && safe(inspection.inspectedAtMs) && safe(provider.observedClosedAtMs) &&
         action.sentAtMs >= providerClock.startMs && action.knownResultAtMs >= action.sentAtMs &&
         frame.capturedAtMs >= action.knownResultAtMs && closedAt >= frame.capturedAtMs && closedAt <= actualDeadline &&
