@@ -61,7 +61,7 @@ function Read-NativeMenuLaunchLease([string]$Path,$Binding,[string]$BindingPath,
   $seen.Add($file,$pin.sha256)
  }
  $required=@('menu-launch-grant.mjs','batch-authorization.mjs','fixture-binding.mjs','guarded-http-ownership.ps1')|ForEach-Object {'tools/starsector-proxy/'+$_}
- $required+=@('menu-launch.ps1','native-controller.ps1','protection-check.ps1','fixture-inputs.ps1','seed-fixture.ps1','publish-owned-snapshot.ps1','session-watchdog.ps1')|ForEach-Object {'tools/starsector-proxy/fixture/'+$_}
+ $required+=@('menu-launch.ps1','native-controller.ps1','protection-check.ps1','fixture-inputs.ps1','seed-fixture.ps1','seed-creation-history.ps1','seed-preference.ps1','seed-provenance-v2.ps1','publish-owned-snapshot.ps1','session-watchdog.ps1')|ForEach-Object {'tools/starsector-proxy/fixture/'+$_}
  foreach($name in $required){
   $file=[IO.Path]::GetFullPath((Join-Path $Binding.repositoryRoot $name))
   if(!$seen.ContainsKey($file)){throw 'Current menu launch tooling pins required'}

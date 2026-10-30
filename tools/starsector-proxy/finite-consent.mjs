@@ -61,8 +61,8 @@ export function readFiniteConsentAuthority({ root, source, runID }) {
  * @param {{sessionFactory?: typeof createSession, record?: (event: Record<string, unknown>) => void}} [options] */
 export function createFiniteConsentMcp({ root, source, runID }, options = {}) {
     const { admitted, consent } = readFiniteConsentAuthority({ root, source, runID });
-    const campaign = [2, 3, 4, 5].includes(admitted.binding.schemaVersion);
-    const allowed = new Set([...observations, ...([4, 5].includes(admitted.binding.schemaVersion) ?
+    const campaign = [2, 3, 4, 5, 6, 7].includes(admitted.binding.schemaVersion);
+    const allowed = new Set([...observations, ...(admitted.binding.schemaVersion===7 ? (admitted.binding.batch==='B1'?mutations.B1:['left_click']) : admitted.binding.schemaVersion===6 ? ['left_click'] : [4, 5].includes(admitted.binding.schemaVersion) ?
         admitted.binding.batch === 'B1' ? mutations.B1 : ['left_click'] : admitted.binding.schemaVersion === 3 ?
         admitted.binding.batch === 'B1' ? mutations.B1 : admitted.binding.batch === 'E1' ? ['left_click', 'key'] : ['left_click'] :
         campaign ? [admitted.binding.batch === 'E1' ? 'key' : 'left_click'] : mutations[admitted.binding.batch])]);

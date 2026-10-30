@@ -400,6 +400,15 @@ result stops the batch. Never blindly repeat a toggle, save, command or click.
 
 Derive screen-absolute coordinates from current bounds and verified image/client
 offsets. Rediscover after launcher handoff, window replacement or invalid handle.
+For pinned Windows vendor 7.1.0, the native-width bitmap is allocated from outer
+bounds but starts at the client DC. Use the existing owned-window
+`fixture/read-owned-client-geometry.ps1` and `clientImagePoint` to add the measured
+`ClientToScreen(hwnd,0,0)` origin to an inspected local image point. Outer bounds
+alone do not supply that origin. Require matching HWND, PID/birth/controller,
+current focus, unchanged outer bounds, native image dimensions and fresh geometry.
+Reject bitmap padding outside the actual client size. Apply this to every click,
+including launcher Play; retain the geometry and local point beside the unchanged
+closed screen-coordinate receipt. These reads grant no input or extra deadline.
 Do not reuse historical AutoColonyManager coordinates. The pinned `zoom` tool
 captures the full desktop and remains denied.
 
@@ -467,3 +476,195 @@ pairs. A new run cannot replenish the remaining absolute allowance. After the
 exact known E2 Continue, observations alone may retain the game's one fixed
 common help-preference file. Earlier phases remain empty; other files, changed
 bytes, links, uncertain results and additional input refuse.
+
+The separate schema6 `DISPOSABLE_SEED_CREATION` profile permits a complete fixed
+vanilla wizard route. Original launch documents select control schema4 and the
+same binding3 uncompressed, zero-mod fixture recipe. B1 sends Play; E1 sends
+New Game, Generate and first Continue; E2 sends Explorer (faster start), Normal,
+visibly enabled Skip it and Start game. Every choice requires a current inspected
+original and exact enabled control. There is no activation, typing, key, manual
+Save, alternative wizard branch or ordinary Exit in this profile. The game may
+write its initial save after Start game. Unknown or disabled controls stop input.
+
+An explicit root-issued history2 grant carries the preceding actual result and
+ledger hashes and permits at most eight additional reservations. No old failure
+or reserved action is refunded. Eight actions, three providers, 32 calls per
+provider and the cleanup reserve remain unchanged.
+The one existing Java tutorial-skip preference must already be true; its exact
+read-only witness is checked before launch and after cleanup. It is never written.
+
+Seed creation may explicitly pair `sessionWatchdogMs:1800000` in the original
+plan and lease with the same owned-game/controller bounds. This selects a finite
+30-minute emergency watchdog. Only this policy uses the existing 20-second
+per-call input check instead of the separate two-minute input reserve; its
+30-second cleanup reserve remains. Prelaunch seed admission consequently needs
+50 seconds of original caller time. Generic controller startup freshness still
+applies. The legacy eight- and twelve-minute seed policies retain their original
+two-minute input reserve and 150-second prelaunch floor.
+
+The emergency watchdog does not renew the original clock, extend a provider's
+180-second lifetime, refill calls/actions or admit an unknown control. Its expiry
+is an incomplete run with owned cleanup, not a performance result. Earlier failed
+attempts keep their original deadlines and outcomes.
+
+After owned cleanup, a separately versioned V2 seed manifest may qualify exactly
+two uncompressed save XML files, at most 16 MiB together, with zero enabled mods.
+The consumer rechecks the actual eight input acknowledgements, inspected images,
+provider closures, carried history, original-save protection and complete current
+tooling inventory. Partial output and forced cleanup remain separate outcomes;
+neither synthetic wizard tests nor a seed establish lifecycle or alpha acceptance.
+See the fixture README for the closed authority and provenance contract.
+
+A known closed seed-creation run that stopped before input on a foreground
+mismatch can preserve its attempt through the separate root failed-attempt
+history receipt. Both validators reread the actual observations, original
+authority, provider/caller termination and save protection. The next grant
+carries the real attempt context and unchanged reserved/sent counts. This
+neither creates seed provenance nor permits activation or a blind replay;
+the next run still requires a supported foreground setup.
+
+A separately closed known-Play failure uses
+`ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY`. It retains the acknowledged
+Play reservation as pending and carries its spent reserved/sent action into the
+next explicit grant. Both readers verify the fourteen-call sequence, three
+complete original PNGs, the strict Play acknowledgement, and the original Java
+PID/birth/session/parent/kernel/Job identity across the window replacement.
+Provider/caller closure and protected empty private saves remain mandatory.
+The zero-input kind keeps its existing five-call, zero-action contract.
+
+Neither failure kind is completed seed provenance. A new grant must retain all
+counts and explicitly admit its bounded allowance; an old cap is never rewritten
+or replenished. Future input must include `target_app: "java.exe"` alongside the
+current owned HWND and strict focus, as required by the completed-seed consumer.
+The private B1 frame helper must permit only the qualified known-Play window
+handoff, and callers must stop metadata construction after any nonzero result.
+
+`ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY` is a separate closed
+case for an acknowledged Play followed by an unreadable final permitted
+capture. It retains the original `CAPTURE_UNCERTAIN` result, the capture-stop
+observation and explicit Java click arguments. Both readers require fourteen
+calls, three complete inspected originals, unknown freshness, one loading
+recapture, no helper modes, no E1/E2 claim and no seed or stability claim. The
+observation follows known provider closure and precedes final protection.
+Original image receipts do not prove a readable main menu or identify a cause.
+The older zero-input and helper-refusal cases keep their existing contracts;
+none is completed seed provenance or replenishes an old allowance.
+
+`ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY` retains a distinct
+two-click failure: known Play and closed B1 menu handoff, followed by acknowledged
+New Game with a failed scene assertion. Both readers require the actual B1/E1
+authority and claims, original process lineage, eleven plus ten calls, four
+complete inspected original PNGs, both known provider closures and caller cleanup.
+The original caller clock remains immutable across copied phase clocks. The known
+New Game reservation stays pending; no E2, Generate, Continue or seed is inferred.
+All thirty evidence references, protected empty private saves, PID absence and the
+two-action increment remain required. Any next explicit bounded grant carries
+the real context and counts; the historical cap and failure are never rewritten.
+
+`ROOT_CLOSED_PRE_INPUT_CAPTURE_LINKAGE_FAILED_SEED_ATTEMPT_HISTORY` retains the
+separate four-call launcher capture-path refusal before any reservation or input.
+Its 22 references bind the original helper and terminal failfast caller as well as
+the common ownership, provider, caller, clock and save-protection evidence. The
+automatic `capture-001.raw.private.json` and selected `call-004.raw.private.json`
+are distinct fixed paths with identical complete response bytes. Both readers
+require their original PNG, focused owned launcher, exact failure boundary and
+absence of geometry or later-phase artifacts. This custody grants no input or
+seed provenance; the next explicit grant carries the spent context and unchanged
+action count. Historical deadlines, failures and ceilings remain recorded.
+
+`ROOT_CLOSED_ZERO_PROVIDER_CONTROLLER_CLOCK_FAILED_SEED_ATTEMPT_HISTORY` records
+an unclaimed B1 stopped at launch admission because the original controller
+deadline exceeded its supervisor deadline. Its separate closed custody binds the
+actual freeze command and pinned procedure, unclaimed phase files, terminal
+stager and original caller, process ancestry and save protection. The exact B1
+output directory and all consumed claims must be absent. Both readers preserve
+the spent launch context without claiming provider, input, seed or ordinary-exit
+success. The producer clips its inner deadline to the earlier unchanged outer
+deadline; neither clock nor the consumer's ordering rule is extended.
+
+`ROOT_CLOSED_PRE_INPUT_CALLER_DATE_FAILED_SEED_ATTEMPT_HISTORY` retains a separate
+four-call stop after successful owned geometry, mapping and point checking. The
+original generic driver result and stop observation stay in their recorded
+formats. The closed root receipt pins the original root/phase authority, consumed
+B1 claim, all four post/attempt/raw call records, complete inspected PNG, source
+frame, process births, geometry Job terminal, point, fail-fast metadata caller,
+provider/caller closure and save protection. The doctor caller's empty arguments
+and normalized provider arguments remain distinct recorded representations.
+
+Both validators require the final caller's recorded date-parse error with zero
+input, reservations and activations. Historical geometry is checked at its
+recorded computation time within the original deadlines; it never supplies fresh
+geometry for another run. The original failure, spent context, unsent reservation
+count and action ceiling remain. This receipt grants neither input nor successful
+seed provenance, and does not attest unrecorded caller runtime or locale state.
+The original plan's `source-pins.private.json` and lease's
+`frozen-support-pins.private.json` remain distinct canonical aliases with identical
+bytes. The initial owned observation retains its three-field projection and
+recorded source digest even after that source alias is overwritten. Later full
+snapshots bind controller identity, claimed Java PID, Job parent and birth time.
+Phase authority must be the exact original plan/lease spread for B1. Recorded
+begin/finish MCP text packets use strict scalar, array and duplicate-field checks.
+The single-Java claim must contain exactly the observed PID. Recorded Job PID
+arrays are positive and unique; controller kernel birth remains a canonical
+positive decimal string. Consumed process and MCP records retain their object
+and array types rather than accepting collection-to-scalar conversions.
+
+`ROOT_CLOSED_POST_START_VERIFICATION_INCOMPLETE_HISTORY` records a campaign
+reached and saved with automated verification incomplete. The two real history
+gates reread eight acknowledged wizard clicks, sixty-one vendor calls, eleven
+original PNGs and the original three provider lifecycles. B1 and E1 retain bound
+PASS terminals; E2 retains UNKNOWN, SIGTERM, null status and absent child linkage.
+The final original, measured 55,775 ms inspection gap and original stability
+margin refusal remain separate from campaign and save-generation success.
+
+This historical case requires the original root caller, all measured geometry,
+finite authority and deadlines, maintained cleanup, the complete fourteen-PID
+absence observation and unchanged original-save protection. Its two XML files
+are `UNQUALIFIED_OUTPUT`; their hashes establish custody only. Stability, created
+seed and closeout receipts must remain absent. Neither cleanup nor the historical
+reader converts E2 UNKNOWN into PASS, grants input, issues a clock, qualifies a
+seed or replenishes spent allowances. A later run needs its own explicit grant,
+fresh observations and supported frontend refresh.
+
+`ROOT_CLOSED_EARLY_WINDOW_FOCUS_STOP_HISTORY` is a distinct historical-only
+three-call stop: doctor, policy and an owned unfocused window, with no saved
+original PNG or input. It binds the original generic result and observation,
+unchanged source/authority, known provider closure, actual caller terminal,
+eight-PID absence and original-save protection. The earlier doctor diagnostic
+does not substitute for a contemporaneous foreground observation. This receipt
+carries spent context and unsent reservations; it supplies no focus recovery,
+clock, input grant or successful seed provenance.
+
+The separate control5 `DISPOSABLE_SEED_CREATION_INITIAL_FOCUS` profile uses auth7
+and a closed v3 `ROOT_ADMITTED_INITIAL_FOCUS_SEED_CREATION_HISTORY` grant. It
+reserves nine requests: eight unchanged wizard clicks and at most one initial B1
+activation. Control4/auth6 retains its v2 eight-request, zero-activation contract.
+The root watchdog remains thirty minutes. Each of three providers defaults to
+180 seconds and 32 calls; the separate paired [provider timing selector](starsector-provider-timing.md)
+may admit a full original 480-second interval. Existing input/observation/cleanup
+margins and nine geometry observations remain unchanged.
+
+For an initially unfocused owned target, inspect the original BEFORE, then obtain
+a fresh foreground/window pair before the sole activation. A known activation
+ACK, fresh owned foreground/window pair and complete original AFTER are required.
+After the AFTER call, raw packet, PNG, metadata and completed post record are
+persisted, the public adapter atomically archives `resolvedInitialActivation`
+and clears its pending reservation. This proves pre-capture focus and capture
+custody only; it never claims post-capture focus, frame freshness or visible Play.
+The driver inspects that original, maps through the existing geometry guard and
+obtains another fresh foreground/window pair immediately before Play. If focus
+arrives naturally, skip activation and capture a fresh focused original. Unknown
+activation or any later focus loss stops the flow; no second activation is allowed.
+The normal known-Play owned launcher-to-main-window handoff remains supported.
+
+The activation archive stays separate from all eight wizard click ordinals.
+Reservations and sent requests are never refunded. The distinct
+`ACTUAL_DISPOSABLE_SEED_CREATION_INITIAL_FOCUS_CLOSEOUT` consumer replays actual
+transport/PNG/claim custody and requires exactly eight plus zero or one requests,
+with the same XML, stability, provider closure, cleanup and protection checks.
+Both creation profiles retain the unchanged read-only shared-preference check
+before launch and after cleanup. Source tests with generated boundaries do not
+establish native completion or qualify a disposable seed.
+The new grant and completed kind reject duplicate JSON fields and collection to
+scalar coercion, including documentary schema, root session, cleanup and
+protection values. Legacy v2 authority and completed-kind parsing remain separate.
