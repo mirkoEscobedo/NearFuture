@@ -15,6 +15,7 @@ const isolatedFiles=[
     'seed-pre-continue-history.test.mjs',
     'seed-pre-continue-history-refusals.test.mjs',
     'seed-pre-continue-review-r1.test.mjs',
+    'seed-modern-private-root.test.mjs',
 ];
 /** @param {string} name */
 function job(name){
