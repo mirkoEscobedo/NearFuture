@@ -34,7 +34,7 @@ jobs:
         run: npm run lint && npm run check:schemas && npm run test:tools && npm run check:java
       - name: Qualify portable finite adapter and capture contracts
         run: node --test tools/starsector-proxy/*.test.mjs tools/starsector-proxy/capture/capture-ascii-sha256.test.mjs tools/starsector-proxy/capture/capture-custody-config.test.mjs tools/starsector-proxy/capture/capture-intent-io.test.mjs tools/starsector-proxy/capture/declared-frame-path.test.mjs tools/starsector-proxy/capture/existing-direct-frames-regression.test.mjs tools/starsector-proxy/capture/probe-stdio.test.mjs
-      - name: Qualify Windows fixture and capture tooling without a game
+      - name: Qualify Windows capture tooling without a game
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -44,9 +44,6 @@ jobs:
           $env:NF_CAPTURE_TEST_POWERSHELL = $env:NF_TEST_POWERSHELL
           node --input-type=module -e "import { buildCaptureRuntime } from './tools/starsector-proxy/capture/build-runtime.mjs'; buildCaptureRuntime();"
           $captureTests = @(Get-ChildItem tools/starsector-proxy/capture/*.test.mjs -File | Where-Object Name -ne 'capture-slot-projection.test.mjs' | ForEach-Object FullName)
-          $isolatedFixtureTests = @('seed-initial-focus-provenance.test.mjs', 'seed-provider-budget-json.test.mjs', 'seed-provider-budget-launch.test.mjs', 'seed-provider-budget-provenance.test.mjs', 'seed-provider-budget-refusals.test.mjs', 'seed-provider-budget-runtime.test.mjs', 'seed-pre-continue-history.test.mjs', 'seed-pre-continue-history-refusals.test.mjs', 'seed-pre-continue-review-r1.test.mjs', 'seed-modern-private-root.test.mjs')
-          $fixtureTests = @(Get-ChildItem tools/starsector-proxy/fixture/*.test.mjs -File | Where-Object { $_.Name -notin $isolatedFixtureTests } | ForEach-Object FullName)
-          node --test @fixtureTests
           node --test @captureTests
       - name: Observe Java and Rust mutual authentication on both local endpoints
         if: runner.os == 'Linux'
@@ -85,6 +82,31 @@ jobs:
         env:
           NF_MINIATURE_REQUIRE_SYNC_FAULT: '1'
         run: cargo test -p nf-store --test miniature_fsync_failure --locked --offline -- --nocapture --test-threads=1
+  windows-fixtures:
+    strategy:
+      fail-fast: false
+      matrix:
+        partition: [a, b, c]
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install vendored developer tools offline
+        run: npm ci --offline --ignore-scripts --no-audit --no-fund
+      - name: Install pinned native-tooling libraries without command links or install scripts
+        run: npm ci --prefix tools/computer-use-mcp --ignore-scripts --bin-links=false --no-audit --no-fund
+      - name: Qualify the complete assigned Windows fixture partition without a game
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $env:NF_TEST_POWERSHELL = (Get-Command pwsh -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
+          $env:NF_CAPTURE_TEST_POWERSHELL = $env:NF_TEST_POWERSHELL
+          node --input-type=module -e "import { buildCaptureRuntime } from './tools/starsector-proxy/capture/build-runtime.mjs'; buildCaptureRuntime();"
+          node tools/delivery/windows-fixtures.mjs --partition ${{ matrix.partition }}
   operator-public:
     strategy:
       fail-fast: false
@@ -433,7 +455,7 @@ jobs:
   headless-qualification:
     # This check runs even after failure/cancellation/skip; only success is accepted.
     if: always()
-    needs: [public-build, public-rust, windows-interop, release-build, profile-smoke, operator-public]
+    needs: [public-build, public-rust, windows-interop, release-build, profile-smoke, operator-public, windows-fixtures]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
