@@ -98,6 +98,14 @@ jobs:
         run: npm ci --offline --ignore-scripts --no-audit --no-fund
       - name: Install pinned native-tooling libraries without command links or install scripts
         run: npm ci --prefix tools/computer-use-mcp --ignore-scripts --bin-links=false --no-audit --no-fund
+      - name: Prepare caller-owned first-page child failure evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $childEvidence = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('near-future-first-page-failures-' + [Guid]::NewGuid().ToString('N'))))
+          [void](New-Item -ItemType Directory -Path $childEvidence -ErrorAction Stop)
+          [IO.File]::WriteAllText((Join-Path $childEvidence 'caller-receipt.json'), '{"schemaVersion":1,"kind":"owned-public-first-page-child-evidence","syntheticOnly":true}' + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+          'NF_FIRST_PAGE_CHILD_EVIDENCE_PARENT=' + $childEvidence | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Qualify the complete assigned Windows fixture partition without a game
         shell: pwsh
         run: |
@@ -107,6 +115,14 @@ jobs:
           $env:NF_CAPTURE_TEST_POWERSHELL = $env:NF_TEST_POWERSHELL
           node --input-type=module -e "import { buildCaptureRuntime } from './tools/starsector-proxy/capture/build-runtime.mjs'; buildCaptureRuntime();"
           node tools/delivery/windows-fixtures.mjs --partition ${{ matrix.partition }}
+      - name: Retain only caller-owned first-page child failure evidence
+        if: ${{ failure() && env.NF_FIRST_PAGE_CHILD_EVIDENCE_PARENT != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: first-page-child-failure-${{ matrix.partition }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.NF_FIRST_PAGE_CHILD_EVIDENCE_PARENT }}
+          if-no-files-found: error
+          retention-days: 7
   operator-public:
     strategy:
       fail-fast: false

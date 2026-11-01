@@ -171,3 +171,29 @@ registration remain unchanged. Job timeouts are unchanged; new Windows fixture
 runners retain the existing 30-minute ceiling. The complete current workflow,
 including matrix expansion, controls expected job counts for future evidence.
 No prior 15-job/30-log expectation applies to a partitioned successor.
+
+## First-page fixture failure evidence
+
+The first-page public-launch-gates test can observe an incomplete PowerShell
+child before the existing terminal-status assertion throws. The observer receives
+a detached immutable snapshot; it cannot change the latched result or turn a
+capture failure into a passing test. The 15-second child timeout and all caller
+assertions remain unchanged.
+
+Windows fixture jobs create one dedicated caller-owned
+`NF_FIRST_PAGE_CHILD_EVIDENCE_PARENT` and retain that exact root only on failure.
+A complete capture contains the original Node-captured UTF8 stdout/stderr strings,
+closed error/status/signal/argument fields, and four fixed generated metadata files.
+Absent, null and empty output remain distinct. This is not native pipe-byte custody.
+The writer accepts only the version-1 synthetic seed-target-test fixture marker,
+rejects launched/live markers and linked paths, reads stable bounded files, and
+uses create-new output. Limits are 2 MiB per output string, 1 MiB per metadata
+file, 64 KiB of arguments, 16 KiB of error fields and one capture per observer.
+Oversized, changing or unowned inputs refuse capture while the original child
+assertion still fails. Fixture/process cleanup is preserved.
+
+Focused regression tests exercise controlled incomplete results and an immediate
+missing-synthetic-executable refusal; they do not repeat the approved historical
+PowerShell diagnostic. The approved one-case live inspection passed only as
+NONREPRODUCTION. Failure-evidence retention addresses lost diagnostics and does
+not establish a fix or cause for the historical 15-second hosted timeout.

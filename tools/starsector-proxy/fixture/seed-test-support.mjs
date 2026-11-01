@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {resolve,relative,isAbsolute,basename,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import assert from 'node:assert/strict';
+import { assertTerminalPowerShellResult } from './powershell-child-result.mjs';
 
 export const repository=resolve(fileURLToPath(new URL('../../../',import.meta.url)));
 const scenarios=resolve(repository,'.tmp/starsector-proxy/scenarios');
@@ -14,9 +14,10 @@ export const hash=(/** @type {string|Buffer} */ data)=>createHash('sha256').upda
 export const filePin=(/** @type {string} */ path)=>({bytes:readFileSync(path).length,sha256:hash(readFileSync(path))});
 export function write(/** @type {string} */ path,/** @type {string} */ data){mkdirSync(dirname(path),{recursive:true});writeFileSync(path,data);return filePin(path);}
 export function json(/** @type {string} */ path,/** @type {unknown} */ value){return write(path,JSON.stringify(value));}
-export function powershell(/** @type {string[]} */ args){
+export function powershell(/** @type {string[]} */ args,
+ /** @type {((value:import('./powershell-child-result.mjs').IncompletePowerShellResult)=>void)|undefined} */ observeIncomplete=undefined){
  const result=spawnSync(process.env.NF_TEST_POWERSHELL??'pwsh',['-NoProfile','-NonInteractive',...args],{cwd:repository,encoding:'utf8',timeout:15000});
- assert.notEqual(result.status,null,'Fixture PowerShell requires terminal status; error='+(result.error?.message??'NONE')+'; signal='+(result.signal??'NONE'));
+ assertTerminalPowerShellResult(result,args,observeIncomplete);
  return result;
 }
 
