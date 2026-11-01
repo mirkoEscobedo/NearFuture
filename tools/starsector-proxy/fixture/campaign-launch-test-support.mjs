@@ -6,7 +6,7 @@ import { unlinkSync, readFileSync } from 'node:fs';
 import { seedFixture, json, filePin, powershell, repository, quote } from './seed-test-support.mjs';
 import { campaignLaunchSources } from '../campaign-authority.mjs';
 
-/** @param {{preparedSeed?: any, staged?: boolean, inspection?: boolean, generation?: boolean, absoluteMaxReservedActions?: number, historyBaseline?: {overallAttempts: number, uiAttempts: number, reservedActions: number, sentActions: number}}} [options] */
+/** @param {{preparedSeed?: any, staged?: boolean, inspection?: boolean, generation?: boolean, campaignControl?: {schemaVersion: number, profile: string}, absoluteMaxReservedActions?: number, historyBaseline?: {overallAttempts: number, uiAttempts: number, reservedActions: number, sentActions: number}}} [options] */
 export function campaignLaunchFixture(options = {}) {
     const f = options.preparedSeed ?? seedFixture({ driverRole: '/root/recovery_game_driver' }), scenario = f.target;
     const noSeed = options.inspection || options.generation;
@@ -42,9 +42,9 @@ export function campaignLaunchFixture(options = {}) {
         historyAdmission: {path: historyAdmissionPath, sha256: json(historyAdmissionPath, {
             schemaVersion: 1, kind: 'ROOT_ADMITTED_CARRIED_PRELAUNCH_HISTORY', issuer: '/root',
             driver: '/root/recovery_game_driver', historyBaseline, maxReservedActions}).sha256.toLowerCase()}} : {};
-    const campaignControl = options.generation ? { schemaVersion: 3, profile: 'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE' }
+    const campaignControl = options.campaignControl ?? (options.generation ? { schemaVersion: 3, profile: 'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE' }
         : options.inspection ? { schemaVersion: 2, profile: 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE' }
-        : { schemaVersion: 1, profile: 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE' };
+        : { schemaVersion: 1, profile: 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE' });
     const plan = { scenarioId: basename(scenario), paths: { scenario }, ...(!noSeed ? { seed } : {}), bounds, historyBaseline, campaignControl,
         callerAdmissionDeadlineMs, ...generationAuthority,
         fixtureBinding: { path: f.bindingPath, sha256: filePin(f.bindingPath).sha256 },

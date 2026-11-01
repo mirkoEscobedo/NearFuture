@@ -235,6 +235,23 @@ inspected ordinary Exit `left_click`. Current root-issued authority, original
 process identity, strict focus, image custody, deadlines and remaining action
 attempts still govern each call. Unknown input or shutdown cannot transfer to E2.
 
+The separate `DISPOSABLE_SEED_RETURN_MENU_QUIT_NO_SAVE` profile binds root control
+schema 6 to phase authorization schema 3. It uses at most eight inputs across
+three providers: naturally focused Play; Load Game, the sole copied seed, Load
+and the inspected paused campaign's exact Escape; campaign Exit, the inspected
+no-save return dialog's `Ok`, then the inspected returned main menu's `Quit`.
+Activation is refused. The two final scene proofs bind distinct original PNGs,
+raw capture records, current focus, source, claim, reservation and seed lineage.
+The return dialog must read `This will exit to the main menu WITHOUT saving your current game.`;
+Save, Cancel, other dialogs and uninspected coordinates refuse input.
+
+The final Quit remains an unresolved action until the original owned launcher
+and controller terminate naturally and their owned process absence is observed.
+An unexpected Quit confirmation stops the flow; it grants no ninth input.
+Forced cleanup is a separate outcome. This profile retains the eight-minute
+root bound, three-minute providers and 32-call provider ceiling. Existing entry
+and separately declared `Exit game?` / `Yes` behavior retain their own profile.
+
 Source qualification and synthetic stdio/HTTP checks do not refresh an already
 loaded MCP frontend or establish live desktop capture, game input or exit success.
 

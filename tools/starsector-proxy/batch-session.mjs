@@ -2,6 +2,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { validateCampaignBinding, reserveCampaignAction, finishCampaignAction } from './campaign-authority.mjs';
 import { completePng } from './direct-frames.mjs';
+import { isSeedApplicationQuit } from './seed-application-quit-profile.mjs';
 const observations = new Set(['doctor', 'policy_status', 'list_windows', 'get_window',
     'get_frontmost_app', 'get_display_size', 'list_running_apps', 'screenshot', 'wait']);
 const batches = {
@@ -50,13 +51,16 @@ export function createBatchSession(session, authorization, record = () => {}) {
     const firstPageEntry = [4, 5, 6, 7].includes(binding.schemaVersion) && binding.batch === 'E1';
     const generationEntry = binding.schemaVersion === 5 && binding.batch === 'E1';
     const seededExitConfirmation = binding.schemaVersion === 3 && binding.batch === 'E2' && binding.exitConfirmation !== undefined;
+    const applicationQuit = isSeedApplicationQuit(binding);
     const generationContinue = binding.schemaVersion === 5 && binding.batch === 'E2';
     const escapeBatch = campaign && binding.batch === 'E1';
     /** @type {Array<{tool:string,optional?:boolean}>} */
-    const sequence = initialFocus && binding.batch === 'B1' ? batches.B1 : creation ? Array.from({length:binding.batch==='B1'?1:binding.batch==='E1'?3:4},()=>({tool:'left_click'})) : seededLauncher ? batches.B1 : seededEntry ?
+    const sequence = applicationQuit && binding.batch === 'B1' ? [{tool: 'left_click'}] : initialFocus && binding.batch === 'B1' ? batches.B1 : creation ? Array.from({length:binding.batch==='B1'?1:binding.batch==='E1'?3:4},()=>({tool:'left_click'})) : seededLauncher ? batches.B1 : seededEntry ?
         [{ tool: 'left_click' }, { tool: 'left_click' }, { tool: 'left_click' }, { tool: 'key' }] :
         generationEntry ? [{ tool: 'left_click' }, { tool: 'left_click' }] :
-        firstPageEntry ? [{ tool: 'left_click' }] : seededExitConfirmation ? [{ tool: 'left_click' }, { tool: 'left_click', optional: true }] :
+        firstPageEntry ? [{ tool: 'left_click' }] : applicationQuit && binding.batch === 'E2' ?
+        [{ tool: 'left_click' }, { tool: 'left_click' }, { tool: 'left_click' }] :
+        seededExitConfirmation ? [{ tool: 'left_click' }, { tool: 'left_click', optional: true }] :
         campaign ? [{ tool: escapeBatch ? 'key' : 'left_click', optional: false }]
         : batches[/** @type {keyof typeof batches} */ (binding.batch)];
     let tail = Promise.resolve();
@@ -125,7 +129,7 @@ export function createBatchSession(session, authorization, record = () => {}) {
                     refuse('only the inspected New Game coordinate is qualified');
                 }
                 if (generationContinue && JSON.stringify(args.coordinate) !== JSON.stringify(binding.e1GeneratedNameReceipt.continueCoordinate)) refuse('only the inspected first Continue coordinate is qualified');
-                if (campaign && !creation && !escapeBatch && !seededLauncher && !generationContinue && !(seededExitConfirmation && position === 2) && (tool !== 'left_click' ||
+                if (campaign && !creation && !escapeBatch && !seededLauncher && !generationContinue && !(applicationQuit && position >= 2) && !(seededExitConfirmation && position === 2) && (tool !== 'left_click' ||
                     JSON.stringify(args.coordinate) !== JSON.stringify(binding.e1MenuReceipt.exitCoordinate))) refuse('only the inspected ordinary Exit coordinate is qualified');
                 const id = tool === 'activate_window' ? args.window_id : args.target_window_id;
                 const target = windows.get(id);
@@ -133,6 +137,7 @@ export function createBatchSession(session, authorization, record = () => {}) {
                     capture.bounds !== JSON.stringify(target.value.bounds)) refuse('missing current diagnostics, owned target or original BEFORE receipt');
                 if(initialFocus && tool === 'activate_window' && (binding.batch !== 'B1' || initialFocused || target.value.isFocused !== false || args.timeout_ms !== 2000 || !foreground || foreground.index <= capture.index || target.index <= capture.index)) refuse('one initial activation requires a fresh unfocused BEFORE pair');
                 if(initialFocus && tool==='left_click' && !capture.focusedAtCapture)refuse('fresh focused original required before Play or wizard click');
+                if(applicationQuit && !capture.focusedAtCapture)refuse('application Quit requires a focused original BEFORE');
                 if (args.target_app !== undefined && args.target_app !== target.value.bundleId) refuse('conflicting target application');
                 if (tool !== 'activate_window' && (args.focus_strategy !== 'strict' ||
                     target.value.isFocused !== true || foreground?.value?.pid !== target.value.pid ||

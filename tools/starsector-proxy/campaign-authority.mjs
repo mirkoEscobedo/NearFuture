@@ -1,5 +1,7 @@
 // @ts-check
 import {initialFocusCreationFlow,isInitialFocusCreation} from './seed-creation-profile.mjs';
+import { seedApplicationQuitFlow, isSeedApplicationQuit } from './seed-application-quit-profile.mjs';
+import { inspectSeedScene } from './seed-scene-inspection.mjs';
 import {seedProviderTimeoutMs,bindingProviderTimeoutMs,campaignProviderClock,assertSeedProviderTimingJson} from './seed-provider-budget.mjs';
 import {inspectInitialFocusResolution,assertInitialFocusArchive} from './seed-initial-focus-proof.mjs';
 import { createHash } from 'node:crypto';
@@ -16,7 +18,7 @@ import { assertSeedCreationOutput } from './seed-creation-output.mjs';
 
 export const campaignLaunchSources = Object.freeze([...fixtureProbeSources,
     ...['campaign-authority.mjs', 'batch-authorization.mjs', 'batch-session.mjs', 'finite-consent.mjs',
-        'fixture-binding.mjs', 'direct-frames.mjs', 'campaign-proof.mjs', 'generation-proof.mjs',
+        'fixture-binding.mjs', 'direct-frames.mjs', 'campaign-proof.mjs', 'generation-proof.mjs', 'seed-application-quit-profile.mjs', 'seed-scene-inspection.mjs',
         'seed-initial-focus-proof.mjs', 'seed-creation-profile.mjs', 'seed-provider-budget.mjs', 'seed-creation-history.mjs', 'seed-failed-attempt.mjs', 'seed-known-play-attempt.mjs', 'seed-wrong-scene-attempt.mjs', 'seed-capture-linkage-attempt.mjs', 'seed-caller-date-attempt.mjs', 'seed-caller-date-geometry.mjs', 'seed-pre-start-margin-attempt.mjs', 'seed-pre-start-margin-records.mjs', 'seed-pre-start-margin-geometry.mjs', 'seed-pre-continue-budget-history.mjs', 'seed-pre-continue-budget-index.mjs', 'seed-pre-continue-budget-authority.mjs', 'seed-pre-continue-budget-records.mjs', 'seed-pre-continue-budget-geometry.mjs', 'seed-early-window-focus.mjs', 'seed-early-window-custody.mjs', 'seed-post-start-verification.mjs', 'seed-post-start-records.mjs', 'seed-post-start-custody.mjs', 'seed-post-start-geometry.mjs', 'seed-zero-provider-attempt.mjs', 'seed-zero-provider-terminal.mjs', 'client-coordinate.mjs', 'seed-wizard-proof.mjs', 'seed-creation-output.mjs', 'seed-creation-custody.mjs'].map(name => 'tools/starsector-proxy/' + name)]);
 
 const flow = 'PAUSED_CAMPAIGN_EXIT_NO_SAVE';
@@ -227,7 +229,7 @@ function campaignHandoff(binding, reference, now) {
         'original paused seed entry proof changed');
         const pausedPng = file(resolve(binding.scenario, 'E1-seed-paused/F1.original.png'), 32 * 1024 * 1024);
         requireThat(pausedPng.sha256 === entry[2].after?.pngSha256 &&
-            seedSceneInspection(initial, entry[2], { ...entry[2].after, pngBytes: pausedPng.bytes }, now) === entry[2].pauseInspectionSha256,
+            inspectSeedScene(initial, entry[2], { ...entry[2].after, pngBytes: pausedPng.bytes }, now, 'paused') === entry[2].pauseInspectionSha256,
         'original paused seed image custody changed');
     }
     const expectedOwner = owner(initial);
@@ -308,7 +310,8 @@ function clock(campaign, controller, now, minimumRemainingMs = 20000) {
  * @returns {string} */
 function launchPredecessor(campaign, scenario, root, controllerSha256, phasePlan, phaseLease) {
     const inspection = campaign.flow === inspectionFlow, generation = campaign.flow === generationFlow,
-        initialFocus = campaign.flow === initialFocusCreationFlow, creation = campaign.flow === seedCreationFlow || initialFocus;
+        initialFocus = campaign.flow === initialFocusCreationFlow, creation = campaign.flow === seedCreationFlow || initialFocus,
+        applicationQuit = campaign.flow === seedApplicationQuitFlow;
     /** @param {any} descriptor @param {string} name */
     function pinned(descriptor, name) {
         requireThat(closed(descriptor, ['path', 'sha256']) && typeof descriptor.path === 'string' &&
@@ -346,8 +349,8 @@ function launchPredecessor(campaign, scenario, root, controllerSha256, phasePlan
         lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' && lease.phase === 'CAMPAIGN_BINDING_ONLY' &&
         lease.ownedGameHardTimeoutMs === watchdog && lease.maxActions === (initialFocus ? 9 : 8) && lease.maxProxyInvocations === 3 &&
         lease.campaignLoadSaveAllowed === false, 'closed original campaign launch scope required');
-    requireThat(closed(plan.campaignControl, ['schemaVersion', 'profile']) && plan.campaignControl.schemaVersion === (creation ? (initialFocus ? 5 : 4) : generation ? 3 : inspection ? 2 : 1) &&
-        plan.campaignControl.profile === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seedFlow) &&
+    requireThat(closed(plan.campaignControl, ['schemaVersion', 'profile']) && plan.campaignControl.schemaVersion === (applicationQuit ? 6 : creation ? (initialFocus ? 5 : 4) : generation ? 3 : inspection ? 2 : 1) &&
+        plan.campaignControl.profile === (applicationQuit ? seedApplicationQuitFlow : creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seedFlow) &&
         isDeepStrictEqual(plan.campaignControl, lease.campaignControl), 'closed seed entry launch profile required');
     requireThat(![plan, lease].some(value => ['ownedNodeKill', 'campaign', 'e1MenuReceipt'].some(key => Object.hasOwn(value, key))),
         'unrelated launch phase authority refused');
@@ -449,11 +452,12 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
         requireThat(files[key].sha256 === auth[key.replace('Path', 'Sha256')]?.toLowerCase(), 'campaign custody hash changed');
     }
     const plan = files.planPath.value, lease = files.leasePath.value, campaign = plan.campaign;
+    const applicationQuit = auth.schemaVersion === 3 && campaign?.flow === seedApplicationQuitFlow;
     assertSeedProviderTimingJson(plan,files.planPath.bytes);assertSeedProviderTimingJson(lease,files.leasePath.bytes);
     requireThat(!(generation || creation) || ![plan, lease].some(value => ['seed', 'exitConfirmation', 'e1MenuReceipt'].some(key => Object.hasOwn(value, key))),
         'generation refuses unrelated phase authority');
     requireThat(closed(campaign, ['flow', 'windowId', 'rootClock', 'producerWitness', 'rootCallRecord',
-        'historyBaseline', 'maxReservedActions', ...(phaseLocal ? ['launchPredecessor'] : [])]) && campaign.flow === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) &&
+        'historyBaseline', 'maxReservedActions', ...(phaseLocal ? ['launchPredecessor'] : [])]) && campaign.flow === (applicationQuit ? seedApplicationQuitFlow : creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) &&
         Number.isSafeInteger(campaign.windowId) && campaign.windowId > 0 &&
         closed(campaign.historyBaseline, ['overallAttempts', 'uiAttempts', 'reservedActions', 'sentActions']) &&
         isDeepStrictEqual(campaign, lease.campaign),
@@ -477,7 +481,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
     });
     const exitConfirmation = seeded && auth.batch === 'E2' ? plan.exitConfirmation : undefined;
     if (seeded && (plan.exitConfirmation !== undefined || lease.exitConfirmation !== undefined)) {
-        requireThat(auth.batch === 'E2' && exitConfirmationProfile(exitConfirmation) &&
+        requireThat(!applicationQuit && auth.batch === 'E2' && exitConfirmationProfile(exitConfirmation) &&
             isDeepStrictEqual(exitConfirmation, lease.exitConfirmation), 'closed matching exit confirmation declaration required');
     }
     const binding = { schemaVersion: auth.schemaVersion, batch: auth.batch, runID, scenario, workspaceRoot: resolve(root), planSha256: files.planPath.sha256,
@@ -499,7 +503,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
         plan.bounds?.maxScenarioActionsIncludingActivations === (initialFocus ? 9 : 8) && plan.bounds?.maxProxyInvocations === 3 &&
         plan.bounds?.proxyTimeoutMs === providerTimeoutMs && plan.bounds?.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs &&
         plan.batches?.some((/** @type {any} */ batch) => batch.id === auth.batch) && lease.schemaVersion === auth.schemaVersion &&
-        lease.authorized === true && lease.phase === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' &&
+        lease.authorized === true && lease.phase === (applicationQuit ? seedApplicationQuitFlow : creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && lease.issuer === '/root' && lease.driver === '/root/recovery_game_driver' &&
         lease.planSha256?.toLowerCase() === files.planPath.sha256 && lease.campaignLoadSaveAllowed === false &&
         lease.ownedGameHardTimeoutMs === campaign.rootClock.sessionWatchdogMs && lease.maxActions === (initialFocus ? 9 : 8) && lease.maxProxyInvocations === 3 &&
         Number.isSafeInteger(campaign.maxReservedActions) &&
@@ -528,6 +532,7 @@ export function readCampaignAuthorization(path, { root, runID, now = Date.now(),
 
 /** @param {any} binding */
 export function validateCampaignBinding(binding) {
+    const applicationQuit = isSeedApplicationQuit(binding);
     const inspection = binding?.schemaVersion === 4, generation = binding?.schemaVersion === 5,
         initialFocus = binding?.schemaVersion === 7, creation = binding?.schemaVersion === 6 || initialFocus, seeded = [3, 4, 5, 6, 7].includes(binding?.schemaVersion);
     requireThat(seeded || (!binding?.campaign?.launchPredecessor && binding?.originalPlanSha256 === undefined),
@@ -541,7 +546,7 @@ export function validateCampaignBinding(binding) {
     if(Object.hasOwn(binding??{},'providerTimeoutMs')){bindingProviderTimeoutMs(binding);fields.push('providerTimeoutMs');}
     requireThat(closed(binding, fields) && [2, 3, 4, 5, 6, 7].includes(binding.schemaVersion) &&
         (generation ? ['B1', 'E1', 'E2'].includes(binding.batch) : inspection ? ['B1', 'E1'].includes(binding.batch) : seeded ? ['B1', 'E1', 'E2'].includes(binding.batch) : ['E1', 'E2'].includes(binding.batch)) &&
-        binding.campaign?.flow === (creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && (!seeded || binding.campaign.launchPredecessor) && Number.isSafeInteger(binding.campaign.windowId) &&
+        binding.campaign?.flow === (applicationQuit ? seedApplicationQuitFlow : creation ? (initialFocus ? initialFocusCreationFlow : seedCreationFlow) : generation ? generationFlow : inspection ? inspectionFlow : seeded ? seedFlow : flow) && (!seeded || binding.campaign.launchPredecessor) && Number.isSafeInteger(binding.campaign.windowId) &&
         typeof binding.workspaceRoot === 'string' && isAbsolute(binding.workspaceRoot) &&
         typeof binding.scenario === 'string' && inside(resolve(binding.workspaceRoot, '.tmp/starsector-proxy/scenarios'), binding.scenario) &&
         binding.sourcePath === resolve(binding.scenario, binding.batch + '-authorization.private.json') &&
@@ -552,7 +557,7 @@ export function validateCampaignBinding(binding) {
         new Set(binding.ownedPids).size === binding.ownedPids.length &&
         (binding.batch !== 'E2' || (creation ? closed(binding.e1WizardReceipt, ['path', 'sha256', 'generatedName']) : generation ? closed(binding.e1GeneratedNameReceipt, ['path', 'sha256', 'continueCoordinate']) : closed(binding.e1MenuReceipt, ['path', 'sha256', 'exitCoordinate']))) &&
         (!seeded || binding.batch !== 'E1' || closed(binding.b1MenuReceipt, ['path', 'sha256', inspection || generation || creation ? 'newGameCoordinate' : 'loadCoordinate'])) &&
-        (binding.exitConfirmation === undefined || (!creation && !generation && seeded && binding.batch === 'E2' && exitConfirmationProfile(binding.exitConfirmation))) &&
+        (binding.exitConfirmation === undefined || (!applicationQuit && !creation && !generation && seeded && binding.batch === 'E2' && exitConfirmationProfile(binding.exitConfirmation))) &&
         (!binding.campaign.launchPredecessor || (typeof binding.originalPlanSha256 === 'string' && /^[a-f0-9]{64}$/.test(binding.originalPlanSha256))),
     'closed campaign binding required');
 }
@@ -630,64 +635,12 @@ export function claimCampaignOwner(binding) {
     });
 }
 
-/** The driver inspects the actual original; capture receipt alone never means pause.
- * @param {any} binding @param {any} previous @param {any} after @param {number} now @param {any} [args] */
-function seedSceneInspection(binding, previous, after, now, args) {
-    const confirmation = binding.batch === 'E2';
-    const prefix = confirmation ? 'E2-exit-confirmation' : 'E1-seed-paused';
-    const label = confirmation ? 'exit confirmation' : 'paused seed';
-    const path = resolve(binding.scenario, prefix + '-inspected.private.json');
-    requireThat(existsSync(path), label + ' inspection required before input');
-    const receipt = read(path), value = receipt.value;
-    const original = read(resolve(binding.scenario, 'plan.json')).value.seed;
-    requireThat(closed(value, ['schemaVersion', 'kind', 'scenario', 'rootRecordKey', 'controllerSha256',
-        'sourceSha256', 'claimSha256', 'runID', 'reservationID', 'manifestSha256', 'stagingReceiptSha256', 'frame', 'inspection']) &&
-        value.schemaVersion === 1 && value.kind === (confirmation ? 'STARSECTOR_EXIT_CONFIRMATION_INSPECTION' : 'STARSECTOR_SEED_PAUSE_INSPECTION') && value.scenario === binding.scenario &&
-        value.rootRecordKey === binding.campaign.rootClock.recordKey && value.controllerSha256 === binding.controllerSha256 &&
-        value.sourceSha256 === binding.sourceSha256 && value.runID === binding.runID && value.reservationID === previous.reservationID &&
-        value.claimSha256 === read(resolve(binding.scenario, 'guard-' + binding.batch + '-consumed.private.json')).sha256 &&
-        value.manifestSha256 === original.manifestSha256?.toLowerCase() &&
-        value.stagingReceiptSha256 === original.stagingReceiptSha256?.toLowerCase(), label + ' inspection lineage changed');
-    const frame = value.frame, inspection = value.inspection;
-    const pngPath = resolve(binding.scenario, prefix, 'F1.original.png');
-    const metadataPath = resolve(binding.scenario, prefix, 'capture-001.metadata.private.json');
-    const rawPath = resolve(binding.scenario, prefix, 'capture-001.raw.private.json');
-    requireThat(closed(frame, ['pngPath', 'pngSha256', 'metadataPath', 'metadataSha256', 'capturedAtMs']) &&
-        frame.pngPath === pngPath && frame.metadataPath === metadataPath, label + ' original paths changed');
-    const png = file(pngPath, 32 * 1024 * 1024), metadata = read(metadataPath), m = metadata.value;
-    const raw = read(rawPath, 32 * 1024 * 1024);
-    const images = raw.value.content?.filter((/** @type {any} */ row) => row.type === 'image');
-    const dimensions = completePng(png.bytes);
-    requireThat(png.sha256 === frame.pngSha256 && metadata.sha256 === frame.metadataSha256 && png.bytes.equals(after.pngBytes) &&
-        raw.value.isError !== true && images?.length === 1 && images[0].mimeType === 'image/png' &&
-        png.bytes.toString('base64') === images[0].data && m.captureReceipt === true &&
-        m.rawPath === rawPath && m.rawSha256 === raw.sha256 && m.pngPath === pngPath && m.pngSha256 === png.sha256 &&
-        m.runID === binding.runID && m.batch === binding.batch && m.sourceSha256 === binding.sourceSha256 &&
-        m.reservationID === previous.reservationID && m.capturedAtMs === frame.capturedAtMs &&
-        m.args?.target_window_id === binding.campaign.windowId && m.args.quality === 0 && m.args.width === after.window.bounds.width &&
-        m.window?.windowId === after.window.windowId && m.window.pid === after.window.pid && m.window.isFocused === true &&
-        isDeepStrictEqual(m.window.bounds, after.window.bounds) && isDeepStrictEqual(m.dimensions, dimensions) &&
-        dimensions.width === after.window.bounds.width && dimensions.height === after.window.bounds.height &&
-        Number.isSafeInteger(frame.capturedAtMs) && frame.capturedAtMs >= after.capturedAtMs && frame.capturedAtMs <= after.observedAtMs,
-    label + ' original custody changed');
-    requireThat(closed(inspection, ['issuer', 'driver', 'inspectedAtMs', 'state',
-        ...(confirmation ? ['dialogText', 'confirmLabel', 'confirmCoordinate'] : [])]) && inspection.issuer === '/root' &&
-        inspection.driver === '/root/recovery_game_driver' && inspection.state === (confirmation ? 'EXIT_GAME_CONFIRMATION' : 'INTENDED_DISPOSABLE_SEED_PAUSED') &&
-        Number.isSafeInteger(inspection.inspectedAtMs) && inspection.inspectedAtMs >= frame.capturedAtMs &&
-        inspection.inspectedAtMs <= after.observedAtMs && inspection.inspectedAtMs <= now, label + ' visible inspection required');
-    if (confirmation) requireThat(exitConfirmationProfile(binding.exitConfirmation) &&
-        inspection.dialogText === binding.exitConfirmation.dialogText && inspection.confirmLabel === binding.exitConfirmation.confirmLabel &&
-        Array.isArray(inspection.confirmCoordinate) && inspection.confirmCoordinate.length === 2 &&
-        inspection.confirmCoordinate.every((/** @type {any} */ value) => Number.isSafeInteger(value)) &&
-        isDeepStrictEqual(inspection.confirmCoordinate, args?.coordinate), 'matching declared exit confirmation required');
-    return receipt.sha256;
-}
-
 /** Full source/clock/history recheck immediately before every input reservation.
  * @param {any} binding @param {any} args @param {string} [tool] @param {any} [after] */
 export function reserveCampaignAction(binding, args, tool = binding.batch === 'E1' ? 'key' : 'left_click', after) {
     const admitted = readCampaignAuthorization(binding.sourcePath, { root: binding.workspaceRoot, runID: binding.runID, input: true });
     requireThat(isDeepStrictEqual(admitted.binding, binding), 'mutation custody changed');
+    requireThat(!isSeedApplicationQuit(binding) || tool !== 'activate_window', 'application Quit refuses activation');
     update(binding, state => {
         if(isInitialFocusCreation(binding)&&binding.batch==='B1'&&tool==='left_click')assertInitialFocusArchive(binding,state);
         const initialActivation = isInitialFocusCreation(binding) && tool === 'activate_window';
@@ -704,9 +657,11 @@ export function reserveCampaignAction(binding, args, tool = binding.batch === 'E
                 ((completed.length < 2 && tool === 'left_click') || (completed.length === 2 && tool === 'key'));
             const exitConfirmation = binding.batch === 'E2' && previous.tool === 'left_click' && tool === 'left_click' &&
                 completed.length === 0 && exitConfirmationProfile(binding.exitConfirmation);
+            const applicationQuit = isSeedApplicationQuit(binding) && binding.batch === 'E2' &&
+                previous.tool === 'left_click' && tool === 'left_click' && completed.length < 2;
             const generate = binding.schemaVersion === 5 && binding.batch === 'E1' && previous.tool === 'left_click' &&
                 tool === 'left_click' && completed.length === 0;
-            requireThat(((binding.schemaVersion === 3 && (activationToPlay || seedEntry || exitConfirmation)) ||
+            requireThat(((binding.schemaVersion === 3 && (activationToPlay || seedEntry || exitConfirmation || applicationQuit)) ||
                 ([4, 5].includes(binding.schemaVersion) && activationToPlay) || generate || wizardStep) && previous.status === 'AWAITING_AFTER' &&
                 isDeepStrictEqual(owner(previous), owner(binding)) &&
                 closed(after, ['pngBytes', 'window', 'capturedAtMs', 'observedAtMs']) && Buffer.isBuffer(after.pngBytes) &&
@@ -720,12 +675,16 @@ export function reserveCampaignAction(binding, args, tool = binding.batch === 'E
             const dimensions = completePng(after.pngBytes);
             requireThat(dimensions.width === after.window.bounds?.width && dimensions.height === after.window.bounds?.height,
                 'original AFTER dimensions changed');
-            const pauseInspectionSha256 = seedEntry && tool === 'key' ? seedSceneInspection(binding, previous, after, now) : undefined;
-            const exitConfirmationInspectionSha256 = exitConfirmation ? seedSceneInspection(binding, previous, after, now, args) : undefined;
+            const pauseInspectionSha256 = seedEntry && tool === 'key' ? inspectSeedScene(binding, previous, after, now, 'paused') : undefined;
+            const exitConfirmationInspectionSha256 = exitConfirmation ? inspectSeedScene(binding, previous, after, now, 'exit-confirmation', args) : undefined;
+            const applicationQuitInspectionSha256 = applicationQuit ? inspectSeedScene(binding, previous, after, now,
+                completed.length === 0 ? 'no-save-return' : 'returned-main-menu', args) : undefined;
             const generateInspectionSha256 = generate ? inspectGenerationControl(binding, previous, after, now, args) : undefined;
             state.resolvedActions = [...resolved, { ...previous, ...(pauseInspectionSha256 ? { pauseInspectionSha256 } : {}),
                 ...(wizardStep?.inspectionSha256 ? { seedWizardInspectionSha256: wizardStep.inspectionSha256 } : {}),
                 ...(exitConfirmationInspectionSha256 ? { exitConfirmationInspectionSha256 } : {}),
+                ...(applicationQuitInspectionSha256 ? { [completed.length === 0 ? 'noSaveReturnInspectionSha256' :
+                    'returnedMainMenuInspectionSha256']: applicationQuitInspectionSha256 } : {}),
                 ...(generateInspectionSha256 ? { generateInspectionSha256 } : {}),
                 after: { captureReceipt: true, freshness: 'UNKNOWN',
                 pngSha256: createHash('sha256').update(after.pngBytes).digest('hex'),
