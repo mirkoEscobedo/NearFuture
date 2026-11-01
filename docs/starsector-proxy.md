@@ -252,6 +252,17 @@ Forced cleanup is a separate outcome. This profile retains the eight-minute
 root bound, three-minute providers and 32-call provider ceiling. Existing entry
 and separately declared `Exit game?` / `Yes` behavior retain their own profile.
 
+`DISPOSABLE_SEED_RETURN_MENU_QUIT_CONFIRMATION_NO_SAVE` pairs a separate immutable
+root control schema 7 with phase authorization schema 3 and a nine-input ceiling.
+It adds only an optional final `Yes` after the same eight inputs. That input
+requires the exact freshly inspected `Exit game?` dialog and `Yes` coordinate,
+bound to the immediately preceding known Quit reservation through
+`E2-application-quit-confirmation`. The legacy confirmation declaration cannot
+grant it. If Quit closes naturally, send no ninth input. Final Quit or Yes stays
+unresolved until separate original-root natural termination and process-absence
+evidence; foreign foreground alone is insufficient. No tenth input or activation
+is permitted. All root/provider timing and call limits above remain unchanged.
+
 Source qualification and synthetic stdio/HTTP checks do not refresh an already
 loaded MCP frontend or establish live desktop capture, game input or exit success.
 

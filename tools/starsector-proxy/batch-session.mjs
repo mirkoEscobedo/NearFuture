@@ -2,7 +2,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { validateCampaignBinding, reserveCampaignAction, finishCampaignAction } from './campaign-authority.mjs';
 import { completePng } from './direct-frames.mjs';
-import { isSeedApplicationQuit } from './seed-application-quit-profile.mjs';
+import { isSeedApplicationQuit, isSeedApplicationQuitConfirmation } from './seed-application-quit-profile.mjs';
 const observations = new Set(['doctor', 'policy_status', 'list_windows', 'get_window',
     'get_frontmost_app', 'get_display_size', 'list_running_apps', 'screenshot', 'wait']);
 const batches = {
@@ -59,7 +59,8 @@ export function createBatchSession(session, authorization, record = () => {}) {
         [{ tool: 'left_click' }, { tool: 'left_click' }, { tool: 'left_click' }, { tool: 'key' }] :
         generationEntry ? [{ tool: 'left_click' }, { tool: 'left_click' }] :
         firstPageEntry ? [{ tool: 'left_click' }] : applicationQuit && binding.batch === 'E2' ?
-        [{ tool: 'left_click' }, { tool: 'left_click' }, { tool: 'left_click' }] :
+        [...Array.from({length: 3}, () => ({tool: 'left_click'})),
+            ...(isSeedApplicationQuitConfirmation(binding) ? [{tool: 'left_click', optional: true}] : [])] :
         seededExitConfirmation ? [{ tool: 'left_click' }, { tool: 'left_click', optional: true }] :
         campaign ? [{ tool: escapeBatch ? 'key' : 'left_click', optional: false }]
         : batches[/** @type {keyof typeof batches} */ (binding.batch)];

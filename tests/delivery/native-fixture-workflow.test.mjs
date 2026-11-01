@@ -58,7 +58,7 @@ test('isolated provenance retains pinned setup and the existing deadlines',()=>{
     assert.match(step,/\$env:NF_CAPTURE_TEST_POWERSHELL = \$env:NF_TEST_POWERSHELL/);
     assert.match(step,/buildCaptureRuntime\(\)/);
     assert.match(step,/\$PSNativeCommandUseErrorActionPreference = \$true/);
-    assert.match(operator,/timeout-minutes: 20/);
+    assert.match(operator,/timeout-minutes: \$\{\{ matrix\.os == 'windows-latest' && 30 \|\| 20 \}\}/);
     assert.match(job('public-build'),/matrix.os == 'windows-latest' && 30 \|\| 20/);
     const helper=readFileSync(new URL('../../tools/starsector-proxy/fixture/seed-test-support.mjs',import.meta.url),'utf8');
     assert.match(helper,/timeout:15000\b/);

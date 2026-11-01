@@ -271,7 +271,8 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  $planControl=$null-ne$Plan-and@($Plan.PSObject.Properties.Name)-ccontains'campaignControl'
  $leaseControl=$null-ne$Lease-and@($Lease.PSObject.Properties.Name)-ccontains'campaignControl'
  $initialFocus=$Plan.campaignControl.profile-ceq'DISPOSABLE_SEED_CREATION_INITIAL_FOCUS'
- $applicationQuit=$Plan.campaignControl.profile-ceq'DISPOSABLE_SEED_RETURN_MENU_QUIT_NO_SAVE'
+ $confirmationQuit=$Plan.campaignControl.profile-ceq'DISPOSABLE_SEED_RETURN_MENU_QUIT_CONFIRMATION_NO_SAVE'
+ $applicationQuit=$confirmationQuit-or$Plan.campaignControl.profile-ceq'DISPOSABLE_SEED_RETURN_MENU_QUIT_NO_SAVE'
  $creation=$Plan.campaignControl.profile-cin@('DISPOSABLE_SEED_CREATION','DISPOSABLE_SEED_CREATION_INITIAL_FOCUS')
  if($Binding.schemaVersion-eq3-and($null-ne$Plan-or$null-ne$Lease)-and(!$planControl-or!$leaseControl-or$Plan.campaignControl.profile-cnotin@('GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE','DISPOSABLE_SEED_CREATION','DISPOSABLE_SEED_CREATION_INITIAL_FOCUS')-or$Lease.campaignControl.profile-cne$Plan.campaignControl.profile)){throw 'Generation fixture requires its explicit campaign control'}
  if($planControl-ne$leaseControl){throw 'Campaign control plan and lease must agree'}
@@ -281,7 +282,7 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
  $inspection=$Plan.campaignControl.profile-ceq'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'
  foreach($control in @($Plan.campaignControl,$Lease.campaignControl)){
   Assert-NativeSeedFields $control @('schemaVersion','profile')
-  $version=if($applicationQuit){6}elseif($initialFocus){5}elseif($creation){4}elseif($generation){3}elseif($inspection){2}else{1};$profile=if($applicationQuit){'DISPOSABLE_SEED_RETURN_MENU_QUIT_NO_SAVE'}elseif($initialFocus){'DISPOSABLE_SEED_CREATION_INITIAL_FOCUS'}elseif($creation){'DISPOSABLE_SEED_CREATION'}elseif($generation){'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'}elseif($inspection){'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'}else{'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE'}
+  $version=if($confirmationQuit){7}elseif($applicationQuit){6}elseif($initialFocus){5}elseif($creation){4}elseif($generation){3}elseif($inspection){2}else{1};$profile=if($applicationQuit){$Plan.campaignControl.profile}elseif($initialFocus){'DISPOSABLE_SEED_CREATION_INITIAL_FOCUS'}elseif($creation){'DISPOSABLE_SEED_CREATION'}elseif($generation){'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'}elseif($inspection){'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'}else{'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE'}
   Assert-NativeSeedInteger $control.schemaVersion $version $version
   if($control.profile-isnot[string]-or$control.profile-cne$profile){throw 'Closed campaign control profile required'}
  }
@@ -295,8 +296,8 @@ function Assert-NativeCampaignControl($Binding,$Plan,$Lease) {
    Assert-NativeSeedProviderTimingJson $pair[1] ([IO.File]::ReadAllBytes($timingPath))
   }
  }
- foreach($pair in @(@('maxScenarioActionsIncludingActivations',$(if($initialFocus){9}else{8})),@('maxProxyInvocations',3),@('proxyTimeoutMs',$providerTimeoutMs),@('ownedGameHardTimeoutMs',$watchdog))){Assert-NativeSeedInteger $Plan.bounds.($pair[0]) $pair[1] $pair[1]}
- foreach($pair in @(@('maxActions',$(if($initialFocus){9}else{8})),@('maxProxyInvocations',3),@('ownedGameHardTimeoutMs',$watchdog))){Assert-NativeSeedInteger $Lease.($pair[0]) $pair[1] $pair[1]}
+ foreach($pair in @(@('maxScenarioActionsIncludingActivations',$(if($initialFocus-or$confirmationQuit){9}else{8})),@('maxProxyInvocations',3),@('proxyTimeoutMs',$providerTimeoutMs),@('ownedGameHardTimeoutMs',$watchdog))){Assert-NativeSeedInteger $Plan.bounds.($pair[0]) $pair[1] $pair[1]}
+ foreach($pair in @(@('maxActions',$(if($initialFocus-or$confirmationQuit){9}else{8})),@('maxProxyInvocations',3),@('ownedGameHardTimeoutMs',$watchdog))){Assert-NativeSeedInteger $Lease.($pair[0]) $pair[1] $pair[1]}
  if($Lease.campaignLoadSaveAllowed-isnot[bool]-or$Lease.campaignLoadSaveAllowed){throw 'Campaign control refuses general save and load authority'}
  $batches=@($Plan.batches)
  $batchCount=if($inspection){2}else{3};$batchNames=if($inspection){'B1,E1'}else{'B1,E1,E2'}

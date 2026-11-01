@@ -74,11 +74,12 @@ export function seedInputSession(f, beforeEffect, observations = {}) {
 export function claimSeededLauncher(f, runID, claim = true) {
     const inspection = f.plan.campaignControl.profile === 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE';
     const generation = f.plan.campaignControl.profile === 'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE';
-    const applicationQuit = f.plan.campaignControl.profile === 'DISPOSABLE_SEED_RETURN_MENU_QUIT_NO_SAVE';
+    const applicationQuit = ['DISPOSABLE_SEED_RETURN_MENU_QUIT_NO_SAVE',
+        'DISPOSABLE_SEED_RETURN_MENU_QUIT_CONFIRMATION_NO_SAVE'].includes(f.plan.campaignControl.profile);
     const schemaVersion = generation ? 5 : inspection ? 4 : 3;
     const campaign = { ...f.campaign, flow: generation ? 'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'
         : inspection ? 'NEW_GAME_FIRST_PAGE_INSPECTION_NO_SAVE'
-        : applicationQuit ? 'DISPOSABLE_SEED_RETURN_MENU_QUIT_NO_SAVE' : 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE' };
+        : applicationQuit ? f.plan.campaignControl.profile : 'DISPOSABLE_SEED_ENTRY_EXIT_NO_SAVE' };
     const planPath = resolve(f.scenario, 'B1-plan.private.json'), leasePath = resolve(f.scenario, 'B1-lease.private.json');
     writeJson(planPath, { ...f.phasePlan, campaign, batches: [{ id: 'B1' }] });
     writeJson(leasePath, { ...f.phaseLease, schemaVersion, phase: campaign.flow, campaign, planSha256: filePin(planPath).sha256 });

@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { completePng } from './direct-frames.mjs';
 import { requireThat, file, read, closed } from './campaign-proof.mjs';
-import { isSeedApplicationQuit } from './seed-application-quit-profile.mjs';
+import { isSeedApplicationQuit, isSeedApplicationQuitConfirmation } from './seed-application-quit-profile.mjs';
 
 const scenes = Object.freeze({
     paused: { prefix: 'E1-seed-paused', label: 'paused seed', batch: 'E1',
@@ -19,6 +19,9 @@ const scenes = Object.freeze({
     'returned-main-menu': { prefix: 'E2-returned-main-menu', label: 'returned main menu', batch: 'E2',
         kind: 'STARSECTOR_RETURNED_MAIN_MENU_INSPECTION', state: 'STARSECTOR_MAIN_MENU_WITH_QUIT',
         button: 'Quit', coordinate: 'quitCoordinate', buttonField: 'quitLabel' },
+    'application-quit-confirmation': { prefix: 'E2-application-quit-confirmation', label: 'application Quit confirmation', batch: 'E2',
+        kind: 'STARSECTOR_APPLICATION_QUIT_CONFIRMATION_INSPECTION', state: 'EXIT_GAME_CONFIRMATION',
+        dialogText: 'Exit game?', button: 'Yes', coordinate: 'confirmCoordinate', buttonField: 'confirmLabel' },
 });
 
 /** Read-only proof: no ledger updates, claims or authority renewal.
@@ -30,6 +33,8 @@ export function inspectSeedScene(binding, previous, after, now, scene, args) {
     requireThat(definition && binding.batch === definition.batch, 'matching seed scene batch required');
     const applicationQuit = scene === 'no-save-return' || scene === 'returned-main-menu';
     requireThat(!applicationQuit || isSeedApplicationQuit(binding), 'application Quit scene profile required');
+    if (scene === 'application-quit-confirmation') requireThat(isSeedApplicationQuitConfirmation(binding),
+        'application Quit confirmation profile required');
     if (scene === 'exit-confirmation') requireThat(!isSeedApplicationQuit(binding) &&
         closed(binding.exitConfirmation, ['schemaVersion', 'dialogText', 'confirmLabel']) &&
         binding.exitConfirmation.schemaVersion === 1 && binding.exitConfirmation.dialogText === 'Exit game?' &&

@@ -19,7 +19,7 @@ const sha=p=>filePin(p).sha256.toLowerCase();
 /** @param {any} r */
 const textJson=r=>JSON.parse(r.content.find((/** @type {any} */ c)=>c.type==='text').text);
 
-/** @param {{retain?:boolean,watchdogMs?:number,callerBudgetMs?:number,fixture?:()=>any,initialActivation?:boolean,expectedProviderTimeoutMs?:480000}} [options] */
+/** @param {{retain?:boolean,retainFailure?:boolean,watchdogMs?:number,callerBudgetMs?:number,fixture?:()=>any,initialActivation?:boolean,expectedProviderTimeoutMs?:480000}} [options] */
 export async function exerciseSeedCreationTransport(options={}) {
     const f=options.fixture?.()??seedCreationFixture({watchdogMs:options.watchdogMs,callerBudgetMs:options.callerBudgetMs}),input=new PassThrough(),output=new PassThrough();
     const creationFlow=f.plan.campaignControl.profile,version=creationFlow===originalCreationFlow?6:7;
@@ -36,7 +36,7 @@ export async function exerciseSeedCreationTransport(options={}) {
     /** @type {ReturnType<typeof directFixture>|undefined} */let provider;
     /** @type {ReturnType<typeof serveDirectMcp>|undefined} */let frontend;
     let batch='B1',runID=prefix+'-B1',source='',calls=0,window={...seedTarget,isFocused:!options.initialActivation};
-    let retained=false;
+    let retained=false,completed=false;
     function cleanup() {
         for(const p of outputs)if(existsSync(p)){const suffix=relative(parent,p);assert.ok(suffix&&!suffix.startsWith('..')&&!isAbsolute(suffix));rmSync(p,{recursive:true});}
         f.close();
@@ -186,10 +186,12 @@ export async function exerciseSeedCreationTransport(options={}) {
         assert.equal(ledger().uncertain,false);assert.equal(ledger().pending.wizardStep.stage,'START_GAME');
         assert.equal(provider.starts(),3);assert.ok(callCounts.E1<=32&&callCounts.E2<=32);
         assert.deepEqual([f.planPath,f.leasePath].map(p=>readFileSync(p)),originalAuthority);
+        completed=true;
         if(options.retain){retained=true;return {fixture:f,callCounts,outputs,close:cleanup};}
     } finally {
         await client.close();await frontend?.close();await provider?.close();
-        if(!retained)cleanup();
+        // Existing provider/client cleanup above is unchanged; this opt-in retains only synthetic files.
+        if(!retained&&(completed||options.retainFailure!==true))cleanup();
         names.forEach((n,i)=>{if(prior[i]===undefined)delete process.env[n];else process.env[n]=prior[i];});
     }
 }
