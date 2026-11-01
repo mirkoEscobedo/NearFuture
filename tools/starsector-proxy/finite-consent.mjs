@@ -8,6 +8,7 @@ import { createSession } from '../computer-use-mcp/node_modules/@zavora-ai/compu
 import { readClaimedBatchAuthorization } from './batch-authorization.mjs';
 import { createGuardedMcp } from './guarded-mcp.mjs';
 import { markCampaignActionSent } from './campaign-authority.mjs';
+import { isSeedApplicationQuit } from './seed-application-quit-profile.mjs';
 
 const observations = ['doctor', 'policy_status', 'list_windows', 'get_window', 'get_frontmost_app',
     'get_display_size', 'list_running_apps', 'screenshot', 'wait'];
@@ -62,7 +63,7 @@ export function readFiniteConsentAuthority({ root, source, runID }) {
 export function createFiniteConsentMcp({ root, source, runID }, options = {}) {
     const { admitted, consent } = readFiniteConsentAuthority({ root, source, runID });
     const campaign = [2, 3, 4, 5, 6, 7].includes(admitted.binding.schemaVersion);
-    const allowed = new Set([...observations, ...(admitted.binding.schemaVersion===7 ? (admitted.binding.batch==='B1'?mutations.B1:['left_click']) : admitted.binding.schemaVersion===6 ? ['left_click'] : [4, 5].includes(admitted.binding.schemaVersion) ?
+    const allowed = new Set([...observations, ...(isSeedApplicationQuit(admitted.binding) && admitted.binding.batch === 'B1' ? ['left_click'] : admitted.binding.schemaVersion===7 ? (admitted.binding.batch==='B1'?mutations.B1:['left_click']) : admitted.binding.schemaVersion===6 ? ['left_click'] : [4, 5].includes(admitted.binding.schemaVersion) ?
         admitted.binding.batch === 'B1' ? mutations.B1 : ['left_click'] : admitted.binding.schemaVersion === 3 ?
         admitted.binding.batch === 'B1' ? mutations.B1 : admitted.binding.batch === 'E1' ? ['left_click', 'key'] : ['left_click'] :
         campaign ? [admitted.binding.batch === 'E1' ? 'key' : 'left_click'] : mutations[admitted.binding.batch])]);

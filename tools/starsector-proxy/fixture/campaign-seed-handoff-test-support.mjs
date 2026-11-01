@@ -11,7 +11,7 @@ import { persistDirectFrame } from '../direct-frames.mjs';
 /** @param {string} path */
 const filePin = path => { const pin = rawFilePin(path); return { ...pin, sha256: pin.sha256.toLowerCase() }; };
 
-/** @param {{inspection?: boolean, generation?: boolean}} [options] */
+/** @param {Parameters<typeof campaignLaunchFixture>[0]} [options] */
 export async function completedSeedLaunch(options = {}) {
     const f = campaignLaunchFixture(options);
     const schemaVersion = options.generation ? 5 : options.inspection ? 4 : 3;

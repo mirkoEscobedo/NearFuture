@@ -8,9 +8,10 @@ import { json, filePin } from './seed-test-support.mjs';
 import { claimBatchAuthorization, readBatchAuthorization } from '../batch-authorization.mjs';
 import { persistDirectFrame } from '../direct-frames.mjs';
 
-/** Existing three-click entry is prerequisite setup, with generated observations. */
-export async function enteredSeedFixture() {
-    const f = await completedSeedLaunch();
+/** Existing three-click entry is prerequisite setup, with generated observations.
+ * @param {Parameters<typeof completedSeedLaunch>[0]} [options] */
+export async function enteredSeedFixture(options) {
+    const f = await completedSeedLaunch(options);
     const runID = 'synthetic-paused-seed-entry-' + basename(f.scenario);
     claimBatchAuthorization(readBatchAuthorization(f.source, { root: f.root, runID }));
     const window = { ...seedTarget, windowId: 21 };
