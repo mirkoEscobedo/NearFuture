@@ -18,7 +18,7 @@ const original = { content: [{ type: 'image', mimeType: 'image/png',
 const json = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], structuredContent: value });
 
 /** @param {(tool: string, args: unknown[]) => void} beforeEffect
- * @param {{screenshot?: () => any, window?: () => any}} [observations]
+ * @param {{screenshot?: () => any, window?: () => any,activationResult?:(result:any)=>any}} [observations]
  * @returns {typeof createSession} */
 export function seedNativeSessionFactory(beforeEffect, observations = {}) {
     const window = () => observations.window?.() ?? seedTarget;
@@ -33,7 +33,10 @@ export function seedNativeSessionFactory(beforeEffect, observations = {}) {
     return (/** @type {Parameters<typeof createSession>[0]} */ options) => {
             const real = createSession(/** @type {any} */ ({ ...options, native }));
             return { ...real, dispatch: async (tool, args, signal, progress, context) => {
-                if (['key', 'left_click', 'activate_window'].includes(tool)) return real.dispatch(tool, args, signal, progress, context);
+                if (['key', 'left_click', 'activate_window'].includes(tool)) {
+                    const result=await real.dispatch(tool,args,signal,progress,context);
+                    return tool==='activate_window'&&observations.activationResult?observations.activationResult(result):result;
+                }
                 assert.equal(await options?.elicitApproval?.({ tool, args, destructive: false,
                     reasons: ['approval_required_for_all'] }), true, 'fresh exact observation consent');
                 if (tool === 'doctor') return json(syntheticDoctor);
@@ -47,7 +50,7 @@ export function seedNativeSessionFactory(beforeEffect, observations = {}) {
 }
 
 /** @param {any} f @param {(tool: string, args: unknown[]) => void} beforeEffect
- * @param {{screenshot?: () => any, window?: () => any}} [observations] */
+ * @param {{screenshot?: () => any, window?: () => any,activationResult?:(result:any)=>any}} [observations] */
 export function seedInputSession(f, beforeEffect, observations = {}) {
     const window = () => observations.window?.() ?? seedTarget;
     const embedded = createFiniteConsentMcp({ root: f.root, source: f.source, runID: f.runID }, {

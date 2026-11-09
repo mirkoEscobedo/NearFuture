@@ -21,7 +21,7 @@ fn signed_admission_revocation_and_private_key_rotation_survive_real_sqlite_rest
     let saves = scratch.0.join("saves");
     std::fs::create_dir(&saves).unwrap();
     let private = scratch.0.join("private");
-    let vault = PrivateVault::create(&private, &saves).unwrap();
+    let vault = PrivateVault::create_diagnosed(&private, &saves).unwrap();
     let recipient = vault.create_identity(vec![3, 4]).unwrap();
     let invitation = sign_invitation(
         Invitation {

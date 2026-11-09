@@ -6,9 +6,9 @@ import { unlinkSync, readFileSync } from 'node:fs';
 import { seedFixture, json, filePin, powershell, repository, quote } from './seed-test-support.mjs';
 import { campaignLaunchSources } from '../campaign-authority.mjs';
 
-/** @param {{inspection?: boolean, generation?: boolean, absoluteMaxReservedActions?: number, historyBaseline?: {overallAttempts: number, uiAttempts: number, reservedActions: number, sentActions: number}}} [options] */
+/** @param {{preparedSeed?: any, staged?: boolean, inspection?: boolean, generation?: boolean, absoluteMaxReservedActions?: number, historyBaseline?: {overallAttempts: number, uiAttempts: number, reservedActions: number, sentActions: number}}} [options] */
 export function campaignLaunchFixture(options = {}) {
-    const f = seedFixture({ driverRole: '/root/recovery_game_driver' }), scenario = f.target;
+    const f = options.preparedSeed ?? seedFixture({ driverRole: '/root/recovery_game_driver' }), scenario = f.target;
     const noSeed = options.inspection || options.generation;
     if (options.generation) {
         const binding = JSON.parse(readFileSync(f.bindingPath, 'utf8'));
@@ -24,7 +24,7 @@ export function campaignLaunchFixture(options = {}) {
         for (const name of ['seed-manifest.private.json', 'seed-stage-authority.private.json', 'seed-stage-plan.private.json']) {
             unlinkSync(resolve(scenario, name));
         }
-    } else assert.equal(f.stage().status, 0, 'generated disposable seed staging');
+    } else if(!options.staged) assert.equal(f.stage().status, 0, 'generated disposable seed staging');
     const startMs = Date.now() - 2000, deadlineMs = startMs + 480000;
     const callerAdmissionDeadlineMs = startMs + 420000;
     const planPath = resolve(scenario, 'plan.json');

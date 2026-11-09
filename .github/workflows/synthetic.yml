@@ -12,7 +12,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 30 || 20 }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -44,7 +44,8 @@ jobs:
           $env:NF_CAPTURE_TEST_POWERSHELL = $env:NF_TEST_POWERSHELL
           node --input-type=module -e "import { buildCaptureRuntime } from './tools/starsector-proxy/capture/build-runtime.mjs'; buildCaptureRuntime();"
           $captureTests = @(Get-ChildItem tools/starsector-proxy/capture/*.test.mjs -File | Where-Object Name -ne 'capture-slot-projection.test.mjs' | ForEach-Object FullName)
-          $fixtureTests = @(Get-ChildItem tools/starsector-proxy/fixture/*.test.mjs -File | ForEach-Object FullName)
+          $isolatedFixtureTests = @('seed-initial-focus-provenance.test.mjs', 'seed-provider-budget-json.test.mjs', 'seed-provider-budget-launch.test.mjs', 'seed-provider-budget-provenance.test.mjs', 'seed-provider-budget-refusals.test.mjs', 'seed-provider-budget-runtime.test.mjs', 'seed-pre-continue-history.test.mjs', 'seed-pre-continue-history-refusals.test.mjs', 'seed-pre-continue-review-r1.test.mjs', 'seed-modern-private-root.test.mjs')
+          $fixtureTests = @(Get-ChildItem tools/starsector-proxy/fixture/*.test.mjs -File | Where-Object { $_.Name -notin $isolatedFixtureTests } | ForEach-Object FullName)
           node --test @fixtureTests
           node --test @captureTests
       - name: Observe Java and Rust mutual authentication on both local endpoints
@@ -303,6 +304,17 @@ jobs:
           path: ${{ env.NF_DIAGNOSTIC_OBSERVATION_EVIDENCE_ROOT }}
           if-no-files-found: error
           retention-days: 7
+      - name: Qualify initial-focus provenance without other fixture workers
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          npm ci --prefix tools/computer-use-mcp --ignore-scripts --bin-links=false --no-audit --no-fund
+          $env:NF_TEST_POWERSHELL = (Get-Command pwsh -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
+          $env:NF_CAPTURE_TEST_POWERSHELL = $env:NF_TEST_POWERSHELL
+          node --input-type=module -e "import { buildCaptureRuntime } from './tools/starsector-proxy/capture/build-runtime.mjs'; buildCaptureRuntime();"
+          node --test --test-concurrency=1 tools/starsector-proxy/fixture/seed-initial-focus-provenance.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-json.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-launch.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-provenance.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-refusals.test.mjs tools/starsector-proxy/fixture/seed-provider-budget-runtime.test.mjs tools/starsector-proxy/fixture/seed-pre-continue-history.test.mjs tools/starsector-proxy/fixture/seed-pre-continue-history-refusals.test.mjs tools/starsector-proxy/fixture/seed-pre-continue-review-r1.test.mjs tools/starsector-proxy/fixture/seed-modern-private-root.test.mjs
   public-rust:
     strategy:
       fail-fast: false

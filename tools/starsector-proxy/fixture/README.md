@@ -1,5 +1,28 @@
 # Protected Starsector fixture tooling
 
+The existing closed no-input focus-failure history also accepts the separately
+recorded capture-first observation shape. Its five calls must remain in their
+original order: doctor, policy status, owned-window lookup, targeted original
+screenshot, then foreground lookup. The readers bind the raw observation and
+result to the actual call triples, provider and original-caller terminal records,
+owned PID absence and protected saves. They recognize only the pinned doctor's
+default `include_remediation: true` for an omitted caller option; other request
+arguments must match the owned window and native-width PNG request. The legacy
+shape and its foreground-before-capture order are unchanged. Neither shape
+qualifies a seed, native acceptance, another action or a renewed clock.
+
+The separate `ROOT_CLOSED_CAPTURE_STOP_FAILED_SEED_ATTEMPT_HISTORY` receipt
+preserves a one-Play run whose last permitted original did not establish a
+readable main menu. It references the unchanged actual `CAPTURE_UNCERTAIN`
+result and `ACTUAL_DRIVER_KNOWN_PLAY_CAPTURE_STOP` observation, including its
+explicit four-field Java arguments and unknown freshness. It requires the
+same fourteen-call/three-original one-Play custody, immutable process lineage,
+known provider/caller closure, protected empty private saves, one recapture,
+zero helper modes and no E1/E2 or seed claim. It does not reinterpret this stop
+as the historical helper refusal, qualify seed provenance or clear pending
+Play. A next root grant carries the spent counts and explicitly admits at most
+eight further reservations; its new cap cannot rewrite the historical cap.
+
 The maintained fixture code lives here. Private bindings, plans, leases,
 runtime manifests, source pins, licensed game copies, backups, saves, images,
 logs, recordings and receipts belong under ignored
@@ -426,4 +449,157 @@ Admission still checks current owner/claim/source, inspected coordinate, origina
 clocks and the known `AWAITING_AFTER` reservation. Links, extra files/directories,
 different bytes, uncertain or incomplete actions and every further input refuse.
 This UI preference is preserved output; it supplies no campaign save or seed.
+
+# Disposable initial seed creation
+
+Schema6 `DISPOSABLE_SEED_CREATION` is distinct from the preceding observation
+profiles. Original launch plan and lease select exactly
+`campaignControl:{schemaVersion:4,profile:"DISPOSABLE_SEED_CREATION"}` and binding3
+`VANILLA_UNCOMPRESSED_GENERATION`. Both original and phase pairs bind identical
+`seedCreation:{mode:"CREATE_ONE_PRIVATE_DISPOSABLE_SEED",preference:{path,sha256}}`
+and `historyAdmission:{path,sha256}` descriptors. The fixed preference file is
+`seed-creation-preference.private.json`; its closed fields are schemaVersion1,
+kind `NATIVE_SEED_SHARED_PREFERENCE_V1`, view `Registry64`, node
+`/com/fs/starfarer`, valueName `canSkipTutorial`, registryValueName
+`can/Skip/Tutorial`, valueKind `String`, value `true`. Only this existing exact
+HKCU Java preference is read. Native launch and protection recheck it without
+enumeration, creation or writes.
+
+The fixed `root-history-baseline.admitted.private.json` grant uses schemaVersion2,
+kind `ROOT_ADMITTED_SEED_CREATION_HISTORY`, issuer `/root`, driver
+`/root/recovery_game_driver`, identical `historyBaseline`, `maxReservedActions`,
+and `previous:{result:{path,sha256},ledger:{path,sha256}}`. Both previous artifacts
+must be actual terminal evidence with unchanged guard counters and the truthful
+next attempt context. The cap is greater than the carried reserved count and at
+most eight more. New authority does not erase prior failures or replenish input
+within a run. Root-issued authority JSON uses canonical scalars and permits
+insignificant whitespace; duplicate fields refuse. Legacy grants are unchanged.
+
+The only route is eight left clicks: B1 Play; E1 New Game, Generate, first
+Continue; E2 Explorer/Apogee faster start, Normal, Skip it, Start game. No
+activation, key, typing, manual Save or extra provider is available. Provider,
+startup/call/action/cleanup limits and the selected original root clock remain. An unavailable preferred
+choice stops the route instead of selecting another branch.
+
+The original seed-creation plan and lease may explicitly select the paired
+`sessionWatchdogMs:1800000` emergency policy with matching owned-game/controller
+bounds. This finite 30-minute watchdog replaces the separate 120000ms input
+reserve with the existing 20000ms per-call check, retaining 30000ms for cleanup.
+Its seed prelaunch caller floor is 50000ms; generic controller startup freshness
+and its owned Job tail remain unchanged. Legacy 480000ms/720000ms policies retain
+their 120000ms input reserve and 150000ms caller floor. Other profiles cannot use
+the new value. No policy renews original caller/outer deadlines, adds a provider,
+extends the 180000ms provider lifetime, refunds actions or rewrites old failures.
+
+Each E1 control after New Game and every E2 control uses
+`<batch>-wizard-<ordinal>-inspected.private.json`, kind
+`STARSECTOR_SEED_WIZARD_CONTROL`, with the closed lineage fields in
+`seed-wizard-proof.mjs`. Its fixed directory contains the original PNG, raw MCP
+result and metadata. Inspection binds issuer, driver, time, state, exact label,
+enabled=true, coordinate and generated name. E1 ends with
+`E1-occupation-inspected.private.json`, kind `STARSECTOR_E1_OCCUPATION_INSPECTION`,
+binding all three reservations and actual provider closure. E2 binds that receipt
+as `e1WizardReceipt:{path,sha256}`. Every control is checked against the actual
+clicked BEFORE, archived AFTER where present and inspection before dispatch.
+
+The final original lives under `E2-created-seed/`; the closed
+`E2-created-seed-inspected.private.json` has kind `STARSECTOR_NEW_SEED_INSPECTION`
+and inspection state `NEW_GAME_CAMPAIGN_VISIBLE`. Its frame time, paths, bytes
+and source capture must agree, followed by actual terminal E2 provider proof.
+Observations after the known Start may tolerate the game's partial initial-save
+write; partial files are never accepted as a usable seed.
+
+After all owned handles are terminal and reaped, freeze
+`seed-creation-closeout.private.json`, kind
+`ACTUAL_DISPOSABLE_SEED_CREATION_CLOSEOUT`, with carried/actual counters, separate
+raw cleanup outcome, original protection, exact two-file census and fixed
+evidence hashes. The V2 manifest kind is `NATIVE99_DISPOSABLE_SEED_MANIFEST_V2`.
+It adds canonical `sourceWorkspace` and uses immediate private scenario children;
+its five provenance pins include that completed closeout. This forms an acyclic
+chain: closeout pins XML/evidence, manifest pins closeout, stage authority pins
+manifest. The consumer rereads actual acknowledged clicks, original-image and
+provider custody, zero live source processes, original182/save178 protection,
+the exact41-byte common preference, and ordinary unlinked XML files. Version,
+uncompressed format, player-fleet reference, zero mods and 16 MiB total are
+independently validated. Current complete tooling pins allow at most1024 unique
+rows and262144 bytes for V2; a selected subset refuses. V1 retains its original
+131072-byte inventory limit and provenance reader. Valid V2 staging composes with
+the existing immutable seeded-entry launch validators; it grants no new input.
+
+Tests generate OS, visual and cleanup boundaries. Their real transport/validator
+coverage is source evidence, never a loaded-frontend or native campaign pass.
+
+A seed-creation attempt stopped before input on a foreground mismatch has a
+separate terminal history receipt, `ROOT_CLOSED_NO_INPUT_SEED_ATTEMPT_HISTORY`.
+Its closed fields are `schemaVersion:1`, `kind`, `issuer:"/root"`, canonical
+`driver`, `scenario`, `sourceWorkspace`, original `sourceHead`,
+`allOwnedHandlesTerminalReaped:true`, `actions` and `evidence`. `actions` contains
+the unchanged actual guard, actual attempt context and original absolute cap.
+This receipt can carry history into a fresh explicit grant. It supplies no seed,
+process launch, input, focus activation or new clock.
+
+The twenty evidence descriptors bind the original generic failed result, ledger,
+plan, lease, controller, owned snapshot, root call, caller terminal, launch
+supervisor, protection, PID absence, preference, support pins, B1 authorization,
+claim, observation stop and B1 provider readiness, terminal, stdout and stderr.
+The original focus-stop branch requires exactly five observation calls, zero input or
+reservations, only B1 started, no pending/uncertain action, original binary and
+target ownership, unchanged eligible preference, known terminal handles and
+protected empty private saves. Actual attempt counters advance once while
+reserved/sent counters retain every historical unsent reservation. A failure
+does not acquire the completed-seed closeout kind; the seed consumer rejects it.
+
+The same no-input kind has a separate closed snapshot-read failure case. It
+requires the original four calls (`doctor`, `policy_status`, `get_window`,
+`screenshot`), a focused owned launcher, complete original PNG and recorded
+geometry and mapping, followed by an `EBUSY` open of the current owned snapshot
+inside the pre-input point check. Both readers bind the exact helper command,
+original clock, source and phase receipts, process lineage, terminal caller and
+provider, complete PID absence and unchanged save protection. No fresh focus
+pair, input, reservation, later provider or successful seed may be claimed.
+The reader validates closed custody only; it grants no retry or current input.
+
+`ROOT_CLOSED_KNOWN_PLAY_FAILED_SEED_ATTEMPT_HISTORY` is a distinct closed branch
+with the same twenty evidence descriptors. It requires one acknowledged strict
+Play, fourteen fixed calls and three original PNGs, no later phase claim, known
+pending Play, no uncertainty, and an exact one-action reserved/sent increment.
+The initial owned Java PID, birth, parent, kernel identity, executable, session
+and Job must match the current owner across a launcher-to-game HWND replacement.
+Each original remains bound to its actual source call, arguments and chronology;
+complete PNG parsing is shared, while both history readers enforce their own
+action, process and terminal checks. The historical failed cap remains unchanged.
+Only a new explicit grant may admit the next bounded allowance, retaining the
+spent Play and every older unsent reservation. This kind also refuses as seed
+provenance. It does not resolve Play, grant input, activate a window or renew time.
+
+The separate capture-stop kind retains `CAPTURE_UNCERTAIN`, one known Play,
+fourteen calls, three originals and the final permitted unreadable capture.
+The older helper-refusal and zero-input shapes remain unchanged.
+
+`ROOT_CLOSED_NEW_GAME_WRONG_SCENE_FAILED_SEED_ATTEMPT_HISTORY` uses thirty fixed
+evidence descriptors: the existing twenty plus E1 authorization, claim, plan,
+lease and owned snapshot, the B1 menu proof and E1 provider readiness, terminal,
+stdout and stderr. Both readers require two known strict Java clicks, B1 eleven
+calls followed by E1 ten calls, four complete native-width originals, a known
+closed B1 handoff and a failed New Game scene assertion. Root/phase clocks and
+full original process identity remain bound. Generate, Continue, E2 and seed
+provenance refuse. Reserved/sent counts advance by two, and context advances by
+one; earlier failures, unsent reservations and the historical cap stay intact.
+
+For future pointer coordinates, native Windows captures start at client `(0,0)`
+inside an outer-sized bitmap. Read the existing owned client-geometry helper
+after inspection, then use `clientImagePoint` with the actual native image point.
+It checks identity, focus, outer dimensions, client size and fresh stable origin,
+and rejects nonclient padding or scaled images. Keep private derivation evidence
+beside the closed public screen-coordinate receipts. No guessed border/titlebar
+offset, new native input surface, extra provider call or longer deadline follows.
+
+The separate `ROOT_CLOSED_POST_START_VERIFICATION_INCOMPLETE_HISTORY` receipt
+means “Campaign reached and saved; automated verification incomplete.” It binds
+all eight ACKs, sixty-one calls, eleven original PNGs, nine geometry checks and
+the closed original root and provider records. The late stability margin refusal
+and E2 UNKNOWN terminal remain unresolved. Both history gates preserve the spent
+context and fourteen-PID cleanup evidence; the two retained XML hashes are only
+`UNQUALIFIED_OUTPUT`. This kind always refuses as successful seed provenance and
+does not issue another run's authority or clock.
 

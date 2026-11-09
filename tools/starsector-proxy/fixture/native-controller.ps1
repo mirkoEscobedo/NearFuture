@@ -3,6 +3,7 @@ $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'fixture-inputs.ps1')
 . (Join-Path $PSScriptRoot 'publish-owned-snapshot.ps1')
 . (Join-Path $PSScriptRoot 'session-watchdog.ps1')
+. (Join-Path $PSScriptRoot 'seed-preference.ps1')
 $binding=Read-NativeFixtureBinding $BindingPath $BindingSha256
 if(!$OwnershipProbeOnly){$SessionWatchdogMs=Read-NativeSessionWatchdog $EvidenceRoot $SessionWatchdogMs}
 & (Join-Path $PSScriptRoot 'protection-check.ps1') -BindingPath $BindingPath -BindingSha256 $BindingSha256 -Phase admit-probe -EvidenceRoot $EvidenceRoot
@@ -319,7 +320,9 @@ if($controllerRow.Count-ne1){throw 'Actual controller birth required'}
 $controllerHandle=[NFRecoveryJob]::OpenMetadata($PID)
 try{$controllerIdentity=[NFRecoveryJob]::Identity($controllerHandle);if(!$controllerIdentity.Alive){throw 'Actual live controller required'}}finally{$controllerHandle.Dispose()}
 $sourcePinsPath=Join-Path $binding.fixtureRoot 'source-pins.private.json'
-$hookState=[pscustomobject]@{EvidenceRoot=$EvidenceRoot;Installation=$installation;SourcePinsPath=$sourcePinsPath;FixtureReceiptPath=$receiptPath;ControllerPid=$PID;ControllerCreationTime=$controllerRow[0].CreationDate.ToString('o');ControllerKernelCreationFileTime=$controllerIdentity.KernelCreationFileTime;SessionWatchdogMs=$SessionWatchdogMs;ControllerStartedUtc=$script:started;ControllerDeadlineUtc=$script:started.AddMilliseconds($SessionWatchdogMs-10000);OuterDeadlineUtc=$conservativeOuterDeadline;RequestConsumed=$false;LeaseSHA256=(Get-FileHash -LiteralPath "$EvidenceRoot/native-lane-lease.private.json" -Algorithm SHA256).Hash;PlanSHA256=(Get-FileHash -LiteralPath "$EvidenceRoot/plan.json" -Algorithm SHA256).Hash;FixtureSHA256=(Get-FileHash -LiteralPath $receiptPath -Algorithm SHA256).Hash;SourcePinsSHA256=(Get-FileHash -LiteralPath $sourcePinsPath -Algorithm SHA256).Hash;NodeExecutableSHA256=(Get-FileHash -LiteralPath "$installation/diagnostic/nf-ipc-node.exe" -Algorithm SHA256).Hash;ParentExecutableSHA256=(Get-FileHash -LiteralPath "$installation/jre/bin/java.exe" -Algorithm SHA256).Hash}
+$controllerDeadlineUtc=$script:started.AddMilliseconds($SessionWatchdogMs-10000)
+if($controllerDeadlineUtc-gt$conservativeOuterDeadline){$controllerDeadlineUtc=$conservativeOuterDeadline}
+$hookState=[pscustomobject]@{EvidenceRoot=$EvidenceRoot;Installation=$installation;SourcePinsPath=$sourcePinsPath;FixtureReceiptPath=$receiptPath;ControllerPid=$PID;ControllerCreationTime=$controllerRow[0].CreationDate.ToString('o');ControllerKernelCreationFileTime=$controllerIdentity.KernelCreationFileTime;SessionWatchdogMs=$SessionWatchdogMs;ControllerStartedUtc=$script:started;ControllerDeadlineUtc=$controllerDeadlineUtc;OuterDeadlineUtc=$conservativeOuterDeadline;RequestConsumed=$false;LeaseSHA256=(Get-FileHash -LiteralPath "$EvidenceRoot/native-lane-lease.private.json" -Algorithm SHA256).Hash;PlanSHA256=(Get-FileHash -LiteralPath "$EvidenceRoot/plan.json" -Algorithm SHA256).Hash;FixtureSHA256=(Get-FileHash -LiteralPath $receiptPath -Algorithm SHA256).Hash;SourcePinsSHA256=(Get-FileHash -LiteralPath $sourcePinsPath -Algorithm SHA256).Hash;NodeExecutableSHA256=(Get-FileHash -LiteralPath "$installation/diagnostic/nf-ipc-node.exe" -Algorithm SHA256).Hash;ParentExecutableSHA256=(Get-FileHash -LiteralPath "$installation/jre/bin/java.exe" -Algorithm SHA256).Hash}
 $env:NF_PERFORMANCE_TRACE_ID=[Guid]::NewGuid().ToString('N')
 $env:NF_PERFORMANCE_OBSERVER='true'
 $controllerStart=[ordered]@{at=Get-Date -Format o;controllerPid=$PID;controllerCreationTime=$hookState.ControllerCreationTime;controllerKernelCreationFileTime=$hookState.ControllerKernelCreationFileTime;sessionWatchdogMs=$SessionWatchdogMs;conservativeOuterDeadlineUtc=$hookState.OuterDeadlineUtc.ToString('o');controllerDeadlineUtc=$hookState.ControllerDeadlineUtc.ToString('o');outerDeadlineSource='RUNNER_BEFORE_PROJECT_PREPARATION';sessionId=[Diagnostics.Process]::GetCurrentProcess().SessionId;supervisorJobPids=$jobPids;traceId=$env:NF_PERFORMANCE_TRACE_ID;observer=$env:NF_PERFORMANCE_OBSERVER;installation=$installation;hardTimeoutMs=$SessionWatchdogMs;timeoutMeaning='SAFETY_WATCHDOG_NOT_PRODUCT_DEADLINE';fixtureReceiptSha256=$hookState.FixtureSHA256;sourcePinsSha256=$hookState.SourcePinsSHA256;rootLeaseSha256=$hookState.LeaseSHA256}
@@ -329,6 +332,8 @@ if($null-ne$launchAdmission){
 }
 $controllerStart|ConvertTo-Json -Depth 6|Set-Content "$EvidenceRoot/controller-start.private.json"
 # Visible interactive launcher is the authorized native test surface.
+$seedCreationPlan=Get-Content -LiteralPath "$EvidenceRoot/plan.json" -Raw|ConvertFrom-Json -DateKind String
+if($seedCreationPlan.campaignControl.profile-cin@('DISPOSABLE_SEED_CREATION','DISPOSABLE_SEED_CREATION_INITIAL_FOCUS')){$null=Assert-NativeSeedPreferenceUnchanged $seedCreationPlan $EvidenceRoot}
 $launcher=Start-Process -FilePath "$installation/starsector.exe" -WorkingDirectory $installation -WindowStyle Normal -PassThru
 $samples=[Collections.Generic.List[object]]::new()
 $seen=$false

@@ -6,7 +6,7 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 export const fixtureProbeSources = Object.freeze([
     'tools/starsector-proxy/guarded-http-ownership.ps1',
     ...['native-controller.ps1', 'protection-check.ps1', 'fixture-inputs.ps1',
-        'seed-fixture.ps1', 'publish-owned-snapshot.ps1', 'session-watchdog.ps1', 'menu-launch.ps1']
+        'seed-fixture.ps1', 'seed-creation-history.ps1', 'seed-provider-budget.ps1', 'seed-failed-attempt.ps1', 'seed-known-play-attempt.ps1', 'seed-wrong-scene-attempt.ps1', 'seed-capture-linkage-attempt.ps1', 'seed-caller-date-attempt.ps1', 'seed-caller-date-geometry.ps1', 'seed-snapshot-busy-attempt.ps1', 'seed-pre-start-margin-attempt.ps1', 'seed-pre-continue-budget-history.ps1', 'seed-early-window-focus.ps1', 'seed-post-start-verification.ps1', 'read-owned-client-geometry.ps1', 'seed-zero-provider-attempt.ps1', 'seed-zero-provider-terminal.ps1', 'seed-preference.ps1', 'seed-provenance-v2.ps1', 'publish-owned-snapshot.ps1', 'session-watchdog.ps1', 'menu-launch.ps1']
         .map(name => 'tools/starsector-proxy/fixture/' + name),
 ]);
 
@@ -58,16 +58,20 @@ export function readFixtureBinding(admitted) {
     if (value?.schemaVersion === 2) fields.push('recordingProfileSha256');
     if (value?.schemaVersion === 3) fields.push('fixtureProfile');
     const control = plan.value.campaignControl;
-    const generation = control?.schemaVersion === 3 && control.profile === 'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE'
-        && Object.keys(control).sort().join() === 'profile,schemaVersion';
+    const initialFocus = control?.schemaVersion === 5 && control.profile === 'DISPOSABLE_SEED_CREATION_INITIAL_FOCUS';
+    const creation = (control?.schemaVersion === 4 && control.profile === 'DISPOSABLE_SEED_CREATION') || initialFocus;
+    const generation = ((control?.schemaVersion === 3 && control.profile === 'GENERATED_NAME_FIRST_CONTINUE_INSPECTION_NO_SAVE')
+        || creation) && Object.keys(control).sort().join() === 'profile,schemaVersion';
     const lease = read(resolve(scenario, 'native-lane-lease.private.json'), 256 * 1024).value;
     const controller = read(resolve(scenario, 'controller-start.private.json'), 256 * 1024).value;
     if (fixture.sha256 !== descriptor.sha256.toLowerCase() || !value || Array.isArray(value)
         || ![1, 2, 3].includes(value.schemaVersion) || Object.keys(value).sort().join() !== fields.sort().join()
         || (value.schemaVersion === 3) !== generation
         || (value.schemaVersion === 3 && (value.fixtureProfile !== 'VANILLA_UNCOMPRESSED_GENERATION'
-            || (admitted.binding.schemaVersion !== undefined && admitted.binding.schemaVersion !== 5)))
+            || (admitted.binding.schemaVersion !== undefined && admitted.binding.schemaVersion !== (initialFocus ? 7 : creation ? 6 : 5))))
         || (admitted.binding.schemaVersion === 5 && !generation)
+        || (admitted.binding.schemaVersion === 6 && (!creation || initialFocus))
+        || (admitted.binding.schemaVersion === 7 && !initialFocus)
         || typeof value.fixtureRoot !== 'string' || !isAbsolute(value.fixtureRoot)
         || resolve(value.fixtureRoot) !== scenario || value.driverRole !== lease.driver
         || resolve(controller.installation ?? '') !== resolve(value.fixtureRoot, 'installation')) {
