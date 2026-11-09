@@ -1,0 +1,32 @@
+repositories { mavenCentral() }
+dependencies { implementation 'org.ow2.asm:asm:9.7.1' }
+sourceSets.test.java.srcDir rootProject.file('../tools/performance/jfr')
+
+tasks.register('lockDependencies') {
+    doLast { configurations.findAll { it.canBeResolved }.each { it.resolve() } }
+}
+
+tasks.register('agentJar', Jar) {
+    dependsOn classes
+    archiveClassifier = 'agent'
+    manifest { attributes('Premain-Class': 'nf.performance.FrameAgent',
+        'Can-Redefine-Classes': 'false', 'Can-Retransform-Classes': 'false') }
+    from sourceSets.main.output
+    from({ configurations.runtimeClasspath.collect { zipTree(it) } }) {
+        exclude 'META-INF/MANIFEST.MF', 'module-info.class'
+    }
+}
+
+tasks.register('probeProcessTest', JavaExec) {
+    dependsOn testClasses, agentJar
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.performance.FrameAgentProcessTest'
+    if (providers.gradleProperty('testJavaExecutable').isPresent()) {
+        executable = providers.gradleProperty('testJavaExecutable').get()
+    }
+    doFirst {
+        args tasks.named('agentJar').get().archiveFile.get().asFile.absolutePath,
+            sourceSets.test.output.classesDirs.asPath
+    }
+}
+tasks.named('check') { dependsOn 'probeProcessTest' }

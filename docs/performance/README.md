@@ -4,6 +4,21 @@ NF-008 / issue #12 delivers trace tooling under its unavailable-reference-data c
 
 The implemented public seams are a bounded `TraceBuffer`, allowlisted event/run contracts, monotonic-clock alignment helpers, offline JFR export, percentile/resource analysis, matched repeated comparisons and a synthetic saturation CLI. All filesystem, process and wall-clock effects stay outside the calculation/queue core. No tool launches/attaches to Starsector or rewrites its launcher/mod/save files.
 
+## Opt-in campaign callback observer
+
+The local adapter includes a disabled-by-default observer of its own campaign callback. In a separately qualified adapter launch, opt in with both JVM properties:
+
+```text
+-Dnf.profiling.callback.enabled=true
+-Dnf.profiling.traceId=<32 lowercase hexadecimal characters>
+```
+
+Use a fresh anonymous trace ID for each recording run and the same ID in its run metadata. The enabled value must be exactly `true`; a missing/invalid trace ID or absent sector attaches no observer. The observer starts no recording: an explicitly owned JFR session must enable `nf.CampaignCallback`. It records only the observer's own callback span and correlation ID, with stacks disabled. These spans do not measure a whole frame, other mods, the economic bridge or instrumentation overhead.
+
+Repeated loads replace only the owned transient script. Before saving, the plugin closes and removes it; after a successful or failed save, it re-evaluates opt-in and attaches a fresh observer. Closed stale scripts emit no callback events, and unrelated scripts remain untouched. These lifecycle statements are tested on licensed API host proxies; actual campaign scheduling and save serialization remain unverified.
+
+Local host checks compile classes for Java 17 using pinned JDK 21.0.8. The installed game's Azul 17.0.10 runtime has not exercised this observer. Required delivery evidence separately includes the licensed `gameAdapter` build, all six host contracts, and exact-revision public CI; synthetic CI excludes the licensed adapter build and `tests/game` contracts. The actual game baseline and bridge target remain unmeasured. See [verification evidence](verification.md) for commands, exact revisions and limits.
+
 ```powershell
 node --test tests/performance/*.test.mjs
 npm run check:types

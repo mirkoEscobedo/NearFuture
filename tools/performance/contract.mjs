@@ -1,8 +1,8 @@
 // @ts-check
 /** @typedef {'adapter'|'node'|'jfr'} Source */
-/** @typedef {{traceId: string, source: Source, kind: string, atUs: number, durationUs?: number, bytes?: number, threadId?: number, queueItems?: number, queueBytes?: number, rssBytes?: number, cpuUs?: number, sentBytes?: number, receivedBytes?: number, frameId?: number, requestId?: string}} TraceEvent */
-const kinds = new Set(['frame', 'campaign_callback', 'capture', 'encode', 'apply', 'queue', 'resource', 'stale', 'save', 'load', 'gc_pause', 'gc_cycle', 'allocation_sample', 'thread_running_sample', 'thread_cpu', 'thread_blocked', 'thread_io', 'thread_sleep']);
-const durationKinds = new Set(['frame', 'campaign_callback', 'capture', 'encode', 'apply', 'save', 'load', 'gc_pause', 'gc_cycle', 'thread_blocked', 'thread_io', 'thread_sleep']);
+/** @typedef {{traceId: string, source: Source, kind: string, atUs: number, durationUs?: number, bytes?: number, threadId?: number, queueItems?: number, queueBytes?: number, rssBytes?: number, cpuUs?: number, sentBytes?: number, receivedBytes?: number, frameId?: number, clockUncertaintyUs?: number, requestId?: string}} TraceEvent */
+const kinds = new Set(['frame', 'presentation_interval', 'campaign_callback', 'capture', 'encode', 'apply', 'queue', 'resource', 'stale', 'save', 'load', 'gc_pause', 'gc_cycle', 'allocation_sample', 'thread_running_sample', 'thread_cpu', 'thread_blocked', 'thread_io', 'thread_sleep']);
+const durationKinds = new Set(['frame', 'presentation_interval', 'campaign_callback', 'capture', 'encode', 'apply', 'save', 'load', 'gc_pause', 'gc_cycle', 'thread_blocked', 'thread_io', 'thread_sleep']);
 export const hashPattern = /^[a-f0-9]{64}$/;
 export const tracePattern = /^[a-f0-9]{32}$/;
 /** @param {unknown} value @returns {TraceEvent} */
@@ -12,7 +12,7 @@ export function sanitizeEvent(value) {
   if (typeof raw.traceId !== 'string' || !tracePattern.test(raw.traceId) ||
       !['adapter','node','jfr'].includes(String(raw.source)) || !kinds.has(String(raw.kind)))
     throw new Error('INVALID_EVENT: trace ID, source and kind must use the declared trace contract.');
-  const fields = ['atUs', 'durationUs', 'bytes', 'threadId', 'queueItems', 'queueBytes', 'rssBytes', 'cpuUs', 'sentBytes', 'receivedBytes', 'frameId'];
+  const fields = ['atUs', 'durationUs', 'bytes', 'threadId', 'queueItems', 'queueBytes', 'rssBytes', 'cpuUs', 'sentBytes', 'receivedBytes', 'frameId', 'clockUncertaintyUs'];
   for (const key of fields) {
     if ((key === 'atUs' || raw[key] !== undefined) &&
       (typeof raw[key] !== 'number' || !Number.isSafeInteger(raw[key]) || Number(raw[key]) < 0))
@@ -22,6 +22,8 @@ export function sanitizeEvent(value) {
     throw new Error('INVALID_EVENT: this event kind requires durationUs.');
   if (raw.kind === 'campaign_callback' && (raw.threadId === undefined || Number(raw.threadId) < 1 || raw.frameId !== undefined))
     throw new Error('INVALID_EVENT: campaign callbacks require a numeric thread identity and cannot identify whole frames.');
+  if (raw.kind === 'presentation_interval' && (raw.source !== 'jfr' || Number(raw.threadId ?? 0) < 1 || Number(raw.frameId ?? 0) < 1 || Number(raw.durationUs) < 1 || raw.clockUncertaintyUs === undefined))
+    throw new Error('INVALID_EVENT: presentation intervals require positive duration, frame and thread identity from JFR.');
   if (raw.kind === 'queue' && (raw.queueItems === undefined || raw.queueBytes === undefined)) throw new Error('INVALID_EVENT: queue samples require item and byte counts.');
   if (raw.kind === 'allocation_sample' && raw.bytes === undefined)
     throw new Error('INVALID_EVENT: allocation samples require bytes.');
@@ -34,7 +36,7 @@ export function sanitizeEvent(value) {
   return /** @type {TraceEvent} */ (event);
 }
 
-/** @typedef {{schemaVersion: 1, traceId: string, manifestSha256: string, budgetsSha256: string, checkpointSha256: string, scenario: string, repeat: number, warmupUs: number, durationUs: number, speed: number, paused: boolean, instrumentation: string, campaignThreadId: number, startEpochUs: number, alignmentUncertaintyUs: number, baseline: 'synthetic'|'game', droppedEvents: number, invalidEvents: number, controlEvidenceSha256?: string, referenceManifestSha256?: string, hardwareSha256?: string, liveJvmFlagsSha256?: string}} RunMetadata */
+/** @typedef {{schemaVersion: 1, traceId: string, manifestSha256: string, budgetsSha256: string, checkpointSha256: string, scenario: string, repeat: number, warmupUs: number, durationUs: number, speed: number, paused: boolean, instrumentation: string, campaignThreadId: number, startEpochUs: number, alignmentUncertaintyUs: number, baseline: 'synthetic'|'game', droppedEvents: number, invalidEvents: number, controlEvidenceSha256?: string, referenceManifestSha256?: string, hardwareSha256?: string, liveJvmFlagsSha256?: string, frameBoundaryEvidenceSha256?: string}} RunMetadata */
 /** @param {unknown} value @returns {RunMetadata} */
 export function validateRun(value) {
   if (!value || typeof value !== 'object') throw new Error('INVALID_RUN: expected run metadata.');
@@ -56,7 +58,8 @@ export function validateRun(value) {
     if (raw[key] !== undefined && (typeof raw[key] !== 'string' || !hashPattern.test(String(raw[key])))) throw new Error('INVALID_RUN: hardware/live JVM flags need SHA-256 identities.');
     if (raw.baseline === 'game' && raw[key] === undefined) throw new Error('MISSING_RUNTIME_EVIDENCE: actual game runs require hardwareSha256 and liveJvmFlagsSha256; configured vmparams alone is insufficient.');
   }
+  if (raw.frameBoundaryEvidenceSha256 !== undefined && (typeof raw.frameBoundaryEvidenceSha256 !== 'string' || !hashPattern.test(raw.frameBoundaryEvidenceSha256))) throw new Error('INVALID_RUN: frame boundary evidence needs a SHA-256 identity.');
   if (raw.referenceManifestSha256 !== undefined && (typeof raw.referenceManifestSha256 !== 'string' || !hashPattern.test(raw.referenceManifestSha256))) throw new Error('INVALID_RUN: referenceManifestSha256 must be a SHA-256 identity.');
-  const keys = ['schemaVersion','traceId','manifestSha256','budgetsSha256','checkpointSha256','scenario','repeat','warmupUs','durationUs','speed','paused','instrumentation','campaignThreadId','startEpochUs','alignmentUncertaintyUs','baseline','droppedEvents','invalidEvents','controlEvidenceSha256','referenceManifestSha256','hardwareSha256','liveJvmFlagsSha256'];
+  const keys = ['schemaVersion','traceId','manifestSha256','budgetsSha256','checkpointSha256','scenario','repeat','warmupUs','durationUs','speed','paused','instrumentation','campaignThreadId','startEpochUs','alignmentUncertaintyUs','baseline','droppedEvents','invalidEvents','controlEvidenceSha256','referenceManifestSha256','hardwareSha256','liveJvmFlagsSha256','frameBoundaryEvidenceSha256'];
   return /** @type {RunMetadata} */ (Object.fromEntries(keys.filter(key => raw[key] !== undefined).map(key => [key, raw[key]])));
 }
