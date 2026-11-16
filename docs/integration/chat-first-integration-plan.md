@@ -4,6 +4,8 @@
 
 The first connected outcome is room selection, bounded text/history and truthful delivery/recovery state in Pandora's actual native Starsector panel, through the real STRATCOM service. NearFuture supplies the game adapter and lifecycle. This plan does not authorize an alternative social product or renderer.
 
+STRATCOM implementation is coordinated in ProjectSynergy through the existing STRATCOM owner chat. The legacy scom repository and its links are source/reuse evidence only, not the implementation destination. NearFuture owns the adapter/consumer only; service/backend implementation stays with STRATCOM. The actual service package/revision remains an owner selection.
+
 ## Current, next-ready and held
 
 | State | Work |

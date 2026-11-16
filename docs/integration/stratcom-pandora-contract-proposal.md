@@ -15,6 +15,8 @@
 
 GM coordinates the existing STRATCOM, shared-networking and Pandora owners. This proposal does not dispatch another owner, select a shared carrier, install services or create another social backend/renderer. Academy fiction grants no infrastructure authority.
 
+STRATCOM implementation is coordinated in ProjectSynergy through the existing STRATCOM owner chat. The legacy scom repository and its links are source/reuse evidence only, not the implementation destination. NearFuture owns the adapter/consumer only; service/backend implementation stays with STRATCOM. The actual service package/revision remains an owner selection.
+
 ## Minimum service contract
 
 Use STRATCOM's proposed logical facade, working name stratcom.social/1; it is not a released SDK. Names/codec remain owner-selected. The consumer recommends the following semantics for PM acceptance, without selecting a portfolio wire format or carrier.
