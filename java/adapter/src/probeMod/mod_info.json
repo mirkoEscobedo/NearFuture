@@ -1,0 +1,10 @@
+{
+  "id": "near_future_probe",
+  "name": "NearFuture diagnostic probe (opt-in)",
+  "author": "NearFuture contributors",
+  "version": "0.1.0",
+  "gameVersion": "0.98a-RC8",
+  "description": "Explicit diagnostic companion for the bounded authenticated Rust probe. Native support remains unverified.",
+  "jars": ["jars/near-future-adapter.jar", "jars/near-future-probe.jar"],
+  "modPlugin": "nf.adapter.probe.ProbeModPlugin"
+}
