@@ -1,0 +1,15 @@
+[package]
+name = "nf-modules"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+nf-kernel = { path = "../nf-kernel", optional = true }
+
+[features]
+default = []
+snapshot = ["dep:nf-kernel"]

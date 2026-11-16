@@ -2109,6 +2109,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "nf-modules"
+version = "0.1.0"
+dependencies = [
+ "nf-kernel",
+]
+
+[[package]]
 name = "nf-nex-boundary"
 version = "0.1.0"
 dependencies = [
@@ -2123,6 +2130,20 @@ dependencies = [
  "nf-identity",
  "nf-nex-boundary",
  "sha2 0.10.9",
+]
+
+[[package]]
+name = "nf-sidecar"
+version = "0.1.0"
+dependencies = [
+ "getrandom 0.4.3",
+ "hmac 0.12.1",
+ "nf-contract",
+ "nf-ipc",
+ "nf-kernel",
+ "nf-modules",
+ "sha2 0.10.9",
+ "zeroize",
 ]
 
 [[package]]
