@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { campaignLaunchFixture } from './campaign-launch-test-support.mjs';
 import { claimSeededLauncher, seedInputSession } from './campaign-input-test-support.mjs';
 import { json, filePin, powershell } from './seed-test-support.mjs';
+import { createFirstPageFailureObserver } from './first-page-failure-evidence.mjs';
 import { readBatchAuthorization, claimBatchAuthorization } from '../batch-authorization.mjs';
 
 test('first-page inspection admits its real protected no-seed launch and guarded Play without changing original authority', async () => {
@@ -49,19 +50,21 @@ test('first-page inspection admits its real protected no-seed launch and guarded
 test('first-page profile reaches both public launch gates over the original no-seed pair before deliberate pre-effect stops', () => {
     const f = campaignLaunchFixture({ inspection: true });
     try {
+        const failureParent = process.env.NF_FIRST_PAGE_CHILD_EVIDENCE_PARENT;
+        const observeIncomplete = failureParent ? createFirstPageFailureObserver(failureParent, f.target) : undefined;
         const original = [f.planPath, f.leasePath].map(path => readFileSync(path));
         const controller = readFileSync(f.controllerPath); unlinkSync(f.controllerPath);
         assert.equal(existsSync(resolve(f.installation, 'jre/bin/java.exe')), false);
         writeFileSync(resolve(f.scenario, 'launch-supervisor.private.json'), 'Controlled pre-effect sentinel');
         try {
             let result = powershell(['-File', resolve(f.root, 'tools/starsector-proxy/fixture/run-native.ps1'),
-                '-BindingPath', f.bindingPath, '-BindingSha256', f.bindingPin.sha256, '-EvidenceRoot', f.scenario, '-Phase', 'launch']);
+                '-BindingPath', f.bindingPath, '-BindingSha256', f.bindingPin.sha256, '-EvidenceRoot', f.scenario, '-Phase', 'launch'], observeIncomplete);
             assert.notEqual(result.status, 0); assert.match(result.stderr, /Preserve existing native evidence/);
             assert.equal(existsSync(resolve(f.scenario, 'supervision-launch')), false);
             const deadline = new Date(Date.now() + 470000).toISOString().replace(/Z$/, '0000Z');
             result = powershell(['-File', resolve(f.root, 'tools/starsector-proxy/fixture/native-controller.ps1'),
                 '-BindingPath', f.bindingPath, '-BindingSha256', f.bindingPin.sha256, '-EvidenceRoot', f.scenario,
-                '-OuterDeadlineUtc', deadline]);
+                '-OuterDeadlineUtc', deadline], observeIncomplete);
             assert.notEqual(result.status, 0); assert.match(result.stderr, /java\.exe/);
             assert.equal(existsSync(f.controllerPath), false);
         } finally { writeFileSync(f.controllerPath, controller, { flag: 'wx' }); }

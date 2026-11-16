@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
 import {basename} from 'node:path';
+import {selectFixturePartition} from '../../tools/delivery/windows-fixtures.mjs';
 import test from 'node:test';
 
 const workflow=readFileSync(new URL('../../.github/workflows/synthetic.yml',import.meta.url),'utf8');
@@ -26,23 +27,26 @@ function job(name){
 }
 
 test('the required Windows groups retain every fixture file exactly once',()=>{
-    const main=job('public-build'),operator=job('operator-public');
-    const declaration=main.match(/\$isolatedFixtureTests = @\(([^)]+)\)/);
-    assert.ok(declaration,'The main fixture partition must declare its closed isolated set');
-    const excluded=[...declaration[1].matchAll(/'([^']+)'/g)].map(m=>m[1]);
+    const main=job('public-build'),operator=job('operator-public'),fixtures=job('windows-fixtures');
+    const inventory=JSON.parse(readFileSync(new URL('../../config/ci/windows-fixture-partitions.json',import.meta.url),'utf8'));
     const command=operator.match(/node --test --test-concurrency=1 ([^\r\n]+)/);
     assert.ok(command,'The operator must execute its isolated set serially');
     const isolated=command[1].trim().split(/\s+/).map(path=>{
         assert.match(path,/^tools\/starsector-proxy\/fixture\/[^/]+\.test\.mjs$/);
         return basename(path);
     });
-    assert.deepEqual(excluded,isolatedFiles);
+    assert.deepEqual(inventory.partitions.isolated,isolatedFiles);
     assert.deepEqual(isolated,isolatedFiles);
-    assert.match(main,/\$fixtureTests = @\(Get-ChildItem tools\/starsector-proxy\/fixture\/\*\.test\.mjs -File \| Where-Object \{ \$_.Name -notin \$isolatedFixtureTests \}/);
     const all=readdirSync(new URL('../../tools/starsector-proxy/fixture/',import.meta.url)).filter(n=>n.endsWith('.test.mjs')).sort();
-    const selected=[...all.filter(n=>!excluded.includes(n)),...isolated].sort();
+    const selected=['a','b','c','isolated'].flatMap(name=>selectFixturePartition(inventory,all,name)).sort();
     assert.deepEqual(selected,all,'No fixture may disappear or execute twice');
-    assert.match(main,/node --test @fixtureTests/);
+    assert.match(fixtures,/partition: \[a, b, c\]/);
+    assert.match(fixtures,/runs-on: windows-latest/);
+    assert.match(fixtures,/timeout-minutes: 30/);
+    assert.match(fixtures,/fail-fast: false/);
+    assert.match(fixtures,/node tools\/delivery\/windows-fixtures\.mjs --partition \$\{\{ matrix\.partition \}\}/);
+    assert.doesNotMatch(fixtures,/--test-concurrency/);
+    assert.doesNotMatch(main,/node --test @fixtureTests/);
     assert.match(main,/node --test @captureTests/);
     assert.match(job('headless-qualification'),/needs: \[[^\n]*operator-public[^\n]*\]/);
 });
@@ -58,7 +62,7 @@ test('isolated provenance retains pinned setup and the existing deadlines',()=>{
     assert.match(step,/\$env:NF_CAPTURE_TEST_POWERSHELL = \$env:NF_TEST_POWERSHELL/);
     assert.match(step,/buildCaptureRuntime\(\)/);
     assert.match(step,/\$PSNativeCommandUseErrorActionPreference = \$true/);
-    assert.match(operator,/timeout-minutes: 20/);
+    assert.match(operator,/timeout-minutes: \$\{\{ matrix\.os == 'windows-latest' && 30 \|\| 20 \}\}/);
     assert.match(job('public-build'),/matrix.os == 'windows-latest' && 30 \|\| 20/);
     const helper=readFileSync(new URL('../../tools/starsector-proxy/fixture/seed-test-support.mjs',import.meta.url),'utf8');
     assert.match(helper,/timeout:15000\b/);

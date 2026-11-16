@@ -235,6 +235,34 @@ inspected ordinary Exit `left_click`. Current root-issued authority, original
 process identity, strict focus, image custody, deadlines and remaining action
 attempts still govern each call. Unknown input or shutdown cannot transfer to E2.
 
+The separate `DISPOSABLE_SEED_RETURN_MENU_QUIT_NO_SAVE` profile binds root control
+schema 6 to phase authorization schema 3. It uses at most eight inputs across
+three providers: naturally focused Play; Load Game, the sole copied seed, Load
+and the inspected paused campaign's exact Escape; campaign Exit, the inspected
+no-save return dialog's `Ok`, then the inspected returned main menu's `Quit`.
+Activation is refused. The two final scene proofs bind distinct original PNGs,
+raw capture records, current focus, source, claim, reservation and seed lineage.
+The return dialog must read `This will exit to the main menu WITHOUT saving your current game.`;
+Save, Cancel, other dialogs and uninspected coordinates refuse input.
+
+The final Quit remains an unresolved action until the original owned launcher
+and controller terminate naturally and their owned process absence is observed.
+An unexpected Quit confirmation stops the flow; it grants no ninth input.
+Forced cleanup is a separate outcome. This profile retains the eight-minute
+root bound, three-minute providers and 32-call provider ceiling. Existing entry
+and separately declared `Exit game?` / `Yes` behavior retain their own profile.
+
+`DISPOSABLE_SEED_RETURN_MENU_QUIT_CONFIRMATION_NO_SAVE` pairs a separate immutable
+root control schema 7 with phase authorization schema 3 and a nine-input ceiling.
+It adds only an optional final `Yes` after the same eight inputs. That input
+requires the exact freshly inspected `Exit game?` dialog and `Yes` coordinate,
+bound to the immediately preceding known Quit reservation through
+`E2-application-quit-confirmation`. The legacy confirmation declaration cannot
+grant it. If Quit closes naturally, send no ninth input. Final Quit or Yes stays
+unresolved until separate original-root natural termination and process-absence
+evidence; foreign foreground alone is insufficient. No tenth input or activation
+is permitted. All root/provider timing and call limits above remain unchanged.
+
 Source qualification and synthetic stdio/HTTP checks do not refresh an already
 loaded MCP frontend or establish live desktop capture, game input or exit success.
 

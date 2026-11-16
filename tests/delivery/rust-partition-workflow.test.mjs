@@ -16,7 +16,7 @@ test('required Rust execution covers all three suites on both platforms without 
 });
 
 test('partitioning retains required groups, strict aggregate, and restore custody', () => {
-    assert.match(workflow, /needs: \[public-build, public-rust, windows-interop, release-build, profile-smoke, operator-public\]/);
+    assert.match(workflow, /needs: \[public-build, public-rust, windows-interop, release-build, profile-smoke, operator-public, windows-fixtures\]/);
     assert.match(workflow, /headless-qualification:\r?\n[^\n]*\r?\n    if: always\(\)/);
     assert.match(rust, /NF_ISOLATED_RESTORE_REFUSAL_EVIDENCE_PARENT/);
     assert.match(rust, /Retain caller-owned full-suite restore refusal originals/);

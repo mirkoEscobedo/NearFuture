@@ -9,8 +9,9 @@ import { json, filePin as rawPin } from './seed-test-support.mjs';
 /** @param {string} path */
 const sha = path => rawPin(path).sha256.toLowerCase();
 
-export async function completedSeedEscape() {
-    const f = await enteredSeedFixture();
+/** @param {Parameters<typeof enteredSeedFixture>[0]} [options] */
+export async function completedSeedEscape(options) {
+    const f = await enteredSeedFixture(options);
     const outputParent = resolve(f.root, '.tmp/starsector-proxy'), output = resolve(outputParent, f.runID);
     let outputCreated = false;
     async function close() {

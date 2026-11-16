@@ -139,3 +139,61 @@ the [PNG specification](https://www.w3.org/TR/png-3/) as its format reference;
 it does not certify rendering, ancillary metadata semantics, native provenance
 or freshness. The previous synthetic pixel had an invalid IDAT CRC and is
 replaced by a valid encoded pixel without relaxing byte/provenance assertions.
+
+## Windows fixture runner partitions
+
+The Windows fixture inventory is explicit in
+`config/ci/windows-fixture-partitions.json`. The required `windows-fixtures`
+matrix runs ordinary partitions `a`, `b` and `c` on separate hosted runners.
+Each invocation validates every current fixture filename against the entire
+inventory before executing its assigned files. Missing, stale, overlapping or
+newly unassigned files refuse execution. The ten isolation-sensitive fixtures
+remain in `operator-public`, in their original serial order. Existing Node child
+concurrency, assertions and fixture/process deadlines are unchanged.
+
+Partition weights use the larger per-module sum of top-level test durations from
+PR138's original push run `41313619627` and PR run `41313623765`. All 127 ordinary
+modules have observed weights. Greedy largest-first assignment totals approximately
+1,447,240 / 1,447,238 / 1,447,860 milliseconds (0.043% spread). These sums include
+concurrent test execution and are relative scheduling weights, not predicted wall
+time. The original fixture wall times were 1,447,389.6432 and 1,495,546.63 ms;
+the push capture suite took only 6,876.5824 ms. Capture remains in `public-build`.
+The PR Windows job annotation explicitly reported exceeding its 30-minute limit.
+Both streams passed all 999 ordinary fixture cases; the PR's subsequent capture
+suite was cancelled (38 passes, 10 cancellations, zero failed assertions).
+Those original outcomes remain failures for qualification where applicable.
+
+Every matrix child is required through `windows-fixtures` in both workflow
+`needs` and the named profile. A missing, failed, cancelled or skipped matrix
+cannot pass `headless-qualification`. Existing cross-platform portable checks,
+Windows capture inventory and the excluded slot-projection test's existing
+registration remain unchanged. Job timeouts are unchanged; new Windows fixture
+runners retain the existing 30-minute ceiling. The complete current workflow,
+including matrix expansion, controls expected job counts for future evidence.
+No prior 15-job/30-log expectation applies to a partitioned successor.
+
+## First-page fixture failure evidence
+
+The first-page public-launch-gates test can observe an incomplete PowerShell
+child before the existing terminal-status assertion throws. The observer receives
+a detached immutable snapshot; it cannot change the latched result or turn a
+capture failure into a passing test. The 15-second child timeout and all caller
+assertions remain unchanged.
+
+Windows fixture jobs create one dedicated caller-owned
+`NF_FIRST_PAGE_CHILD_EVIDENCE_PARENT` and retain that exact root only on failure.
+A complete capture contains the original Node-captured UTF8 stdout/stderr strings,
+closed error/status/signal/argument fields, and four fixed generated metadata files.
+Absent, null and empty output remain distinct. This is not native pipe-byte custody.
+The writer accepts only the version-1 synthetic seed-target-test fixture marker,
+rejects launched/live markers and linked paths, reads stable bounded files, and
+uses create-new output. Limits are 2 MiB per output string, 1 MiB per metadata
+file, 64 KiB of arguments, 16 KiB of error fields and one capture per observer.
+Oversized, changing or unowned inputs refuse capture while the original child
+assertion still fails. Fixture/process cleanup is preserved.
+
+Focused regression tests exercise controlled incomplete results and an immediate
+missing-synthetic-executable refusal; they do not repeat the approved historical
+PowerShell diagnostic. The approved one-case live inspection passed only as
+NONREPRODUCTION. Failure-evidence retention addresses lost diagnostics and does
+not establish a fix or cause for the historical 15-second hosted timeout.
