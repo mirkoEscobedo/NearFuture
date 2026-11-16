@@ -1,0 +1,35 @@
+tasks.register('probeLifecycleTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.probe.ProbeLifecycleTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'probeLifecycleTest' }
+
+tasks.register('probeWireTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.probe.ProbeWireTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'probeWireTest' }
+
+tasks.register('probeEvidenceTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.probe.ProbeEvidenceTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'probeEvidenceTest' }
+
+tasks.register('probeProcessTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.probe.ProbeProcessTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+    doFirst {
+        if (!project.hasProperty('probeExecutable') || !project.hasProperty('probeSha256'))
+            throw new GradleException('Explicit built nf-sidecar executable and SHA256 pin required; no game launched.')
+        args project.property('probeExecutable'), project.property('probeSha256')
+    }
+}

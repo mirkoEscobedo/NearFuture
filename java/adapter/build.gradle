@@ -5,6 +5,7 @@ def localLibraries = provider {
 }
 dependencies {
     implementation project(':contract')
+    implementation project(':probe')
     compileOnly files(localLibraries)
 }
 tasks.register('validateLocalLibraries') {
@@ -20,3 +21,32 @@ tasks.register('validateLocalLibraries') {
     }
 }
 tasks.named('compileJava') { dependsOn validateLocalLibraries }
+
+tasks.register('probePackage', Sync) {
+    group = 'distribution'
+    description = 'Explicit local probe companion staging; never deploys or launches Starsector.'
+    dependsOn tasks.named('jar'), project(':probe').tasks.named('jar')
+    into layout.buildDirectory.dir('probe-package')
+    from('src/probeMod/mod_info.json')
+    from(tasks.named('jar')) { into 'jars'; rename { 'near-future-adapter.jar' } }
+    from(project(':probe').tasks.named('jar')) { into 'jars'; rename { 'near-future-probe.jar' } }
+    doLast {
+        def digest = { File file ->
+            def hash = java.security.MessageDigest.getInstance('SHA-256')
+            file.withInputStream { stream ->
+                byte[] buffer = new byte[65536]
+                for (int count; (count = stream.read(buffer)) >= 0;) hash.update(buffer, 0, count)
+            }
+            java.util.HexFormat.of().formatHex(hash.digest())
+        }
+        def root = destinationDir
+        def artifacts = fileTree(root).files.sort { it.path }.collectEntries { file ->
+            [(root.toPath().relativize(file.toPath()).toString().replace('\\', '/')): digest(file)]
+        }
+        def metadata = [formatVersion: 1, packageVersion: project.version.toString(),
+            protocol: 'neutral-probe-v1-ack32', javaTarget: 17, compiler: System.getProperty('java.version'),
+            gameRequirement: '0.98a-RC8', enabledByDefault: false, nativeValidated: false,
+            sidecarBundled: false, maxRequestsPerBinding: 8, maxOutstanding: 1, artifacts: artifacts]
+        new File(root, 'probe-package.json').text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata)) + '\n'
+    }
+}
