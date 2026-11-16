@@ -16,7 +16,7 @@ export function compareRuns(input) {
   const baselineRun = reports.find(report => report.run.scenario === 'baseline')?.run;
   if (!baselineRun) throw new Error('MISSING_BASELINE: include supported reference baseline runs.');
   const baselineInstrumentation = baselineRun.instrumentation;
-  const equalFields = /** @type {const} */ (['budgetsSha256','checkpointSha256','warmupUs','durationUs','speed','paused','baseline','hardwareSha256']);
+  const equalFields = /** @type {const} */ (['budgetsSha256','checkpointSha256','warmupUs','durationUs','speed','paused','baseline','hardwareSha256','frameBoundaryEvidenceSha256']);
   for (const report of reports) {
     if (report.run.manifestSha256 !== baselineRun?.manifestSha256 && (report.run.scenario !== 'control' || report.run.referenceManifestSha256 !== baselineRun?.manifestSha256))
       throw new Error('COMPARISON_MISMATCH: manifestSha256; only a documented control may differ from its exact reference manifest.');
@@ -54,6 +54,7 @@ export function compareRuns(input) {
       observedRangesOverlap: group.minP99Us <= baseline.maxP99Us && baseline.minP99Us <= group.maxP99Us };
   });
   return { schemaVersion: 1, actualGameBaseline: first.baseline === 'game' ? 'recorded-not-certified' : 'unmeasured',
+    frameBoundaryEvidenceSha256: first.frameBoundaryEvidenceSha256??null,
     accelerationClaim: 'none', scenarios, comparisons,
     warnings: ['Min/max overlap and sample standard deviation describe run variation, not statistical proof of a speedup.',
       scenarios.some(group => group.repeats < 3) ? 'At least three matched repetitions are required for a useful initial comparison.' : '',

@@ -1,5 +1,6 @@
 // @ts-check
 import { sanitizeEvent, validateRun } from './contract.mjs';
+import { admittedPresentationFrames } from './presentation.mjs';
 /** Nearest-rank percentiles; null preserves unavailable evidence. @param {number[]} values */
 export function percentiles(values) {
   const sorted = [...values].sort((a,b) => a - b);
@@ -24,9 +25,10 @@ export function analyzeTrace(metadata, records, budgets) {
   const measured = events.filter(event => event.atUs >= start && event.atUs < end).sort((a,b) => a.atUs - b.atUs);
   /** @param {string} kind */
   const durations = kind => measured.filter(event => event.kind === kind && wholePhase(event)).map(event => event.durationUs ?? 0);
-  const frames = durations('frame');
+  const frameEvents = events.filter(event=>event.kind==='frame').concat(admittedPresentationFrames(run,events,start,end));
+  const frames = frameEvents.filter(wholePhase).map(event=>event.durationUs??0);
   const frameIds = new Set();
-  for (const event of measured.filter(event => event.kind === 'frame' && event.frameId !== undefined)) {
+  for (const event of frameEvents.filter(event => event.atUs>=start && event.atUs<end && event.frameId !== undefined)) {
     if (frameIds.has(event.frameId)) throw new Error('DUPLICATE_FRAME: select one authoritative frame capture source per run.');
     frameIds.add(event.frameId);
   }
@@ -49,7 +51,7 @@ export function analyzeTrace(metadata, records, budgets) {
   const groups = [...bridgeByFrame.values()];
   const incompleteFrames = groups.filter(spans => !spans.capture || !spans.apply || spans.excludedSpans).length;
   const bridge = percentiles(groups.filter(spans => spans.capture && spans.apply && !spans.excludedSpans).map(spans => spans.durationUs));
-  const phaseKinds = ['frame','capture','encode','apply','save','load','gc_pause','gc_cycle','campaign_callback'];
+  const phaseKinds = ['frame','presentation_interval','capture','encode','apply','save','load','gc_pause','gc_cycle','campaign_callback'];
   const excludedPhaseEvents = events.filter(event => phaseKinds.includes(event.kind) && overlapsWindow(event) && !wholePhase(event)).length;
   /** @type {Map<string, {process: 'node'|'adapter', threadId: number, executionSamples: number, runningCpuUs: number|null, blockedEventUs: number, ioEventUs: number, sleepEventUs: number, cpuFirst?: number, cpuLast?: number, cpuSamples?: number}>} */
   const threadData = new Map();
@@ -89,6 +91,7 @@ export function analyzeTrace(metadata, records, budgets) {
   const queueSamples = measured.filter(event => event.kind === 'queue');
   return { schemaVersion: 1, run, actualGameBaseline: run.baseline === 'game' ? 'recorded-not-certified' : 'unmeasured',
     frames: { ...percentiles(frames), longFrames: frames.filter(value => value > budgets.longFrameUs).length },
+    presentations: { ...percentiles(durations('presentation_interval')), boundaryEvidenceSha256: run.frameBoundaryEvidenceSha256??null },
     bridge: { ...bridge, p99BudgetUs: budgets.bridgeP99Us, ungroupedSpans: ungroupedBridgeSpans, incompleteFrames,
       excludedSpans: bridgeEvents.filter(event => !wholePhase(event)).length,
       status: bridge.count && !ungroupedBridgeSpans && !incompleteFrames && !run.droppedEvents && !run.invalidEvents ? 'observed-sample-only' : 'unmeasured',

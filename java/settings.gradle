@@ -1,2 +1,3 @@
 rootProject.name = 'near-future-java'
 include 'contract', 'adapter', 'wire', 'capture', 'nex-reference', 'ipc'
+include 'performance-agent'

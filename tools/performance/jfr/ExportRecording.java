@@ -11,6 +11,7 @@ public final class ExportRecording {
     private static String kind(String name) {
         return switch (name) {
             case "nf.Frame" -> "frame";
+            case "nf.PresentInterval" -> "presentation_interval";
             case "nf.CampaignCallback" -> "campaign_callback";
             case "nf.Capture" -> "capture";
             case "nf.Apply" -> "apply";
@@ -39,11 +40,32 @@ public final class ExportRecording {
                 while (file.hasMoreEvents()) {
                     if (++scanned > 1_000_000) throw new IllegalArgumentException();
                     RecordedEvent event = file.readEvent();
+                    if (event.getEventType().getName().equals("nf.FrameProbeRejected")
+                        || event.getEventType().getName().equals("jdk.DataLoss")) throw new IllegalArgumentException();
                     String category = kind(event.getEventType().getName());
                     if (category == null) continue;
                     if (++exported > 100_000) throw new IllegalArgumentException();
                     if (event.hasField("traceId") && !args[1].equals(event.getString("traceId"))) throw new IllegalArgumentException();
                     long atUs = Math.addExact(Math.multiplyExact(event.getStartTime().getEpochSecond(), 1_000_000), event.getStartTime().getNano() / 1000);
+                    long durationUs = event.getDuration().toNanos() / 1000;
+                    long clockUncertaintyUs = 0;
+                    if (category.equals("presentation_interval")) {
+                        long elapsed = event.getLong("intervalNanos");
+                        long uncertainty = event.getLong("clockUncertaintyNanos");
+                        RecordedThread observed = event.getThread();
+                        if (!event.hasField("traceId") || elapsed < 1000 || uncertainty < 0
+                            || observed == null || observed.getJavaThreadId() <= 0
+                            || event.getLong("frameId") <= 0 || event.getLong("frameId") > 9_007_199_254_740_991L) {
+                            throw new IllegalArgumentException();
+                        }
+                        durationUs = elapsed / 1000;
+                        // The JFR marker is the END anchor. Never export its short
+                        // handler duration as the preceding presentation interval.
+                        atUs = Math.subtractExact(atUs, durationUs);
+                        // Include one microsecond for timestamp/duration quantization.
+                        clockUncertaintyUs = Math.addExact(Math.addExact(uncertainty, 999) / 1000, 1);
+                        if (clockUncertaintyUs > 9_007_199_254_740_991L) throw new IllegalArgumentException();
+                    }
                     if (atUs < 0 || atUs > 9_007_199_254_740_991L) throw new IllegalArgumentException();
                     StringBuilder out = new StringBuilder(256);
                     out.append("{\"traceId\":\"").append(args[1]).append("\",\"source\":\"jfr\",\"kind\":\"").append(category).append("\",\"atUs\":").append(atUs);
@@ -54,7 +76,8 @@ public final class ExportRecording {
                         throw new IllegalArgumentException();
                     if (thread != null) out.append(",\"threadId\":").append(thread.getJavaThreadId());
                     if (!category.equals("thread_running_sample") && !category.equals("allocation_sample") && !category.equals("thread_cpu"))
-                        out.append(",\"durationUs\":").append(event.getDuration().toNanos() / 1000);
+                        out.append(",\"durationUs\":").append(durationUs);
+                    if (category.equals("presentation_interval")) out.append(",\"clockUncertaintyUs\":").append(clockUncertaintyUs);
                     if (category.equals("allocation_sample")) out.append(",\"bytes\":").append(event.getLong("weight"));
                     if (category.equals("thread_cpu")) out.append(",\"cpuUs\":").append(event.getLong("cpuUs"));
                     if (event.hasField("frameId")) out.append(",\"frameId\":").append(event.getLong("frameId"));
