@@ -16,6 +16,8 @@ The selected implementation path is incremental rename/evolution from scom to st
 
 Keep #139's content-neutral probe independent. Contract discovery is not a prerequisite for its early delivery. Conversely, a working probe does not establish chat service availability, a native panel, ordinary-exit/save acceptance or AoTD coexistence.
 
+STRATCOM's [selected first increment](https://github.com/mirkoEscobedo/NearFuture/issues/140#issuecomment-6925762591) establishes an internal read facade, not the required durable external service or Java binding. Its shell/headless equivalence must name the actual provider; memory fixtures and snapshot slicing do not prove persistence or bounded history. The neutral probe's 346-byte response ceiling and 60-second parent lifetime remain unchanged; a later social binding needs its own agreed profile.
+
 ## Preconditions for the first implementation slice
 
 Record the answer/evidence beside each item before calling #25 ready. Missing components return to their existing owners through GM; this plan supplies no delivery dates.

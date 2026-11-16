@@ -99,6 +99,10 @@ The initial action allowlist has no cargo/economy/save/world writes. A message, 
 
 Recommend the smallest owner-supported STRATCOM service/client package and Pandora native source/package that meet the table. A bundled component need not include the marketplace. No global daemon, shared raw database, portfolio identity root or new deployment is implied.
 
+The [STRATCOM owner's selected first increment](https://github.com/mirkoEscobedo/NearFuture/issues/140#issuecomment-6925762591) is an internal, UI-independent room/status read facade over an explicit retained provider, reused by shell and headless callers. It is not the external social service or Java binding. Memory fixtures do not establish durable headless storage, and slicing a full snapshot does not establish bounded persistent history. Atomic durable operation admission/recovery remains a separate STRATCOM behavior slice.
+
+The neutral probe's response-body ceiling is 346 bytes and its parent lease is at most 60 seconds. These are intentionally separate from the proposed social pages and durable lifetime. A social binding requires its own explicitly agreed capability/version/limits and ownership profile; this proposal does not enlarge or repurpose the probe.
+
 | Needed before #25 implementation | Known source / missing selection |
 | --- | --- |
 | STRATCOM service | Core vocabulary exists at the source pin below. Missing: actual runnable/embeddable component, revision/package/artifact, supported Windows/architecture/runtime, Java-to-service binding/encoding, minimal dependency closure, authorization and recovery support. A Rust core or generic loopback port alone is insufficient. |
