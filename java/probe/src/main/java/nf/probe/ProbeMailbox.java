@@ -14,8 +14,11 @@ public final class ProbeMailbox {
     private final AtomicReference<Pending> outbound = new AtomicReference<>();
     private volatile Pending pending;
     private volatile boolean active = true;
+    private final ProbeEvidence evidence;
+    private ProbeResult consumed;
 
-    ProbeMailbox(long generation) { this.generation = generation; }
+    ProbeMailbox(long generation) { this(generation, new ProbeEvidence(false)); }
+    ProbeMailbox(long generation, ProbeEvidence evidence) { this.generation = generation; this.evidence = evidence; }
     public long generation() { return generation; }
     public boolean active() { return active; }
 
@@ -41,7 +44,15 @@ public final class ProbeMailbox {
         if (result == null || !request.matches(result) || !active) return null;
         pending = null;
         outbound.compareAndSet(current, null);
+        consumed = result;
         return result;
+    }
+    /** Callback-only: one bounded immutable fact; worker performs all formatting and I/O. */
+    public void callbackFinished(long durationNanos) {
+        ProbeResult result = consumed; consumed = null;
+        Pending current = pending;
+        evidence.callback(result == null ? ProbeEvidence.Kind.CALLBACK_FRAME : ProbeEvidence.Kind.CALLBACK_CONSUMED,
+                generation, result, current == null ? null : current.request, durationNanos);
     }
     public void cancel() { pending = null; outbound.set(null); }
     public void revoke() { active = false; cancel(); }

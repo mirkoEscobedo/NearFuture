@@ -51,7 +51,12 @@ public final class ProbeProcessTest {
         catch (IOException expected) { /* refusal precedes child creation */ }
 
         OwnedProbeFactory factory = new OwnedProbeFactory(executable, pin);
-        ProbeService service = new ProbeService(factory);
+        java.nio.file.Path evidenceDirectory = java.nio.file.Files.createTempDirectory("nf-probe-actual-");
+        java.nio.file.Path evidencePath = evidenceDirectory.resolve("facts.jsonl");
+        String previousEvidence = System.getProperty("nf.probe.evidence");
+        System.setProperty("nf.probe.evidence", evidencePath.toString());
+        ProbeEvidence evidence = new ProbeEvidence(true);
+        ProbeService service = new ProbeService(factory, evidence);
         try {
             ProbeMailbox mailbox = service.activate(1);
             check(mailbox.submit(bytes(16, 6), bytes(32, 7), 5000), "actual worker submit");
@@ -69,7 +74,13 @@ public final class ProbeProcessTest {
             check(service.isStopped(), "actual worker terminal");
             check(!service.cleanupFailed() && factory.phase() == OwnedProbeFactory.Phase.STOPPED
                     && !ProcessHandle.of(factory.childPid()).map(ProcessHandle::isAlive).orElse(false), "actual worker child reaped");
+            if (previousEvidence == null) System.clearProperty("nf.probe.evidence");
+            else System.setProperty("nf.probe.evidence", previousEvidence);
         }
+        String facts = java.nio.file.Files.readString(evidencePath);
+        check(!evidence.unavailable() && facts.contains("WORKER_RESULT") && facts.contains("CALLBACK_CONSUMED")
+                && facts.contains("\"generation\":2") && facts.contains("\"echoVerified\":true"), "actual observable reply/consumption");
+        java.nio.file.Files.delete(evidencePath); java.nio.file.Files.delete(evidenceDirectory);
         System.out.println("Probe actual Java/Rust: authenticated echo, rebind ACK, stale rejection, fresh session, cancellation, pin refusal, EOF/worker cleanup PASS.");
     }
     private static ProbeResult await(ProbeMailbox mailbox) throws Exception {
@@ -77,6 +88,7 @@ public final class ProbeProcessTest {
         long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(6);
         while (result == null && System.nanoTime() - end < 0) { result = mailbox.poll(); Thread.sleep(2); }
         check(result != null && result.status() == ProbeResult.Status.REPLIED, "actual authenticated worker reply");
+        mailbox.callbackFinished(1); // Deterministic callback-duration fixture; not native timing evidence.
         return result;
     }
     private static ProbeRequest request(long generation, int id) {

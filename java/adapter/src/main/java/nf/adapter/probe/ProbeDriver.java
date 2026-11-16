@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import nf.probe.OwnedProbeFactory;
 import nf.probe.ProbeMailbox;
+import nf.probe.ProbeEvidence;
 import nf.probe.ProbeRequest;
 import nf.probe.ProbeResult;
 import nf.probe.ProbeService;
@@ -19,7 +20,8 @@ import nf.probe.ProbeTransport;
  * Public game APIs stay on one callback owner; JDK transport/process work stays on its worker. */
 final class ProbeDriver implements ProbeHooks {
     private final DeferredFactory factory = new DeferredFactory();
-    private final ProbeService service = new ProbeService(factory);
+    private final ProbeEvidence evidence = new ProbeEvidence(true);
+    private final ProbeService service = new ProbeService(factory, evidence);
     private final AtomicReference<Thread> callback = new AtomicReference<>();
     private transient SectorAPI sector;
     private transient Script script;
@@ -56,7 +58,7 @@ final class ProbeDriver implements ProbeHooks {
         }
         state = "SUSPENDED";
     }
-    @Override public String status() { return state + ":" + factory.phase; }
+    @Override public String status() { return state + ":" + factory.phase + (evidence.unavailable() ? ":EVIDENCE_UNAVAILABLE" : ""); }
 
     private final class Script implements EveryFrameScript {
         private final ProbeMailbox mailbox;
@@ -67,9 +69,13 @@ final class ProbeDriver implements ProbeHooks {
         @Override public boolean isDone() { return !mailbox.active(); }
         @Override public boolean runWhilePaused() { return true; }
         @Override public void advance(float amount) {
+            long begin = System.nanoTime();
+            boolean sample = false;
+            try {
             if (!callbackAllowed() || isDone()) return;
             ProbeResult result = mailbox.poll();
             if (result != null) {
+                sample = true;
                 pending = false; state = result.status().name(); frames = 120;
                 if (result.status() != ProbeResult.Status.REPLIED) sequence = 8;
             }
@@ -84,6 +90,8 @@ final class ProbeDriver implements ProbeHooks {
             System.arraycopy(id, 0, challenge, 0, 16);
             System.arraycopy(id, 0, challenge, 16, 16);
             pending = mailbox.submit(id, challenge, 5000);
+            sample = pending;
+            } finally { if (sample) mailbox.callbackFinished(System.nanoTime() - begin); }
         }
     }
 

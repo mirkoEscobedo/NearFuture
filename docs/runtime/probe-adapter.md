@@ -47,8 +47,22 @@ All plugin fields holding runtime references are transient; the script is added
 only with `SectorAPI.addTransientScript`. No persistentData, XStream converter,
 save schema, token, socket, process handle or worker is registered for saving.
 This is source structure; actual native save exclusion is still unproved.
-The companion exposes only a closed `diagnosticStatus()` string, with no callback
-logging or peer text. It does not add a renderer, console command or social service.
+The companion exposes a closed `diagnosticStatus()` string. For saved native
+observations, explicitly set `nf.probe.evidence` to a fresh absolute private
+JSONL path. Only the worker opens/formats/writes/flushes/closes it, using
+CREATE_NEW; an existing original refuses. It records at most256 fixed-schema
+facts (less than128KiB), with one nonblocking callback slot and drop accounting.
+Facts contain public request/session IDs, generation, closed status, worker echo
+verification and actual callback-consumed replies. They contain no token, payload,
+peer text, widget or path. Correlate WORKER_RESULT and CALLBACK_CONSUMED with the
+same IDs/session/generation; a handshake or worker result alone is insufficient.
+`callbackNanos` measures sampled advance work up to the evidence handoff; it
+excludes bounded fact allocation/publication. CLOSED counts are explicitly a
+snapshot and may omit concurrent shutdown publications; missing/dropped facts
+are UNKNOWN. CLOSED can be absent on JVM exit. Evidence failure becomes
+unavailable without preventing transport cleanup or terminal worker status.
+The driver must inspect/hash saved evidence alongside process receipts and
+original PNGs. This adds no renderer, console command, reflection or callback I/O.
 
 Closing a request connection detaches it without stopping the service. Worker
 shutdown closes the parent's pipe and reaps only its own child, separately

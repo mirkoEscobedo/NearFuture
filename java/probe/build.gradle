@@ -14,6 +14,14 @@ tasks.register('probeWireTest', JavaExec) {
 }
 tasks.named('check') { dependsOn 'probeWireTest' }
 
+tasks.register('probeEvidenceTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'nf.probe.ProbeEvidenceTest'
+    if (project.hasProperty('testJavaExecutable')) executable = project.property('testJavaExecutable')
+}
+tasks.named('check') { dependsOn 'probeEvidenceTest' }
+
 tasks.register('probeProcessTest', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath
