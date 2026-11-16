@@ -15,7 +15,7 @@
 
 GM coordinates the existing STRATCOM, shared-networking and Pandora owners. This proposal does not dispatch another owner, select a shared carrier, install services or create another social backend/renderer. Academy fiction grants no infrastructure authority.
 
-STRATCOM implementation is coordinated in ProjectSynergy through the existing STRATCOM owner chat. The legacy scom repository and its links are source/reuse evidence only, not the implementation destination. NearFuture owns the adapter/consumer only; service/backend implementation stays with STRATCOM. The actual service package/revision remains an owner selection.
+The selected implementation path is incremental rename/evolution from scom to stratcom, coordinated by the dedicated GM coordinator "Coordinate SCOM to STRATCOM migration" through the existing SCOM PM, preserving unpublished work. The existing ProjectSynergy STRATCOM owner coordinates product, contract and reuse. Old scom pins remain source/reuse evidence. A repository rename does not establish compatible packages/APIs or authorize package, wire, storage or data migration; those concrete contracts remain proposed until agreed and implemented. NearFuture owns only the adapter/consumer and performs no backend work or unilateral API/package rename. Its PM relays exact component requirements to the dedicated coordinator; no PM replacement or duplicate dispatch.
 
 ## Minimum service contract
 
