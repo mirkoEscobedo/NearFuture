@@ -8,6 +8,16 @@ use std::{
 pub const API_VERSION: u16 = 1;
 pub const PROBE_MODULE: u16 = 1;
 pub const PROBE_CAPABILITY: u32 = 1;
+pub const SNAPSHOT_MODULE: u16 = 2;
+pub const SNAPSHOT_CAPABILITY: u32 = 2;
+pub const COMPILED_CAPABILITIES: u32 = PROBE_CAPABILITY
+    | if cfg!(feature = "snapshot") {
+        SNAPSHOT_CAPABILITY
+    } else {
+        0
+    };
+#[cfg(feature = "snapshot")]
+mod snapshot;
 pub const MAX_PAYLOAD: usize = 65_408;
 pub const MAX_REPLY: usize = 256;
 
@@ -85,6 +95,8 @@ pub struct Host {
     session: [u8; 16],
     generation: u64,
     probe: Option<Probe>,
+    #[cfg(feature = "snapshot")]
+    snapshot: Option<snapshot::Snapshot>,
     active: bool,
 }
 impl Host {
@@ -96,11 +108,29 @@ impl Host {
             session,
             generation: 0,
             probe: probe.then_some(Probe),
+            #[cfg(feature = "snapshot")]
+            snapshot: None,
             active: true,
         })
     }
     pub fn session(&self) -> [u8; 16] {
         self.session
+    }
+    pub fn with_snapshot(self, enabled: bool) -> Result<Self, Error> {
+        #[cfg(feature = "snapshot")]
+        {
+            let mut host = self;
+            host.snapshot = enabled.then_some(snapshot::Snapshot);
+            Ok(host)
+        }
+        #[cfg(not(feature = "snapshot"))]
+        {
+            if enabled {
+                Err(Error::UnsupportedCapability)
+            } else {
+                Ok(self)
+            }
+        }
     }
     pub fn campaign_generation(&self) -> u64 {
         self.generation
@@ -116,11 +146,22 @@ impl Host {
         self.active = false;
     }
     pub fn available(&self) -> u32 {
-        if self.active && self.probe.is_some() {
+        if !self.active {
+            return 0;
+        }
+        let available = if self.probe.is_some() {
             PROBE_CAPABILITY
         } else {
             0
-        }
+        };
+        #[cfg(feature = "snapshot")]
+        let available = available
+            | if self.snapshot.is_some() {
+                SNAPSHOT_CAPABILITY
+            } else {
+                0
+            };
+        available
     }
     pub fn dispatch(&self, request: &Invocation<'_>, granted: u32, context: &Context<'_>) -> Reply {
         let outcome = self.execute(request, granted, context).and_then(|value| {
@@ -166,6 +207,7 @@ impl Host {
         }
         let capability = match r.module {
             PROBE_MODULE => PROBE_CAPABILITY,
+            SNAPSHOT_MODULE => SNAPSHOT_CAPABILITY,
             _ => return Err(Error::UnsupportedModule),
         };
         if r.operation != 1 {
@@ -180,6 +222,12 @@ impl Host {
         match r.module {
             PROBE_MODULE => self
                 .probe
+                .as_ref()
+                .ok_or(Error::Disabled)?
+                .invoke(r.payload, context),
+            #[cfg(feature = "snapshot")]
+            SNAPSHOT_MODULE => self
+                .snapshot
                 .as_ref()
                 .ok_or(Error::Disabled)?
                 .invoke(r.payload, context),

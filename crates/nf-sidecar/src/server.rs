@@ -188,10 +188,16 @@ impl Server {
             deadline,
             cancelled,
         };
-        let reply = host.dispatch(&r.invocation, channel.granted, &context);
+        let mut reply = host.dispatch(&r.invocation, channel.granted, &context);
         // A cooperative handler may have exceeded its deadline; never flush a late success.
         if context.check().is_err() {
             return false;
+        }
+        if reply.outcome.as_ref().is_ok_and(|v| {
+            protocol::RESPONSE_HEADER + protocol::TAG_BYTES + v.len()
+                > channel.limits.response_bytes as usize
+        }) {
+            reply.outcome = Err(nf_modules::Error::Limit);
         }
         let encoded = match channel.encode_reply(&reply, r.sequence) {
             Ok(b) => b,

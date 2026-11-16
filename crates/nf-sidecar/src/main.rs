@@ -100,7 +100,9 @@ impl Parent {
                 let lifetime = u32::from_be_bytes(b[40..44].try_into().expect("fixed bootstrap"));
                 let capabilities =
                     u32::from_be_bytes(b[44..48].try_into().expect("fixed bootstrap"));
-                if *token == [0; 32] || !(100..=60000).contains(&lifetime) || capabilities & !1 != 0
+                if *token == [0; 32]
+                    || !(100..=60000).contains(&lifetime)
+                    || capabilities & !nf_modules::COMPILED_CAPABILITIES != 0
                 {
                     signal.store(true, Ordering::Release);
                     return;
@@ -147,6 +149,7 @@ fn run() -> Result<(), &'static str> {
         fresh_session().map_err(|_| "random-unavailable")?,
         parent.capabilities & 1 != 0,
     )
+    .and_then(|host| host.with_snapshot(parent.capabilities & nf_modules::SNAPSHOT_CAPABILITY != 0))
     .map_err(|_| "host-unavailable")?;
     let mut server = Server::bind(parent.token, host).map_err(|_| "listener-unavailable")?;
     if parent.gone.load(Ordering::Acquire) {

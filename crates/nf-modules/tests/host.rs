@@ -76,3 +76,36 @@ fn probe_binding_availability_and_cancellation_are_explicit() {
         Err(Error::Unavailable)
     );
 }
+
+#[test]
+fn snapshot_can_be_omitted_without_changing_the_probe() {
+    let host = Host::new([1; 16], true)
+        .unwrap()
+        .with_snapshot(false)
+        .unwrap();
+    assert_eq!(host.available(), 1);
+    let cancelled = AtomicBool::new(false);
+    let context = Context {
+        deadline: Instant::now() + Duration::from_secs(1),
+        cancelled: &cancelled,
+    };
+    let request = Invocation {
+        session: [1; 16],
+        request_id: [2; 16],
+        campaign_generation: 0,
+        module: SNAPSHOT_MODULE,
+        operation: 1,
+        api_version: 1,
+        required_capabilities: 0,
+        payload: &[],
+    };
+    assert_eq!(
+        host.dispatch(&request, 1, &context).outcome,
+        Err(Error::Disabled)
+    );
+    #[cfg(not(feature = "snapshot"))]
+    assert!(matches!(
+        Host::new([1; 16], true).unwrap().with_snapshot(true),
+        Err(Error::UnsupportedCapability)
+    ));
+}
