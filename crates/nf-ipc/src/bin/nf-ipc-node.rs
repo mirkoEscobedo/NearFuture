@@ -11,6 +11,8 @@ use std::{
     path::Path,
     time::{Duration, Instant},
 };
+#[path = "nf-ipc-node/parent.rs"]
+mod parent;
 fn hex<const N: usize>(text: &str) -> Result<[u8; N], IpcError> {
     if text.len() != N * 2 || !text.is_ascii() {
         return Err(IpcError::Malformed);
@@ -134,6 +136,7 @@ fn run(args: &[String]) -> Result<(), IpcError> {
                 duration(&args[11])?,
             )
         }
+        Some("serve-parent") if args.len() == 12 => parent::serve(args),
         Some("serve-store") if args.len() == 15 => {
             let vault = vault(args)?;
             let config = session_config(&args[6..10])?;
