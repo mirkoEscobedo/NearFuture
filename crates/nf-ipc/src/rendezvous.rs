@@ -3,7 +3,7 @@ use nf_contract::identity::{AccountId, DeviceId};
 use nf_identity::private_storage::PrivateVault;
 use nf_wire::generated as g;
 use std::{
-    io::{Cursor, Read},
+    io::{Cursor, Read, Write},
     net::{Ipv4Addr, SocketAddr},
 };
 use zeroize::Zeroizing;
@@ -30,6 +30,26 @@ pub struct DiscoveryRecord {
     token: SecretToken,
 }
 impl DiscoveryRecord {
+    /// Secret handoff to the trusted owner over its private, directly constructed parent pipe.
+    /// This is not diagnostic output. Never redirect it to logs or a persistent file.
+    /// Only this ephemeral session token and bounded connection metadata are exported;
+    /// private vault/root keys are not part of a discovery record.
+    pub fn write_private_parent_handoff(
+        &self,
+        output: &mut impl Write,
+        parent_nonce: &[u8; 32],
+    ) -> Result<(), IpcError> {
+        if parent_nonce.iter().all(|byte| *byte == 0) {
+            return Err(IpcError::Malformed);
+        }
+        let record = self.encode();
+        output
+            .write_all(b"NF-HANDOFF-1\0")
+            .and_then(|()| output.write_all(parent_nonce))
+            .and_then(|()| output.write_all(&record))
+            .and_then(|()| output.flush())
+            .map_err(|_| IpcError::Disconnected)
+    }
     pub fn read(vault: &PrivateVault, name: &str) -> Result<Self, IpcError> {
         let bytes = Zeroizing::new(
             vault
